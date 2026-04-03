@@ -20,15 +20,100 @@
                 <span class="badge badge-info ml-2">{{ missions|length }} mission(s)</span>
             </div>
         </div>
+
+        <div class="card-body">
+            <!-- Barre de recherche et boutons d'export -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <form method="get" action="{{ path('app_admin_missions_list') }}" class="form-inline">
+                        <div class="input-group">
+                            <input type="text"
+                                   name="search"
+                                   class="form-control"
+                                   placeholder="Rechercher par description..."
+                                   value="{{ search|default('') }}">
+                            <input type="hidden" name="sort_by" value="{{ sort_by|default('id') }}">
+                            <input type="hidden" name="sort_order" value="{{ sort_order|default('DESC') }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> Rechercher
+                                </button>
+                                {% if search|default('') %}
+                                    <a href="{{ path('app_admin_missions_list') }}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Réinitialiser
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-6 text-right">
+                    <div class="btn-group">
+                        <a href="{{ path('app_admin_missions_export_pdf', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC')}) }}"
+                           class="btn btn-danger btn-sm">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if search|default('') %}
+                <div class="alert alert-info alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <i class="fas fa-search"></i> Résultats pour : <strong>{{ search }}</strong>
+                </div>
+            {% endif %}
+        </div>
+
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0">
                     <thead>
                     <tr>
-                        <th>Description</th>
-                        <th>Type</th>
-                        <th>Score min</th>
-                        <th>Créée le</th>
+                        <th>
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'description', 'sort_order': (sort_by|default('id') == 'description' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                               class="text-dark text-decoration-none">
+                                Description
+                                {% if sort_by|default('id') == 'description' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'type', 'sort_order': (sort_by|default('id') == 'type' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                               class="text-dark text-decoration-none">
+                                Type
+                                {% if sort_by|default('id') == 'type' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'scoreMin', 'sort_order': (sort_by|default('id') == 'scoreMin' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                               class="text-dark text-decoration-none">
+                                Score min
+                                {% if sort_by|default('id') == 'scoreMin' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'createdAt', 'sort_order': (sort_by|default('id') == 'createdAt' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                               class="text-dark text-decoration-none">
+                                Créée le
+                                {% if sort_by|default('id') == 'createdAt' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th>Actions</th>
                     </tr>
                     </thead>
@@ -37,7 +122,15 @@
                         <tr>
                             <td>{% set d = m.description|default('') %}{{ d|length > 120 ? d|slice(0, 117) ~ '…' : (d ?: '—') }}</td>
                             <td>{{ m.type|default('—') }}</td>
-                            <td>{{ m.scoreMin|default('—') }}</td>
+                            <td>
+                                {% if m.scoreMin >= 80 %}
+                                    <span class="badge badge-success">{{ m.scoreMin }}</span>
+                                {% elseif m.scoreMin >= 50 %}
+                                    <span class="badge badge-warning">{{ m.scoreMin }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ m.scoreMin }}</span>
+                                {% endif %}
+                            </td>
                             <td>{% if m.createdAt %}{{ m.createdAt|date('d/m/Y H:i') }}{% else %}—{% endif %}</td>
                             <td>
                                 <div class="btn-group btn-group-sm">
@@ -100,6 +193,15 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <div class="card-footer">
+            <small class="text-muted">
+                <i class="fas fa-info-circle"></i>
+                Total : {{ missions|length }} mission(s) |
+                Cliquez sur les en-têtes pour trier |
+                Utilisez la barre de recherche pour filtrer par description
+            </small>
         </div>
     </div>
 {% endblock %}

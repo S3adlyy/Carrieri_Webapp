@@ -13,8 +13,13 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 #[Route('/admin/missions')]
 class MissionController extends AbstractController
@@ -27,21 +32,159 @@ class MissionController extends AbstractController
 
     #[Route('/', name: 'app_admin_missions_list')]
     #[IsGranted('ROLE_RECRUITER')]
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        $missions = $this->missionRepository->findBy(
-            ['user' => $user],
-            ['id' => 'DESC']
+        // Récupérer les paramètres de recherche et de tri
+        $search = $request->query->get('search', '');
+        $sortBy = $request->query->get('sort_by', 'id');
+        $sortOrder = $request->query->get('sort_order', 'DESC');
+
+        // Valider les paramètres de tri
+        $allowedSortFields = ['id', 'description', 'type', 'scoreMin', 'createdAt'];
+        if (!in_array($sortBy, $allowedSortFields)) {
+            $sortBy = 'id';
+        }
+        $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
+
+        // Récupérer les missions avec recherche et tri
+        $missions = $this->missionRepository->findByUserWithSearchAndSort(
+            $user,
+            $search,
+            $sortBy,
+            $sortOrder
         );
 
         return $this->render('BackOffice/dashboard/missions/index.html.twig', [
             'missions' => $missions,
             'is_admin_view' => false,
+            'search' => $search,
+            'sort_by' => $sortBy,
+            'sort_order' => $sortOrder,
+        ]);
+    }
+
+    #[Route('/export/excel', name: 'app_admin_missions_export_excel')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function exportExcel(Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Récupérer les filtres pour l'export
+        $search = $request->query->get('search', '');
+        $sortBy = $request->query->get('sort_by', 'id');
+        $sortOrder = $request->query->get('sort_order', 'DESC');
+
+        $missions = $this->missionRepository->findByUserWithSearchAndSort(
+            $user,
+            $search,
+            $sortBy,
+            $sortOrder
+        );
+
+        // Créer le fichier Excel
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // En-têtes
+        $sheet->setCellValue('A1', 'ID');
+        $sheet->setCellValue('B1', 'Description');
+        $sheet->setCellValue('C1', 'Type');
+        $sheet->setCellValue('D1', 'Score Minimum');
+        $sheet->setCellValue('E1', 'Date de création');
+
+        // Style des en-têtes
+        $headerStyle = [
+            'font' => ['bold' => true, 'size' => 12],
+            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E0E0E0']],
+            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
+        ];
+        $sheet->getStyle('A1:E1')->applyFromArray($headerStyle);
+
+        // Auto-size des colonnes
+        foreach(range('A','E') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Remplir les données
+        $row = 2;
+        foreach ($missions as $mission) {
+            $sheet->setCellValue('A' . $row, $mission->getId());
+            $sheet->setCellValue('B' . $row, $mission->getDescription());
+            $sheet->setCellValue('C' . $row, $mission->getType());
+            $sheet->setCellValue('D' . $row, $mission->getScoreMin());
+            $sheet->setCellValue('E' . $row, $mission->getCreatedAt() ? $mission->getCreatedAt()->format('d/m/Y H:i') : '');
+
+            // Style pour les lignes
+            if ($row % 2 == 0) {
+                $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray([
+                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
+                ]);
+            }
+
+            $row++;
+        }
+
+        // Créer le fichier
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'missions_' . date('Y-m-d_H-i-s') . '.xlsx';
+        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
+        $writer->save($tempFile);
+
+        return $this->file($tempFile, $fileName, ResponseHeaderBag::DISPOSITION_INLINE);
+    }
+
+    #[Route('/export/pdf', name: 'app_admin_missions_export_pdf')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function exportPDF(Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Récupérer les filtres pour l'export
+        $search = $request->query->get('search', '');
+        $sortBy = $request->query->get('sort_by', 'id');
+        $sortOrder = $request->query->get('sort_order', 'DESC');
+
+        $missions = $this->missionRepository->findByUserWithSearchAndSort(
+            $user,
+            $search,
+            $sortBy,
+            $sortOrder
+        );
+
+        // Générer le HTML pour le PDF
+        $html = $this->renderView('BackOffice/dashboard/missions/export_pdf.html.twig', [
+            'missions' => $missions,
+            'export_date' => date('d/m/Y H:i:s'),
+            'search' => $search,
+        ]);
+
+        // Configurer Dompdf
+        $options = new Options();
+        $options->set('defaultFont', 'Arial');
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        // Générer le PDF
+        $fileName = 'missions_' . date('Y-m-d_H-i-s') . '.pdf';
+        return new Response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"'
         ]);
     }
 
@@ -85,25 +228,20 @@ class MissionController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Vérifier que l'utilisateur est bien le propriétaire de la mission
         if ($mission->getUser() !== $user) {
             $this->addFlash('error', 'Vous ne pouvez pas modifier cette mission.');
             return $this->redirectToRoute('app_admin_missions_list');
         }
 
-        // Créer le formulaire avec les données existantes
         $form = $this->createForm(MissionType::class, $mission);
         $form->handleRequest($request);
 
-        // Vérifier la soumission et la validation
         if ($form->isSubmitted() && $form->isValid()) {
-            // Les données sont valides, on sauvegarde
             $this->entityManager->flush();
             $this->addFlash('success', 'La mission a été modifiée avec succès.');
             return $this->redirectToRoute('app_admin_missions_list');
         }
 
-        // Si le formulaire est invalide, on retourne les erreurs
         return $this->render('BackOffice/dashboard/missions/edit.html.twig', [
             'form' => $form->createView(),
             'mission' => $mission,
@@ -119,7 +257,6 @@ class MissionController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Vérifier que l'utilisateur a le droit de voir cette mission
         if ($mission->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles())) {
             $this->addFlash('error', 'Vous ne pouvez pas voir cette mission.');
             return $this->redirectToRoute('app_admin_missions_list');
@@ -139,7 +276,6 @@ class MissionController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Vérifier que l'utilisateur est bien le propriétaire de la mission
         if ($mission->getUser() !== $user) {
             $this->addFlash('error', 'Vous ne pouvez pas supprimer cette mission.');
             return $this->redirectToRoute('app_admin_missions_list');
