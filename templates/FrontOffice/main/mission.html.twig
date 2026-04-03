@@ -1,7 +1,435 @@
+{# templates/FrontOffice/main/mission.html.twig #}
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
-{% block title %}Missions{% endblock %}
+{% block title %}Missions disponibles{% endblock %}
 
-{% block candidate_page_heading %}Missions{% endblock %}
+{% block candidate_page_heading %}Missions disponibles{% endblock %}
 
 {% block candidate_breadcrumb %} / Missions{% endblock %}
+
+{% block candidate_content %}
+    <div class="container">
+        <!-- Barre de recherche et filtres -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="mission-search-bar">
+                    <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                        <input type="text"
+                               id="mission-search"
+                               class="form-control border-start-0"
+                               placeholder="Rechercher une mission par description ou type..."
+                               aria-label="Rechercher">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtres par type -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="mission-filters">
+                    <button class="filter-btn active" data-filter="all">Toutes</button>
+                    {# Récupérer les types uniques manuellement #}
+                    {% set types = [] %}
+                    {% for mission in missions %}
+                        {% if mission.type not in types %}
+                            {% set types = types|merge([mission.type]) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% for type in types %}
+                        <button class="filter-btn" data-filter="{{ type|lower|replace({' ': '-'}) }}">{{ type }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Grille des missions -->
+        <div class="row mission-grid" id="mission-grid">
+            {% for mission in missions %}
+                <div class="col-lg-6 col-xl-4 mb-4 mission-item"
+                     data-type="{{ mission.type|lower|replace({' ': '-'}) }}"
+                     data-title="{{ mission.description|lower }}"
+                     data-type-search="{{ mission.type|lower }}">
+                    <div class="mission-card">
+                        <div class="mission-card__header">
+                            <div class="mission-card__type">
+                                <i class="fas fa-briefcase"></i>
+                                {{ mission.type }}
+                            </div>
+                            <div class="mission-card__score">
+                                <span class="score-value">{{ mission.scoreMin }}</span>
+                                <span class="score-label">points min</span>
+                            </div>
+                        </div>
+
+                        <div class="mission-card__body">
+                            <h3 class="mission-card__title">
+                                {{ mission.type }}
+                            </h3>
+                            <div class="mission-card__description">
+                                {{ mission.description|length > 150 ? mission.description|slice(0, 147) ~ '...' : mission.description }}
+                            </div>
+
+                            <div class="mission-card__meta">
+                                <div class="meta-item">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Publiée le {{ mission.createdAt|date('d/m/Y') }}</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fas fa-chart-line"></i>
+                                    <span>Score requis: {{ mission.scoreMin }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mission-card__footer">
+                            <button class="btn-view-mission" onclick="showMissionDetails({{ mission.id }})">
+                                Voir les détails
+                                <i class="fas fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-tasks fa-3x text-muted mb-3"></i>
+                        <h4>Aucune mission disponible</h4>
+                        <p class="text-muted">Revenez plus tard pour découvrir de nouvelles opportunités.</p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Modal pour les détails de la mission -->
+    <div class="modal fade" id="missionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content mission-modal">
+                <div class="modal-header">
+                    <h5 class="modal-title">Détails de la mission</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body" id="mission-modal-body">
+                    <!-- Contenu chargé via AJAX -->
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Styles pour les cartes de mission */
+        .mission-search-bar {
+            background: white;
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .mission-search-bar .form-control {
+            padding: 12px 20px;
+            font-size: 1rem;
+        }
+
+        .mission-search-bar .form-control:focus {
+            box-shadow: none;
+            border-color: #dee2e6;
+        }
+
+        .mission-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 20px;
+            border: 1px solid #e0e0e0;
+            background: white;
+            border-radius: 30px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn:hover {
+            background: #f5f5f5;
+            border-color: #ccc;
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .mission-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mission-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .mission-card__header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: white;
+        }
+
+        .mission-card__type {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .mission-card__type i {
+            margin-right: 6px;
+            font-size: 12px;
+        }
+
+        .mission-card__score {
+            text-align: right;
+        }
+
+        .score-value {
+            font-size: 24px;
+            font-weight: bold;
+            display: block;
+            line-height: 1;
+        }
+
+        .score-label {
+            font-size: 11px;
+            opacity: 0.9;
+        }
+
+        .mission-card__body {
+            padding: 20px;
+            flex: 1;
+        }
+
+        .mission-card__title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .mission-card__description {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .mission-card__meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #888;
+        }
+
+        .meta-item i {
+            font-size: 14px;
+            color: #667eea;
+        }
+
+        .mission-card__footer {
+            padding: 15px 20px 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .btn-view-mission {
+            width: 100%;
+            padding: 10px;
+            background: white;
+            border: 2px solid #667eea;
+            border-radius: 30px;
+            color: #667eea;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-view-mission:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: transparent;
+        }
+
+        .btn-view-mission i {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-view-mission:hover i {
+            transform: translateX(5px);
+        }
+
+        /* Modal styles */
+        .mission-modal {
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .mission-modal .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+        }
+
+        .mission-modal .btn-close {
+            filter: brightness(0) invert(1);
+        }
+
+        /* Animation pour les cartes */
+        .mission-item {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .mission-filters {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 10px;
+            }
+
+            .filter-btn {
+                white-space: nowrap;
+            }
+
+            .mission-card__header {
+                padding: 15px;
+            }
+
+            .score-value {
+                font-size: 20px;
+            }
+
+            .mission-card__body {
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .mission-card__meta {
+                flex-direction: column;
+                gap: 8px;
+            }
+        }
+    </style>
+
+    <script>
+        // Recherche en temps réel
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('mission-search');
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const missionItems = document.querySelectorAll('.mission-item');
+            let currentFilter = 'all';
+            let currentSearch = '';
+
+            function filterMissions() {
+                missionItems.forEach(item => {
+                    const matchesFilter = currentFilter === 'all' || item.dataset.type === currentFilter;
+                    const searchText = item.dataset.title + ' ' + item.dataset.typeSearch;
+                    const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+
+                    if (matchesFilter && matchesSearch) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            // Recherche
+            if (searchInput) {
+                searchInput.addEventListener('input', function(e) {
+                    currentSearch = e.target.value;
+                    filterMissions();
+                });
+            }
+
+            // Filtres
+            filterButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    filterButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    filterMissions();
+                });
+            });
+
+            // Animation d'entrée
+            setTimeout(() => {
+                missionItems.forEach((item, index) => {
+                    item.style.animationDelay = `${index * 0.05}s`;
+                    item.style.opacity = '1';
+                });
+            }, 100);
+        });
+
+        // Fonction pour afficher les détails de la mission dans le modal
+        function showMissionDetails(missionId) {
+            const modalBody = document.getElementById('mission-modal-body');
+            modalBody.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Chargement...</span>
+            </div>
+        </div>
+    `;
+
+            // Rediriger vers la page de détails
+            window.location.href = `/candidat/missions/${missionId}`;
+        }
+    </script>
+{% endblock %}
