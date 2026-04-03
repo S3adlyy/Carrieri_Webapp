@@ -1,0 +1,29 @@
+{# templates/BackOffice/dashboard/missions/index.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des missions{% endblock %}
+
+{% block page_title %}Missions{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Missions</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des missions</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Ajouter une mission
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Page en construction...
+            </div>
+            <p>La liste des missions sera affichée ici prochainement.</p>
+        </div>
+    </div>
+{% endblock %}

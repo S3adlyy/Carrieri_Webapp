@@ -1,0 +1,29 @@
+{# templates/BackOffice/dashborad/utilisateurs/index.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des utilisateurs{% endblock %}
+
+{% block page_title %}Utilisateurs{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Utilisateurs</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des utilisateurs</h3>
+            <div class="card-tools">
+                <button type="button" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Ajouter
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> Page en construction...
+            </div>
+            <p>La liste des utilisateurs sera affichée ici prochainement.</p>
+        </div>
+    </div>
+{% endblock %}

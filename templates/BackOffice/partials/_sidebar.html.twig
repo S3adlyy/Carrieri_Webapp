@@ -1,0 +1,81 @@
+{# templates/BackOffice/partials/_sidebar.html.twig #}
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    <a href="{{ path('app_admin_dashboard') }}" class="brand-link">
+        <span class="brand-text font-weight-light">Admin Dashboard</span>
+    </a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Sidebar user panel -->
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="image">
+                <img src="https://ui-avatars.com/api/?name=Admin&background=007bff&color=fff" class="img-circle elevation-2" alt="User Image">
+            </div>
+            <div class="info">
+                <a href="#" class="d-block">Administrateur</a>
+            </div>
+        </div>
+
+        <!-- Sidebar Menu -->
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                <!-- Dashboard -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_dashboard') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_dashboard' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+
+                <!-- Utilisateurs -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_utilisateurs') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_utilisateurs' %}active{% endif %}">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>Utilisateurs</p>
+                    </a>
+                </li>
+
+                <!-- Cours -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_cours') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_cours' %}active{% endif %}">
+                        <i class="nav-icon fas fa-book"></i>
+                        <p>Cours</p>
+                    </a>
+                </li>
+
+                <!-- Missions -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_missions') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_missions' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tasks"></i>
+                        <p>Missions</p>
+                    </a>
+                </li>
+
+                <!-- Offres d'emploi -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_offres_emploi') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_offres_emploi' %}active{% endif %}">
+                        <i class="nav-icon fas fa-briefcase"></i>
+                        <p>Offres d'emploi</p>
+                    </a>
+                </li>
+
+                <!-- Certifications -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_certifications') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_certifications' %}active{% endif %}">
+                        <i class="nav-icon fas fa-certificate"></i>
+                        <p>Certifications</p>
+                    </a>
+                </li>
+
+                <!-- Réclamations -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_reclamations') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_reclamations' %}active{% endif %}">
+                        <i class="nav-icon fas fa-exclamation-triangle"></i>
+                        <p>Réclamations</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>
