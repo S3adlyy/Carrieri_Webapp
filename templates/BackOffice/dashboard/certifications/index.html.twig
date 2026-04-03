@@ -10,20 +10,56 @@
 {% endblock %}
 
 {% block body %}
+    {% if is_admin_view is defined and not is_admin_view %}
+        <div class="alert alert-light border">
+            Certifications délivrées pour des cours dont vous êtes l'auteur.
+        </div>
+    {% endif %}
+
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Liste des certifications</h3>
-            <div class="card-tools">
-                <button type="button" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Ajouter une certification
-                </button>
-            </div>
+            <span class="badge badge-info">{{ certifications|length }} certification(s)</span>
         </div>
-        <div class="card-body">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Page en construction...
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Date obtention</th>
+                        <th>Cours</th>
+                        <th>Candidat</th>
+                        {% if is_admin_view|default(false) %}
+                            <th>Fichier</th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for c in certifications %}
+                        <tr>
+                            <td>{{ c.id }}</td>
+                            <td>{% if c.dateObtention %}{{ c.dateObtention|date('d/m/Y') }}{% else %}—{% endif %}</td>
+                            <td>
+                                {% set cr = c.cours %}
+                                {{ cr ? cr.titre|default('#' ~ cr.id) : '—' }}
+                            </td>
+                            <td>
+                                {% set u = c.user %}
+                                {% if u %}{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}{% else %}—{% endif %}
+                            </td>
+                            {% if is_admin_view|default(false) %}
+                                <td>{{ c.fichierPdf|default(c.cheminFichier)|default('—') }}</td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ is_admin_view|default(false) ? 5 : 4 }}" class="text-center text-muted">Aucune certification.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <p>La liste des certifications sera affichée ici prochainement.</p>
         </div>
     </div>
 {% endblock %}

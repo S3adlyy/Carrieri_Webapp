@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 #[ORM\Table(name: 'user')]
 #[ORM\Entity]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -33,11 +35,11 @@ class User
     #[ORM\Column]
     private ?int $isActive = null;
 
-    #[ORM\Column]
-    private ?\DateTimeInterface $lastLoginAt = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $lastLoginAt = null;
 
-    #[ORM\Column]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
     private ?string $type = null;
@@ -163,15 +165,88 @@ class User
         return $this;
     }
 
-    public function getRoles(): ?string
+    public function getRoles(): array
     {
-        return $this->roles;
+        $raw = [];
+        if ($this->roles !== null && $this->roles !== '') {
+            $decoded = json_decode($this->roles, true);
+            if (\is_array($decoded)) {
+                $raw = $decoded;
+            } elseif (str_contains($this->roles, ',')) {
+                $raw = array_map('trim', explode(',', $this->roles));
+            } else {
+                $raw = [trim($this->roles)];
+            }
+        }
+        $raw = array_filter($raw);
+
+        if ($raw === [] && $this->type !== null && $this->type !== '') {
+            $raw = [$this->type];
+        }
+
+        $symfonyRoles = [];
+        foreach ($raw as $r) {
+            $symfonyRoles[] = $this->normalizeDbRoleToSymfony((string) $r);
+        }
+
+        if (!\in_array('ROLE_USER', $symfonyRoles, true)) {
+            $symfonyRoles[] = 'ROLE_USER';
+        }
+
+        return array_values(array_unique($symfonyRoles));
+    }
+
+    /**
+     * Maps DB values like ADMIN, RECRUITER to Symfony roles (ROLE_ADMIN, ROLE_RECRUITER).
+     */
+    private function normalizeDbRoleToSymfony(string $role): string
+    {
+        $role = trim($role);
+        if ($role === '') {
+            return 'ROLE_USER';
+        }
+        if (str_starts_with($role, 'ROLE_')) {
+            return $role;
+        }
+
+        return match (strtoupper($role)) {
+            'ADMIN' => 'ROLE_ADMIN',
+            'RECRUITER' => 'ROLE_RECRUITER',
+            'CANDIDAT', 'CANDIDATE', 'STUDENT' => 'ROLE_CANDIDAT',
+            default => 'ROLE_' . strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '_', $role)),
+        };
+    }
+
+    public function canAccessBackOffice(): bool
+    {
+        foreach ($this->getRoles() as $role) {
+            if (\in_array($role, ['ROLE_ADMIN', 'ROLE_RECRUITER'], true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function setRoles(?string $roles): self
     {
         $this->roles = $roles;
+
         return $this;
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->passwordHash;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return (string) ($this->email ?? '');
+    }
+
+    public function eraseCredentials(): void
+    {
     }
 
     public function getIsActive(): ?int
@@ -185,25 +260,31 @@ class User
         return $this;
     }
 
-    public function getLastLoginAt(): ?\DateTimeInterface
+    public function getLastLoginAt(): ?\DateTimeImmutable
     {
         return $this->lastLoginAt;
     }
 
     public function setLastLoginAt(?\DateTimeInterface $lastLoginAt): self
     {
-        $this->lastLoginAt = $lastLoginAt;
+        $this->lastLoginAt = $lastLoginAt instanceof \DateTimeImmutable
+            ? $lastLoginAt
+            : ($lastLoginAt !== null ? \DateTimeImmutable::createFromInterface($lastLoginAt) : null);
+
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
     public function setCreatedAt(?\DateTimeInterface $createdAt): self
     {
-        $this->createdAt = $createdAt;
+        $this->createdAt = $createdAt instanceof \DateTimeImmutable
+            ? $createdAt
+            : ($createdAt !== null ? \DateTimeImmutable::createFromInterface($createdAt) : null);
+
         return $this;
     }
 

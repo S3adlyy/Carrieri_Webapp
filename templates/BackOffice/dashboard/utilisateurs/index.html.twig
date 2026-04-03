@@ -1,4 +1,4 @@
-{# templates/BackOffice/dashborad/utilisateurs/index.html.twig #}
+{# templates/BackOffice/dashboard/utilisateurs/index.html.twig #}
 {% extends 'BackOffice/base.html.twig' %}
 
 {% block title %}Gestion des utilisateurs{% endblock %}
@@ -10,20 +10,46 @@
 {% endblock %}
 
 {% block body %}
+    {% if is_admin_view is defined and not is_admin_view %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> Liste des <strong>candidats</strong> inscrits sur la plateforme.
+        </div>
+    {% endif %}
+
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Liste des utilisateurs</h3>
-            <div class="card-tools">
-                <button type="button" class="btn btn-primary btn-sm">
-                    <i class="fas fa-plus"></i> Ajouter
-                </button>
-            </div>
+            <h3 class="card-title">{% if is_admin_view|default(true) %}Tous les utilisateurs{% else %}Candidats{% endif %}</h3>
+            <span class="badge badge-info">{{ users|length }} ligne(s)</span>
         </div>
-        <div class="card-body">
-            <div class="alert alert-info">
-                <i class="fas fa-info-circle"></i> Page en construction...
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom</th>
+                        <th>Email</th>
+                        <th>Type</th>
+                        <th>Actif</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for u in users %}
+                        <tr>
+                            <td>{{ u.id }}</td>
+                            <td>{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: '—' }}</td>
+                            <td>{{ u.email|default('—') }}</td>
+                            <td>{{ u.type|default('—') }}</td>
+                            <td>{{ u.isActive ? 'Oui' : 'Non' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">Aucun utilisateur.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <p>La liste des utilisateurs sera affichée ici prochainement.</p>
         </div>
     </div>
 {% endblock %}
