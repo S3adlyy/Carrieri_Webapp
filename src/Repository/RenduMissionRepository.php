@@ -1,4 +1,7 @@
 <?php
+// src/Repository/RenduMissionRepository.php
+
+declare(strict_types=1);
 
 namespace App\Repository;
 
@@ -16,16 +19,29 @@ class RenduMissionRepository extends ServiceEntityRepository
         parent::__construct($registry, RenduMission::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    public function findExistingSubmission(int $missionId, int $candidatId): ?RenduMission
+    {
+        return $this->createQueryBuilder('r')
+            ->where('r.missionId = :missionId')
+            ->andWhere('r.candidatId = :candidatId')
+            ->setParameter('missionId', $missionId)
+            ->setParameter('candidatId', $candidatId)
+            ->orderBy('r.dateRendu', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * @return RenduMission[]
+     */
+    public function findByCandidat(int $candidatId): array
+    {
+        return $this->createQueryBuilder('r')
+            ->where('r.candidatId = :candidatId')
+            ->setParameter('candidatId', $candidatId)
+            ->orderBy('r.dateRendu', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

@@ -36,7 +36,7 @@ class Conversation
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'user2_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    private ?User $user2 = null;
 
     public function getId(): ?int
     {

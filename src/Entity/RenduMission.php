@@ -1,4 +1,5 @@
 <?php
+// src/Entity/RenduMission.php
 
 declare(strict_types=1);
 
@@ -15,38 +16,38 @@ class RenduMission
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'text')]
     private ?string $codeSolution = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
     private ?string $fichier = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dateRendu = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'float', nullable: true)]
     private ?float $score = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'text', nullable: true)]
     private ?string $resultat = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $missionId = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $candidatId = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'text', nullable: true)]
     private ?string $feedback = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $langue = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'candidat_id', referencedColumnName: 'id')]
     private ?User $user = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(targetEntity: Mission::class)]
     #[ORM\JoinColumn(name: 'mission_id', referencedColumnName: 'id')]
     private ?Mission $mission = null;
 
@@ -168,6 +169,9 @@ class RenduMission
     public function setUser(?User $user): self
     {
         $this->user = $user;
+        if ($user) {
+            $this->candidatId = $user->getId();
+        }
         return $this;
     }
 
@@ -179,6 +183,9 @@ class RenduMission
     public function setMission(?Mission $mission): self
     {
         $this->mission = $mission;
+        if ($mission) {
+            $this->missionId = $mission->getId();
+        }
         return $this;
     }
 }

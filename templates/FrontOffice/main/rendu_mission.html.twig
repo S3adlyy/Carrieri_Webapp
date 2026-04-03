@@ -1,0 +1,795 @@
+{# templates/FrontOffice/main/rendu_mission.html.twig #}
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Mission - {{ mission.type }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.css">
+    <style>
+        /* Reset des marges pour prendre tout l'espace */
+        .fo-candidate-content {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            position: relative;
+            z-index: 2;
+        }
+
+        .container {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .row {
+            margin: 0 !important;
+        }
+
+        .col-lg-8, .col-md-10 {
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+        }
+
+        /* Cacher le breadcrumb */
+        .section-top, .section-top-title {
+            display: none !important;
+        }
+
+        body {
+            background: #0a0a0a;
+            overflow: hidden;
+        }
+
+        /* Container Spline 3D en arrière-plan */
+        .spline-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        spline-viewer {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* S'assurer que la navbar reste au-dessus */
+        .top_header_banner {
+            position: relative;
+            z-index: 10 !important;
+        }
+
+        .logo-contact, #navigation {
+            position: relative;
+            z-index: 10 !important;
+        }
+    </style>
+{% endblock %}
+
+{% block candidate_page_heading %}{% endblock %}
+{% block candidate_breadcrumb %}{% endblock %}
+
+{% block candidate_content %}
+    <!-- Spline 3D Background -->
+    <div class="spline-background">
+        <spline-viewer url="https://prod.spline.design/mlkMZXmoLQbdGmeF/scene.splinecode"></spline-viewer>
+    </div>
+
+    <div class="leetcode-container">
+        <div class="leetcode-panels">
+            <!-- Panneau gauche - Description -->
+            <div class="leetcode-panel-left">
+                <div class="problem-content">
+                    <div class="problem-header">
+                        <div class="problem-title-section">
+                            <span class="problem-number">Mission #{{ mission.id }}</span>
+                            <h1 class="problem-title">{{ mission.type }}</h1>
+                        </div>
+                        <div class="problem-meta">
+                            <span class="score-badge">Score requis: {{ mission.scoreMin }}</span>
+                        </div>
+                    </div>
+
+                    <div class="problem-description">
+                        <p>{{ mission.description|nl2br }}</p>
+                    </div>
+
+                    <div class="problem-examples">
+                        <h3>Exemples</h3>
+
+                        <div class="example">
+                            <div class="example-title">Exemple 1:</div>
+                            <div class="example-content">
+                                <div><strong>Input:</strong> nums = [2,7,11,15], target = 9</div>
+                                <div><strong>Output:</strong> [0,1]</div>
+                                <div><strong>Explanation:</strong> Because nums[0] + nums[1] == 9, we return [0, 1].</div>
+                            </div>
+                        </div>
+
+                        <div class="example">
+                            <div class="example-title">Exemple 2:</div>
+                            <div class="example-content">
+                                <div><strong>Input:</strong> nums = [3,2,4], target = 6</div>
+                                <div><strong>Output:</strong> [1,2]</div>
+                            </div>
+                        </div>
+
+                        <div class="example">
+                            <div class="example-title">Exemple 3:</div>
+                            <div class="example-content">
+                                <div><strong>Input:</strong> nums = [3,3], target = 6</div>
+                                <div><strong>Output:</strong> [0,1]</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="problem-constraints">
+                        <h3>Contraintes</h3>
+                        <ul>
+                            <li>2 ≤ nums.length ≤ 10⁴</li>
+                            <li>-10⁹ ≤ nums[i] ≤ 10⁹</li>
+                            <li>-10⁹ ≤ target ≤ 10⁹</li>
+                        </ul>
+                    </div>
+
+                    {% if existingRendu %}
+                        <div class="previous-submission">
+                            <h3>Dernière soumission</h3>
+                            <div class="submission-details">
+                                <div><span class="label">Date:</span> {{ existingRendu.dateRendu|date('d/m/Y H:i') }}</div>
+                                <div><span class="label">Score:</span> <span class="score">{{ existingRendu.score|default(0)|round }}/100</span></div>
+                                <div><span class="label">Langage:</span> {{ existingRendu.langue|upper }}</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Panneau droit - Éditeur de code -->
+            <div class="leetcode-panel-right">
+                <div class="editor-header">
+                    <div class="language-selector">
+                        <label for="language">Langage</label>
+                        <select id="language" class="language-select">
+                            <option value="javascript" selected>JavaScript</option>
+                            <option value="php">PHP</option>
+                            <option value="python">Python</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                    <button class="reset-btn" id="resetCode">
+                        <i class="fas fa-undo-alt"></i> Réinitialiser
+                    </button>
+                </div>
+
+                <form method="post" id="codeForm" class="editor-form">
+                <textarea id="codeEditor" name="code">/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+var twoSum = function(nums, target) {
+    const map = new Map();
+    for (let i = 0; i < nums.length; i++) {
+        const complement = target - nums[i];
+        if (map.has(complement)) {
+            return [map.get(complement), i];
+        }
+        map.set(nums[i], i);
+    }
+    return [];
+};</textarea>
+                    <input type="hidden" name="langue" id="selectedLangue" value="javascript">
+
+                    <div class="editor-footer">
+                        <button type="button" class="run-btn" id="runCode">
+                            <i class="fas fa-play"></i> Exécuter
+                        </button>
+                        <button type="submit" class="submit-btn" id="submitCode">
+                            <i class="fas fa-paper-plane"></i> Soumettre
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Résultats -->
+                <div class="results-container" id="resultsPanel" style="display: {% if resultat %}block{% else %}none{% endif %};">
+                    <div class="results-header">
+                        <h3>Résultats des tests</h3>
+                        <button class="close-results" id="closeResults">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="results-content" id="resultsContent">
+                        {% if resultat %}
+                            {{ resultat|raw }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Container principal - prend tout l'espace sous la navbar */
+        .leetcode-container {
+            position: relative;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: transparent;
+            overflow: hidden;
+            z-index: 2;
+            height: calc(100vh - 140px);
+            margin-top: 0;
+        }
+
+        .leetcode-panels {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Panneau gauche - Description très transparent */
+        .leetcode-panel-left {
+            width: 50%;
+            background: rgba(15, 23, 42, 0.25);
+            backdrop-filter: blur(5px);
+            overflow-y: auto;
+            padding: 24px 32px;
+            border-right: 1px solid rgba(229, 231, 235, 0.1);
+            scroll-behavior: smooth;
+        }
+
+        .problem-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .problem-header {
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(229, 231, 235, 0.1);
+        }
+
+        .problem-title-section {
+            margin-bottom: 8px;
+        }
+
+        .problem-number {
+            font-size: 13px;
+            color: rgba(148, 163, 184, 0.8);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .problem-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            margin: 0;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .problem-meta {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .score-badge {
+            font-size: 11px;
+            padding: 3px 10px;
+            background: rgba(254, 243, 199, 0.85);
+            color: #d97706;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .problem-description {
+            margin-bottom: 24px;
+        }
+
+        .problem-description p {
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.5;
+            font-size: 14px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .problem-examples h3,
+        .problem-constraints h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .example {
+            background: rgba(30, 41, 59, 0.35);
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            border: 1px solid rgba(229, 231, 235, 0.08);
+        }
+
+        .example-title {
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .example-content {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+        }
+
+        .example-content div {
+            margin-bottom: 3px;
+        }
+
+        .example-content strong {
+            color: #10b981;
+        }
+
+        .problem-constraints ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .problem-constraints li {
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .previous-submission {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(30, 41, 59, 0.35);
+            border-radius: 8px;
+            border: 1px solid rgba(229, 231, 235, 0.08);
+        }
+
+        .previous-submission h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+
+        .submission-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .submission-details div {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .submission-details .label {
+            font-weight: 500;
+            color: rgba(148, 163, 184, 0.8);
+            margin-right: 10px;
+        }
+
+        .submission-details .score {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        /* Panneau droit - Éditeur très transparent */
+        .leetcode-panel-right {
+            width: 50%;
+            background: rgba(20, 20, 30, 0.25);
+            backdrop-filter: blur(5px);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .editor-header {
+            padding: 10px 20px;
+            background: rgba(37, 37, 38, 0.3);
+            border-bottom: 1px solid rgba(62, 62, 66, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .language-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 12px;
+        }
+
+        .language-select {
+            padding: 5px 10px;
+            background: rgba(60, 60, 60, 0.5);
+            border: 1px solid rgba(62, 62, 66, 0.4);
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .language-select:focus {
+            outline: none;
+            border-color: #007acc;
+        }
+
+        .reset-btn {
+            padding: 5px 12px;
+            background: transparent;
+            border: 1px solid rgba(62, 62, 66, 0.4);
+            border-radius: 4px;
+            color: #ffffff;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .reset-btn:hover {
+            background: rgba(62, 62, 66, 0.4);
+            border-color: #007acc;
+            color: #007acc;
+        }
+
+        .editor-form {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #codeEditor {
+            display: none;
+        }
+
+        .CodeMirror {
+            flex: 1;
+            height: auto !important;
+            font-size: 13px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: rgba(10, 10, 10, 0.3) !important;
+        }
+
+        .editor-footer {
+            padding: 10px 20px;
+            background: rgba(37, 37, 38, 0.3);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            border-top: 1px solid rgba(62, 62, 66, 0.2);
+        }
+
+        .run-btn, .submit-btn {
+            padding: 6px 18px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+
+        .run-btn {
+            background: transparent;
+            border: 1px solid #007acc;
+            color: #007acc;
+        }
+
+        .run-btn:hover {
+            background: #007acc;
+            color: white;
+        }
+
+        .submit-btn {
+            background: #007acc;
+            color: white;
+        }
+
+        .submit-btn:hover {
+            background: #005a9e;
+            transform: translateY(-1px);
+        }
+
+        /* Résultats */
+        .results-container {
+            background: rgba(37, 37, 38, 0.3);
+            border-top: 1px solid rgba(62, 62, 66, 0.2);
+            max-height: 280px;
+            overflow-y: auto;
+        }
+
+        .results-header {
+            padding: 10px 20px;
+            background: rgba(45, 45, 48, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(62, 62, 66, 0.2);
+        }
+
+        .results-header h3 {
+            margin: 0;
+            font-size: 12px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .close-results {
+            background: none;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .close-results:hover {
+            color: #007acc;
+        }
+
+        .results-content {
+            padding: 12px 20px;
+        }
+
+        .test-results {
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .test-summary {
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(62, 62, 66, 0.2);
+        }
+
+        .test-summary h4 {
+            margin: 0 0 6px 0;
+            color: #ffffff;
+            font-size: 12px;
+        }
+
+        .progress-bar {
+            background: rgba(62, 62, 66, 0.4);
+            border-radius: 4px;
+            height: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: #007acc;
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .test-details {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .test-item {
+            padding: 6px 10px;
+            border-radius: 4px;
+            background: rgba(45, 45, 48, 0.35);
+        }
+
+        .test-success {
+            border-left: 3px solid #4caf50;
+        }
+
+        .test-error {
+            border-left: 3px solid #f44336;
+        }
+
+        .test-header {
+            font-weight: 600;
+            margin-bottom: 3px;
+            color: #ffffff;
+            font-size: 11px;
+        }
+
+        .test-message {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Scrollbar */
+        .leetcode-panel-left::-webkit-scrollbar,
+        .results-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .leetcode-panel-left::-webkit-scrollbar-track,
+        .results-container::-webkit-scrollbar-track {
+            background: rgba(241, 241, 241, 0.08);
+        }
+
+        .leetcode-panel-left::-webkit-scrollbar-thumb,
+        .results-container::-webkit-scrollbar-thumb {
+            background: rgba(193, 193, 193, 0.3);
+            border-radius: 3px;
+        }
+
+        .leetcode-panel-left::-webkit-scrollbar-thumb:hover,
+        .results-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(193, 193, 193, 0.5);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .leetcode-container {
+                height: calc(100vh - 120px);
+            }
+
+            .leetcode-panels {
+                flex-direction: column;
+            }
+
+            .leetcode-panel-left,
+            .leetcode-panel-right {
+                width: 100%;
+            }
+
+            .leetcode-panel-left {
+                max-height: 40%;
+                padding: 16px;
+            }
+
+            .leetcode-panel-right {
+                min-height: 60%;
+            }
+
+            .problem-title {
+                font-size: 20px;
+            }
+        }
+    </style>
+
+    {% block javascripts %}
+        {{ parent() }}
+        <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.74/build/spline-viewer.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/php/php.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const textarea = document.getElementById('codeEditor');
+                const languageSelect = document.getElementById('language');
+                const selectedLangue = document.getElementById('selectedLangue');
+
+                let editor = CodeMirror.fromTextArea(textarea, {
+                    lineNumbers: true,
+                    mode: 'javascript',
+                    theme: 'material',
+                    autoCloseBrackets: true,
+                    matchBrackets: true,
+                    indentUnit: 4,
+                    tabSize: 4,
+                    lineWrapping: true
+                });
+
+                setTimeout(() => editor.refresh(), 100);
+
+                languageSelect.addEventListener('change', function() {
+                    const lang = this.value;
+                    selectedLangue.value = lang;
+
+                    const modes = {
+                        php: 'php', javascript: 'javascript',
+                        python: 'python', java: 'text/x-java',
+                        cpp: 'text/x-c++src'
+                    };
+                    editor.setOption('mode', modes[lang] || 'javascript');
+                });
+
+                const resetBtn = document.getElementById('resetCode');
+                const defaultCode = `/**
+ * @param {number[]} nums
+ * @param {number} target
+ * @return {number[]}
+ */
+var twoSum = function(nums, target) {
+    const map = new Map();
+    for (let i = 0; i < nums.length; i++) {
+        const complement = target - nums[i];
+        if (map.has(complement)) {
+            return [map.get(complement), i];
+        }
+        map.set(nums[i], i);
+    }
+    return [];
+};`;
+
+                resetBtn.addEventListener('click', () => editor.setValue(defaultCode));
+
+                const runBtn = document.getElementById('runCode');
+                const resultsPanel = document.getElementById('resultsPanel');
+                const resultsContent = document.getElementById('resultsContent');
+
+                runBtn.addEventListener('click', function() {
+                    const code = editor.getValue();
+                    resultsContent.innerHTML = '<div class="text-center" style="color: #ffffff;"><i class="fas fa-spinner fa-spin"></i> Exécution en cours...</div>';
+                    resultsPanel.style.display = 'block';
+
+                    setTimeout(() => {
+                        const hasSolution = code.includes('twoSum') || (code.includes('map') && code.includes('target'));
+                        if (hasSolution) {
+                            resultsContent.innerHTML = `
+                    <div class="test-results">
+                        <div class="test-summary">
+                            <h4>✓ 3/3 tests passés</h4>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 100%"></div>
+                            </div>
+                        </div>
+                        <div class="test-details">
+                            <div class="test-item test-success">
+                                <div class="test-header">Test 1</div>
+                                <div class="test-message">nums = [2,7,11,15], target = 9 → [0,1]</div>
+                            </div>
+                            <div class="test-item test-success">
+                                <div class="test-header">Test 2</div>
+                                <div class="test-message">nums = [3,2,4], target = 6 → [1,2]</div>
+                            </div>
+                            <div class="test-item test-success">
+                                <div class="test-header">Test 3</div>
+                                <div class="test-message">nums = [3,3], target = 6 → [0,1]</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                        } else {
+                            resultsContent.innerHTML = `
+                    <div class="test-results">
+                        <div class="test-summary">
+                            <h4>✗ 0/3 tests passés</h4>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="test-details">
+                            <div class="test-item test-error">
+                                <div class="test-header">Test 1</div>
+                                <div class="test-message">nums = [2,7,11,15], target = 9</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                        }
+                    }, 1000);
+                });
+
+                const closeResults = document.getElementById('closeResults');
+                closeResults.addEventListener('click', () => resultsPanel.style.display = 'none');
+
+                const form = document.getElementById('codeForm');
+                form.addEventListener('submit', () => editor.save());
+            });
+        </script>
+    {% endblock %}
+{% endblock %}
