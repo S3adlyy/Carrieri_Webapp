@@ -1,4 +1,5 @@
 <?php
+// src/Entity/Mission.php
 
 declare(strict_types=1);
 
@@ -15,22 +16,22 @@ class Mission
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'text')]
     private ?string $description = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'score_min', type: 'integer')]
     private ?int $scoreMin = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'string', length: 50)]
     private ?string $type = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'created_at', type: 'datetime')]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'created_by_id', type: 'integer')]
     private ?int $createdById = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id')]
     private ?User $user = null;
 
@@ -108,6 +109,9 @@ class Mission
     public function setUser(?User $user): self
     {
         $this->user = $user;
+        if ($user) {
+            $this->createdById = $user->getId();
+        }
         return $this;
     }
 }

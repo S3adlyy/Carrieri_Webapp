@@ -1,0 +1,66 @@
+{# templates/BackOffice/dashboard/missions/create.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Créer une nouvelle mission{% endblock %}
+
+{% block page_title %}Créer une mission{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_missions_list') }}">Missions</a></li>
+    <li class="breadcrumb-item active">Créer</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Nouvelle mission</h3>
+        </div>
+        <div class="card-body">
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+            <div class="form-group">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.errors|length ? ' is-invalid' : '')}}) }}
+                {{ form_errors(form.description) }}
+                <small class="form-text text-muted">Décrivez la mission en détail (minimum 10 caractères).</small>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.type) }}
+                        {{ form_widget(form.type, {'attr': {'class': 'form-control' ~ (form.type.vars.errors|length ? ' is-invalid' : '')}}) }}
+                        {{ form_errors(form.type) }}
+                        <small class="form-text text-muted">Ex: Développement, Design, Marketing, etc.</small>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.scoreMin) }}
+                        {{ form_widget(form.scoreMin, {'attr': {'class': 'form-control' ~ (form.scoreMin.vars.errors|length ? ' is-invalid' : '')}}) }}
+                        {{ form_errors(form.scoreMin) }}
+                        <small class="form-text text-muted">Score minimum requis pour cette mission (0-100).</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Créer la mission
+                </button>
+                <a href="{{ path('app_admin_missions_list') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
