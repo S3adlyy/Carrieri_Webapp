@@ -6,8 +6,13 @@
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/material.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
         /* Reset des marges pour prendre tout l'espace */
         .fo-candidate-content {
             padding: 0 !important;
@@ -38,7 +43,7 @@
         }
 
         body {
-            background: #0a0a0a;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             overflow: hidden;
         }
 
@@ -51,6 +56,7 @@
             height: 100%;
             z-index: 0;
             pointer-events: none;
+            opacity: 0.3;
         }
 
         spline-viewer {
@@ -67,6 +73,28 @@
         .logo-contact, #navigation {
             position: relative;
             z-index: 10 !important;
+        }
+
+        /* Mode plein écran */
+        .fullscreen-mode {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 9999 !important;
+            background: rgba(20, 20, 30, 0.98) !important;
+            backdrop-filter: blur(20px) !important;
+        }
+
+        .fullscreen-mode .leetcode-panel-right {
+            width: 100% !important;
+        }
+
+        .fullscreen-mode .leetcode-panel-left {
+            display: none !important;
         }
     </style>
 {% endblock %}
@@ -87,11 +115,15 @@
                 <div class="problem-content">
                     <div class="problem-header">
                         <div class="problem-title-section">
-                            <span class="problem-number">Mission #{{ mission.id }}</span>
+                            <span class="problem-number">
+                                <i class="fas fa-code"></i> Mission #{{ mission.id }}
+                            </span>
                             <h1 class="problem-title">{{ mission.type }}</h1>
                         </div>
                         <div class="problem-meta">
-                            <span class="score-badge">Score requis: {{ mission.scoreMin }}</span>
+                            <span class="score-badge">
+                                <i class="fas fa-star"></i> Score requis: {{ mission.scoreMin }}
+                            </span>
                         </div>
                     </div>
 
@@ -100,10 +132,12 @@
                     </div>
 
                     <div class="problem-examples">
-                        <h3>Exemples</h3>
+                        <h3><i class="fas fa-file-alt"></i> Exemples</h3>
 
                         <div class="example">
-                            <div class="example-title">Exemple 1:</div>
+                            <div class="example-title">
+                                <i class="fas fa-play-circle"></i> Exemple 1:
+                            </div>
                             <div class="example-content">
                                 <div><strong>Input:</strong> nums = [2,7,11,15], target = 9</div>
                                 <div><strong>Output:</strong> [0,1]</div>
@@ -112,7 +146,9 @@
                         </div>
 
                         <div class="example">
-                            <div class="example-title">Exemple 2:</div>
+                            <div class="example-title">
+                                <i class="fas fa-play-circle"></i> Exemple 2:
+                            </div>
                             <div class="example-content">
                                 <div><strong>Input:</strong> nums = [3,2,4], target = 6</div>
                                 <div><strong>Output:</strong> [1,2]</div>
@@ -120,7 +156,9 @@
                         </div>
 
                         <div class="example">
-                            <div class="example-title">Exemple 3:</div>
+                            <div class="example-title">
+                                <i class="fas fa-play-circle"></i> Exemple 3:
+                            </div>
                             <div class="example-content">
                                 <div><strong>Input:</strong> nums = [3,3], target = 6</div>
                                 <div><strong>Output:</strong> [0,1]</div>
@@ -129,7 +167,7 @@
                     </div>
 
                     <div class="problem-constraints">
-                        <h3>Contraintes</h3>
+                        <h3><i class="fas fa-exclamation-triangle"></i> Contraintes</h3>
                         <ul>
                             <li>2 ≤ nums.length ≤ 10⁴</li>
                             <li>-10⁹ ≤ nums[i] ≤ 10⁹</li>
@@ -139,7 +177,7 @@
 
                     {% if existingRendu %}
                         <div class="previous-submission">
-                            <h3>Dernière soumission</h3>
+                            <h3><i class="fas fa-history"></i> Dernière soumission</h3>
                             <div class="submission-details">
                                 <div><span class="label">Date:</span> {{ existingRendu.dateRendu|date('d/m/Y H:i') }}</div>
                                 <div><span class="label">Score:</span> <span class="score">{{ existingRendu.score|default(0)|round }}/100</span></div>
@@ -151,41 +189,54 @@
             </div>
 
             <!-- Panneau droit - Éditeur de code -->
-            <div class="leetcode-panel-right">
+            <div class="leetcode-panel-right" id="editorPanel">
                 <div class="editor-header">
                     <div class="language-selector">
-                        <label for="language">Langage</label>
+                        <label for="language">
+                            <i class="fas fa-code"></i> Langage
+                        </label>
                         <select id="language" class="language-select">
-                            <option value="javascript" selected>JavaScript</option>
+                            <option value="python" selected>Python</option>
+                            <option value="javascript">JavaScript</option>
                             <option value="php">PHP</option>
-                            <option value="python">Python</option>
                             <option value="java">Java</option>
                             <option value="cpp">C++</option>
                         </select>
                     </div>
-                    <button class="reset-btn" id="resetCode">
-                        <i class="fas fa-undo-alt"></i> Réinitialiser
-                    </button>
+                    <div class="editor-actions">
+                        <button class="fullscreen-btn" id="fullscreenBtn" title="Mode plein écran">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button class="reset-btn" id="resetCode" title="Réinitialiser le code">
+                            <i class="fas fa-undo-alt"></i> Réinitialiser
+                        </button>
+                    </div>
                 </div>
 
                 <form method="post" id="codeForm" class="editor-form">
-                <textarea id="codeEditor" name="code">/**
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
- */
-var twoSum = function(nums, target) {
-    const map = new Map();
-    for (let i = 0; i < nums.length; i++) {
-        const complement = target - nums[i];
-        if (map.has(complement)) {
-            return [map.get(complement), i];
-        }
-        map.set(nums[i], i);
-    }
-    return [];
-};</textarea>
-                    <input type="hidden" name="langue" id="selectedLangue" value="javascript">
+                <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
+# Essayez votre code ici !
+
+def twoSum(nums, target):
+    """
+    :type nums: List[int]
+    :type target: int
+    :rtype: List[int]
+    """
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+
+# Testez votre code avec print
+print("Bienvenue dans l'éditeur de code!")
+print("Exemple d'utilisation:")
+result = twoSum([2, 7, 11, 15], 9)
+print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
+                    <input type="hidden" name="langue" id="selectedLangue" value="python">
 
                     <div class="editor-footer">
                         <button type="button" class="run-btn" id="runCode">
@@ -197,18 +248,32 @@ var twoSum = function(nums, target) {
                     </div>
                 </form>
 
-                <!-- Résultats -->
-                <div class="results-container" id="resultsPanel" style="display: {% if resultat %}block{% else %}none{% endif %};">
+                <!-- Résultats - Terminal unique -->
+                <div class="results-container" id="resultsPanel" style="display: none;">
                     <div class="results-header">
-                        <h3>Résultats des tests</h3>
-                        <button class="close-results" id="closeResults">
+                        <h3>
+                            <i class="fas fa-terminal"></i> Terminal - Résultats
+                        </h3>
+                        <button class="close-results" id="closeResults" title="Fermer">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
                     <div class="results-content" id="resultsContent">
-                        {% if resultat %}
-                            {{ resultat|raw }}
-                        {% endif %}
+                        <div class="test-results">
+                            <div class="test-summary">
+                                <h4>Prêt à exécuter</h4>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-message" style="color: rgba(255,255,255,0.6);">
+                                        <i class="fas fa-code"></i> Cliquez sur "Exécuter" pour tester votre code
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -234,17 +299,19 @@ var twoSum = function(nums, target) {
             display: flex;
             width: 100%;
             height: 100%;
+            gap: 0;
         }
 
-        /* Panneau gauche - Description très transparent */
+        /* Panneau gauche - Description améliorée */
         .leetcode-panel-left {
-            width: 50%;
-            background: rgba(15, 23, 42, 0.25);
-            backdrop-filter: blur(5px);
+            width: 45%;
+            background: rgba(15, 25, 45, 0.65);
+            backdrop-filter: blur(20px);
             overflow-y: auto;
-            padding: 24px 32px;
-            border-right: 1px solid rgba(229, 231, 235, 0.1);
+            padding: 28px 32px;
+            border-right: 1px solid rgba(0, 255, 255, 0.15);
             scroll-behavior: smooth;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
         }
 
         .problem-content {
@@ -253,28 +320,36 @@ var twoSum = function(nums, target) {
         }
 
         .problem-header {
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(229, 231, 235, 0.1);
+            margin-bottom: 28px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
         }
 
         .problem-title-section {
-            margin-bottom: 8px;
+            margin-bottom: 12px;
         }
 
         .problem-number {
             font-size: 13px;
-            color: rgba(148, 163, 184, 0.8);
-            display: block;
-            margin-bottom: 4px;
+            color: #00ffff;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            font-weight: 600;
         }
 
         .problem-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff, #00ffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
             margin: 0;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            text-shadow: 0 2px 10px rgba(0, 255, 255, 0.2);
         }
 
         .problem-meta {
@@ -284,62 +359,81 @@ var twoSum = function(nums, target) {
         }
 
         .score-badge {
-            font-size: 11px;
-            padding: 3px 10px;
-            background: rgba(254, 243, 199, 0.85);
-            color: #d97706;
+            font-size: 12px;
+            padding: 5px 14px;
+            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2));
+            border: 1px solid rgba(255, 193, 7, 0.4);
+            color: #ffc107;
             border-radius: 20px;
-            font-weight: 600;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .problem-description {
-            margin-bottom: 24px;
+            margin-bottom: 28px;
         }
 
         .problem-description p {
-            color: rgba(255, 255, 255, 0.85);
-            line-height: 1.5;
-            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.7;
+            font-size: 15px;
             text-shadow: 0 1px 2px rgba(0,0,0,0.1);
         }
 
         .problem-examples h3,
         .problem-constraints h3 {
-            font-size: 16px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 12px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff, #00ffff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .example {
-            background: rgba(30, 41, 59, 0.35);
-            border-radius: 8px;
-            padding: 12px 16px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(229, 231, 235, 0.08);
+            background: rgba(0, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .example:hover {
+            background: rgba(0, 255, 255, 0.12);
+            transform: translateX(4px);
+            border-color: rgba(0, 255, 255, 0.4);
         }
 
         .example-title {
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 8px;
-            font-size: 13px;
+            font-weight: 700;
+            color: #00ffff;
+            margin-bottom: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .example-content {
             font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
-            line-height: 1.5;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
+            line-height: 1.6;
         }
 
         .example-content div {
-            margin-bottom: 3px;
+            margin-bottom: 5px;
         }
 
         .example-content strong {
-            color: #10b981;
+            color: #ffc107;
         }
 
         .problem-constraints ul {
@@ -348,62 +442,66 @@ var twoSum = function(nums, target) {
         }
 
         .problem-constraints li {
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 6px;
+            color: rgba(255, 255, 255, 0.85);
+            margin-bottom: 8px;
             font-size: 13px;
         }
 
         .previous-submission {
-            margin-top: 24px;
-            padding: 16px;
-            background: rgba(30, 41, 59, 0.35);
-            border-radius: 8px;
-            border: 1px solid rgba(229, 231, 235, 0.08);
+            margin-top: 32px;
+            padding: 20px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.08), rgba(0, 150, 255, 0.08));
+            border-radius: 12px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
         }
 
         .previous-submission h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #00ffff;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .submission-details {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 8px;
         }
 
         .submission-details div {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.85);
         }
 
         .submission-details .label {
-            font-weight: 500;
-            color: rgba(148, 163, 184, 0.8);
-            margin-right: 10px;
+            font-weight: 600;
+            color: #00ffff;
+            margin-right: 12px;
         }
 
         .submission-details .score {
-            color: #10b981;
-            font-weight: 600;
+            color: #ffc107;
+            font-weight: 700;
         }
 
-        /* Panneau droit - Éditeur très transparent */
+        /* Panneau droit - Éditeur amélioré */
         .leetcode-panel-right {
-            width: 50%;
-            background: rgba(20, 20, 30, 0.25);
-            backdrop-filter: blur(5px);
+            width: 55%;
+            background: rgba(10, 20, 30, 0.75);
+            backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
             height: 100%;
+            transition: all 0.3s ease;
         }
 
         .editor-header {
-            padding: 10px 20px;
-            background: rgba(37, 37, 38, 0.3);
-            border-bottom: 1px solid rgba(62, 62, 66, 0.2);
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.15);
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -412,44 +510,64 @@ var twoSum = function(nums, target) {
         .language-selector {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             color: rgba(255, 255, 255, 0.9);
-            font-size: 12px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .language-selector label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .language-select {
-            padding: 5px 10px;
-            background: rgba(60, 60, 60, 0.5);
-            border: 1px solid rgba(62, 62, 66, 0.4);
-            border-radius: 4px;
-            color: #ffffff;
-            font-size: 12px;
+            padding: 6px 12px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #00ffff;
+            font-size: 13px;
             cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .language-select:hover {
+            background: rgba(0, 255, 255, 0.2);
+            border-color: #00ffff;
         }
 
         .language-select:focus {
             outline: none;
-            border-color: #007acc;
+            border-color: #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
         }
 
-        .reset-btn {
-            padding: 5px 12px;
-            background: transparent;
-            border: 1px solid rgba(62, 62, 66, 0.4);
-            border-radius: 4px;
-            color: #ffffff;
-            font-size: 12px;
+        .editor-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .fullscreen-btn, .reset-btn {
+            padding: 6px 12px;
+            background: rgba(0, 255, 255, 0.1);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 8px;
+            color: #00ffff;
+            font-size: 13px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
 
-        .reset-btn:hover {
-            background: rgba(62, 62, 66, 0.4);
-            border-color: #007acc;
-            color: #007acc;
+        .fullscreen-btn:hover, .reset-btn:hover {
+            background: rgba(0, 255, 255, 0.2);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
         }
 
         .editor-form {
@@ -466,176 +584,231 @@ var twoSum = function(nums, target) {
         .CodeMirror {
             flex: 1;
             height: auto !important;
-            font-size: 13px;
+            font-size: 14px;
             font-family: 'Monaco', 'Courier New', monospace;
-            background: rgba(10, 10, 10, 0.3) !important;
+            background: rgba(0, 0, 0, 0.4) !important;
+            border-radius: 0;
+        }
+
+        .CodeMirror-gutters {
+            background: rgba(0, 0, 0, 0.5) !important;
+            border-right: 1px solid rgba(0, 255, 255, 0.1);
         }
 
         .editor-footer {
-            padding: 10px 20px;
-            background: rgba(37, 37, 38, 0.3);
+            padding: 12px 24px;
+            background: rgba(0, 0, 0, 0.3);
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: flex-end;
-            border-top: 1px solid rgba(62, 62, 66, 0.2);
+            border-top: 1px solid rgba(0, 255, 255, 0.15);
         }
 
         .run-btn, .submit-btn {
-            padding: 6px 18px;
+            padding: 10px 24px;
             border: none;
-            border-radius: 4px;
-            font-weight: 500;
+            border-radius: 10px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 13px;
+            gap: 8px;
+            font-size: 14px;
         }
 
         .run-btn {
-            background: transparent;
-            border: 1px solid #007acc;
-            color: #007acc;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 150, 255, 0.2));
+            border: 1px solid #00ffff;
+            color: #00ffff;
         }
 
         .run-btn:hover {
-            background: #007acc;
+            background: linear-gradient(135deg, #00ffff, #0099ff);
             color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.3);
         }
 
         .submit-btn {
-            background: #007acc;
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
         }
 
         .submit-btn:hover {
-            background: #005a9e;
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
 
-        /* Résultats */
+        /* Résultats - Terminal amélioré */
         .results-container {
-            background: rgba(37, 37, 38, 0.3);
-            border-top: 1px solid rgba(62, 62, 66, 0.2);
-            max-height: 280px;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 255, 255, 0.3);
+            max-height: 320px;
             overflow-y: auto;
+            border-radius: 0;
         }
 
         .results-header {
-            padding: 10px 20px;
-            background: rgba(45, 45, 48, 0.3);
+            padding: 12px 24px;
+            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 150, 255, 0.05));
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(62, 62, 66, 0.2);
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
         }
 
         .results-header h3 {
             margin: 0;
-            font-size: 12px;
-            font-weight: 600;
-            color: #ffffff;
+            font-size: 14px;
+            font-weight: 700;
+            color: #00ff9d;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .close-results {
             background: none;
             border: none;
-            color: #ffffff;
+            color: rgba(255, 255, 255, 0.6);
             cursor: pointer;
-            font-size: 13px;
+            font-size: 18px;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 6px;
         }
 
         .close-results:hover {
-            color: #007acc;
+            color: #ff4757;
+            background: rgba(255, 71, 87, 0.1);
+            transform: rotate(90deg);
         }
 
         .results-content {
-            padding: 12px 20px;
+            padding: 20px 24px;
         }
 
         .test-results {
             font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 12px;
+            font-size: 13px;
         }
 
         .test-summary {
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(62, 62, 66, 0.2);
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
         }
 
         .test-summary h4 {
-            margin: 0 0 6px 0;
+            margin: 0 0 12px 0;
             color: #ffffff;
-            font-size: 12px;
+            font-size: 14px;
+            font-weight: 600;
         }
 
         .progress-bar {
             background: rgba(62, 62, 66, 0.4);
-            border-radius: 4px;
-            height: 4px;
+            border-radius: 10px;
+            height: 8px;
             overflow: hidden;
         }
 
         .progress-fill {
-            background: #007acc;
+            background: linear-gradient(90deg, #00ffff, #0099ff);
             height: 100%;
-            transition: width 0.3s ease;
+            transition: width 0.5s ease;
+            border-radius: 10px;
         }
 
         .test-details {
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 12px;
         }
 
         .test-item {
-            padding: 6px 10px;
-            border-radius: 4px;
-            background: rgba(45, 45, 48, 0.35);
+            padding: 12px 16px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
         }
 
         .test-success {
-            border-left: 3px solid #4caf50;
+            border-left: 4px solid #00ff9d;
+            background: linear-gradient(90deg, rgba(0, 255, 157, 0.1), rgba(0, 255, 157, 0.02));
         }
 
         .test-error {
-            border-left: 3px solid #f44336;
+            border-left: 4px solid #ff4757;
+            background: linear-gradient(90deg, rgba(255, 71, 87, 0.1), rgba(255, 71, 87, 0.02));
         }
 
         .test-header {
-            font-weight: 600;
-            margin-bottom: 3px;
+            font-weight: 700;
+            margin-bottom: 6px;
             color: #ffffff;
-            font-size: 11px;
+            font-size: 13px;
         }
 
         .test-message {
-            font-size: 11px;
+            font-size: 12px;
             color: rgba(255, 255, 255, 0.7);
+            line-height: 1.5;
         }
 
-        /* Scrollbar */
+        .test-message pre {
+            margin: 8px 0 0 0;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        /* Scrollbar personnalisée */
         .leetcode-panel-left::-webkit-scrollbar,
-        .results-container::-webkit-scrollbar {
-            width: 6px;
+        .results-container::-webkit-scrollbar,
+        .CodeMirror-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
 
         .leetcode-panel-left::-webkit-scrollbar-track,
-        .results-container::-webkit-scrollbar-track {
-            background: rgba(241, 241, 241, 0.08);
+        .results-container::-webkit-scrollbar-track,
+        .CodeMirror-scroll::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
         }
 
         .leetcode-panel-left::-webkit-scrollbar-thumb,
-        .results-container::-webkit-scrollbar-thumb {
-            background: rgba(193, 193, 193, 0.3);
-            border-radius: 3px;
+        .results-container::-webkit-scrollbar-thumb,
+        .CodeMirror-scroll::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, #00ffff, #0099ff);
+            border-radius: 10px;
         }
 
         .leetcode-panel-left::-webkit-scrollbar-thumb:hover,
-        .results-container::-webkit-scrollbar-thumb:hover {
-            background: rgba(193, 193, 193, 0.5);
+        .results-container::-webkit-scrollbar-thumb:hover,
+        .CodeMirror-scroll::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, #00ffff, #00ff9d);
+        }
+
+        /* Animation pour le chargement */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .fa-spinner {
+            animation: spin 1s linear infinite;
         }
 
         /* Responsive */
@@ -650,12 +823,12 @@ var twoSum = function(nums, target) {
 
             .leetcode-panel-left,
             .leetcode-panel-right {
-                width: 100%;
+                width: 100% !important;
             }
 
             .leetcode-panel-left {
                 max-height: 40%;
-                padding: 16px;
+                padding: 20px;
             }
 
             .leetcode-panel-right {
@@ -663,8 +836,17 @@ var twoSum = function(nums, target) {
             }
 
             .problem-title {
-                font-size: 20px;
+                font-size: 22px;
             }
+
+            .results-container {
+                max-height: 200px;
+            }
+        }
+
+        /* Transition pour le plein écran */
+        .fullscreen-mode {
+            transition: all 0.3s ease;
         }
     </style>
 
@@ -681,34 +863,54 @@ var twoSum = function(nums, target) {
                 const textarea = document.getElementById('codeEditor');
                 const languageSelect = document.getElementById('language');
                 const selectedLangue = document.getElementById('selectedLangue');
+                const editorPanel = document.getElementById('editorPanel');
+                const fullscreenBtn = document.getElementById('fullscreenBtn');
+                let isFullscreen = false;
 
+                // Initialiser CodeMirror
                 let editor = CodeMirror.fromTextArea(textarea, {
                     lineNumbers: true,
-                    mode: 'javascript',
-                    theme: 'material',
+                    mode: 'python',
+                    theme: 'dracula',
                     autoCloseBrackets: true,
                     matchBrackets: true,
                     indentUnit: 4,
                     tabSize: 4,
-                    lineWrapping: true
+                    lineWrapping: true,
+                    styleActiveLine: true,
+                    matchTags: true,
+                    foldGutter: true,
+                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
                 });
 
                 setTimeout(() => editor.refresh(), 100);
 
-                languageSelect.addEventListener('change', function() {
-                    const lang = this.value;
-                    selectedLangue.value = lang;
+                // Codes par défaut pour chaque langage
+                const defaultCodes = {
+                    python: `# Solution Python pour Two Sum
+# Essayez votre code ici !
 
-                    const modes = {
-                        php: 'php', javascript: 'javascript',
-                        python: 'python', java: 'text/x-java',
-                        cpp: 'text/x-c++src'
-                    };
-                    editor.setOption('mode', modes[lang] || 'javascript');
-                });
+def twoSum(nums, target):
+    """
+    :type nums: List[int]
+    :type target: int
+    :rtype: List[int]
+    """
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
 
-                const resetBtn = document.getElementById('resetCode');
-                const defaultCode = `/**
+# Testez votre code avec print
+print("Bienvenue dans l'éditeur de code!")
+print("Exemple d'utilisation:")
+result = twoSum([2, 7, 11, 15], 9)
+print(f"twoSum([2, 7, 11, 15], 9) = {result}")`,
+                    javascript: `/**
+ * Solution JavaScript pour Two Sum
  * @param {number[]} nums
  * @param {number} target
  * @return {number[]}
@@ -723,72 +925,361 @@ var twoSum = function(nums, target) {
         map.set(nums[i], i);
     }
     return [];
-};`;
+};
 
-                resetBtn.addEventListener('click', () => editor.setValue(defaultCode));
+// Test
+console.log("Bienvenue dans l'éditeur de code!");
+console.log("twoSum([2, 7, 11, 15], 9) =", twoSum([2, 7, 11, 15], 9));`,
+                    php: `<?php
+/**
+ * Solution PHP pour Two Sum
+ * @param Integer[] $nums
+ * @param Integer $target
+ * @return Integer[]
+ */
+function twoSum($nums, $target) {
+    $map = [];
+    for ($i = 0; $i < count($nums); $i++) {
+        $complement = $target - $nums[$i];
+        if (isset($map[$complement])) {
+            return [$map[$complement], $i];
+        }
+        $map[$nums[$i]] = $i;
+    }
+    return [];
+}
 
+// Test
+echo "Bienvenue dans l'éditeur de code!\\n";
+echo "twoSum([2, 7, 11, 15], 9) = ";
+print_r(twoSum([2, 7, 11, 15], 9));
+?>`,
+                    java: `import java.util.*;
+
+class Solution {
+    /**
+     * Solution Java pour Two Sum
+     * @param nums int[]
+     * @param target int
+     * @return int[]
+     */
+    public int[] twoSum(int[] nums, int target) {
+        Map<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int complement = target - nums[i];
+            if (map.containsKey(complement)) {
+                return new int[] { map.get(complement), i };
+            }
+            map.put(nums[i], i);
+        }
+        return new int[] {};
+    }
+
+    public static void main(String[] args) {
+        Solution sol = new Solution();
+        int[] result = sol.twoSum(new int[]{2, 7, 11, 15}, 9);
+        System.out.println("twoSum([2, 7, 11, 15], 9) = " + Arrays.toString(result));
+    }
+}`,
+                    cpp: `#include <iostream>
+#include <vector>
+#include <unordered_map>
+using namespace std;
+
+class Solution {
+public:
+    /**
+     * Solution C++ pour Two Sum
+     * @param nums vector<int>
+     * @param target int
+     * @return vector<int>
+     */
+    vector<int> twoSum(vector<int>& nums, int target) {
+        unordered_map<int, int> map;
+        for (int i = 0; i < nums.size(); i++) {
+            int complement = target - nums[i];
+            if (map.find(complement) != map.end()) {
+                return {map[complement], i};
+            }
+            map[nums[i]] = i;
+        }
+        return {};
+    }
+};
+
+int main() {
+    Solution sol;
+
+    int target = 9;
+
+    cout << "twoSum([2, 7, 11, 15], 9) = [" << result[0] << "," << result[1] << "]" << endl;
+    return 0;
+}`
+                };
+
+                // Fonction pour basculer le mode plein écran
+                function toggleFullscreen() {
+                    if (!isFullscreen) {
+                        editorPanel.classList.add('fullscreen-mode');
+                        fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
+                        fullscreenBtn.title = "Quitter le mode plein écran";
+                        setTimeout(() => editor.refresh(), 300);
+                    } else {
+                        editorPanel.classList.remove('fullscreen-mode');
+                        fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
+                        fullscreenBtn.title = "Mode plein écran";
+                        setTimeout(() => editor.refresh(), 300);
+                    }
+                    isFullscreen = !isFullscreen;
+                }
+
+                fullscreenBtn.addEventListener('click', toggleFullscreen);
+
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape' && isFullscreen) {
+                        toggleFullscreen();
+                    }
+                });
+
+                // Changer de langage
+                languageSelect.addEventListener('change', function() {
+                    const lang = this.value;
+                    selectedLangue.value = lang;
+
+                    const modes = {
+                        php: 'php',
+                        javascript: 'javascript',
+                        python: 'python',
+                        java: 'text/x-java',
+                        cpp: 'text/x-c++src'
+                    };
+                    editor.setOption('mode', modes[lang] || 'python');
+
+                    if (defaultCodes[lang]) {
+                        editor.setValue(defaultCodes[lang]);
+                    }
+                });
+
+                // Réinitialiser le code
+                const resetBtn = document.getElementById('resetCode');
+                resetBtn.addEventListener('click', () => {
+                    const currentLang = languageSelect.value;
+                    editor.setValue(defaultCodes[currentLang] || defaultCodes.python);
+                });
+
+                // Fonction pour échapper le HTML
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                // Exécuter le code avec le backend
                 const runBtn = document.getElementById('runCode');
                 const resultsPanel = document.getElementById('resultsPanel');
                 const resultsContent = document.getElementById('resultsContent');
 
-                runBtn.addEventListener('click', function() {
+                runBtn.addEventListener('click', async function() {
                     const code = editor.getValue();
-                    resultsContent.innerHTML = '<div class="text-center" style="color: #ffffff;"><i class="fas fa-spinner fa-spin"></i> Exécution en cours...</div>';
+                    const language = languageSelect.value;
+
+                    // Afficher le terminal
                     resultsPanel.style.display = 'block';
 
-                    setTimeout(() => {
-                        const hasSolution = code.includes('twoSum') || (code.includes('map') && code.includes('target'));
-                        if (hasSolution) {
-                            resultsContent.innerHTML = `
-                    <div class="test-results">
-                        <div class="test-summary">
-                            <h4>✓ 3/3 tests passés</h4>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 100%"></div>
+                    // Afficher l'état d'exécution
+                    resultsContent.innerHTML = `
+                        <div class="test-results">
+                            <div class="test-summary">
+                                <h4><i class="fas fa-spinner fa-spin"></i> Exécution en cours...</h4>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 50%"></div>
+                                </div>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-message">Compilation et exécution du code ${language.toUpperCase()}...</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="test-details">
-                            <div class="test-item test-success">
-                                <div class="test-header">Test 1</div>
-                                <div class="test-message">nums = [2,7,11,15], target = 9 → [0,1]</div>
-                            </div>
-                            <div class="test-item test-success">
-                                <div class="test-header">Test 2</div>
-                                <div class="test-message">nums = [3,2,4], target = 6 → [1,2]</div>
-                            </div>
-                            <div class="test-item test-success">
-                                <div class="test-header">Test 3</div>
-                                <div class="test-message">nums = [3,3], target = 6 → [0,1]</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                        } else {
-                            resultsContent.innerHTML = `
-                    <div class="test-results">
-                        <div class="test-summary">
-                            <h4>✗ 0/3 tests passés</h4>
-                            <div class="progress-bar">
-                                <div class="progress-fill" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="test-details">
-                            <div class="test-item test-error">
-                                <div class="test-header">Test 1</div>
-                                <div class="test-message">nums = [2,7,11,15], target = 9</div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                    `;
+
+                    try {
+                        // Détecter le mode d'exécution
+                        let mode = 'free';
+
+                        if (language === 'python') {
+                            // Mode test seulement si la fonction twoSum est définie ET qu'il n'y a pas de print
+                            const hasTwoSum = code.includes('def twoSum');
+                            const hasPrint = code.includes('print(');
+                            if (hasTwoSum && !hasPrint && !code.includes('print')) {
+                                mode = 'test';
+                            }
+                        } else if (language === 'javascript') {
+                            const hasTwoSum = code.includes('function twoSum') || code.includes('var twoSum') || code.includes('const twoSum');
+                            const hasConsoleLog = code.includes('console.log');
+                            if (hasTwoSum && !hasConsoleLog) {
+                                mode = 'test';
+                            }
                         }
-                    }, 1000);
+
+                        const response = await fetch('/execute-code', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                code: code,
+                                language: language,
+                                mode: mode
+                            })
+                        });
+
+                        const result = await response.json();
+
+                        if (mode === 'free') {
+                            // Mode exécution libre
+                            if (result.success) {
+                                resultsContent.innerHTML = `
+                                    <div class="test-results">
+                                        <div class="test-summary">
+                                            <h4 style="color: #00ff9d;">
+                                                <i class="fas fa-check-circle"></i> Exécution réussie
+                                            </h4>
+                                        </div>
+                                        <div class="test-details">
+                                            <div class="test-item test-success">
+                                                <div class="test-header">📤 Sortie du programme</div>
+                                                <div class="test-message">
+                                                    <pre>${escapeHtml(result.output)}</pre>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                resultsContent.innerHTML = `
+                                    <div class="test-results">
+                                        <div class="test-summary">
+                                            <h4 style="color: #ff4757;">
+                                                <i class="fas fa-exclamation-triangle"></i> Erreur d'exécution
+                                            </h4>
+                                        </div>
+                                        <div class="test-details">
+                                            <div class="test-item test-error">
+                                                <div class="test-header">❌ Erreur</div>
+                                                <div class="test-message">
+                                                    <pre style="color: #ff4757;">${escapeHtml(result.error)}</pre>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        } else {
+                            // Mode test Two Sum
+                            if (result.success) {
+                                const percentage = (result.passedTests / result.totalTests) * 100;
+                                let testsHtml = '';
+
+                                result.results.forEach((test, index) => {
+                                    testsHtml += `
+                                        <div class="test-item ${test.passed ? 'test-success' : 'test-error'}">
+                                            <div class="test-header">${test.passed ? '✓' : '✗'} Test ${index + 1}</div>
+                                            <div class="test-message">
+                                                ${test.message}
+                                                ${!test.passed && test.expected ? `<br><small style="color: #ffc107;">Attendu: ${JSON.stringify(test.expected)}</small>` : ''}
+                                            </div>
+                                        </div>
+                                    `;
+                                });
+
+                                resultsContent.innerHTML = `
+                                    <div class="test-results">
+                                        <div class="test-summary">
+                                            <h4 style="color: #00ff9d;">
+                                                ${result.passedTests === result.totalTests ? '✓' : '⚠'} ${result.passedTests}/${result.totalTests} tests passés
+                                                ${result.score ? ` (Score: ${result.score}/100)` : ''}
+                                            </h4>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: ${percentage}%; background: linear-gradient(90deg, #00ff9d, #00ffff);"></div>
+                                            </div>
+                                        </div>
+                                        <div class="test-details">
+                                            ${testsHtml}
+                                        </div>
+                                    </div>
+                                `;
+                            } else {
+                                resultsContent.innerHTML = `
+                                    <div class="test-results">
+                                        <div class="test-summary">
+                                            <h4 style="color: #ff4757;">✗ ${result.passedTests || 0}/${result.totalTests || 3} tests passés</h4>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: ${(result.passedTests || 0) / (result.totalTests || 3) * 100}%; background: #ff4757;"></div>
+                                            </div>
+                                        </div>
+                                        <div class="test-details">
+                                            ${result.results ? result.results.map((test, index) => `
+                                                <div class="test-item ${test.passed ? 'test-success' : 'test-error'}">
+                                                    <div class="test-header">${test.passed ? '✓' : '✗'} Test ${index + 1}</div>
+                                                    <div class="test-message">${test.message}</div>
+                                                </div>
+                                            `).join('') : `
+                                                <div class="test-item test-error">
+                                                    <div class="test-header">✗ Erreur</div>
+                                                    <div class="test-message">${result.message || "Une erreur s'est produite"}</div>
+                                                </div>
+                                            `}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        }
+                    } catch (error) {
+                        resultsContent.innerHTML = `
+                            <div class="test-results">
+                                <div class="test-summary">
+                                    <h4 style="color: #ff4757;">✗ Erreur de connexion</h4>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: 0%; background: #ff4757;"></div>
+                                    </div>
+                                </div>
+                                <div class="test-details">
+                                    <div class="test-item test-error">
+                                        <div class="test-header">✗ Erreur</div>
+                                        <div class="test-message">Impossible de contacter le serveur: ${error.message}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
                 });
 
+                // Fermer les résultats
                 const closeResults = document.getElementById('closeResults');
                 closeResults.addEventListener('click', () => resultsPanel.style.display = 'none');
 
+                // Soumettre le formulaire
                 const form = document.getElementById('codeForm');
-                form.addEventListener('submit', () => editor.save());
+                form.addEventListener('submit', function() {
+                    editor.save();
+                    resultsPanel.style.display = 'block';
+                    resultsContent.innerHTML = `
+                        <div class="test-results">
+                            <div class="test-summary">
+                                <h4><i class="fas fa-spinner fa-spin"></i> Soumission en cours...</h4>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 50%"></div>
+                                </div>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-message">Envoi du code au serveur pour évaluation...</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
             });
         </script>
     {% endblock %}
