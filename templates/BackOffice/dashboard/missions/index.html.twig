@@ -1,0 +1,64 @@
+{# templates/BackOffice/dashboard/missions/index.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des missions{% endblock %}
+
+{% block page_title %}Missions{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Missions</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des missions</h3>
+            <div class="card-tools">
+                <span class="badge badge-info">{{ missions|length }} mission(s)</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Description</th>
+                        <th>Type</th>
+                        <th>Score min</th>
+                        <th>Créée le</th>
+                        {% if is_admin_view|default(false) %}
+                            <th>Créée par</th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for m in missions %}
+                        <tr>
+                            <td>{{ m.id }}</td>
+                            <td>{% set d = m.description|default('') %}{{ d|length > 120 ? d|slice(0, 117) ~ '…' : (d ?: '—') }}</td>
+                            <td>{{ m.type|default('—') }}</td>
+                            <td>{{ m.scoreMin|default('—') }}</td>
+                            <td>{% if m.createdAt %}{{ m.createdAt|date('d/m/Y H:i') }}{% else %}—{% endif %}</td>
+                            {% if is_admin_view|default(false) %}
+                                <td>
+                                    {% set u = m.user %}
+                                    {% if u %}
+                                        {{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ is_admin_view|default(false) ? 6 : 5 }}" class="text-center text-muted">Aucune mission.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
