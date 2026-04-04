@@ -40,7 +40,7 @@ class CoursType extends AbstractType
                         'maxMessage' => 'Le titre ne doit pas dépasser {{ limit }} caractères.',
                     ]),
                 ],
-                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Symfony avancé', 'maxlength' => 150],
+                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Symfony avancé', 'minlength' => 3, 'maxlength' => 150],
             ])
             ->add('description', TextareaType::class, [
                 'label'       => 'Description',
@@ -53,7 +53,7 @@ class CoursType extends AbstractType
                         'maxMessage' => 'La description ne doit pas dépasser {{ limit }} caractères.',
                     ]),
                 ],
-                'attr'        => ['class' => 'form-control', 'rows' => 4, 'maxlength' => 2500, 'placeholder' => 'Décrivez le cours en détail...'],
+                'attr'        => ['class' => 'form-control', 'rows' => 4, 'minlength' => 10, 'maxlength' => 2500, 'placeholder' => 'Décrivez le cours en détail...'],
             ])
             ->add('duree', IntegerType::class, [
                 'label'       => 'Durée (heures)',
@@ -94,7 +94,7 @@ class CoursType extends AbstractType
                         'maxMessage' => 'Les compétences visées ne doivent pas dépasser {{ limit }} caractères.',
                     ]),
                 ],
-                'attr'  => ['class' => 'form-control', 'rows' => 3, 'maxlength' => 2500, 'placeholder' => 'Compétences développées (ex: API REST, tests, sécurité)'],
+                'attr'  => ['class' => 'form-control', 'rows' => 3, 'minlength' => 3, 'maxlength' => 2500, 'placeholder' => 'Compétences développées (ex: API REST, tests, sécurité)'],
             ])
             ->add('estObligatoire', ChoiceType::class, [
                 'label'   => 'Obligatoire ?',

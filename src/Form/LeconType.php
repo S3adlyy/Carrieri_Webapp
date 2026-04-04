@@ -39,7 +39,7 @@ class LeconType extends AbstractType
                         'maxMessage' => 'Le titre ne doit pas dépasser {{ limit }} caractères.',
                     ]),
                 ],
-                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Créer une route Symfony', 'maxlength' => 150],
+                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Créer une route Symfony', 'minlength' => 3, 'maxlength' => 150],
             ])
             ->add('contenu', TextareaType::class, [
                 'label'       => 'Contenu',
@@ -52,7 +52,7 @@ class LeconType extends AbstractType
                         'maxMessage' => 'Le contenu ne doit pas dépasser {{ limit }} caractères.',
                     ]),
                 ],
-                'attr'        => ['class' => 'form-control', 'rows' => 6, 'maxlength' => 15000, 'placeholder' => 'Rédigez le contenu de la leçon...'],
+                'attr'        => ['class' => 'form-control', 'rows' => 6, 'minlength' => 5, 'maxlength' => 15000, 'placeholder' => 'Rédigez le contenu de la leçon...'],
             ])
             ->add('video', FileType::class, [
                 'label'    => 'Vidéo',

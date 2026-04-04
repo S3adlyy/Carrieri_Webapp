@@ -37,7 +37,7 @@ class ModuleType extends AbstractType
                         'maxMessage' => 'Le titre ne doit pas dépasser {{ limit }} caractères.',
                     ]),
                 ],
-                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Introduction', 'maxlength' => 150],
+                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Introduction', 'minlength' => 3, 'maxlength' => 150],
             ])
             ->add('description', TextareaType::class, [
                 'label'       => 'Description',
@@ -50,7 +50,7 @@ class ModuleType extends AbstractType
                         'maxMessage' => 'La description ne doit pas dépasser {{ limit }} caractères.',
                     ]),
                 ],
-                'attr'        => ['class' => 'form-control', 'rows' => 4, 'maxlength' => 2000, 'placeholder' => 'Décrivez le module en détail...'],
+                'attr'        => ['class' => 'form-control', 'rows' => 4, 'minlength' => 5, 'maxlength' => 2000, 'placeholder' => 'Décrivez le module en détail...'],
             ])
             ->add('cours', EntityType::class, [
                 'label'        => 'Cours',

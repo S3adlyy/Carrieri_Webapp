@@ -10,12 +10,37 @@
 <li class="breadcrumb-item active">Modifier</li>
 {% endblock %}
 
+{% block stylesheets %}
+<style>
+    .course-form .form-group { margin-bottom: 1.5rem; position: relative; }
+    .form-label { font-size: 14px; margin-bottom: 8px; color: #2c3e50; display: block; font-weight: 600; }
+    .form-control { border-radius: 8px; border: 2px solid #e2e8f0; padding: 10px 40px 10px 12px; transition: all 0.3s ease; width: 100%; }
+    .form-control:focus { outline: none; border-color: #667eea; }
+    .form-group.valid .form-control { border-color: #10b981; background-color: #f0fdf4; }
+    .form-group.invalid .form-control { border-color: #dc2626; background-color: #fef2f2; }
+    .validation-icon { position: absolute; right: 12px; top: 42px; font-size: 16px; }
+    .form-group.valid .validation-icon i { color: #10b981; }
+    .form-group.invalid .validation-icon i { color: #dc2626; }
+    .error-message { font-size: 12px; margin-top: 5px; padding: 6px 12px; border-radius: 6px; display: none; }
+    .form-group.invalid .error-message { display: block; background-color: #fef2f2; color: #dc2626; border-left: 3px solid #dc2626; }
+    .form-hint { margin-top: 5px; }
+    .form-status { margin: 20px 0; padding: 12px 16px; border-radius: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; }
+    .status-indicator { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 500; }
+    .status-indicator.valid { color: #10b981; }
+    .status-indicator.invalid { color: #dc2626; }
+    .form-actions { display: flex; gap: 10px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    .btn { padding: 10px 24px; border-radius: 8px; font-weight: 500; transition: all 0.3s; }
+    .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border: none; color: white; }
+    .btn-secondary { background-color: #f1f5f9; border: 1px solid #e2e8f0; color: #475569; }
+</style>
+{% endblock %}
+
 {% block body %}
 <div class="card card-warning">
     <div class="card-header">
         <h3 class="card-title">Modifier : <em>{{ cours.titre }}</em></h3>
     </div>
-    {{ form_start(form, {'attr': {'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+    {{ form_start(form, {'attr': {'class': 'course-form', 'enctype': 'multipart/form-data', 'novalidate': 'novalidate', 'data-live-validation': '1'}}) }}
     {% if form.vars.submitted and not form.vars.valid %}
         <div class="alert alert-danger m-3 mb-0">
             <strong>Veuillez corriger les erreurs suivantes :</strong>
@@ -28,17 +53,23 @@
                 <div class="form-group">
                     {{ form_label(form.titre) }}
                     {{ form_widget(form.titre, {'attr': {'class': 'form-control' ~ (form.titre.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.titre) }}
+                    <div class="form-hint"><small class="text-muted">Minimum 3 caractères.</small></div>
                 </div>
                 <div class="form-group">
                     {{ form_label(form.description) }}
                     {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.description) }}
+                    <div class="form-hint"><small class="text-muted">Minimum 10 caractères.</small></div>
                 </div>
                 <div class="form-group">
                     {{ form_label(form.competencesVisees) }}
                     {{ form_widget(form.competencesVisees, {'attr': {'class': 'form-control' ~ (form.competencesVisees.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.competencesVisees) }}
+                    <div class="form-hint"><small class="text-muted">Minimum 3 caractères.</small></div>
                 </div>
                 <div class="form-group">
                     {{ form_label(form.imageCouverture) }}
@@ -50,29 +81,37 @@
                 <div class="form-group">
                     {{ form_label(form.niveau) }}
                     {{ form_widget(form.niveau, {'attr': {'class': 'form-control' ~ (form.niveau.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.niveau) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.duree) }}
                     {{ form_widget(form.duree, {'attr': {'class': 'form-control' ~ (form.duree.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.duree) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.prix) }}
                     {{ form_widget(form.prix, {'attr': {'class': 'form-control' ~ (form.prix.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.prix) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.estPayant) }}
                     {{ form_widget(form.estPayant, {'attr': {'class': 'form-control' ~ (form.estPayant.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.estPayant) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.estObligatoire) }}
                     {{ form_widget(form.estObligatoire, {'attr': {'class': 'form-control' ~ (form.estObligatoire.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.estObligatoire) }}
                 </div>
             </div>
+        </div>
+        <div class="form-status">
+            <div class="status-indicator invalid"><i class="fas fa-times-circle"></i> Formulaire incomplet</div>
         </div>
     </div>
     <div class="card-footer">
@@ -86,3 +125,83 @@
     {{ form_end(form) }}
 </div>
 {% endblock %}
+
+{% block javascripts %}
+<script>
+(function () {
+    function getMessage(field, form) {
+        var value = (field.value || '').trim();
+        var tag = (field.tagName || '').toLowerCase();
+        var type = (field.getAttribute('type') || '').toLowerCase();
+        var payantField = form.querySelector('[name$="[estPayant]"]');
+        var isPayant = payantField && payantField.value === '1';
+
+        if (field.name && field.name.indexOf('[prix]') !== -1 && !isPayant) {
+            return '';
+        }
+        if (type === 'file') return '';
+        if (field.required && value.length === 0) return 'Ce champ est obligatoire.';
+        if (value.length === 0) return '';
+        var minLengthAttr = field.getAttribute('minlength');
+        if (minLengthAttr) { var minLength = parseInt(minLengthAttr, 10); if (!isNaN(minLength) && value.length < minLength) return 'Minimum ' + minLength + ' caracteres.'; }
+        var maxLengthAttr = field.getAttribute('maxlength');
+        if (maxLengthAttr) { var maxLength = parseInt(maxLengthAttr, 10); if (!isNaN(maxLength) && value.length > maxLength) return 'Maximum ' + maxLength + ' caracteres.'; }
+        if (type === 'number') { var numberValue = parseFloat(field.value); if (isNaN(numberValue)) return 'Veuillez saisir un nombre valide.'; var minAttr = field.getAttribute('min'); if (minAttr !== null && numberValue < parseFloat(minAttr)) return 'La valeur minimale est ' + minAttr + '.'; var maxAttr = field.getAttribute('max'); if (maxAttr !== null && numberValue > parseFloat(maxAttr)) return 'La valeur maximale est ' + maxAttr + '.'; }
+        if (tag === 'select' && field.required && !field.value) return 'Veuillez selectionner une valeur.';
+        return '';
+    }
+    function validateField(field, form, showError) {
+        if (!field || field.disabled || field.type === 'hidden') return true;
+        var group = field.closest('.form-group');
+        if (!group) return true;
+        var errorBox = group.querySelector('.error-message');
+        var serverInvalid = field.classList.contains('is-invalid') && field.dataset.touched !== '1';
+        var message = getMessage(field, form);
+        var invalid = message !== '';
+        group.classList.remove('valid', 'invalid');
+        if (serverInvalid || (showError && invalid)) { group.classList.add('invalid'); if (errorBox && invalid) errorBox.textContent = message; return false; }
+        if (!invalid && field.value && field.value.trim && field.value.trim().length > 0) group.classList.add('valid');
+        if (errorBox) errorBox.textContent = showError ? message : '';
+        return !invalid;
+    }
+    function attach(form) {
+        var fields = form.querySelectorAll('input, textarea, select');
+        var submitBtn = form.querySelector('button[type="submit"]');
+        var status = form.querySelector('.status-indicator');
+        var submitted = false;
+        function refresh() {
+            var allValid = true;
+            for (var i = 0; i < fields.length; i += 1) {
+                var field = fields[i];
+                var showError = submitted || field.dataset.touched === '1';
+                if (!validateField(field, form, showError)) allValid = false;
+            }
+            if (submitBtn) submitBtn.disabled = !allValid;
+            if (status) { if (allValid) { status.className = 'status-indicator valid'; status.innerHTML = '<i class="fas fa-check-circle"></i> Formulaire complet et valide'; } else { status.className = 'status-indicator invalid'; status.innerHTML = '<i class="fas fa-times-circle"></i> Verifiez les champs obligatoires'; } }
+        }
+        for (var i = 0; i < fields.length; i += 1) { fields[i].addEventListener('input', function (event) { event.target.dataset.touched = '1'; event.target.classList.remove('is-invalid'); refresh(); }); fields[i].addEventListener('change', function (event) { event.target.dataset.touched = '1'; event.target.classList.remove('is-invalid'); refresh(); }); fields[i].addEventListener('blur', function (event) { event.target.dataset.touched = '1'; event.target.classList.remove('is-invalid'); refresh(); }); }
+        var payantField = form.querySelector('[name$="[estPayant]"]');
+        if (payantField) {
+            payantField.addEventListener('change', function () {
+                var priceField = form.querySelector('[name$="[prix]"]');
+                if (priceField && this.value !== '1') {
+                    priceField.classList.remove('is-invalid');
+                    var priceGroup = priceField.closest('.form-group');
+                    if (priceGroup) {
+                        priceGroup.classList.remove('invalid');
+                        priceGroup.classList.remove('valid');
+                        var errorBox = priceGroup.querySelector('.error-message');
+                        if (errorBox) errorBox.textContent = '';
+                    }
+                }
+                refresh();
+            });
+        }
+        form.addEventListener('submit', function (event) { submitted = true; refresh(); if (submitBtn && submitBtn.disabled) { event.preventDefault(); } });
+        refresh();
+    }
+    document.addEventListener('DOMContentLoaded', function () { var forms = document.querySelectorAll('form[data-live-validation="1"]'); for (var i = 0; i < forms.length; i += 1) attach(forms[i]); });
+})();
+</script>
+{% endblock %}
+
