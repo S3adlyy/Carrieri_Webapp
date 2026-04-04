@@ -67,4 +67,16 @@ class LeconRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function getNextOrdreForModule(int $moduleId): int
+    {
+        $maxOrdre = $this->createQueryBuilder('l')
+            ->select('MAX(l.ordre)')
+            ->andWhere('l.moduleId = :moduleId')
+            ->setParameter('moduleId', $moduleId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return ((int) $maxOrdre) + 1;
+    }
 }

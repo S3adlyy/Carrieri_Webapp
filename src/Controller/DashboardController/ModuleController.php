@@ -107,6 +107,7 @@ class ModuleController extends AbstractController
         $form = $this->createForm(ModuleType::class, $module, [
             'cours_choices' => $allowedCourses,
             'lock_cours' => !$isAdmin && $hasPrefilledCourse,
+            'include_ordre' => false,
         ]);
         $form->handleRequest($request);
 
@@ -115,13 +116,16 @@ class ModuleController extends AbstractController
             if ($module->getCours()) {
                 $module->setCoursId($module->getCours()->getId());
             }
+            if ($module->getCoursId() !== null) {
+                $module->setOrdre($this->moduleRepository->getNextOrdreForCours($module->getCoursId()));
+            }
             $this->em->persist($module);
             $this->em->flush();
             $this->addFlash('success', 'Module créé avec succès !');
 
             $coursId = $module->getCoursId();
             if ($coursId !== null) {
-                return $this->redirectToRoute('app_admin_cours_show', ['id' => $coursId]);
+                return $this->redirectToRoute('app_admin_modules_index', ['cours' => $coursId]);
             }
 
             return $this->redirectToRoute('app_admin_modules_index');
@@ -160,6 +164,7 @@ class ModuleController extends AbstractController
         $form = $this->createForm(ModuleType::class, $module, [
             'cours_choices' => $allowedCourses,
             'lock_cours' => !$isAdmin,
+            'include_ordre' => true,
         ]);
         $form->handleRequest($request);
 
@@ -172,7 +177,7 @@ class ModuleController extends AbstractController
 
             $coursId = $module->getCoursId();
             if ($coursId !== null) {
-                return $this->redirectToRoute('app_admin_cours_show', ['id' => $coursId]);
+                return $this->redirectToRoute('app_admin_modules_index', ['cours' => $coursId]);
             }
 
             return $this->redirectToRoute('app_admin_modules_index');
@@ -200,7 +205,7 @@ class ModuleController extends AbstractController
         }
 
         if ($redirectCoursId !== null) {
-            return $this->redirectToRoute('app_admin_cours_show', ['id' => $redirectCoursId]);
+            return $this->redirectToRoute('app_admin_modules_index', ['cours' => $redirectCoursId]);
         }
 
         return $this->redirectToRoute('app_admin_modules_index');

@@ -23,6 +23,7 @@ class LeconType extends AbstractType
     {
         $moduleChoices = $options['module_choices'];
         $lockModule = $options['lock_module'];
+        $includeOrdre = $options['include_ordre'];
 
         $builder
             ->add('titre', TextType::class, [
@@ -34,11 +35,6 @@ class LeconType extends AbstractType
                 'label'       => 'Contenu',
                 'constraints' => [new NotBlank()],
                 'attr'        => ['class' => 'form-control', 'rows' => 6, 'placeholder' => 'Contenu de la leçon'],
-            ])
-            ->add('ordre', IntegerType::class, [
-                'label'       => 'Ordre',
-                'constraints' => [new NotBlank(), new Positive()],
-                'attr'        => ['class' => 'form-control', 'min' => 1],
             ])
             ->add('type', ChoiceType::class, [
                 'label'   => 'Type',
@@ -65,6 +61,14 @@ class LeconType extends AbstractType
                 'attr'         => ['class' => 'form-control'],
                 'disabled'     => $lockModule,
             ]);
+
+        if ($includeOrdre) {
+            $builder->add('ordre', IntegerType::class, [
+                'label'       => 'Ordre',
+                'constraints' => [new NotBlank(), new Positive()],
+                'attr'        => ['class' => 'form-control', 'min' => 1],
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -73,8 +77,10 @@ class LeconType extends AbstractType
             'data_class' => Lecon::class,
             'module_choices' => [],
             'lock_module' => false,
+            'include_ordre' => true,
         ]);
         $resolver->setAllowedTypes('module_choices', 'array');
         $resolver->setAllowedTypes('lock_module', 'bool');
+        $resolver->setAllowedTypes('include_ordre', 'bool');
     }
 }

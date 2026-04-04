@@ -27,11 +27,8 @@
                 </a>
             {% else %}
                 <div>
-                    <a href="{{ path('app_admin_cours_index') }}" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-book mr-1"></i> Choisir un cours
-                    </a>
                     {% if selected_cours is defined and selected_cours %}
-                        <a href="{{ path('app_admin_modules_new', {cours: selected_cours.id}) }}" class="btn btn-primary btn-sm ml-1">
+                        <a href="{{ path('app_admin_modules_new', {cours: selected_cours.id}) }}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus mr-1"></i> Nouveau module
                         </a>
                     {% endif %}
@@ -61,7 +58,11 @@
                     {% for m in modules %}
                         <tr>
                             <td>{{ m.id }}</td>
-                            <td><strong>{{ m.titre|default('—') }}</strong></td>
+                            <td>
+                                <a href="{{ path('app_admin_lecons_index', {module: m.id}) }}" title="Ouvrir les leçons de ce module">
+                                    <strong>{{ m.titre|default('—') }}</strong>
+                                </a>
+                            </td>
                             <td>{{ m.description|default('—')|slice(0,60) }}{% if m.description|length > 60 %}…{% endif %}</td>
                             <td><span class="badge badge-secondary">{{ m.ordre|default('—') }}</span></td>
                             <td>
@@ -72,12 +73,6 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <a href="{{ path('app_admin_modules_show', {id: m.id}) }}" class="btn btn-xs btn-info" title="Voir">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{{ path('app_admin_lecons_index', {module: m.id}) }}" class="btn btn-xs btn-success" title="Sélectionner ce module">
-                                    <i class="fas fa-check"></i>
-                                </a>
                                 <a href="{{ path('app_admin_modules_edit', {id: m.id}) }}" class="btn btn-xs btn-warning" title="Modifier">
                                     <i class="fas fa-edit"></i>
                                 </a>

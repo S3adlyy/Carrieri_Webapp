@@ -58,4 +58,16 @@ class ModuleRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function getNextOrdreForCours(int $coursId): int
+    {
+        $maxOrdre = $this->createQueryBuilder('m')
+            ->select('MAX(m.ordre)')
+            ->andWhere('m.coursId = :coursId')
+            ->setParameter('coursId', $coursId)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return ((int) $maxOrdre) + 1;
+    }
 }

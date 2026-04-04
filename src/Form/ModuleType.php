@@ -22,6 +22,7 @@ class ModuleType extends AbstractType
     {
         $coursChoices = $options['cours_choices'];
         $lockCours = $options['lock_cours'];
+        $includeOrdre = $options['include_ordre'];
 
         $builder
             ->add('titre', TextType::class, [
@@ -34,11 +35,6 @@ class ModuleType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'attr'        => ['class' => 'form-control', 'rows' => 4, 'placeholder' => 'Description du module'],
             ])
-            ->add('ordre', IntegerType::class, [
-                'label'       => 'Ordre',
-                'constraints' => [new NotBlank(), new Positive()],
-                'attr'        => ['class' => 'form-control', 'min' => 1],
-            ])
             ->add('cours', EntityType::class, [
                 'label'        => 'Cours',
                 'class'        => Cours::class,
@@ -49,6 +45,14 @@ class ModuleType extends AbstractType
                 'attr'         => ['class' => 'form-control'],
                 'disabled'     => $lockCours,
             ]);
+
+        if ($includeOrdre) {
+            $builder->add('ordre', IntegerType::class, [
+                'label'       => 'Ordre',
+                'constraints' => [new NotBlank(), new Positive()],
+                'attr'        => ['class' => 'form-control', 'min' => 1],
+            ]);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
@@ -57,8 +61,10 @@ class ModuleType extends AbstractType
             'data_class' => Module::class,
             'cours_choices' => [],
             'lock_cours' => false,
+            'include_ordre' => true,
         ]);
         $resolver->setAllowedTypes('cours_choices', 'array');
         $resolver->setAllowedTypes('lock_cours', 'bool');
+        $resolver->setAllowedTypes('include_ordre', 'bool');
     }
 }

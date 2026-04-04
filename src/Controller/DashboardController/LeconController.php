@@ -112,6 +112,7 @@ class LeconController extends AbstractController
         $form = $this->createForm(LeconType::class, $lecon, [
             'module_choices' => $allowedModules,
             'lock_module' => !$isAdmin && $hasPrefilledModule,
+            'include_ordre' => false,
         ]);
         $form->handleRequest($request);
 
@@ -120,13 +121,17 @@ class LeconController extends AbstractController
             if ($lecon->getModule()) {
                 $lecon->setModuleId($lecon->getModule()->getId());
             }
+            if ($lecon->getModuleId() !== null) {
+                $lecon->setOrdre($this->leconRepository->getNextOrdreForModule($lecon->getModuleId()));
+            }
             $this->em->persist($lecon);
             $this->em->flush();
             $this->addFlash('success', 'Leçon créée avec succès !');
 
             $coursId = $lecon->getModule()?->getCoursId();
-            if ($coursId !== null) {
-                return $this->redirectToRoute('app_admin_cours_show', ['id' => $coursId]);
+            $moduleId = $lecon->getModuleId();
+            if ($moduleId !== null) {
+                return $this->redirectToRoute('app_admin_lecons_index', ['module' => $moduleId]);
             }
 
             return $this->redirectToRoute('app_admin_lecons_index');
@@ -165,6 +170,7 @@ class LeconController extends AbstractController
         $form = $this->createForm(LeconType::class, $lecon, [
             'module_choices' => $allowedModules,
             'lock_module' => !$isAdmin,
+            'include_ordre' => true,
         ]);
         $form->handleRequest($request);
 
@@ -175,9 +181,9 @@ class LeconController extends AbstractController
             $this->em->flush();
             $this->addFlash('success', 'Leçon modifiée avec succès !');
 
-            $coursId = $lecon->getModule()?->getCoursId();
-            if ($coursId !== null) {
-                return $this->redirectToRoute('app_admin_cours_show', ['id' => $coursId]);
+            $moduleId = $lecon->getModuleId();
+            if ($moduleId !== null) {
+                return $this->redirectToRoute('app_admin_lecons_index', ['module' => $moduleId]);
             }
 
             return $this->redirectToRoute('app_admin_lecons_index');
@@ -195,7 +201,7 @@ class LeconController extends AbstractController
         $this->denyIfRecruiterCannotManageLesson($lecon);
         $this->storeSelectionContext($request, $lecon);
 
-        $redirectCoursId = $lecon->getModule()?->getCoursId();
+        $redirectModuleId = $lecon->getModuleId();
         if ($this->isCsrfTokenValid('delete_lecon_' . $lecon->getId(), $request->getPayload()->get('_token'))) {
             $this->em->remove($lecon);
             $this->em->flush();
@@ -204,8 +210,8 @@ class LeconController extends AbstractController
             $this->addFlash('danger', 'Jeton CSRF invalide.');
         }
 
-        if ($redirectCoursId !== null) {
-            return $this->redirectToRoute('app_admin_cours_show', ['id' => $redirectCoursId]);
+        if ($redirectModuleId !== null) {
+            return $this->redirectToRoute('app_admin_lecons_index', ['module' => $redirectModuleId]);
         }
 
         return $this->redirectToRoute('app_admin_lecons_index');
