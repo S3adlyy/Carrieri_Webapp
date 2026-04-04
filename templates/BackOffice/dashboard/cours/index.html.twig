@@ -95,6 +95,9 @@
                                 <td>{{ c.estPayant ? '<span class="badge badge-info">Oui</span>' : '<span class="badge badge-secondary">Non</span>' }}</td>
                                 <td>{{ c.estObligatoire ? '<span class="badge badge-danger">Oui</span>' : 'Non' }}</td>
                                 <td>
+                                    <a href="{{ path('app_admin_cours_export_pdf', {id: c.id}) }}" class="btn btn-xs btn-danger" title="Exporter en PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
                                     <a href="{{ path('app_admin_cours_edit', {id: c.id}) }}" class="btn btn-xs btn-warning" title="Modifier">
                                         <i class="fas fa-edit"></i>
                                     </a>

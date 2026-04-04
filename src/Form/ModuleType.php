@@ -13,6 +13,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Positive;
 
@@ -27,13 +28,29 @@ class ModuleType extends AbstractType
         $builder
             ->add('titre', TextType::class, [
                 'label'       => 'Titre',
-                'constraints' => [new NotBlank(['message' => 'Le titre est obligatoire'])],
-                'attr'        => ['class' => 'form-control', 'placeholder' => 'Titre du module'],
+                'constraints' => [
+                    new NotBlank(['message' => 'Le titre est obligatoire.']),
+                    new Length([
+                        'min' => 3,
+                        'max' => 150,
+                        'minMessage' => 'Le titre doit contenir au moins {{ limit }} caractères.',
+                        'maxMessage' => 'Le titre ne doit pas dépasser {{ limit }} caractères.',
+                    ]),
+                ],
+                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Introduction', 'maxlength' => 150],
             ])
             ->add('description', TextareaType::class, [
                 'label'       => 'Description',
-                'constraints' => [new NotBlank()],
-                'attr'        => ['class' => 'form-control', 'rows' => 4, 'placeholder' => 'Description du module'],
+                'constraints' => [
+                    new NotBlank(['message' => 'La description est obligatoire.']),
+                    new Length([
+                        'min' => 5,
+                        'max' => 2000,
+                        'minMessage' => 'La description doit contenir au moins {{ limit }} caractères.',
+                        'maxMessage' => 'La description ne doit pas dépasser {{ limit }} caractères.',
+                    ]),
+                ],
+                'attr'        => ['class' => 'form-control', 'rows' => 4, 'maxlength' => 2000, 'placeholder' => 'Décrivez le module en détail...'],
             ])
             ->add('cours', EntityType::class, [
                 'label'        => 'Cours',
@@ -49,7 +66,11 @@ class ModuleType extends AbstractType
         if ($includeOrdre) {
             $builder->add('ordre', IntegerType::class, [
                 'label'       => 'Ordre',
-                'constraints' => [new NotBlank(), new Positive()],
+                'invalid_message' => 'L\'ordre doit être un nombre entier valide.',
+                'constraints' => [
+                    new NotBlank(['message' => 'L\'ordre est obligatoire.']),
+                    new Positive(['message' => 'L\'ordre doit être supérieur à 0.']),
+                ],
                 'attr'        => ['class' => 'form-control', 'min' => 1],
             ]);
         }
@@ -62,6 +83,9 @@ class ModuleType extends AbstractType
             'cours_choices' => [],
             'lock_cours' => false,
             'include_ordre' => true,
+            'csrf_protection' => true,
+            'csrf_field_name' => '_token',
+            'csrf_token_id' => 'module_item',
         ]);
         $resolver->setAllowedTypes('cours_choices', 'array');
         $resolver->setAllowedTypes('lock_cours', 'bool');

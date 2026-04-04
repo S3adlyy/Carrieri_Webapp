@@ -93,6 +93,9 @@
             </div>
         </div>
         <div class="d-flex flex-column gap-2">
+            <a href="{{ path('app_admin_cours_export_pdf', {id: cours.id}) }}" class="btn btn-danger btn-block">
+                <i class="fas fa-file-pdf mr-1"></i> Exporter en PDF
+            </a>
             <a href="{{ path('app_admin_modules_index', {cours: cours.id}) }}" class="btn btn-primary btn-block">
                 <i class="fas fa-layer-group mr-1"></i> Accéder aux modules
             </a>

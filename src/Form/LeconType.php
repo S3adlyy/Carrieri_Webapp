@@ -15,6 +15,7 @@ use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Positive;
 
@@ -29,17 +30,35 @@ class LeconType extends AbstractType
         $builder
             ->add('titre', TextType::class, [
                 'label'       => 'Titre',
-                'constraints' => [new NotBlank(['message' => 'Le titre est obligatoire'])],
-                'attr'        => ['class' => 'form-control', 'placeholder' => 'Titre de la leçon'],
+                'constraints' => [
+                    new NotBlank(['message' => 'Le titre est obligatoire.']),
+                    new Length([
+                        'min' => 3,
+                        'max' => 150,
+                        'minMessage' => 'Le titre doit contenir au moins {{ limit }} caractères.',
+                        'maxMessage' => 'Le titre ne doit pas dépasser {{ limit }} caractères.',
+                    ]),
+                ],
+                'attr'        => ['class' => 'form-control', 'placeholder' => 'Ex: Créer une route Symfony', 'maxlength' => 150],
             ])
             ->add('contenu', TextareaType::class, [
                 'label'       => 'Contenu',
-                'constraints' => [new NotBlank()],
-                'attr'        => ['class' => 'form-control', 'rows' => 6, 'placeholder' => 'Contenu de la leçon'],
+                'constraints' => [
+                    new NotBlank(['message' => 'Le contenu est obligatoire.']),
+                    new Length([
+                        'min' => 5,
+                        'max' => 15000,
+                        'minMessage' => 'Le contenu doit contenir au moins {{ limit }} caractères.',
+                        'maxMessage' => 'Le contenu ne doit pas dépasser {{ limit }} caractères.',
+                    ]),
+                ],
+                'attr'        => ['class' => 'form-control', 'rows' => 6, 'maxlength' => 15000, 'placeholder' => 'Rédigez le contenu de la leçon...'],
             ])
             ->add('video', FileType::class, [
                 'label'    => 'Vidéo',
                 'required' => false,
+                'mapped' => false,
+                'data_class' => null,
                 'attr'     => ['class' => 'form-control', 'accept' => 'video/*'],
                 'constraints' => [
                     new File([
@@ -63,7 +82,11 @@ class LeconType extends AbstractType
         if ($includeOrdre) {
             $builder->add('ordre', IntegerType::class, [
                 'label'       => 'Ordre',
-                'constraints' => [new NotBlank(), new Positive()],
+                'invalid_message' => 'L\'ordre doit être un nombre entier valide.',
+                'constraints' => [
+                    new NotBlank(['message' => 'L\'ordre est obligatoire.']),
+                    new Positive(['message' => 'L\'ordre doit être supérieur à 0.']),
+                ],
                 'attr'        => ['class' => 'form-control', 'min' => 1],
             ]);
         }
@@ -76,6 +99,9 @@ class LeconType extends AbstractType
             'module_choices' => [],
             'lock_module' => false,
             'include_ordre' => true,
+            'csrf_protection' => true,
+            'csrf_field_name' => '_token',
+            'csrf_token_id' => 'lecon_item',
         ]);
         $resolver->setAllowedTypes('module_choices', 'array');
         $resolver->setAllowedTypes('lock_module', 'bool');

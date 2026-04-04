@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Export cours - {{ cours.titre|default('Cours') }}</title>
+    <style>
+        body {
+            font-family: DejaVu Sans, Arial, sans-serif;
+            font-size: 12px;
+            color: #222;
+            line-height: 1.45;
+        }
+        h1, h2, h3 {
+            margin: 0 0 8px 0;
+        }
+        .meta {
+            margin-bottom: 12px;
+            font-size: 11px;
+            color: #666;
+        }
+        .section {
+            margin-top: 14px;
+        }
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 8px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border: 1px solid #aaa;
+            border-radius: 10px;
+            font-size: 10px;
+            margin-right: 6px;
+        }
+        ul {
+            margin: 8px 0 0 18px;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        .muted {
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+<h1>{{ cours.titre|default('Cours') }}</h1>
+<div class="meta">
+    Exporté le {{ generated_at|date('d/m/Y H:i') }}
+</div>
+
+<div class="section card">
+    <h2>Informations du cours</h2>
+    <p><strong>Niveau :</strong> {{ cours.niveau|default('Non défini') }}</p>
+    <p><strong>Durée :</strong> {{ cours.duree|default('0') }} h</p>
+    <p><strong>Prix :</strong> {{ cours.prix is not null ? cours.prix ~ ' EUR' : 'Gratuit' }}</p>
+    <p><strong>Obligatoire :</strong> {{ cours.estObligatoire ? 'Oui' : 'Non' }}</p>
+    <p><strong>Payant :</strong> {{ cours.estPayant ? 'Oui' : 'Non' }}</p>
+</div>
+
+<div class="section card">
+    <h2>Description</h2>
+    <p>{{ cours.description|default('Aucune description') }}</p>
+</div>
+
+<div class="section card">
+    <h2>Compétences visées</h2>
+    <p>{{ cours.competencesVisees|default('Aucune compétence indiquée') }}</p>
+</div>
+
+<div class="section">
+    <h2>Modules et leçons</h2>
+    {% if modules is empty %}
+        <p class="muted">Aucun module pour ce cours.</p>
+    {% else %}
+        {% for module in modules %}
+            <div class="card">
+                <h3>Module {{ module.ordre|default(loop.index) }} - {{ module.titre|default('Sans titre') }}</h3>
+                <p>{{ module.description|default('') }}</p>
+
+                {% set module_lessons = lessons_by_module[module.id]|default([]) %}
+                {% if module_lessons is empty %}
+                    <p class="muted">Aucune leçon dans ce module.</p>
+                {% else %}
+                    <ul>
+                        {% for lesson in module_lessons %}
+                            <li>
+                                <strong>{{ lesson.ordre|default(loop.index) }}. {{ lesson.titre|default('Leçon') }}</strong><br>
+                                {% set plain_content = lesson.contenu|default('')|striptags %}
+                                <span>{{ plain_content|slice(0, 240) }}{% if plain_content|length > 240 %}...{% endif %}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+</body>
+</html>
+
+

@@ -11,6 +11,8 @@ use App\Repository\CoursRepository;
 use App\Repository\LeconRepository;
 use App\Repository\ModuleRepository;
 use App\Service\BackOfficeDashboardService;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -62,6 +64,10 @@ class CoursController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if ($cours->getCompetencesVisees() === null) {
+                $cours->setCompetencesVisees('');
+            }
+
             // Handle file upload for image
             $imageFile = $form->get('imageCouverture')->getData();
             if ($imageFile) {
@@ -96,26 +102,54 @@ class CoursController extends AbstractController
             $request->getSession()->remove('selected_module_id');
         }
 
-        $modules = $this->moduleRepository->findByCours($cours);
-        $lessonsByModule = [];
-
-        if ($modules !== []) {
-            $moduleIds = array_map(static fn ($m): int => (int) $m->getId(), $modules);
-            $lessons = $this->leconRepository->findByModuleIds($moduleIds);
-            foreach ($lessons as $lesson) {
-                $moduleId = $lesson->getModuleId();
-                if ($moduleId === null) {
-                    continue;
-                }
-                $lessonsByModule[$moduleId][] = $lesson;
-            }
-        }
+        [$modules, $lessonsByModule] = $this->loadCourseTree($cours);
 
         return $this->render('BackOffice/dashboard/cours/show.html.twig', [
             'cours' => $cours,
             'modules' => $modules,
             'lessons_by_module' => $lessonsByModule,
         ]);
+    }
+
+    #[Route('/{id}/export-pdf', name: 'app_admin_cours_export_pdf', methods: ['GET'])]
+    public function exportPdf(Cours $cours): Response
+    {
+        $user = $this->requireUser();
+        if (!$this->dashboardData->isAdmin($user)) {
+            if ($cours->getUser()?->getId() !== $user->getId()) {
+                throw $this->createAccessDeniedException();
+            }
+        }
+
+        [$modules, $lessonsByModule] = $this->loadCourseTree($cours);
+
+        $html = $this->renderView('BackOffice/dashboard/cours/export_pdf.html.twig', [
+            'cours' => $cours,
+            'modules' => $modules,
+            'lessons_by_module' => $lessonsByModule,
+            'generated_at' => new \DateTimeImmutable(),
+        ]);
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', false);
+        $options->set('defaultFont', 'DejaVu Sans');
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html, 'UTF-8');
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $safeTitle = preg_replace('/[^a-zA-Z0-9_-]+/', '-', (string) $cours->getTitre()) ?: 'cours';
+        $fileName = sprintf('cours-%s-%s.pdf', trim($safeTitle, '-'), (new \DateTimeImmutable())->format('Ymd-His'));
+
+        return new Response(
+            $dompdf->output(),
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => sprintf('attachment; filename="%s"', $fileName),
+            ]
+        );
     }
 
     #[Route('/{id}/modifier', name: 'app_admin_cours_edit', methods: ['GET', 'POST'])]
@@ -125,6 +159,10 @@ class CoursController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            if ($cours->getCompetencesVisees() === null) {
+                $cours->setCompetencesVisees('');
+            }
+
             // Handle file upload for image
             $imageFile = $form->get('imageCouverture')->getData();
             if ($imageFile) {
@@ -166,5 +204,25 @@ class CoursController extends AbstractController
         }
 
         return $user;
+    }
+
+    private function loadCourseTree(Cours $cours): array
+    {
+        $modules = $this->moduleRepository->findByCours($cours);
+        $lessonsByModule = [];
+
+        if ($modules !== []) {
+            $moduleIds = array_map(static fn ($module): int => (int) $module->getId(), $modules);
+            $lessons = $this->leconRepository->findByModuleIds($moduleIds);
+            foreach ($lessons as $lesson) {
+                $moduleId = $lesson->getModuleId();
+                if ($moduleId === null) {
+                    continue;
+                }
+                $lessonsByModule[$moduleId][] = $lesson;
+            }
+        }
+
+        return [$modules, $lessonsByModule];
     }
 }

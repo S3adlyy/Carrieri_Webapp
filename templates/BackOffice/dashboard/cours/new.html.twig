@@ -14,55 +14,61 @@
     <div class="card-header">
         <h3 class="card-title">Créer un nouveau cours</h3>
     </div>
-    {{ form_start(form, {'attr': {'class': 'needs-validation', 'enctype': 'multipart/form-data'}}) }}
+    {{ form_start(form, {'attr': {'class': 'needs-validation', 'enctype': 'multipart/form-data', 'novalidate': 'novalidate'}}) }}
+    {% if form.vars.submitted and not form.vars.valid %}
+        <div class="alert alert-danger m-3 mb-0">
+            <strong>Veuillez corriger les erreurs suivantes :</strong>
+            {{ form_errors(form) }}
+        </div>
+    {% endif %}
     <div class="card-body">
         <div class="row">
             <div class="col-md-8">
                 <div class="form-group">
                     {{ form_label(form.titre) }}
-                    {{ form_widget(form.titre) }}
+                    {{ form_widget(form.titre, {'attr': {'class': 'form-control' ~ (form.titre.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.titre) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.description) }}
-                    {{ form_widget(form.description) }}
+                    {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.description) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.competencesVisees) }}
-                    {{ form_widget(form.competencesVisees) }}
+                    {{ form_widget(form.competencesVisees, {'attr': {'class': 'form-control' ~ (form.competencesVisees.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.competencesVisees) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.imageCouverture) }}
-                    {{ form_widget(form.imageCouverture) }}
+                    {{ form_widget(form.imageCouverture, {'attr': {'class': 'form-control' ~ (form.imageCouverture.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.imageCouverture) }}
                 </div>
             </div>
             <div class="col-md-4">
                 <div class="form-group">
                     {{ form_label(form.niveau) }}
-                    {{ form_widget(form.niveau) }}
+                    {{ form_widget(form.niveau, {'attr': {'class': 'form-control' ~ (form.niveau.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.niveau) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.duree) }}
-                    {{ form_widget(form.duree) }}
+                    {{ form_widget(form.duree, {'attr': {'class': 'form-control' ~ (form.duree.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.duree) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.prix) }}
-                    {{ form_widget(form.prix) }}
+                    {{ form_widget(form.prix, {'attr': {'class': 'form-control' ~ (form.prix.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.prix) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.estPayant) }}
-                    {{ form_widget(form.estPayant) }}
+                    {{ form_widget(form.estPayant, {'attr': {'class': 'form-control' ~ (form.estPayant.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.estPayant) }}
                 </div>
                 <div class="form-group">
                     {{ form_label(form.estObligatoire) }}
-                    {{ form_widget(form.estObligatoire) }}
+                    {{ form_widget(form.estObligatoire, {'attr': {'class': 'form-control' ~ (form.estObligatoire.vars.errors|length ? ' is-invalid' : '')}}) }}
                     {{ form_errors(form.estObligatoire) }}
                 </div>
             </div>
