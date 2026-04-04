@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\Cours;
 use App\Entity\Module;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,16 +18,44 @@ class ModuleRepository extends ServiceEntityRepository
         parent::__construct($registry, Module::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    /**
+     * @return Module[]
+     */
+    public function findByCours(Cours $cours): array
+    {
+        return $this->findBy(['cours' => $cours], ['ordre' => 'ASC', 'id' => 'ASC']);
+    }
+
+    /**
+     * @param int[] $coursIds
+     * @return Module[]
+     */
+    public function findByCoursIds(array $coursIds): array
+    {
+        if ($coursIds === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('m')
+            ->andWhere('m.coursId IN (:coursIds)')
+            ->setParameter('coursIds', $coursIds)
+            ->orderBy('m.ordre', 'ASC')
+            ->addOrderBy('m.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Module[]
+     */
+    public function findForRecruiter(User $user): array
+    {
+        return $this->createQueryBuilder('m')
+            ->innerJoin('m.cours', 'c')
+            ->andWhere('c.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('m.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

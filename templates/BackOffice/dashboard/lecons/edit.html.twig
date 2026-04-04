@@ -1,0 +1,69 @@
+{# templates/BackOffice/dashboard/lecons/edit.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Modifier la leçon{% endblock %}
+{% block page_title %}Modifier la leçon{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_lecons_index') }}">Leçons</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_lecons_show', {id: lecon.id}) }}">{{ lecon.titre|default('Leçon') }}</a></li>
+    <li class="breadcrumb-item active">Modifier</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card card-warning">
+        <div class="card-header">
+            <h3 class="card-title">Modifier : <em>{{ lecon.titre }}</em></h3>
+        </div>
+        {{ form_start(form) }}
+        <div class="card-body">
+            <div class="form-group">
+                {{ form_label(form.titre) }}
+                {{ form_widget(form.titre) }}
+                {{ form_errors(form.titre) }}
+            </div>
+            <div class="form-group">
+                {{ form_label(form.contenu) }}
+                {{ form_widget(form.contenu) }}
+                {{ form_errors(form.contenu) }}
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.type) }}
+                        {{ form_widget(form.type) }}
+                        {{ form_errors(form.type) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.ordre) }}
+                        {{ form_widget(form.ordre) }}
+                        {{ form_errors(form.ordre) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.module) }}
+                        {{ form_widget(form.module) }}
+                        {{ form_errors(form.module) }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form_label(form.video) }}
+                {{ form_widget(form.video) }}
+                {{ form_errors(form.video) }}
+            </div>
+        </div>
+        <div class="card-footer">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save mr-1"></i> Mettre à jour
+            </button>
+            <a href="{{ path('app_admin_lecons_index') }}" class="btn btn-secondary ml-2">
+                <i class="fas fa-times mr-1"></i> Annuler
+            </a>
+        </div>
+        {{ form_end(form) }}
+    </div>
+{% endblock %}

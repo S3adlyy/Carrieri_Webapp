@@ -15,26 +15,26 @@ class Message
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?string $contenu = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?string $imageData = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?string $fileData = null;
 
     #[ORM\Column]
     private ?\DateTimeInterface $dateEnvoi = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?\DateTimeInterface $dateModification = null;
 
     #[ORM\Column]
-    private ?string $statut = null;
+    private ?string $statut = 'envoyé';
 
-    #[ORM\Column]
-    private ?string $type = null;
+    #[ORM\Column(nullable: true)]
+    private ?string $type = 'texte';
 
     #[ORM\Column]
     private ?int $conversationId = null;
@@ -45,26 +45,33 @@ class Message
     #[ORM\Column]
     private ?int $destinataireId = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?string $fileName = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?int $fileSize = null;
 
-    #[ORM\Column]
+    #[ORM\Column(nullable: true)]
     private ?string $fileType = null;
 
+    // ✅ Renommé de $user à $expediteur (plus clair)
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'expediteur_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    private ?User $expediteur = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'conversation_id', referencedColumnName: 'id')]
     private ?Conversation $conversation = null;
 
+    // ✅ Renommé de $user à $destinataire
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'destinataire_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    private ?User $destinataire = null;
+
+    public function __construct()
+    {
+        $this->dateEnvoi = new \DateTimeImmutable();
+    }
 
     public function getId(): ?int
     {
@@ -220,14 +227,15 @@ class Message
         return $this;
     }
 
-    public function getUser(): ?User
+    // ✅ Getter et setter pour expediteur
+    public function getExpediteur(): ?User
     {
-        return $this->user;
+        return $this->expediteur;
     }
 
-    public function setUser(?User $user): self
+    public function setExpediteur(?User $expediteur): self
     {
-        $this->user = $user;
+        $this->expediteur = $expediteur;
         return $this;
     }
 
@@ -242,14 +250,15 @@ class Message
         return $this;
     }
 
-    public function getUser(): ?User
+    // ✅ Getter et setter pour destinataire
+    public function getDestinataire(): ?User
     {
-        return $this->user;
+        return $this->destinataire;
     }
 
-    public function setUser(?User $user): self
+    public function setDestinataire(?User $destinataire): self
     {
-        $this->user = $user;
+        $this->destinataire = $destinataire;
         return $this;
     }
 }

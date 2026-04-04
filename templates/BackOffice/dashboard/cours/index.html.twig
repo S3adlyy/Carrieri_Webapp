@@ -2,7 +2,6 @@
 {% extends 'BackOffice/base.html.twig' %}
 
 {% block title %}Gestion des cours{% endblock %}
-
 {% block page_title %}Cours{% endblock %}
 
 {% block breadcrumbs %}
@@ -10,49 +9,85 @@
 {% endblock %}
 
 {% block body %}
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert">×</button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
     <div class="card">
-        <div class="card-header">
-            <h3 class="card-title">Liste des cours</h3>
-            <span class="badge badge-info">{{ cours_list|length }} cours</span>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Liste des cours</h3>
+            <a href="{{ path('app_admin_cours_new') }}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus mr-1"></i> Nouveau cours
+            </a>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0">
-                    <thead>
+                    <thead class="thead-dark">
                     <tr>
-                        <th>ID</th>
+                        <th>#</th>
                         <th>Titre</th>
                         <th>Niveau</th>
-                        <th>Durée</th>
+                        <th>Durée (h)</th>
                         <th>Prix</th>
-                        {% if is_admin_view|default(false) %}
-                            <th>Auteur</th>
-                        {% endif %}
+                        <th>Payant</th>
+                        <th>Obligatoire</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {% for c in cours_list %}
                         <tr>
                             <td>{{ c.id }}</td>
-                            <td>{{ c.titre|default('—') }}</td>
-                            <td>{{ c.niveau|default('—') }}</td>
+                            <td><strong>{{ c.titre|default('—') }}</strong></td>
+                            <td>
+                                {% if c.niveau == 'Débutant' %}
+                                    <span class="badge badge-success">{{ c.niveau }}</span>
+                                {% elseif c.niveau == 'Intermédiaire' %}
+                                    <span class="badge badge-warning">{{ c.niveau }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ c.niveau|default('—') }}</span>
+                                {% endif %}
+                            </td>
                             <td>{{ c.duree|default('—') }}</td>
-                            <td>{% if c.prix is not null %}{{ c.prix }}{% else %}—{% endif %}</td>
-                            {% if is_admin_view|default(false) %}
-                                <td>
-                                    {% set u = c.user %}
-                                    {% if u %}{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}{% else %}—{% endif %}
-                                </td>
-                            {% endif %}
+                            <td>{{ c.prix is not null ? c.prix ~ ' €' : '—' }}</td>
+                            <td>{{ c.estPayant ? '<span class="badge badge-info">Oui</span>' : '<span class="badge badge-secondary">Non</span>' }}</td>
+                            <td>{{ c.estObligatoire ? '<span class="badge badge-danger">Oui</span>' : 'Non' }}</td>
+                            <td>
+                                <a href="{{ path('app_admin_modules_index', {cours: c.id}) }}" class="btn btn-xs btn-success" title="Sélectionner ce cours">
+                                    <i class="fas fa-check"></i>
+                                </a>
+                                <a href="{{ path('app_admin_cours_show', {id: c.id}) }}" class="btn btn-xs btn-info" title="Voir">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('app_admin_cours_edit', {id: c.id}) }}" class="btn btn-xs btn-warning" title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{{ path('app_admin_cours_delete', {id: c.id}) }}" style="display:inline"
+                                      onsubmit="return confirm('Supprimer ce cours ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_cours_' ~ c.id) }}">
+                                    <button class="btn btn-xs btn-danger" title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="{{ is_admin_view|default(false) ? 6 : 5 }}" class="text-center text-muted">Aucun cours.</td>
+                            <td colspan="8" class="text-center text-muted py-3">Aucun cours trouvé.</td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
             </div>
+        </div>
+        <div class="card-footer text-muted">
+            Total : <strong>{{ cours_list|length }}</strong> cours
         </div>
     </div>
 {% endblock %}

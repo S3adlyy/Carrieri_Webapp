@@ -1,0 +1,82 @@
+{# templates/BackOffice/dashboard/cours/edit.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Modifier le cours{% endblock %}
+{% block page_title %}Modifier le cours{% endblock %}
+
+{% block breadcrumbs %}
+<li class="breadcrumb-item"><a href="{{ path('app_admin_cours_index') }}">Cours</a></li>
+<li class="breadcrumb-item"><a href="{{ path('app_admin_cours_show', {id: cours.id}) }}">{{ cours.titre|default('Cours') }}</a></li>
+<li class="breadcrumb-item active">Modifier</li>
+{% endblock %}
+
+{% block body %}
+<div class="card card-warning">
+    <div class="card-header">
+        <h3 class="card-title">Modifier : <em>{{ cours.titre }}</em></h3>
+    </div>
+    {{ form_start(form) }}
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="form-group">
+                    {{ form_label(form.titre) }}
+                    {{ form_widget(form.titre) }}
+                    {{ form_errors(form.titre) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.description) }}
+                    {{ form_widget(form.description) }}
+                    {{ form_errors(form.description) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.competencesVisees) }}
+                    {{ form_widget(form.competencesVisees) }}
+                    {{ form_errors(form.competencesVisees) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.imageCouverture) }}
+                    {{ form_widget(form.imageCouverture) }}
+                    {{ form_errors(form.imageCouverture) }}
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    {{ form_label(form.niveau) }}
+                    {{ form_widget(form.niveau) }}
+                    {{ form_errors(form.niveau) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.duree) }}
+                    {{ form_widget(form.duree) }}
+                    {{ form_errors(form.duree) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.prix) }}
+                    {{ form_widget(form.prix) }}
+                    {{ form_errors(form.prix) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.estPayant) }}
+                    {{ form_widget(form.estPayant) }}
+                    {{ form_errors(form.estPayant) }}
+                </div>
+                <div class="form-group">
+                    {{ form_label(form.estObligatoire) }}
+                    {{ form_widget(form.estObligatoire) }}
+                    {{ form_errors(form.estObligatoire) }}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="card-footer">
+        <button type="submit" class="btn btn-warning">
+            <i class="fas fa-save mr-1"></i> Mettre à jour
+        </button>
+        <a href="{{ path('app_admin_cours_index') }}" class="btn btn-secondary ml-2">
+            <i class="fas fa-times mr-1"></i> Annuler
+        </a>
+    </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}

@@ -36,11 +36,31 @@
                         <p>Utilisateurs</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="{{ path('app_admin_cours') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_cours' %}active{% endif %}">
-                        <i class="nav-icon fas fa-book"></i>
-                        <p>Cours</p>
+                <li class="nav-item has-treeview {% if 'app_admin_cours' in app.request.attributes.get('_route') or 'app_admin_modules' in app.request.attributes.get('_route') or 'app_admin_lecons' in app.request.attributes.get('_route') %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if 'app_admin_cours' in app.request.attributes.get('_route') or 'app_admin_modules' in app.request.attributes.get('_route') or 'app_admin_lecons' in app.request.attributes.get('_route') %}active{% endif %}">
+                        <i class="nav-icon fas fa-graduation-cap"></i>
+                        <p>Études <i class="right fas fa-angle-left"></i></p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ path('app_admin_cours_index') }}" class="nav-link {% if 'app_admin_cours' in app.request.attributes.get('_route') %}active{% endif %}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Cours</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ path('app_admin_modules_index') }}" class="nav-link {% if 'app_admin_modules' in app.request.attributes.get('_route') %}active{% endif %}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Modules</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ path('app_admin_lecons_index') }}" class="nav-link {% if 'app_admin_lecons' in app.request.attributes.get('_route') %}active{% endif %}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Leçons</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
                 <li class="nav-item">
                     <a href="{{ path('app_admin_missions') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_missions' %}active{% endif %}">

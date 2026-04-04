@@ -1,0 +1,63 @@
+{# templates/BackOffice/dashboard/modules/show.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Détail — {{ module.titre }}{% endblock %}
+{% block page_title %}Détail du module{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_modules_index') }}">Modules</a></li>
+    <li class="breadcrumb-item active">{{ module.titre|default('Module') }}</li>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">{{ module.titre }}</h3>
+                    <div class="card-tools">
+                        <span class="badge badge-secondary">Ordre {{ module.ordre }}</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h5>Description</h5>
+                    <p>{{ module.description|default('—') }}</p>
+
+                    {% if module.cours %}
+                        <h5>Cours associé</h5>
+                        <p>
+                            <a href="{{ path('app_admin_cours_show', {id: module.cours.id}) }}" class="btn btn-info btn-sm">
+                                <i class="fas fa-book mr-1"></i>{{ module.cours.titre }}
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-info">
+                <div class="card-header"><h3 class="card-title">Informations</h3></div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr><th>ID</th><td>{{ module.id }}</td></tr>
+                        <tr><th>Ordre</th><td>{{ module.ordre|default('—') }}</td></tr>
+                        <tr><th>Cours ID</th><td>{{ module.coursId|default('—') }}</td></tr>
+                    </table>
+                </div>
+            </div>
+            <a href="{{ path('app_admin_modules_edit', {id: module.id}) }}" class="btn btn-warning btn-block">
+                <i class="fas fa-edit mr-1"></i> Modifier
+            </a>
+            <form method="post" action="{{ path('app_admin_modules_delete', {id: module.id}) }}"
+                  onsubmit="return confirm('Supprimer ce module ?')" class="mt-2">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete_module_' ~ module.id) }}">
+                <button class="btn btn-danger btn-block" type="submit">
+                    <i class="fas fa-trash mr-1"></i> Supprimer
+                </button>
+            </form>
+            <a href="{{ path('app_admin_modules_index') }}" class="btn btn-secondary btn-block mt-2">
+                <i class="fas fa-arrow-left mr-1"></i> Retour
+            </a>
+        </div>
+    </div>
+{% endblock %}

@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\Cours;
 use App\Entity\Lecon;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,16 +18,53 @@ class LeconRepository extends ServiceEntityRepository
         parent::__construct($registry, Lecon::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    /**
+     * @param int[] $moduleIds
+     * @return Lecon[]
+     */
+    public function findByModuleIds(array $moduleIds): array
+    {
+        if ($moduleIds === []) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('l')
+            ->andWhere('l.moduleId IN (:moduleIds)')
+            ->setParameter('moduleIds', $moduleIds)
+            ->orderBy('l.ordre', 'ASC')
+            ->addOrderBy('l.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Lecon[]
+     */
+    public function findByCours(Cours $cours): array
+    {
+        return $this->createQueryBuilder('l')
+            ->innerJoin('l.module', 'm')
+            ->andWhere('m.cours = :cours')
+            ->setParameter('cours', $cours)
+            ->orderBy('m.ordre', 'ASC')
+            ->addOrderBy('l.ordre', 'ASC')
+            ->addOrderBy('l.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Lecon[]
+     */
+    public function findForRecruiter(User $user): array
+    {
+        return $this->createQueryBuilder('l')
+            ->innerJoin('l.module', 'm')
+            ->innerJoin('m.cours', 'c')
+            ->andWhere('c.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('l.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

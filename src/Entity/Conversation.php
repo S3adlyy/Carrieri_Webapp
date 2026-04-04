@@ -32,11 +32,11 @@ class Conversation
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'user1_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    private ?User $user1 = null;  // ✅ Renommé de $user à $user1
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'user2_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    private ?User $user2 = null;  // ✅ Renommé de $user à $user2
 
     public function getId(): ?int
     {
@@ -104,25 +104,27 @@ class Conversation
         return $this;
     }
 
-    public function getUser(): ?User
+    // ✅ Getters et setters pour user1
+    public function getUser1(): ?User
     {
-        return $this->user;
+        return $this->user1;
     }
 
-    public function setUser(?User $user): self
+    public function setUser1(?User $user1): self
     {
-        $this->user = $user;
+        $this->user1 = $user1;
         return $this;
     }
 
-    public function getUser(): ?User
+    // ✅ Getters et setters pour user2
+    public function getUser2(): ?User
     {
-        return $this->user;
+        return $this->user2;
     }
 
-    public function setUser(?User $user): self
+    public function setUser2(?User $user2): self
     {
-        $this->user = $user;
+        $this->user2 = $user2;
         return $this;
     }
 }
