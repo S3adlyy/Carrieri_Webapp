@@ -382,5 +382,78 @@ class MissionController extends AbstractController
         ]);
     }
 
+    private function getMissionStats(User $user): array
+    {
+        $missions = $this->missionRepository->findByUserWithSearchAndSort($user, '', 'id', 'DESC');
+
+        $totalMissions = count($missions);
+        $totalSubmissions = 0;
+        $totalAccepted = 0;
+        $totalRejected = 0;
+        $totalPending = 0;
+        $scores = [];
+        $missionsWithSubmissions = 0;
+
+        foreach ($missions as $mission) {
+            $submissions = $this->renduMissionRepository->findBy(['missionId' => $mission->getId()]);
+            $submissionCount = count($submissions);
+            $totalSubmissions += $submissionCount;
+
+            if ($submissionCount > 0) {
+                $missionsWithSubmissions++;
+            }
+
+            foreach ($submissions as $submission) {
+                if ($submission->getScore()) {
+                    $scores[] = $submission->getScore();
+                }
+
+                if ($submission->getStatut() === 'accepte') {
+                    $totalAccepted++;
+                } elseif ($submission->getStatut() === 'refuse') {
+                    $totalRejected++;
+                } elseif ($submission->getStatut() === 'en_attente') {
+                    $totalPending++;
+                }
+            }
+        }
+
+        $averageScore = !empty($scores) ? array_sum($scores) / count($scores) : 0;
+        $maxScore = !empty($scores) ? max($scores) : 0;
+        $minScore = !empty($scores) ? min($scores) : 0;
+
+        // Distribution des scores par tranche
+        $scoreDistribution = [
+            'excellent' => 0, // 90-100
+            'good' => 0,      // 75-89
+            'average' => 0,   // 50-74
+            'poor' => 0,      // 25-49
+            'very_poor' => 0, // 0-24
+        ];
+
+        foreach ($scores as $score) {
+            if ($score >= 90) $scoreDistribution['excellent']++;
+            elseif ($score >= 75) $scoreDistribution['good']++;
+            elseif ($score >= 50) $scoreDistribution['average']++;
+            elseif ($score >= 25) $scoreDistribution['poor']++;
+            else $scoreDistribution['very_poor']++;
+        }
+
+        return [
+            'total_missions' => $totalMissions,
+            'total_submissions' => $totalSubmissions,
+            'missions_with_submissions' => $missionsWithSubmissions,
+            'submission_rate' => $totalMissions > 0 ? round(($missionsWithSubmissions / $totalMissions) * 100) : 0,
+            'total_accepted' => $totalAccepted,
+            'total_rejected' => $totalRejected,
+            'total_pending' => $totalPending,
+            'acceptance_rate' => $totalSubmissions > 0 ? round(($totalAccepted / $totalSubmissions) * 100) : 0,
+            'average_score' => round($averageScore, 1),
+            'max_score' => round($maxScore, 1),
+            'min_score' => round($minScore, 1),
+            'score_distribution' => $scoreDistribution,
+        ];
+    }
+
 
 }
