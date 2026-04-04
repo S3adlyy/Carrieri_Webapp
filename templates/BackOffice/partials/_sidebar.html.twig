@@ -49,6 +49,12 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ path('app_admin_calendar') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_calendar' %}active{% endif %}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Calendrier</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ path('app_admin_offres_emploi') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_offres_emploi' %}active{% endif %}">
                         <i class="nav-icon fas fa-briefcase"></i>
                         <p>Offres d'emploi</p>

@@ -1,0 +1,387 @@
+{# templates/BackOffice/dashboard/calendar/index.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Calendrier des entretiens{% endblock %}
+
+{% block page_title %}Calendrier des entretiens{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Calendrier</li>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/main.min.css' rel='stylesheet' />
+    <link href='https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css' rel='stylesheet'>
+    <style>
+        .calendar-container {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        #calendar {
+            min-height: 650px;
+        }
+
+        .fc-event {
+            cursor: pointer;
+            transition: transform 0.2s;
+            font-weight: 500;
+        }
+
+        .fc-event:hover {
+            transform: scale(1.02);
+            filter: brightness(1.05);
+        }
+
+        .fc-toolbar-title {
+            font-size: 1.3rem !important;
+            font-weight: 600 !important;
+        }
+
+        .fc-button-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+            border: none !important;
+        }
+
+        .fc-button-primary:hover {
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46a0 100%) !important;
+        }
+
+        .modal-event-details {
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .event-detail-row {
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .event-detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .event-label {
+            font-weight: 600;
+            color: #4b5563;
+            width: 110px;
+            flex-shrink: 0;
+        }
+
+        .event-value {
+            color: #1f2937;
+            flex: 1;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-planifie {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .btn-join {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-join:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .fc-day-today {
+            background: #fef3c7 !important;
+        }
+
+        .info-banner {
+            background: #f0fdf4;
+            border-left: 4px solid #10b981;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .info-banner i {
+            color: #10b981;
+            margin-right: 8px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="info-banner">
+        <i class="fas fa-info-circle"></i>
+        <strong>Entretiens planifiés :</strong> Seuls les entretiens avec le statut "Planifié" sont affichés dans ce calendrier.
+    </div>
+
+    <div class="calendar-container">
+        <div id="calendar"></div>
+    </div>
+
+    <!-- Modal des détails -->
+    <div class="modal fade" id="eventModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-event-details">
+                <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                    <h5 class="modal-title">
+                        <i class="fas fa-calendar-alt"></i> Détails de l'entretien
+                    </h5>
+                    <button type="button" class="close text-white" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Fermer</button>
+                    <button type="button" class="btn-join" id="joinInterviewBtn" style="display: none;">
+                        <i class="fas fa-video"></i> Rejoindre l'entretien
+                    </button>
+                    <button type="button" class="btn btn-warning" id="rescheduleEventBtn" style="display: none;">
+                        <i class="fas fa-calendar-alt"></i> Reprogrammer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de reprogrammation -->
+    <div class="modal fade" id="rescheduleModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-calendar-alt"></i> Reprogrammer l'entretien
+                    </h5>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Nouvelle date et heure</label>
+                        <input type="datetime-local" id="newDateTime" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label>Message au candidat (optionnel)</label>
+                        <textarea id="rescheduleMessage" class="form-control" rows="3"
+                                  placeholder="L'entretien a été reprogrammé..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="confirmRescheduleBtn">
+                        <i class="fas fa-save"></i> Confirmer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let currentEventId = null;
+        let currentEventProps = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+            if (!calendarEl) {
+                console.error('Element #calendar non trouvé');
+                return;
+            }
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'timeGridWeek',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                },
+                buttonText: {
+                    today: 'Aujourd\'hui',
+                    month: 'Mois',
+                    week: 'Semaine',
+                    day: 'Jour'
+                },
+                events: '{{ path('app_admin_calendar_events') }}',
+                editable: true,
+                droppable: true,
+                eventDrop: function(info) {
+                    currentEventId = info.event.id;
+                    const newDate = info.event.start.toISOString();
+
+                    Swal.fire({
+                        title: 'Reprogrammer l\'entretien ?',
+                        text: 'Voulez-vous vraiment modifier la date de cet entretien ?',
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonText: 'Oui, reprogrammer',
+                        cancelButtonText: 'Annuler'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(`/admin/calendrier/api/events/${currentEventId}/move`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ newDate: newDate })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('Succès !', 'Entretien reprogrammé', 'success');
+                                        calendar.refetchEvents();
+                                    } else {
+                                        Swal.fire('Erreur', data.error || 'Une erreur est survenue', 'error');
+                                        calendar.refetchEvents();
+                                    }
+                                });
+                        } else {
+                            calendar.refetchEvents();
+                        }
+                    });
+                },
+                eventClick: function(info) {
+                    currentEventId = info.event.id;
+                    currentEventProps = info.event.extendedProps;
+
+                    let statusText = 'Planifié';
+                    let statusClass = 'status-planifie';
+
+                    const modalBody = document.getElementById('modalBody');
+                    modalBody.innerHTML = `
+                        <div class="event-detail-row">
+                            <span class="event-label">👤 Candidat :</span>
+                            <span class="event-value"><strong>${currentEventProps.candidatNom || currentEventProps.candidat || 'N/A'}</strong><br><small>${currentEventProps.candidat || ''}</small></span>
+                        </div>
+                        <div class="event-detail-row">
+                            <span class="event-label">📋 Mission :</span>
+                            <span class="event-value">${currentEventProps.mission || 'N/A'}</span>
+                        </div>
+                        <div class="event-detail-row">
+                            <span class="event-label">🎯 Type :</span>
+                            <span class="event-value">${currentEventProps.type || 'N/A'}</span>
+                        </div>
+                        <div class="event-detail-row">
+                            <span class="event-label">📅 Date :</span>
+                            <span class="event-value">${info.event.start.toLocaleDateString('fr-FR')} à ${info.event.start.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div class="event-detail-row">
+                            <span class="event-label">📊 Statut :</span>
+                            <span class="event-value">
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </span>
+                        </div>
+                        ${currentEventProps.lien ? `
+                        <div class="event-detail-row">
+                            <span class="event-label">🔗 Lien :</span>
+                            <span class="event-value">
+                                <a href="${currentEventProps.lien}" target="_blank">${currentEventProps.lien.substring(0, 50)}...</a>
+                            </span>
+                        </div>
+                        ` : ''}
+                        ${currentEventProps.notes ? `
+                        <div class="event-detail-row">
+                            <span class="event-label">📝 Notes :</span>
+                            <span class="event-value">${currentEventProps.notes}</span>
+                        </div>
+                        ` : ''}
+                    `;
+
+                    // Gérer les boutons
+                    const joinBtn = document.getElementById('joinInterviewBtn');
+                    const rescheduleBtn = document.getElementById('rescheduleEventBtn');
+
+                    if (currentEventProps.lien) {
+                        joinBtn.style.display = 'inline-block';
+                        joinBtn.onclick = function() {
+                            window.open(currentEventProps.lien, '_blank');
+                        };
+                    } else {
+                        joinBtn.style.display = 'none';
+                    }
+
+                    rescheduleBtn.style.display = 'inline-block';
+                    rescheduleBtn.onclick = function() {
+                        $('#eventModal').modal('hide');
+                        $('#rescheduleModal').modal('show');
+                    };
+
+                    $('#eventModal').modal('show');
+                },
+                eventDidMount: function(info) {
+                    info.el.setAttribute('title', info.event.title);
+                }
+            });
+
+            calendar.render();
+
+            // Reprogrammation manuelle
+            document.getElementById('confirmRescheduleBtn').addEventListener('click', function() {
+                const newDate = document.getElementById('newDateTime').value;
+                const message = document.getElementById('rescheduleMessage').value;
+
+                if (!newDate) {
+                    Swal.fire('Erreur', 'Veuillez sélectionner une nouvelle date', 'error');
+                    return;
+                }
+
+                Swal.fire({
+                    title: 'Confirmation',
+                    text: 'Envoyer la notification au candidat ?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, reprogrammer',
+                    cancelButtonText: 'Annuler'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        fetch(`/admin/calendrier/api/events/${currentEventId}/move`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ newDate: newDate, message: message })
+                        })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.success) {
+                                    Swal.fire('Succès !', 'Entretien reprogrammé avec succès', 'success');
+                                    $('#rescheduleModal').modal('hide');
+                                    calendar.refetchEvents();
+                                } else {
+                                    Swal.fire('Erreur', data.error || 'Une erreur est survenue', 'error');
+                                }
+                            });
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
