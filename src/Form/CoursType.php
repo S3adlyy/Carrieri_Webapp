@@ -7,10 +7,12 @@ namespace App\Form;
 use App\Entity\Cours;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -55,10 +57,17 @@ class CoursType extends AbstractType
                 'choices' => ['Oui' => 1, 'Non' => 0],
                 'attr'    => ['class' => 'form-control'],
             ])
-            ->add('imageCouverture', TextType::class, [
-                'label'    => 'Image de couverture (URL)',
+            ->add('imageCouverture', FileType::class, [
+                'label'    => 'Image de couverture',
                 'required' => false,
-                'attr'     => ['class' => 'form-control', 'placeholder' => 'https://...'],
+                'attr'     => ['class' => 'form-control', 'accept' => 'image/*'],
+                'constraints' => [
+                    new File([
+                        'maxSize' => '20M',
+                        'mimeTypes' => ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+                        'mimeTypesMessage' => 'Veuillez télécharger une image valide (JPEG, PNG, GIF, WebP)',
+                    ])
+                ],
             ])
             ->add('prix', NumberType::class, [
                 'label'    => 'Prix (€)',

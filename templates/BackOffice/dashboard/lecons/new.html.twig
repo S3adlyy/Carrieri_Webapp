@@ -14,7 +14,7 @@
         <div class="card-header">
             <h3 class="card-title">Créer une nouvelle leçon</h3>
         </div>
-        {{ form_start(form) }}
+        {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
         <div class="card-body">
             {% if not is_admin_view|default(false) and selected_module is defined and selected_module %}
                 <div class="alert alert-info">
@@ -32,14 +32,7 @@
                 {{ form_errors(form.contenu) }}
             </div>
             <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        {{ form_label(form.type) }}
-                        {{ form_widget(form.type) }}
-                        {{ form_errors(form.type) }}
-                    </div>
-                </div>
-                <div class="col-md-6">
+                <div class="col-md-12">
                     <div class="form-group">
                         {{ form_label(form.module) }}
                         {{ form_widget(form.module) }}
@@ -51,7 +44,7 @@
                 {{ form_label(form.video) }}
                 {{ form_widget(form.video) }}
                 {{ form_errors(form.video) }}
-                <small class="form-text text-muted">Laisser vide si pas de vidéo.</small>
+                <small class="form-text text-muted">Télécharger un fichier vidéo (MP4, MPEG, MOV, AVI, WebM). Maximum 500 Mo.</small>
             </div>
         </div>
         <div class="card-footer">

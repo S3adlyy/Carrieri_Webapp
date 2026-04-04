@@ -7,6 +7,7 @@ namespace App\Controller\DashboardController;
 use App\Entity\Cours;
 use App\Entity\User;
 use App\Form\CoursType;
+use App\Repository\CoursRepository;
 use App\Repository\LeconRepository;
 use App\Repository\ModuleRepository;
 use App\Service\BackOfficeDashboardService;
@@ -21,19 +22,34 @@ class CoursController extends AbstractController
 {
     public function __construct(
         private BackOfficeDashboardService $dashboardData,
+        private CoursRepository $coursRepository,
         private ModuleRepository $moduleRepository,
         private LeconRepository $leconRepository,
         private EntityManagerInterface $em,
     ) {}
 
     #[Route('/', name: 'app_admin_cours_index', methods: ['GET'])]
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user = $this->requireUser();
+        $isAdmin = $this->dashboardData->isAdmin($user);
+        $filters = [
+            'q' => trim((string) $request->query->get('q', '')),
+            'niveau' => trim((string) $request->query->get('niveau', '')),
+        ];
+
+        $coursList = $this->coursRepository->searchForBackOffice(
+            $isAdmin ? null : $user,
+            $isAdmin,
+            $filters['q'],
+            $filters['niveau'],
+        );
 
         return $this->render('BackOffice/dashboard/cours/index.html.twig', [
-            'cours_list'    => $this->dashboardData->listCours($user),
-            'is_admin_view' => $this->dashboardData->isAdmin($user),
+            'cours_list' => $coursList,
+            'filters' => $filters,
+            'niveaux' => $this->coursRepository->findDistinctNiveauxBackOffice($isAdmin ? null : $user, $isAdmin),
+            'is_admin_view' => $isAdmin,
         ]);
     }
 
@@ -46,6 +62,13 @@ class CoursController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle file upload for image
+            $imageFile = $form->get('imageCouverture')->getData();
+            if ($imageFile) {
+                $fileContent = file_get_contents($imageFile->getPathname());
+                $cours->setImageCouverture($fileContent);
+            }
+            
             // Keep owner fields synchronized for recruiter-scoped listings.
             $cours->setUser($user);
             $cours->setCreatedBy($user->getId());
@@ -102,6 +125,13 @@ class CoursController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle file upload for image
+            $imageFile = $form->get('imageCouverture')->getData();
+            if ($imageFile) {
+                $fileContent = file_get_contents($imageFile->getPathname());
+                $cours->setImageCouverture($fileContent);
+            }
+            
             $this->em->flush();
             $this->addFlash('success', 'Cours modifié avec succès !');
 

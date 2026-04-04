@@ -35,7 +35,7 @@
 			<div class="col-60 d-flex align-items-center">
 				<nav id="main-menu">
 					<ul>
-						<li><a href="{{ path('app_candidate_cours') }}" class="{{ route starts with 'app_candidate_cours' ? 'active' : '' }}">Cours</a></li>
+						<li><a href="{{ path('app_candidate_cours') }}" class="{{ route starts with 'app_candidate_cours' or route starts with 'app_candidate_lecon_show' ? 'active' : '' }}">Cours</a></li>
 						<li><a href="{{ path('app_candidate_offres') }}" class="{{ route == 'app_candidate_offres' ? 'active' : '' }}">Offre d'emploi</a></li>
 						<li><a href="{{ path('app_candidate_mission') }}" class="{{ route == 'app_candidate_mission' ? 'active' : '' }}">Mission</a></li>
 						<li><a href="{{ path('app_candidate_reclamation') }}" class="{{ route == 'app_candidate_reclamation' ? 'active' : '' }}">Réclamation</a></li>

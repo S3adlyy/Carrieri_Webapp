@@ -9,6 +9,11 @@
 {% endblock %}
 
 {% block body %}
+    {% set q = app.request.query.get('q')|default('')|trim %}
+    {% set q_lower = q|lower %}
+    {% set niveau_filter = app.request.query.get('niveau')|default('')|trim %}
+    {% set level_options = ['Débutant', 'Intermédiaire', 'Avancé'] %}
+
     {% for label, messages in app.flashes %}
         {% for message in messages %}
             <div class="alert alert-{{ label }} alert-dismissible fade show">
@@ -24,6 +29,27 @@
             <a href="{{ path('app_admin_cours_new') }}" class="btn btn-primary btn-sm">
                 <i class="fas fa-plus mr-1"></i> Nouveau cours
             </a>
+        </div>
+        <div class="card-body border-bottom">
+            <form method="get" action="{{ path('app_admin_cours_index') }}" class="row align-items-end">
+                <div class="col-md-5 mb-2 mb-md-0">
+                    <label for="course-q" class="sr-only">Rechercher un cours</label>
+                    <input id="course-q" type="text" name="q" class="form-control" placeholder="Rechercher par titre" value="{{ q }}">
+                </div>
+                <div class="col-md-3 mb-2 mb-md-0">
+                    <label for="course-niveau" class="sr-only">Filtrer par niveau</label>
+                    <select id="course-niveau" name="niveau" class="form-control">
+                        <option value="">Tous les niveaux</option>
+                        {% for n in level_options %}
+                            <option value="{{ n }}" {{ niveau_filter == n ? 'selected' : '' }}>{{ n }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex">
+                    <button type="submit" class="btn btn-primary mr-2">Filtrer</button>
+                    <a href="{{ path('app_admin_cours_index') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+                </div>
+            </form>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
@@ -41,51 +67,59 @@
                     </tr>
                     </thead>
                     <tbody>
+                    {% set shown = 0 %}
                     {% for c in cours_list %}
-                        <tr>
-                            <td>{{ c.id }}</td>
-                            <td>
-                                <a href="{{ path('app_admin_modules_index', {cours: c.id}) }}" title="Ouvrir les modules de ce cours">
-                                    <strong>{{ c.titre|default('—') }}</strong>
-                                </a>
-                            </td>
-                            <td>
-                                {% if c.niveau == 'Débutant' %}
-                                    <span class="badge badge-success">{{ c.niveau }}</span>
-                                {% elseif c.niveau == 'Intermédiaire' %}
-                                    <span class="badge badge-warning">{{ c.niveau }}</span>
-                                {% else %}
-                                    <span class="badge badge-danger">{{ c.niveau|default('—') }}</span>
-                                {% endif %}
-                            </td>
-                            <td>{{ c.duree|default('—') }}</td>
-                            <td>{{ c.prix is not null ? c.prix ~ ' €' : '—' }}</td>
-                            <td>{{ c.estPayant ? '<span class="badge badge-info">Oui</span>' : '<span class="badge badge-secondary">Non</span>' }}</td>
-                            <td>{{ c.estObligatoire ? '<span class="badge badge-danger">Oui</span>' : 'Non' }}</td>
-                            <td>
-                                <a href="{{ path('app_admin_cours_edit', {id: c.id}) }}" class="btn btn-xs btn-warning" title="Modifier">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <form method="post" action="{{ path('app_admin_cours_delete', {id: c.id}) }}" style="display:inline"
-                                      onsubmit="return confirm('Supprimer ce cours ?')">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_cours_' ~ c.id) }}">
-                                    <button class="btn btn-xs btn-danger" title="Supprimer">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% else %}
+                        {% set haystack = (c.titre|default('') ~ ' ' ~ c.description|default('') ~ ' ' ~ c.competencesVisees|default(''))|lower %}
+                        {% set matches_query = q_lower == '' or q_lower in haystack %}
+                        {% set matches_level = niveau_filter == '' or c.niveau == niveau_filter %}
+                        {% if matches_query and matches_level %}
+                            {% set shown = shown + 1 %}
+                            <tr>
+                                <td>{{ c.id }}</td>
+                                <td>
+                                    <a href="{{ path('app_admin_modules_index', {cours: c.id}) }}" title="Ouvrir les modules de ce cours">
+                                        <strong>{{ c.titre|default('—') }}</strong>
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if c.niveau == 'Débutant' %}
+                                        <span class="badge badge-success">{{ c.niveau }}</span>
+                                    {% elseif c.niveau == 'Intermédiaire' %}
+                                        <span class="badge badge-warning">{{ c.niveau }}</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">{{ c.niveau|default('—') }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ c.duree|default('—') }}</td>
+                                <td>{{ c.prix is not null ? c.prix ~ ' €' : '—' }}</td>
+                                <td>{{ c.estPayant ? '<span class="badge badge-info">Oui</span>' : '<span class="badge badge-secondary">Non</span>' }}</td>
+                                <td>{{ c.estObligatoire ? '<span class="badge badge-danger">Oui</span>' : 'Non' }}</td>
+                                <td>
+                                    <a href="{{ path('app_admin_cours_edit', {id: c.id}) }}" class="btn btn-xs btn-warning" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="post" action="{{ path('app_admin_cours_delete', {id: c.id}) }}" style="display:inline"
+                                          onsubmit="return confirm('Supprimer ce cours ?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_cours_' ~ c.id) }}">
+                                        <button class="btn btn-xs btn-danger" title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    {% if shown == 0 %}
                         <tr>
                             <td colspan="8" class="text-center text-muted py-3">Aucun cours trouvé.</td>
                         </tr>
-                    {% endfor %}
+                    {% endif %}
                     </tbody>
                 </table>
             </div>
         </div>
         <div class="card-footer text-muted">
-            Total : <strong>{{ cours_list|length }}</strong> cours
+            Total : <strong>{{ shown }}</strong> cours
         </div>
     </div>
 {% endblock %}

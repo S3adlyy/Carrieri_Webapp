@@ -23,7 +23,7 @@
             </div>
             <div class="card-body">
                 {% if cours.imageCouverture %}
-                <img src="{{ cours.imageCouverture }}" alt="Couverture" class="img-fluid mb-3 rounded" style="max-height:200px; object-fit:cover;">
+                <img src="data:image/jpeg;base64,{{ cours.imageCouverture|b64encode }}" alt="Couverture" class="img-fluid mb-3 rounded" style="max-height:200px; object-fit:cover;">
                 {% endif %}
 
                 <h5>Description</h5>

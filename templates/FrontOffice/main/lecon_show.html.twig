@@ -1,0 +1,56 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}{{ lecon.titre|default('Leçon') }}{% endblock %}
+
+{% block candidate_page_heading %}{{ lecon.titre|default('Leçon') }}{% endblock %}
+
+{% block candidate_breadcrumb %}
+    / <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}">{{ cours.titre|default('Cours') }}</a> / Leçon
+{% endblock %}
+
+{% block candidate_content %}
+    <div class="w-100 text-start">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+            <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}" class="btn btn-outline-secondary btn-sm mb-2">Retour au cours</a>
+            {% if continue_lesson is defined and continue_lesson %}
+                <a href="{{ path('app_candidate_lecon_show', {cours: cours.id, id: continue_lesson.id}) }}" class="btn btn-primary btn-sm mb-2">Continuer</a>
+            {% endif %}
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <h3 class="mb-0">{{ lecon.titre|default('Leçon') }}</h3>
+                    <div>
+                        {% if viewed_lesson_ids[lecon.id]|default(false) %}
+                            <span class="badge badge-success">Vue</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <p class="text-muted mb-3">
+                    <strong>Cours :</strong> {{ cours.titre|default('—') }}
+                    &nbsp;|&nbsp;
+                    <strong>Module :</strong> {{ lecon.module ? lecon.module.titre : '—' }}
+                    &nbsp;|&nbsp;
+                    <strong>Progression :</strong> {{ progress|default(0) }}%
+                </p>
+
+                {% if lecon.video %}
+                    <div class="mb-3">
+                        <video controls class="w-100" style="max-height: 460px;">
+                            <source src="{{ path('app_candidate_lecon_video', {cours: cours.id, id: lecon.id}) }}" type="video/mp4">
+                            Votre navigateur ne supporte pas la lecture vidéo.
+                        </video>
+                    </div>
+                {% endif %}
+
+                <div class="p-3 bg-light rounded">
+                    {{ lecon.contenu|default('—')|nl2br }}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+

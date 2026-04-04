@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\DashboardController;
 
+use App\Entity\Cours;
 use App\Entity\Module;
 use App\Entity\User;
 use App\Form\ModuleType;
@@ -12,6 +13,7 @@ use App\Repository\ModuleRepository;
 use App\Service\BackOfficeDashboardService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -164,7 +166,7 @@ class ModuleController extends AbstractController
         $form = $this->createForm(ModuleType::class, $module, [
             'cours_choices' => $allowedCourses,
             'lock_cours' => !$isAdmin,
-            'include_ordre' => true,
+            'include_ordre' => false,
         ]);
         $form->handleRequest($request);
 
@@ -209,6 +211,45 @@ class ModuleController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_modules_index');
+    }
+
+    #[Route('/reorder', name: 'app_admin_modules_reorder', methods: ['POST'])]
+    public function reorder(Request $request): JsonResponse
+    {
+        $user = $this->requireUser();
+        $isAdmin = $this->dashboardData->isAdmin($user);
+        $coursId = $request->request->getInt('cours_id');
+        $ids = array_values(array_filter(array_map('intval', (array) $request->request->all('ids'))));
+
+        if ($coursId <= 0 || $ids === []) {
+            return $this->json(['success' => false, 'message' => 'Données de réordonnancement invalides.'], 400);
+        }
+
+        $cours = $this->coursRepository->find($coursId);
+        if (!$cours instanceof Cours) {
+            return $this->json(['success' => false, 'message' => 'Cours introuvable.'], 404);
+        }
+
+        if (!$isAdmin && $cours->getUser()?->getId() !== $user->getId()) {
+            return $this->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        $orderedModules = [];
+        foreach ($ids as $moduleId) {
+            $module = $this->moduleRepository->findOneBy(['id' => $moduleId, 'cours' => $cours]);
+            if (!$module instanceof Module) {
+                return $this->json(['success' => false, 'message' => 'Un module est invalide.'], 400);
+            }
+            $orderedModules[] = $module;
+        }
+
+        foreach ($orderedModules as $index => $module) {
+            $module->setOrdre($index + 1);
+        }
+
+        $this->em->flush();
+
+        return $this->json(['success' => true]);
     }
 
     private function requireUser(): User

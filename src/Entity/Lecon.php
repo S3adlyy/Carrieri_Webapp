@@ -27,11 +27,8 @@ class Lecon
     #[ORM\Column]
     private ?int $moduleId = null;
 
-    #[ORM\Column]
-    private ?string $type = null;
-
-    #[ORM\Column]
-    private ?string $video = null;
+    #[ORM\Column(type: 'blob', nullable: true)]
+    private mixed $video = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'module_id', referencedColumnName: 'id')]
@@ -92,23 +89,12 @@ class Lecon
         return $this;
     }
 
-    public function getType(): ?string
-    {
-        return $this->type;
-    }
-
-    public function setType(?string $type): self
-    {
-        $this->type = $type;
-        return $this;
-    }
-
-    public function getVideo(): ?string
+    public function getVideo(): mixed
     {
         return $this->video;
     }
 
-    public function setVideo(?string $video): self
+    public function setVideo(mixed $video): self
     {
         $this->video = $video;
         return $this;

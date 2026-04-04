@@ -8,10 +8,11 @@ use App\Entity\Lecon;
 use App\Entity\Module;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
-use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
+use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -36,20 +37,17 @@ class LeconType extends AbstractType
                 'constraints' => [new NotBlank()],
                 'attr'        => ['class' => 'form-control', 'rows' => 6, 'placeholder' => 'Contenu de la leçon'],
             ])
-            ->add('type', ChoiceType::class, [
-                'label'   => 'Type',
-                'choices' => [
-                    'Vidéo'    => 'video',
-                    'Texte'    => 'texte',
-                    'Quiz'     => 'quiz',
-                    'PDF'      => 'pdf',
-                ],
-                'attr' => ['class' => 'form-control'],
-            ])
-            ->add('video', TextType::class, [
-                'label'    => 'URL Vidéo',
+            ->add('video', FileType::class, [
+                'label'    => 'Vidéo',
                 'required' => false,
-                'attr'     => ['class' => 'form-control', 'placeholder' => 'https://youtube.com/...'],
+                'attr'     => ['class' => 'form-control', 'accept' => 'video/*'],
+                'constraints' => [
+                    new File([
+                        'maxSize' => '500M',
+                        'mimeTypes' => ['video/mp4', 'video/mpeg', 'video/quicktime', 'video/x-msvideo', 'video/webm'],
+                        'mimeTypesMessage' => 'Veuillez télécharger une vidéo valide (MP4, MPEG, MOV, AVI, WebM)',
+                    ])
+                ],
             ])
             ->add('module', EntityType::class, [
                 'label'        => 'Module',

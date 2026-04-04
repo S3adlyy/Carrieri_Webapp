@@ -15,7 +15,7 @@
     <div class="card-header">
         <h3 class="card-title">Modifier : <em>{{ cours.titre }}</em></h3>
     </div>
-    {{ form_start(form) }}
+    {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
     <div class="card-body">
         <div class="row">
             <div class="col-md-8">

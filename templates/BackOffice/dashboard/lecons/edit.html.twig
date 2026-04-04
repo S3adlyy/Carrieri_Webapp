@@ -15,7 +15,7 @@
         <div class="card-header">
             <h3 class="card-title">Modifier : <em>{{ lecon.titre }}</em></h3>
         </div>
-        {{ form_start(form) }}
+        {{ form_start(form, {'attr': {'enctype': 'multipart/form-data'}}) }}
         <div class="card-body">
             <div class="form-group">
                 {{ form_label(form.titre) }}
@@ -28,21 +28,7 @@
                 {{ form_errors(form.contenu) }}
             </div>
             <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        {{ form_label(form.type) }}
-                        {{ form_widget(form.type) }}
-                        {{ form_errors(form.type) }}
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        {{ form_label(form.ordre) }}
-                        {{ form_widget(form.ordre) }}
-                        {{ form_errors(form.ordre) }}
-                    </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-12">
                     <div class="form-group">
                         {{ form_label(form.module) }}
                         {{ form_widget(form.module) }}

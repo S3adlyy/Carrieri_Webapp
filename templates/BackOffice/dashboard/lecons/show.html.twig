@@ -15,12 +15,6 @@
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">{{ lecon.titre }}</h3>
-                    <div class="card-tools">
-                        {% set type_badges = {video: 'danger', texte: 'primary', quiz: 'success', pdf: 'warning'} %}
-                        <span class="badge badge-{{ type_badges[lecon.type]|default('secondary') }}">
-                            {{ lecon.type|default('—') }}
-                        </span>
-                    </div>
                 </div>
                 <div class="card-body">
                     <h5>Contenu</h5>
@@ -28,9 +22,12 @@
 
                     {% if lecon.video %}
                         <h5>Vidéo</h5>
-                        <p><a href="{{ lecon.video }}" target="_blank" class="btn btn-sm btn-danger">
-                            <i class="fab fa-youtube mr-1"></i> Voir la vidéo
-                        </a></p>
+                        <div class="mb-3">
+                            <video width="100%" height="auto" controls style="max-width: 600px;">
+                                <source src="data:video/mp4;base64,{{ lecon.video|b64encode }}" type="video/mp4">
+                                Votre navigateur ne supporte pas la balise vidéo.
+                            </video>
+                        </div>
                     {% endif %}
 
                     {% if lecon.module %}
@@ -57,7 +54,6 @@
                     <table class="table table-sm">
                         <tr><th>ID</th><td>{{ lecon.id }}</td></tr>
                         <tr><th>Ordre</th><td>{{ lecon.ordre|default('—') }}</td></tr>
-                        <tr><th>Type</th><td>{{ lecon.type|default('—') }}</td></tr>
                         <tr><th>Module ID</th><td>{{ lecon.moduleId|default('—') }}</td></tr>
                     </table>
                 </div>

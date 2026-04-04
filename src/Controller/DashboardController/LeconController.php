@@ -13,6 +13,7 @@ use App\Repository\ModuleRepository;
 use App\Service\BackOfficeDashboardService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -117,6 +118,13 @@ class LeconController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle file upload for video
+            $videoFile = $form->get('video')->getData();
+            if ($videoFile) {
+                $fileContent = file_get_contents($videoFile->getPathname());
+                $lecon->setVideo($fileContent);
+            }
+            
             // Sync scalar moduleId from relation
             if ($lecon->getModule()) {
                 $lecon->setModuleId($lecon->getModule()->getId());
@@ -128,7 +136,6 @@ class LeconController extends AbstractController
             $this->em->flush();
             $this->addFlash('success', 'Leçon créée avec succès !');
 
-            $coursId = $lecon->getModule()?->getCoursId();
             $moduleId = $lecon->getModuleId();
             if ($moduleId !== null) {
                 return $this->redirectToRoute('app_admin_lecons_index', ['module' => $moduleId]);
@@ -170,11 +177,18 @@ class LeconController extends AbstractController
         $form = $this->createForm(LeconType::class, $lecon, [
             'module_choices' => $allowedModules,
             'lock_module' => !$isAdmin,
-            'include_ordre' => true,
+            'include_ordre' => false,
         ]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle file upload for video
+            $videoFile = $form->get('video')->getData();
+            if ($videoFile) {
+                $fileContent = file_get_contents($videoFile->getPathname());
+                $lecon->setVideo($fileContent);
+            }
+            
             if ($lecon->getModule()) {
                 $lecon->setModuleId($lecon->getModule()->getId());
             }
@@ -215,6 +229,45 @@ class LeconController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_lecons_index');
+    }
+
+    #[Route('/reorder', name: 'app_admin_lecons_reorder', methods: ['POST'])]
+    public function reorder(Request $request): JsonResponse
+    {
+        $user = $this->requireUser();
+        $isAdmin = $this->dashboardData->isAdmin($user);
+        $moduleId = $request->request->getInt('module_id');
+        $ids = array_values(array_filter(array_map('intval', (array) $request->request->all('ids'))));
+
+        if ($moduleId <= 0 || $ids === []) {
+            return $this->json(['success' => false, 'message' => 'Données de réordonnancement invalides.'], 400);
+        }
+
+        $module = $this->moduleRepository->find($moduleId);
+        if (!$module instanceof Module) {
+            return $this->json(['success' => false, 'message' => 'Module introuvable.'], 404);
+        }
+
+        if (!$isAdmin && $module->getCours()?->getUser()?->getId() !== $user->getId()) {
+            return $this->json(['success' => false, 'message' => 'Accès refusé.'], 403);
+        }
+
+        $orderedLecons = [];
+        foreach ($ids as $leconId) {
+            $lecon = $this->leconRepository->findOneBy(['id' => $leconId, 'module' => $module]);
+            if (!$lecon instanceof Lecon) {
+                return $this->json(['success' => false, 'message' => 'Une leçon est invalide.'], 400);
+            }
+            $orderedLecons[] = $lecon;
+        }
+
+        foreach ($orderedLecons as $index => $lecon) {
+            $lecon->setOrdre($index + 1);
+        }
+
+        $this->em->flush();
+
+        return $this->json(['success' => true]);
     }
 
     private function requireUser(): User

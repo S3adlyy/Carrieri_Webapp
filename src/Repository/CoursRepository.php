@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\Cours;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -21,40 +22,42 @@ class CoursRepository extends ServiceEntityRepository
      */
     public function searchForCandidate(?string $query, ?string $niveau, int $page, int $limit = 6): array
     {
-        $qb = $this->createQueryBuilder('c')
-            ->orderBy('c.id', 'DESC')
-            ->setFirstResult(max(0, ($page - 1) * $limit))
-            ->setMaxResults($limit);
+        $items = $this->findBy([], ['id' => 'DESC']);
 
-        if ($niveau !== null && $niveau !== '') {
-            $qb->andWhere('c.niveau = :niveau')->setParameter('niveau', $niveau);
-        }
+        $items = array_values(array_filter($items, static function (Cours $cours) use ($query, $niveau): bool {
+            if ($niveau !== null && $niveau !== '' && $cours->getNiveau() !== $niveau) {
+                return false;
+            }
 
-        if ($query !== null && $query !== '') {
-            $qb
-                ->andWhere('LOWER(c.titre) LIKE :q OR LOWER(c.description) LIKE :q OR LOWER(c.competencesVisees) LIKE :q')
-                ->setParameter('q', '%' . mb_strtolower($query) . '%');
-        }
+            if ($query === null || $query === '') {
+                return true;
+            }
 
-        return $qb->getQuery()->getResult();
+            $needle = mb_strtolower($query);
+            $haystack = mb_strtolower(trim((string) $cours->getTitre() . ' ' . (string) $cours->getDescription() . ' ' . (string) $cours->getCompetencesVisees()));
+
+            return str_contains($haystack, $needle);
+        }));
+
+        return array_slice($items, max(0, ($page - 1) * $limit), $limit);
     }
 
     public function countForCandidateFilters(?string $query, ?string $niveau): int
     {
-        $qb = $this->createQueryBuilder('c')
-            ->select('COUNT(c.id)');
+        return count(array_filter($this->findBy([], ['id' => 'DESC']), static function (Cours $cours) use ($query, $niveau): bool {
+            if ($niveau !== null && $niveau !== '' && $cours->getNiveau() !== $niveau) {
+                return false;
+            }
 
-        if ($niveau !== null && $niveau !== '') {
-            $qb->andWhere('c.niveau = :niveau')->setParameter('niveau', $niveau);
-        }
+            if ($query === null || $query === '') {
+                return true;
+            }
 
-        if ($query !== null && $query !== '') {
-            $qb
-                ->andWhere('LOWER(c.titre) LIKE :q OR LOWER(c.description) LIKE :q OR LOWER(c.competencesVisees) LIKE :q')
-                ->setParameter('q', '%' . mb_strtolower($query) . '%');
-        }
+            $needle = mb_strtolower($query);
+            $haystack = mb_strtolower(trim((string) $cours->getTitre() . ' ' . (string) $cours->getDescription() . ' ' . (string) $cours->getCompetencesVisees()));
 
-        return (int) $qb->getQuery()->getSingleScalarResult();
+            return str_contains($haystack, $needle);
+        }));
     }
 
     /**
@@ -62,14 +65,39 @@ class CoursRepository extends ServiceEntityRepository
      */
     public function findDistinctNiveaux(): array
     {
-        $rows = $this->createQueryBuilder('c')
-            ->select('DISTINCT c.niveau AS niveau')
-            ->andWhere('c.niveau IS NOT NULL')
-            ->andWhere("c.niveau <> ''")
-            ->orderBy('c.niveau', 'ASC')
-            ->getQuery()
-            ->getArrayResult();
+        return ['Débutant', 'Intermédiaire', 'Avancé'];
+    }
 
-        return array_values(array_map(static fn (array $r): string => (string) $r['niveau'], $rows));
+    /**
+     * @return string[]
+     */
+    public function findDistinctNiveauxBackOffice(?User $user, bool $isAdmin): array
+    {
+        return ['Débutant', 'Intermédiaire', 'Avancé'];
+    }
+
+    /**
+     * @return Cours[]
+     */
+    public function searchForBackOffice(?User $user, bool $isAdmin, ?string $query, ?string $niveau): array
+    {
+        $items = $isAdmin || $user === null
+            ? $this->findBy([], ['id' => 'DESC'])
+            : $this->findBy(['user' => $user], ['id' => 'DESC']);
+
+        return array_values(array_filter($items, static function (Cours $cours) use ($query, $niveau): bool {
+            if ($niveau !== null && $niveau !== '' && $cours->getNiveau() !== $niveau) {
+                return false;
+            }
+
+            if ($query === null || $query === '') {
+                return true;
+            }
+
+            $needle = mb_strtolower($query);
+            $haystack = mb_strtolower((string) $cours->getTitre() . ' ' . (string) $cours->getDescription() . ' ' . (string) $cours->getCompetencesVisees());
+
+            return str_contains($haystack, $needle);
+        }));
     }
 }

@@ -36,8 +36,8 @@ class Cours
     #[ORM\Column]
     private ?int $createdBy = null;
 
-    #[ORM\Column]
-    private ?string $imageCouverture = null;
+    #[ORM\Column(type: 'blob', nullable: true)]
+    private mixed $imageCouverture = null;
 
     #[ORM\Column]
     private ?float $prix = null;
@@ -137,12 +137,12 @@ class Cours
         return $this;
     }
 
-    public function getImageCouverture(): ?string
+    public function getImageCouverture(): mixed
     {
         return $this->imageCouverture;
     }
 
-    public function setImageCouverture(?string $imageCouverture): self
+    public function setImageCouverture(mixed $imageCouverture): self
     {
         $this->imageCouverture = $imageCouverture;
         return $this;
