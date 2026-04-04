@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Table(name: 'lecon')]
 #[ORM\Entity]
+#[UniqueEntity(fields: ['titre', 'module'], message: 'Une lecon avec ce titre existe deja dans ce module.', errorPath: 'titre')]
 class Lecon
 {
     #[ORM\Id]

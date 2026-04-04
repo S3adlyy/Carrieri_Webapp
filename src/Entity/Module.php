@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Table(name: 'module')]
 #[ORM\Entity]
+#[UniqueEntity(fields: ['titre', 'cours'], message: 'Un module avec ce titre existe deja dans ce cours.', errorPath: 'titre')]
 class Module
 {
     #[ORM\Id]
