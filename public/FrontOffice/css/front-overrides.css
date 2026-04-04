@@ -450,11 +450,56 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	text-decoration: none;
 }
 
-/* FXML-like catalogue layout translated to Symfony/Twig */
+/* FXML-like candidate catalog layout translated to Symfony/Twig */
+.fo-fxml-catalog.fo-shell-root {
+	overflow: hidden;
+	padding: 4px;
+}
+
+.fo-fxml-catalog .fo-bg-orb {
+	position: absolute;
+	border-radius: 9999px;
+	pointer-events: none;
+	z-index: 0;
+	filter: blur(0.5px);
+}
+
+.fo-fxml-catalog .fo-bg-orb-1 {
+	width: 500px;
+	height: 500px;
+	left: -260px;
+	top: -130px;
+	background: rgba(94, 84, 142, 0.06);
+}
+
+.fo-fxml-catalog .fo-bg-orb-2 {
+	width: 380px;
+	height: 380px;
+	right: -130px;
+	top: 220px;
+	background: rgba(159, 134, 192, 0.05);
+}
+
+.fo-fxml-catalog .fo-bg-orb-3 {
+	width: 280px;
+	height: 280px;
+	right: 110px;
+	top: -90px;
+	background: rgba(224, 177, 203, 0.05);
+}
+
+.fo-fxml-catalog .fo-catalog-header,
+.fo-fxml-catalog form,
+.fo-fxml-catalog .row,
+.fo-fxml-catalog nav {
+	z-index: 1;
+}
+
 .fo-fxml-catalog .fo-catalog-header h3 {
 	font-size: 32px;
 	font-weight: 900;
 	color: #231942;
+	letter-spacing: -0.02em;
 }
 
 .fo-fxml-catalog .fo-catalog-header p {
@@ -462,11 +507,27 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	color: #6b7280;
 }
 
+.fo-fxml-catalog .fo-glass-card {
+	background: rgba(255, 255, 255, 0.84);
+	border: 1px solid rgba(216, 201, 240, 0.65);
+	box-shadow: 0 14px 40px rgba(35, 25, 66, 0.09);
+	backdrop-filter: blur(2px);
+}
+
 .fo-fxml-catalog .fo-filter-combo {
 	background: #fff;
 	border: 1px solid #d8c9f0;
 	border-radius: 12px;
-	min-height: 44px;
+	min-height: 46px;
+	box-shadow: none;
+}
+
+.fo-fxml-catalog .fo-langue-wrap {
+	display: block;
+}
+
+.fo-fxml-catalog .fo-langue-combo {
+	opacity: 1;
 }
 
 .fo-fxml-catalog .fo-search-wrap {
@@ -476,12 +537,14 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	border: 1.5px solid #d8c9f0;
 	border-radius: 50px;
 	padding: 5px;
+	box-shadow: 0 8px 24px rgba(94, 84, 142, 0.08);
 }
 
 .fo-fxml-catalog .fo-search-wrap .fo-search-input {
 	background: transparent;
 	border: 0;
 	padding: 10px 20px;
+	height: auto;
 }
 
 .fo-fxml-catalog .fo-search-wrap .fo-search-input:focus {
@@ -489,19 +552,50 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	border: 0;
 }
 
+.fo-fxml-catalog .fo-search-button {
+	background: linear-gradient(135deg, #667eea 0%, #5e548e 100%);
+	color: #fff;
+	border: 0;
+	border-radius: 999px;
+	padding: 10px 20px;
+	font-weight: 700;
+}
+
+.fo-fxml-catalog .fo-search-button:hover,
+.fo-fxml-catalog .fo-search-button:focus {
+	color: #fff;
+	box-shadow: 0 8px 22px rgba(94, 84, 142, 0.28);
+}
+
+.fo-fxml-catalog .fo-reset-link {
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: #6b7280;
+	text-decoration: none;
+}
+
+.fo-fxml-catalog .fo-reset-link:hover,
+.fo-fxml-catalog .fo-reset-link:focus {
+	color: #5e548e;
+	text-decoration: none;
+}
+
 .fo-fxml-catalog .fo-stat-card {
 	padding: 25px;
 	min-height: 140px;
+	min-width: 180px;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	gap: 8px;
+	border-radius: 18px;
 }
 
 .fo-fxml-catalog .fo-stat-card small {
 	font-size: 14px;
 	font-weight: 600;
 	color: #6b7280;
+	text-transform: none;
 }
 
 .fo-fxml-catalog .fo-stat-card strong {
@@ -512,7 +606,11 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 }
 
 .fo-fxml-catalog .fo-course-card {
+	max-width: 350px;
+	margin: 0 auto;
+	border-radius: 20px;
 	transition: transform 0.25s ease, box-shadow 0.25s ease;
+	box-shadow: 0 10px 30px rgba(94, 84, 142, 0.15);
 }
 
 .fo-fxml-catalog .fo-course-card:hover {
@@ -524,6 +622,8 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	height: 160px;
 	background: #5e548e;
 	overflow: hidden;
+	border-top-left-radius: 20px;
+	border-top-right-radius: 20px;
 }
 
 .fo-fxml-catalog .fo-course-cover img {
@@ -532,10 +632,79 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	object-fit: cover;
 }
 
+.fo-fxml-catalog .fo-card-badges .badge {
+	padding: 0.4rem 0.7rem;
+	font-size: 0.73rem;
+	font-weight: 700;
+	border-radius: 999px;
+}
+
+.fo-fxml-catalog .fo-level-badge--beginner {
+	background: #d1fae5;
+	color: #065f46;
+}
+
+.fo-fxml-catalog .fo-level-badge--intermediate {
+	background: #fef3c7;
+	color: #92400e;
+}
+
+.fo-fxml-catalog .fo-level-badge--advanced {
+	background: #fee2e2;
+	color: #991b1b;
+}
+
+.fo-fxml-catalog .fo-category-badge {
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	color: #4b5563;
+}
+
+.fo-fxml-catalog .fo-course-title {
+	font-weight: 800;
+	color: #1f2937;
+	font-size: 1.1rem;
+}
+
+.fo-fxml-catalog .fo-course-description {
+	line-height: 1.45;
+	min-height: 58px;
+	max-height: 60px;
+	overflow: hidden;
+}
+
+.fo-fxml-catalog .fo-courses-grid {
+	justify-content: center;
+}
+
+.fo-fxml-catalog .fo-meta-row {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 12px 16px;
+	color: #6b7280;
+}
+
+.fo-fxml-catalog .fo-meta-item {
+	display: inline-flex;
+	align-items: center;
+	font-size: 0.86rem;
+}
+
+.fo-fxml-catalog .fo-price-label {
+	color: #5e548e;
+	font-weight: 800;
+	font-size: 0.88rem;
+}
+
 .fo-fxml-catalog .btn-warning {
 	background: #f59e0b;
 	border-color: #f59e0b;
 	color: #fff;
+	font-weight: 700;
+	border-radius: 999px;
+	padding-top: 0.52rem;
+	padding-bottom: 0.52rem;
 }
 
 .fo-fxml-catalog .btn-warning:hover,
@@ -543,6 +712,20 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	background: #d97706;
 	border-color: #d97706;
 	color: #fff;
+}
+
+.fo-fxml-catalog .fo-btn-commencer,
+.fo-fxml-catalog .btn-primary.btn-block {
+	border-radius: 999px;
+	padding-top: 0.52rem;
+	padding-bottom: 0.52rem;
+	font-weight: 700;
+}
+
+@media (max-width: 991px) {
+	.fo-fxml-catalog .fo-course-card {
+		max-width: 100%;
+	}
 }
 
 @media (max-width: 767px) {
@@ -557,6 +740,10 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	.fo-fxml-catalog .fo-search-wrap .btn {
 		margin-left: 0 !important;
 		width: 100%;
+	}
+
+	.fo-fxml-catalog .fo-bg-orb {
+		display: none;
 	}
 }
 
