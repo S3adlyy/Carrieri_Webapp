@@ -23,36 +23,93 @@
                 </div>
             {% endfor %}
 
-            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'mission-form', 'id': 'missionForm'}}) }}
 
-            <div class="form-group">
-                {{ form_label(form.description) }}
-                {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.errors|length ? ' is-invalid' : '')}}) }}
+            <div class="form-group" id="description-group">
+                {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.description, {'attr': {
+                    'class': 'form-control',
+                    'rows': 6,
+                    'placeholder': 'Décrivez la mission en détail...',
+                    'id': 'mission_description'
+                }}) }}
+                <div class="validation-icon">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+                <div class="form-hint">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Décrivez la mission en détail (minimum 10 caractères, maximum 2000 caractères)
+                    </small>
+                </div>
+                <div class="character-counter" id="desc-counter">
+                    <span id="desc-length">0</span> / 2000 caractères
+                </div>
+                <div class="error-message" id="description-error"></div>
                 {{ form_errors(form.description) }}
-                <small class="form-text text-muted">Décrivez la mission en détail (minimum 10 caractères).</small>
             </div>
 
             <div class="row">
                 <div class="col-md-6">
-                    <div class="form-group">
-                        {{ form_label(form.type) }}
-                        {{ form_widget(form.type, {'attr': {'class': 'form-control' ~ (form.type.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="form-group" id="type-group">
+                        {{ form_label(form.type, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.type, {'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Ex: Développement, Design, Marketing...',
+                            'id': 'mission_type'
+                        }}) }}
+                        <div class="validation-icon">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div class="form-hint">
+                            <small class="text-muted">
+                                <i class="fas fa-tag"></i>
+                                Type de mission (minimum 3 caractères)
+                            </small>
+                        </div>
+                        <div class="error-message" id="type-error"></div>
                         {{ form_errors(form.type) }}
-                        <small class="form-text text-muted">Ex: Développement, Design, Marketing, etc.</small>
                     </div>
                 </div>
                 <div class="col-md-6">
-                    <div class="form-group">
-                        {{ form_label(form.scoreMin) }}
-                        {{ form_widget(form.scoreMin, {'attr': {'class': 'form-control' ~ (form.scoreMin.vars.errors|length ? ' is-invalid' : '')}}) }}
+                    <div class="form-group" id="score-group">
+                        {{ form_label(form.scoreMin, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.scoreMin, {'attr': {
+                            'class': 'form-control',
+                            'placeholder': 'Ex: 75',
+                            'min': 0,
+                            'max': 100,
+                            'id': 'mission_scoreMin'
+                        }}) }}
+                        <div class="validation-icon">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </div>
+                        <div class="form-hint">
+                            <small class="text-muted">
+                                <i class="fas fa-chart-line"></i>
+                                Score minimum requis (0-100)
+                            </small>
+                        </div>
+                        <div class="score-preview">
+                            <div class="score-bar">
+                                <div class="score-fill" id="scoreFill" style="width: 0%"></div>
+                            </div>
+                            <span id="scoreValue" class="score-value-text">0</span>
+                        </div>
+                        <div class="error-message" id="score-error"></div>
                         {{ form_errors(form.scoreMin) }}
-                        <small class="form-text text-muted">Score minimum requis pour cette mission (0-100).</small>
                     </div>
                 </div>
             </div>
 
-            <div class="form-group">
-                <button type="submit" class="btn btn-primary">
+            <div class="form-status" id="form-status-container">
+                <div class="status-indicator" id="form-status">
+                    <i class="fas fa-times-circle"></i> Formulaire incomplet
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="fas fa-save"></i> Créer la mission
                 </button>
                 <a href="{{ path('app_admin_missions_list') }}" class="btn btn-secondary">
@@ -63,4 +120,364 @@
             {{ form_end(form) }}
         </div>
     </div>
+
+    <style>
+        .mission-form .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .form-label {
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            display: block;
+            font-weight: 600;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+            padding: 10px 40px 10px 12px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group.valid .form-control {
+            border-color: #10b981;
+            background-color: #f0fdf4;
+        }
+
+        .form-group.invalid .form-control {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+
+        .validation-icon {
+            position: absolute;
+            right: 12px;
+            top: 42px;
+            font-size: 16px;
+        }
+
+        .form-group.valid .validation-icon i {
+            color: #10b981;
+        }
+
+        .form-group.invalid .validation-icon i {
+            color: #dc2626;
+        }
+
+        .error-message {
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .form-group.invalid .error-message {
+            display: block;
+            background-color: #fef2f2;
+            color: #dc2626;
+            border-left: 3px solid #dc2626;
+        }
+
+        .form-hint {
+            margin-top: 5px;
+        }
+
+        .character-counter {
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 5px;
+            text-align: right;
+        }
+
+        .character-counter.warning {
+            color: #f59e0b;
+        }
+
+        .character-counter.danger {
+            color: #dc2626;
+        }
+
+        .score-preview {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score-bar {
+            flex: 1;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .score-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+
+        .score-value-text {
+            font-size: 12px;
+            font-weight: 600;
+            min-width: 35px;
+        }
+
+        .form-status {
+            margin: 20px 0;
+            padding: 12px 16px;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-indicator.valid {
+            color: #10b981;
+        }
+
+        .status-indicator.invalid {
+            color: #dc2626;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .form-group.invalid .form-control {
+            animation: shake 0.3s ease;
+        }
+    </style>
+
+    <script>
+        const validators = {
+            description: function(value) {
+                if (!value || value.trim().length === 0) {
+                    return { valid: false, message: "La description est obligatoire." };
+                }
+                if (value.length < 10) {
+                    return { valid: false, message: "La description doit contenir au moins 10 caractères. (actuel: " + value.length + ")" };
+                }
+                if (value.length > 2000) {
+                    return { valid: false, message: "La description ne peut pas dépasser 2000 caractères." };
+                }
+                return { valid: true, message: "" };
+            },
+            type: function(value) {
+                if (!value || value.trim().length === 0) {
+                    return { valid: false, message: "Le type de mission est obligatoire." };
+                }
+                if (value.length < 3) {
+                    return { valid: false, message: "Le type doit contenir au moins 3 caractères. (actuel: " + value.length + ")" };
+                }
+                if (value.length > 100) {
+                    return { valid: false, message: "Le type ne peut pas dépasser 100 caractères." };
+                }
+                return { valid: true, message: "" };
+            },
+            score: function(value) {
+                if (value === null || value === undefined || value === '') {
+                    return { valid: false, message: "Le score minimum est obligatoire." };
+                }
+                const score = parseInt(value);
+                if (isNaN(score)) {
+                    return { valid: false, message: "Le score doit être un nombre valide." };
+                }
+                if (score < 0) {
+                    return { valid: false, message: "Le score doit être supérieur ou égal à 0." };
+                }
+                if (score > 100) {
+                    return { valid: false, message: "Le score doit être inférieur ou égal à 100." };
+                }
+                return { valid: true, message: "" };
+            }
+        };
+
+        function validateField(fieldId, validator, groupId, errorId) {
+            const field = document.getElementById(fieldId);
+            const group = document.getElementById(groupId);
+            const errorDiv = document.getElementById(errorId);
+
+            if (!field || !group) return { valid: true };
+
+            const value = field.value;
+            const result = validator(value);
+
+            group.classList.remove('valid', 'invalid');
+
+            if (result.valid) {
+                group.classList.add('valid');
+                if (errorDiv) errorDiv.innerHTML = '';
+            } else {
+                group.classList.add('invalid');
+                if (errorDiv) errorDiv.innerHTML = result.message;
+            }
+
+            return result;
+        }
+
+        function updateFormStatus() {
+            const descField = document.getElementById('mission_description');
+            const typeField = document.getElementById('mission_type');
+            const scoreField = document.getElementById('mission_scoreMin');
+
+            const descriptionValid = descField ? validators.description(descField.value).valid : false;
+            const typeValid = typeField ? validators.type(typeField.value).valid : false;
+            const scoreValid = scoreField ? validators.score(scoreField.value).valid : false;
+
+            const allValid = descriptionValid && typeValid && scoreValid;
+            const submitBtn = document.getElementById('submitBtn');
+            const statusDiv = document.getElementById('form-status');
+
+            if (submitBtn) {
+                submitBtn.disabled = !allValid;
+            }
+
+            if (statusDiv) {
+                if (allValid) {
+                    statusDiv.className = 'status-indicator valid';
+                    statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> ✓ Formulaire complet et valide - Vous pouvez créer la mission';
+                } else {
+                    let missingFields = [];
+                    if (!descriptionValid) missingFields.push('Description');
+                    if (!typeValid) missingFields.push('Type');
+                    if (!scoreValid) missingFields.push('Score');
+                    statusDiv.className = 'status-indicator invalid';
+                    statusDiv.innerHTML = '<i class="fas fa-times-circle"></i> ✗ Formulaire incomplet - Champs manquants: ' + missingFields.join(', ');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Description
+            const descField = document.getElementById('mission_description');
+            if (descField) {
+                descField.addEventListener('input', function() {
+                    validateField('mission_description', validators.description, 'description-group', 'description-error');
+                    updateFormStatus();
+
+                    const length = this.value.length;
+                    const lengthSpan = document.getElementById('desc-length');
+                    const counter = document.getElementById('desc-counter');
+                    if (lengthSpan) lengthSpan.textContent = length;
+
+                    if (length < 10) {
+                        counter.classList.add('warning');
+                        counter.classList.remove('danger');
+                    } else if (length > 1900) {
+                        counter.classList.add('danger');
+                        counter.classList.remove('warning');
+                    } else {
+                        counter.classList.remove('warning', 'danger');
+                    }
+                });
+                validateField('mission_description', validators.description, 'description-group', 'description-error');
+            }
+
+            // Type
+            const typeField = document.getElementById('mission_type');
+            if (typeField) {
+                typeField.addEventListener('input', function() {
+                    validateField('mission_type', validators.type, 'type-group', 'type-error');
+                    updateFormStatus();
+                });
+                validateField('mission_type', validators.type, 'type-group', 'type-error');
+            }
+
+            // Score
+            const scoreField = document.getElementById('mission_scoreMin');
+            if (scoreField) {
+                scoreField.addEventListener('input', function() {
+                    validateField('mission_scoreMin', validators.score, 'score-group', 'score-error');
+                    updateFormStatus();
+
+                    const value = parseInt(this.value) || 0;
+                    const percentage = Math.min(Math.max(value, 0), 100);
+                    const scoreFill = document.getElementById('scoreFill');
+                    const scoreValue = document.getElementById('scoreValue');
+
+                    if (scoreFill) scoreFill.style.width = percentage + '%';
+                    if (scoreValue) scoreValue.textContent = percentage;
+
+                    if (percentage >= 70) {
+                        scoreFill.style.background = 'linear-gradient(90deg, #10b981, #059669)';
+                    } else if (percentage >= 40) {
+                        scoreFill.style.background = 'linear-gradient(90deg, #f59e0b, #d97706)';
+                    } else {
+                        scoreFill.style.background = 'linear-gradient(90deg, #ef4444, #dc2626)';
+                    }
+                });
+                validateField('mission_scoreMin', validators.score, 'score-group', 'score-error');
+            }
+
+            if (descField) {
+                const length = descField.value.length;
+                const lengthSpan = document.getElementById('desc-length');
+                if (lengthSpan) lengthSpan.textContent = length;
+            }
+
+            updateFormStatus();
+        });
+    </script>
 {% endblock %}
