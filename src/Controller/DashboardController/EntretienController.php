@@ -4,7 +4,8 @@
 declare(strict_types=1);
 
 namespace App\Controller\DashboardController;
-
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use App\Entity\Entretien;
 use App\Entity\User;
 use App\Form\EntretienType;
@@ -136,5 +137,69 @@ class EntretienController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_candidats_acceptes');
+    }
+    #[Route('/candidats-acceptes/export/excel', name: 'app_admin_candidats_acceptes_export_excel')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function exportExcel(Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Récupérer tous les rendus acceptés pour les missions du recruteur
+        $candidats = $this->renduMissionRepository->findAcceptedSubmissionsByRecruiter($user->getId());
+
+        // Générer le HTML pour l'export Excel
+        $html = $this->renderView('BackOffice/dashboard/entretiens/export_candidats_excel.html.twig', [
+            'candidats' => $candidats,
+            'export_date' => date('d/m/Y H:i:s'),
+        ]);
+
+        // Headers pour forcer le téléchargement en tant que fichier Excel
+        $fileName = 'candidats_acceptes_' . date('Y-m-d_H-i-s') . '.xls';
+
+        return new Response($html, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Cache-Control' => 'max-age=0',
+        ]);
+    }
+
+    #[Route('/candidats-acceptes/export/pdf', name: 'app_admin_candidats_acceptes_export_pdf')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function exportPDF(Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Récupérer tous les rendus acceptés pour les missions du recruteur
+        $candidats = $this->renduMissionRepository->findAcceptedSubmissionsByRecruiter($user->getId());
+
+        // Générer le HTML pour le PDF
+        $html = $this->renderView('BackOffice/dashboard/entretiens/export_candidats_pdf.html.twig', [
+            'candidats' => $candidats,
+            'export_date' => date('d/m/Y H:i:s'),
+        ]);
+
+        // Configurer Dompdf
+        $options = new Options();
+        $options->set('defaultFont', 'Arial');
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isRemoteEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        // Générer le PDF
+        $fileName = 'candidats_acceptes_' . date('Y-m-d_H-i-s') . '.pdf';
+        return new Response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
+        ]);
     }
 }

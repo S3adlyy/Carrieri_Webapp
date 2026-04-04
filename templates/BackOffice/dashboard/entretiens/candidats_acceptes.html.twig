@@ -14,6 +14,14 @@
         <div class="card-header">
             <h3 class="card-title">Liste des candidats dont la mission a été acceptée</h3>
             <div class="card-tools">
+                <div class="btn-group mr-2">
+                    <a href="{{ path('app_admin_candidats_acceptes_export_excel') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </a>
+                    <a href="{{ path('app_admin_candidats_acceptes_export_pdf') }}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                </div>
                 <span class="badge badge-info">{{ candidats|length }} candidat(s)</span>
             </div>
         </div>

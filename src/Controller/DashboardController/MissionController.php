@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 namespace App\Controller\DashboardController;
 
+
 use App\Entity\Mission;
 use App\Entity\User;
 use App\Form\MissionType;
@@ -91,56 +92,21 @@ class MissionController extends AbstractController
             $sortOrder
         );
 
-        // Créer le fichier Excel
-        $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet();
+        // Générer le HTML pour l'export Excel
+        $html = $this->renderView('BackOffice/dashboard/missions/export_excel.html.twig', [
+            'missions' => $missions,
+            'export_date' => date('d/m/Y H:i:s'),
+            'search' => $search,
+        ]);
 
-        // En-têtes
-        $sheet->setCellValue('A1', 'ID');
-        $sheet->setCellValue('B1', 'Description');
-        $sheet->setCellValue('C1', 'Type');
-        $sheet->setCellValue('D1', 'Score Minimum');
-        $sheet->setCellValue('E1', 'Date de création');
+        // Headers pour forcer le téléchargement en tant que fichier Excel
+        $fileName = 'missions_' . date('Y-m-d_H-i-s') . '.xls';
 
-        // Style des en-têtes
-        $headerStyle = [
-            'font' => ['bold' => true, 'size' => 12],
-            'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'E0E0E0']],
-            'alignment' => ['horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER]
-        ];
-        $sheet->getStyle('A1:E1')->applyFromArray($headerStyle);
-
-        // Auto-size des colonnes
-        foreach(range('A','E') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
-
-        // Remplir les données
-        $row = 2;
-        foreach ($missions as $mission) {
-            $sheet->setCellValue('A' . $row, $mission->getId());
-            $sheet->setCellValue('B' . $row, $mission->getDescription());
-            $sheet->setCellValue('C' . $row, $mission->getType());
-            $sheet->setCellValue('D' . $row, $mission->getScoreMin());
-            $sheet->setCellValue('E' . $row, $mission->getCreatedAt() ? $mission->getCreatedAt()->format('d/m/Y H:i') : '');
-
-            // Style pour les lignes
-            if ($row % 2 == 0) {
-                $sheet->getStyle('A' . $row . ':E' . $row)->applyFromArray([
-                    'fill' => ['fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID, 'startColor' => ['rgb' => 'F9F9F9']]
-                ]);
-            }
-
-            $row++;
-        }
-
-        // Créer le fichier
-        $writer = new Xlsx($spreadsheet);
-        $fileName = 'missions_' . date('Y-m-d_H-i-s') . '.xlsx';
-        $tempFile = tempnam(sys_get_temp_dir(), $fileName);
-        $writer->save($tempFile);
-
-        return $this->file($tempFile, $fileName, ResponseHeaderBag::DISPOSITION_INLINE);
+        return new Response($html, 200, [
+            'Content-Type' => 'application/vnd.ms-excel',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     #[Route('/export/pdf', name: 'app_admin_missions_export_pdf')]

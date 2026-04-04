@@ -17,34 +17,34 @@
                 <a href="{{ path('app_admin_missions_create') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Nouvelle mission
                 </a>
-
                 <a href="{{ path('app_admin_candidats_acceptes') }}" class="btn btn-success btn-sm">
                     <i class="fas fa-users"></i> Candidats acceptés
                 </a>
-
                 <span class="badge badge-info ml-2">{{ missions|length }} mission(s)</span>
             </div>
         </div>
 
         <div class="card-body">
-            <!-- Barre de recherche et boutons d'export -->
-            <div class="row mb-3">
-                <div class="col-md-6">
-                    <form method="get" action="{{ path('app_admin_missions_list') }}" class="form-inline">
+            <!-- Barre de recherche avancée -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <form method="get" action="{{ path('app_admin_missions_list') }}" id="searchForm">
                         <div class="input-group">
                             <input type="text"
                                    name="search"
+                                   id="searchInput"
                                    class="form-control"
-                                   placeholder="Rechercher par description..."
-                                   value="{{ search|default('') }}">
-                            <input type="hidden" name="sort_by" value="{{ sort_by|default('id') }}">
-                            <input type="hidden" name="sort_order" value="{{ sort_order|default('DESC') }}">
+                                   placeholder="Rechercher par description, type..."
+                                   value="{{ search|default('') }}"
+                                   autocomplete="off">
+                            <input type="hidden" name="sort_by" id="sortBy" value="{{ sort_by|default('id') }}">
+                            <input type="hidden" name="sort_order" id="sortOrder" value="{{ sort_order|default('DESC') }}">
                             <div class="input-group-append">
                                 <button class="btn btn-primary" type="submit">
                                     <i class="fas fa-search"></i> Rechercher
                                 </button>
                                 {% if search|default('') %}
-                                    <a href="{{ path('app_admin_missions_list') }}" class="btn btn-secondary">
+                                    <a href="{{ path('app_admin_missions_list') }}" class="btn btn-secondary" id="resetSearch">
                                         <i class="fas fa-times"></i> Réinitialiser
                                     </a>
                                 {% endif %}
@@ -52,7 +52,7 @@
                         </div>
                     </form>
                 </div>
-                <div class="col-md-6 text-right">
+                <div class="col-md-4 text-right">
                     <div class="btn-group">
                         <a href="{{ path('app_admin_missions_export_excel', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC')}) }}"
                            class="btn btn-success btn-sm">
@@ -61,6 +61,31 @@
                         <a href="{{ path('app_admin_missions_export_pdf', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC')}) }}"
                            class="btn btn-danger btn-sm">
                             <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtres rapides -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="quick-filters">
+                        <span class="filter-label">Filtres rapides :</span>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'all'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'all' or app.request.query.get('filter') is null %}active{% endif %}">
+                            Toutes
+                        </a>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'high'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'high' %}active{% endif %}">
+                            <i class="fas fa-chart-line"></i> Score élevé (≥80)
+                        </a>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'medium'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'medium' %}active{% endif %}">
+                            <i class="fas fa-chart-simple"></i> Score moyen (50-79)
+                        </a>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'low'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'low' %}active{% endif %}">
+                            <i class="fas fa-chart-line"></i> Score faible ({"<"}50)
                         </a>
                     </div>
                 </div>
@@ -76,11 +101,11 @@
 
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0">
+                <table class="table table-hover table-striped mb-0" id="missionsTable">
                     <thead>
                     <tr>
-                        <th>
-                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'description', 'sort_order': (sort_by|default('id') == 'description' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                        <th class="sortable" data-sort="description">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'description', 'sort_order': (sort_by|default('id') == 'description' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
                                class="text-dark text-decoration-none">
                                 Description
                                 {% if sort_by|default('id') == 'description' %}
@@ -90,8 +115,8 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'type', 'sort_order': (sort_by|default('id') == 'type' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                        <th class="sortable" data-sort="type">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'type', 'sort_order': (sort_by|default('id') == 'type' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
                                class="text-dark text-decoration-none">
                                 Type
                                 {% if sort_by|default('id') == 'type' %}
@@ -101,8 +126,8 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'scoreMin', 'sort_order': (sort_by|default('id') == 'scoreMin' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                        <th class="sortable" data-sort="scoreMin">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'scoreMin', 'sort_order': (sort_by|default('id') == 'scoreMin' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
                                class="text-dark text-decoration-none">
                                 Score min
                                 {% if sort_by|default('id') == 'scoreMin' %}
@@ -112,8 +137,8 @@
                                 {% endif %}
                             </a>
                         </th>
-                        <th>
-                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'createdAt', 'sort_order': (sort_by|default('id') == 'createdAt' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                        <th class="sortable" data-sort="createdAt">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'createdAt', 'sort_order': (sort_by|default('id') == 'createdAt' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
                                class="text-dark text-decoration-none">
                                 Créée le
                                 {% if sort_by|default('id') == 'createdAt' %}
@@ -209,12 +234,191 @@
         </div>
 
         <div class="card-footer">
-            <small class="text-muted">
-                <i class="fas fa-info-circle"></i>
-                Total : {{ missions|length }} mission(s) |
-                Cliquez sur les en-têtes pour trier |
-                Utilisez la barre de recherche pour filtrer par description
-            </small>
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Total : <strong id="totalCount">{{ missions|length }}</strong> mission(s) |
+                        Cliquez sur les en-têtes pour trier |
+                        Utilisez la barre de recherche pour filtrer
+                    </small>
+                </div>
+                <div class="col-md-6 text-right">
+                    <div class="btn-group btn-group-xs">
+                        <button type="button" class="btn btn-default btn-sm" id="refreshTable">
+                            <i class="fas fa-sync-alt"></i> Rafraîchir
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    </div>
+
+    <style>
+        /* Styles pour les filtres rapides */
+        .quick-filters {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: #f8f9fa;
+            color: #495057;
+            border-radius: 20px;
+            font-size: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .filter-badge:hover {
+            background: #e9ecef;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .filter-badge.active {
+            background: #007bff;
+            color: white;
+        }
+
+        /* Styles pour les en-têtes triables */
+        .sortable {
+            cursor: pointer;
+        }
+
+        .sortable a:hover {
+            color: #007bff !important;
+        }
+
+        /* Animation de chargement */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .table tbody tr {
+            animation: fadeIn 0.3s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .quick-filters {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 10px;
+            }
+
+            .filter-badge {
+                white-space: nowrap;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Recherche en temps réel (optionnelle - avec délai)
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        const form = document.getElementById('searchForm');
+                        if (form) {
+                            form.submit();
+                        }
+                    }, 500);
+                });
+            }
+
+            // Rafraîchir la page
+            const refreshBtn = document.getElementById('refreshTable');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    window.location.href = "{{ path('app_admin_missions_list') }}";
+                });
+            }
+
+            // Mettre en évidence la ligne au survol
+            const rows = document.querySelectorAll('#missionsTable tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+
+            // Filtrage côté client (pour les filtres rapides sans rechargement)
+            const filterBadges = document.querySelectorAll('.filter-badge');
+            const tableRows = document.querySelectorAll('#missionsTable tbody tr');
+
+            // Fonction pour filtrer les lignes du tableau côté client
+            function filterTableByScore(scoreRange) {
+                let visibleCount = 0;
+                tableRows.forEach(row => {
+                    const scoreCell = row.cells[3];
+                    if (scoreCell) {
+                        const scoreText = scoreCell.innerText;
+                        const score = parseInt(scoreText);
+
+                        let show = false;
+                        if (scoreRange === 'high') {
+                            show = score >= 80;
+                        } else if (scoreRange === 'medium') {
+                            show = score >= 50 && score <= 79;
+                        } else if (scoreRange === 'low') {
+                            show = score < 50;
+                        } else {
+                            show = true;
+                        }
+
+                        if (show) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+
+                // Mettre à jour le compteur
+                const totalCountSpan = document.getElementById('totalCount');
+                if (totalCountSpan) {
+                    totalCountSpan.textContent = visibleCount;
+                }
+            }
+
+            // Ajouter des écouteurs d'événements pour les filtres rapides
+            filterBadges.forEach(badge => {
+                badge.addEventListener('click', function(e) {
+                    const filterValue = this.getAttribute('href')?.match(/filter=([^&]+)/);
+                    if (filterValue && filterValue[1] !== 'all') {
+                        e.preventDefault();
+                        filterTableByScore(filterValue[1]);
+
+                        // Mettre à jour les classes actives
+                        filterBadges.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
 {% endblock %}
