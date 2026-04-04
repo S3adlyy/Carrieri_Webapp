@@ -5,7 +5,6 @@ declare(strict_types=1);
 
 namespace App\Controller\DashboardController;
 
-
 use App\Entity\Mission;
 use App\Entity\User;
 use App\Form\MissionType;
@@ -18,8 +17,6 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
@@ -35,7 +32,7 @@ class MissionController extends AbstractController
 
     #[Route('/', name: 'app_admin_missions_list')]
     #[IsGranted('ROLE_RECRUITER')]
-    public function index(Request $request): Response
+    public function index(Request $request, $stats): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -46,6 +43,7 @@ class MissionController extends AbstractController
         $search = $request->query->get('search', '');
         $sortBy = $request->query->get('sort_by', 'id');
         $sortOrder = $request->query->get('sort_order', 'DESC');
+        $filter = $request->query->get('filter', 'all');
 
         // Valider les paramètres de tri
         $allowedSortFields = ['id', 'description', 'type', 'scoreMin', 'createdAt'];
@@ -62,12 +60,33 @@ class MissionController extends AbstractController
             $sortOrder
         );
 
+        // Appliquer le filtre par score
+        if ($filter !== 'all') {
+            $missions = array_filter($missions, function($mission) use ($stats, $filter) {
+                $score = $mission->getScoreMin();
+                if ($filter === 'high') {
+                    return $score >= 80;
+                } elseif ($filter === 'medium') {
+                    return $score >= 50 && $score <= 79;
+                } elseif ($filter === 'low') {
+                    return $score < 50;
+                }
+                dump($stats); die;
+                return true;
+            });
+        }
+
+        // Récupérer les statistiques
+        $stats = $this->getMissionStats($user);
+
         return $this->render('BackOffice/dashboard/missions/index.html.twig', [
             'missions' => $missions,
             'is_admin_view' => false,
             'search' => $search,
             'sort_by' => $sortBy,
             'sort_order' => $sortOrder,
+            'filter' => $filter,
+            'stats' => $stats,  // ← TRÈS IMPORTANT : Cette ligne doit être présente
         ]);
     }
 
@@ -80,7 +99,6 @@ class MissionController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Récupérer les filtres pour l'export
         $search = $request->query->get('search', '');
         $sortBy = $request->query->get('sort_by', 'id');
         $sortOrder = $request->query->get('sort_order', 'DESC');
@@ -92,14 +110,12 @@ class MissionController extends AbstractController
             $sortOrder
         );
 
-        // Générer le HTML pour l'export Excel
         $html = $this->renderView('BackOffice/dashboard/missions/export_excel.html.twig', [
             'missions' => $missions,
             'export_date' => date('d/m/Y H:i:s'),
             'search' => $search,
         ]);
 
-        // Headers pour forcer le téléchargement en tant que fichier Excel
         $fileName = 'missions_' . date('Y-m-d_H-i-s') . '.xls';
 
         return new Response($html, 200, [
@@ -118,7 +134,6 @@ class MissionController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Récupérer les filtres pour l'export
         $search = $request->query->get('search', '');
         $sortBy = $request->query->get('sort_by', 'id');
         $sortOrder = $request->query->get('sort_order', 'DESC');
@@ -130,14 +145,12 @@ class MissionController extends AbstractController
             $sortOrder
         );
 
-        // Générer le HTML pour le PDF
         $html = $this->renderView('BackOffice/dashboard/missions/export_pdf.html.twig', [
             'missions' => $missions,
             'export_date' => date('d/m/Y H:i:s'),
             'search' => $search,
         ]);
 
-        // Configurer Dompdf
         $options = new Options();
         $options->set('defaultFont', 'Arial');
         $options->set('isHtml5ParserEnabled', true);
@@ -148,7 +161,6 @@ class MissionController extends AbstractController
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
-        // Générer le PDF
         $fileName = 'missions_' . date('Y-m-d_H-i-s') . '.pdf';
         return new Response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
@@ -260,10 +272,6 @@ class MissionController extends AbstractController
         return $this->redirectToRoute('app_admin_missions_list');
     }
 
-// src/Controller/DashboardController/MissionController.php
-
-// Ajoutez cette méthode à votre contrôleur existant
-
     #[Route('/{id}/submissions', name: 'app_admin_mission_submissions')]
     #[IsGranted('ROLE_RECRUITER')]
     public function submissions(int $id, Request $request): Response
@@ -279,7 +287,6 @@ class MissionController extends AbstractController
             return $this->redirectToRoute('app_admin_missions_list');
         }
 
-        // Récupérer tous les rendus pour cette mission
         $rendus = $this->renduMissionRepository->findBy(
             ['missionId' => $mission->getId()],
             ['dateRendu' => 'DESC']
@@ -360,28 +367,6 @@ class MissionController extends AbstractController
         ]);
     }
 
-    #[Route('/status/{id}', name: 'app_candidate_rendu_status')]
-    #[IsGranted('ROLE_CANDIDAT')]
-    public function status(int $id): Response
-    {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            throw $this->createAccessDeniedException();
-        }
-
-        $rendu = $this->renduMissionRepository->find($id);
-        if (!$rendu || $rendu->getUser() !== $user) {
-            throw $this->createNotFoundException('Soumission non trouvée');
-        }
-
-        $mission = $rendu->getMission();
-
-        return $this->render('FrontOffice/main/rendu_status.html.twig', [
-            'rendu' => $rendu,
-            'mission' => $mission,
-        ]);
-    }
-
     private function getMissionStats(User $user): array
     {
         $missions = $this->missionRepository->findByUserWithSearchAndSort($user, '', 'id', 'DESC');
@@ -422,13 +407,12 @@ class MissionController extends AbstractController
         $maxScore = !empty($scores) ? max($scores) : 0;
         $minScore = !empty($scores) ? min($scores) : 0;
 
-        // Distribution des scores par tranche
         $scoreDistribution = [
-            'excellent' => 0, // 90-100
-            'good' => 0,      // 75-89
-            'average' => 0,   // 50-74
-            'poor' => 0,      // 25-49
-            'very_poor' => 0, // 0-24
+            'excellent' => 0,
+            'good' => 0,
+            'average' => 0,
+            'poor' => 0,
+            'very_poor' => 0,
         ];
 
         foreach ($scores as $score) {
@@ -454,6 +438,4 @@ class MissionController extends AbstractController
             'score_distribution' => $scoreDistribution,
         ];
     }
-
-
 }

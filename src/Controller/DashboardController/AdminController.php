@@ -62,9 +62,16 @@ class AdminController extends AbstractController
     {
         $user = $this->requireUser();
 
+        // Récupérer les missions (comme avant)
+        $missions = $this->dashboardData->listMissions($user);
+
+        // Récupérer les statistiques
+        $stats = $this->dashboardData->getMissionStats($user);
+
         return $this->render('BackOffice/dashboard/missions/index.html.twig', [
-            'missions' => $this->dashboardData->listMissions($user),
+            'missions' => $missions,
             'is_admin_view' => $this->dashboardData->isAdmin($user),
+            'stats' => $stats,  // ← AJOUTEZ CETTE LIGNE
         ]);
     }
 
