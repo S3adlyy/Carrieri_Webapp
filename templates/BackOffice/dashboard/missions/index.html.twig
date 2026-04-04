@@ -49,6 +49,10 @@
                 </div>
                 <div class="col-md-6 text-right">
                     <div class="btn-group">
+                        <a href="{{ path('app_admin_missions_export_excel', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC')}) }}"
+                           class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
                         <a href="{{ path('app_admin_missions_export_pdf', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC')}) }}"
                            class="btn btn-danger btn-sm">
                             <i class="fas fa-file-pdf"></i> PDF
@@ -70,6 +74,17 @@
                 <table class="table table-hover table-striped mb-0">
                     <thead>
                     <tr>
+                        <th>
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'id', 'sort_order': (sort_by|default('id') == 'id' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
+                               class="text-dark text-decoration-none">
+                                ID
+                                {% if sort_by|default('id') == 'id' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
                         <th>
                             <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'description', 'sort_order': (sort_by|default('id') == 'description' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
                                class="text-dark text-decoration-none">
@@ -120,6 +135,7 @@
                     <tbody>
                     {% for m in missions %}
                         <tr>
+                            <td>{{ m.id }}</td>
                             <td>{% set d = m.description|default('') %}{{ d|length > 120 ? d|slice(0, 117) ~ '…' : (d ?: '—') }}</td>
                             <td>{{ m.type|default('—') }}</td>
                             <td>
@@ -141,6 +157,10 @@
                                     <a href="{{ path('app_admin_missions_edit', {'id': m.id}) }}"
                                        class="btn btn-warning" title="Modifier">
                                         <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ path('app_admin_mission_submissions', {'id': m.id}) }}"
+                                       class="btn btn-primary" title="Voir les soumissions">
+                                        <i class="fas fa-users"></i>
                                     </a>
                                     <button type="button"
                                             class="btn btn-danger"

@@ -188,4 +188,23 @@ class RenduMission
         }
         return $this;
     }
+
+    // Dans src/Entity/RenduMission.php, ajoutez :
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true, options: ['default' => 'en_attente'])]
+    private ?string $statut = 'en_attente';
+
+// Ajoutez les getter et setter
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(?string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+
 }

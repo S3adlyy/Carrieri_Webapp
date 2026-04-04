@@ -9,6 +9,7 @@ use App\Entity\Mission;
 use App\Entity\User;
 use App\Form\MissionType;
 use App\Repository\MissionRepository;
+use App\Repository\RenduMissionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,7 +27,8 @@ class MissionController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
-        private MissionRepository $missionRepository
+        private MissionRepository $missionRepository,
+        private RenduMissionRepository $renduMissionRepository
     ) {
     }
 
@@ -290,6 +292,106 @@ class MissionController extends AbstractController
         }
 
         return $this->redirectToRoute('app_admin_missions_list');
+    }
+
+// src/Controller/DashboardController/MissionController.php
+
+// Ajoutez cette méthode à votre contrôleur existant
+
+    #[Route('/{id}/submissions', name: 'app_admin_mission_submissions')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function submissions(int $id, Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $mission = $this->missionRepository->find($id);
+        if (!$mission || $mission->getUser() !== $user) {
+            $this->addFlash('error', 'Mission non trouvée ou accès non autorisé.');
+            return $this->redirectToRoute('app_admin_missions_list');
+        }
+
+        // Récupérer tous les rendus pour cette mission
+        $rendus = $this->renduMissionRepository->findBy(
+            ['missionId' => $mission->getId()],
+            ['dateRendu' => 'DESC']
+        );
+
+        return $this->render('BackOffice/dashboard/missions/submissions.html.twig', [
+            'mission' => $mission,
+            'rendus' => $rendus,
+        ]);
+    }
+
+    #[Route('/submission/{id}/review', name: 'app_admin_submission_review', methods: ['POST'])]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function reviewSubmission(int $id, Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $rendu = $this->renduMissionRepository->find($id);
+        if (!$rendu) {
+            $this->addFlash('error', 'Soumission non trouvée.');
+            return $this->redirectToRoute('app_admin_missions_list');
+        }
+
+        $mission = $rendu->getMission();
+        if (!$mission || $mission->getUser() !== $user) {
+            $this->addFlash('error', 'Vous n\'êtes pas autorisé à modifier cette soumission.');
+            return $this->redirectToRoute('app_admin_missions_list');
+        }
+
+        $action = $request->request->get('action');
+        $feedback = $request->request->get('feedback', '');
+
+        if ($action === 'accept') {
+            $rendu->setStatut('accepte');
+            $rendu->setFeedback($feedback ?: 'Félicitations ! Votre solution a été acceptée.');
+            $this->addFlash('success', 'La soumission a été acceptée avec succès.');
+        } elseif ($action === 'reject') {
+            $rendu->setStatut('refuse');
+            $rendu->setFeedback($feedback ?: 'Désolé, votre solution n\'a pas été retenue.');
+            $this->addFlash('success', 'La soumission a été refusée.');
+        } else {
+            $this->addFlash('error', 'Action invalide.');
+            return $this->redirectToRoute('app_admin_mission_submissions', ['id' => $mission->getId()]);
+        }
+
+        $this->entityManager->flush();
+
+        return $this->redirectToRoute('app_admin_mission_submissions', ['id' => $mission->getId()]);
+    }
+
+    #[Route('/submission/{id}/view', name: 'app_admin_submission_view')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function viewSubmission(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $rendu = $this->renduMissionRepository->find($id);
+        if (!$rendu) {
+            $this->addFlash('error', 'Soumission non trouvée.');
+            return $this->redirectToRoute('app_admin_missions_list');
+        }
+
+        $mission = $rendu->getMission();
+        if (!$mission || $mission->getUser() !== $user) {
+            $this->addFlash('error', 'Vous n\'êtes pas autorisé à voir cette soumission.');
+            return $this->redirectToRoute('app_admin_missions_list');
+        }
+
+        return $this->render('BackOffice/dashboard/missions/submission_view.html.twig', [
+            'rendu' => $rendu,
+            'mission' => $mission,
+        ]);
     }
 
 
