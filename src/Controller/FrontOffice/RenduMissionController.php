@@ -27,6 +27,48 @@ class RenduMissionController extends AbstractController
     ) {
     }
 
+    // ⚠️ IMPORTANT: Les routes sans paramètre doivent être AVANT celles avec paramètre
+
+    #[Route('/mes-resultats', name: 'app_candidate_my_results')]
+    public function myResults(): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Récupérer toutes les soumissions du candidat
+        $soumissions = $this->renduMissionRepository->findBy(
+            ['candidatId' => $user->getId()],
+            ['dateRendu' => 'DESC']
+        );
+
+        return $this->render('FrontOffice/main/my_results.html.twig', [
+            'soumissions' => $soumissions,
+        ]);
+    }
+
+    #[Route('/status/{id}', name: 'app_candidate_rendu_status')]
+    public function status(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $rendu = $this->renduMissionRepository->find($id);
+        if (!$rendu || $rendu->getUser() !== $user) {
+            throw $this->createNotFoundException('Soumission non trouvée');
+        }
+
+        $mission = $rendu->getMission();
+
+        return $this->render('FrontOffice/main/rendu_status.html.twig', [
+            'rendu' => $rendu,
+            'mission' => $mission,
+        ]);
+    }
+
     #[Route('/{id}', name: 'app_candidate_rendu_mission')]
     public function index(int $id, Request $request): Response
     {
@@ -67,14 +109,15 @@ class RenduMissionController extends AbstractController
             $renduMission->setResultat($resultat);
             $renduMission->setMission($mission);
             $renduMission->setUser($user);
+            $renduMission->setStatut('en_attente');
 
             $this->entityManager->persist($renduMission);
             $this->entityManager->flush();
 
             $this->addFlash('success', 'Votre solution a été soumise avec succès !');
 
-            // Rediriger pour éviter la resoumission
-            return $this->redirectToRoute('app_candidate_rendu_mission', ['id' => $id]);
+            // Rediriger vers la page de statut
+            return $this->redirectToRoute('app_candidate_rendu_status', ['id' => $renduMission->getId()]);
         }
 
         return $this->render('FrontOffice/main/rendu_mission.html.twig', [
@@ -164,8 +207,6 @@ class RenduMissionController extends AbstractController
 
     private function simulateCodeExecution(string $code, string $langue, array $input, $expected): bool
     {
-        // Simulation - Dans un vrai projet, utilisez un juge en ligne
-        // Pour l'exemple, on vérifie si le code contient les bons éléments
         $codeLower = strtolower($code);
 
         $requiredPatterns = [
@@ -183,7 +224,6 @@ class RenduMissionController extends AbstractController
             }
         }
 
-        // Si le code contient au moins 2 patterns, on considère le test réussi
         return $foundCount >= 2;
     }
 

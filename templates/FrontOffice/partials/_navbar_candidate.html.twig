@@ -1,3 +1,4 @@
+{# templates/FrontOffice/partials/_navbar_candidate.html.twig #}
 {# Purdue-style navbar for authenticated candidates (same grid as _navbar_landing) #}
 {% set route = app.request.attributes.get('_route') %}
 {% set user = app.user %}
@@ -40,6 +41,7 @@
 						<li><a href="{{ path('app_candidate_mission') }}" class="{{ route == 'app_candidate_mission' ? 'active' : '' }}">Mission</a></li>
 						<li><a href="{{ path('app_candidate_reclamation') }}" class="{{ route == 'app_candidate_reclamation' ? 'active' : '' }}">Réclamation</a></li>
 						<li><a href="{{ path('app_candidate_messagerie') }}" class="{{ route == 'app_candidate_messagerie' ? 'active' : '' }}">Messagerie</a></li>
+						<li><a href="{{ path('app_candidate_my_results') }}" class="{{ route == 'app_candidate_my_results' ? 'active' : '' }}">Mes résultats</a></li>
 					</ul>
 				</nav>
 			</div>
@@ -72,6 +74,7 @@
 				<li><a href="{{ path('app_candidate_mission') }}">Mission</a></li>
 				<li><a href="{{ path('app_candidate_reclamation') }}">Réclamation</a></li>
 				<li><a href="{{ path('app_candidate_messagerie') }}">Messagerie</a></li>
+				<li><a href="{{ path('app_candidate_my_results') }}">Mes résultats</a></li>
 				<li class="fo-mobile-logout"><a class="fo-candidate-logout" href="{{ path('app_logout') }}">Déconnexion</a></li>
 			</ul>
 		</div>

@@ -44,4 +44,19 @@ class RenduMissionRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    /**
+    * @return RenduMission[]
+    */
+    public function findAcceptedSubmissionsByRecruiter(int $recruiterId): array
+    {
+        return $this->createQueryBuilder('r')
+            ->innerJoin('r.mission', 'm')
+            ->where('r.statut = :statut')
+            ->andWhere('m.user = :recruiterId')
+            ->setParameter('statut', 'accepte')
+            ->setParameter('recruiterId', $recruiterId)
+            ->orderBy('r.dateRendu', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

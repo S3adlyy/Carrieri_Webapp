@@ -394,5 +394,27 @@ class MissionController extends AbstractController
         ]);
     }
 
+    #[Route('/status/{id}', name: 'app_candidate_rendu_status')]
+    #[IsGranted('ROLE_CANDIDAT')]
+    public function status(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $rendu = $this->renduMissionRepository->find($id);
+        if (!$rendu || $rendu->getUser() !== $user) {
+            throw $this->createNotFoundException('Soumission non trouvée');
+        }
+
+        $mission = $rendu->getMission();
+
+        return $this->render('FrontOffice/main/rendu_status.html.twig', [
+            'rendu' => $rendu,
+            'mission' => $mission,
+        ]);
+    }
+
 
 }

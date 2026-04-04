@@ -1,0 +1,65 @@
+{# templates/BackOffice/dashboard/entretiens/create.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Planifier un entretien{% endblock %}
+
+{% block page_title %}Planifier un entretien{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_candidats_acceptes') }}">Candidats acceptés</a></li>
+    <li class="breadcrumb-item active">Planifier</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Entretien pour {{ rendu.user ? (rendu.user.firstName ~ ' ' ~ rendu.user.lastName)|trim : rendu.user.email }}</h3>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i>
+                <strong>Mission:</strong> {{ rendu.mission.type }}<br>
+                <strong>Score obtenu:</strong> {{ rendu.score|round }}% (requis: {{ rendu.mission.scoreMin }}%)
+            </div>
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+            <div class="form-group">
+                {{ form_label(form.dateEntretien) }}
+                {{ form_widget(form.dateEntretien, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.dateEntretien) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.type) }}
+                {{ form_widget(form.type, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.type) }}
+                <small class="form-text text-muted">Ex: Technique, RH, Managerial...</small>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.lien) }}
+                {{ form_widget(form.lien, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.lien) }}
+                <small class="form-text text-muted">Lien Google Meet, Zoom, Teams...</small>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.notes) }}
+                {{ form_widget(form.notes, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.notes) }}
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Planifier l'entretien
+                </button>
+                <a href="{{ path('app_admin_candidats_acceptes') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

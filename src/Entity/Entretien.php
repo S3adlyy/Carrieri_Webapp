@@ -1,4 +1,5 @@
 <?php
+// src/Entity/Entretien.php
 
 declare(strict_types=1);
 
@@ -15,21 +16,37 @@ class Entretien
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dateEntretien = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'string', length: 100)]
     private ?string $type = null;
 
-    #[ORM\Column]
-    private ?string $status = null;
+    #[ORM\Column(type: 'string', length: 50)]
+    private ?string $status = 'planifie';
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'integer')]
     private ?int $postulationId = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'postulation_id', referencedColumnName: 'id')]
-    private ?Postulation $postulation = null;
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $lien = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $notes = null;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'candidat_id', referencedColumnName: 'id')]
+    private ?User $candidat = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $candidatId = null;
+
+    #[ORM\ManyToOne(targetEntity: RenduMission::class)]
+    #[ORM\JoinColumn(name: 'rendu_id', referencedColumnName: 'id')]
+    private ?RenduMission $rendu = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $renduId = null;
 
     public function getId(): ?int
     {
@@ -86,14 +103,79 @@ class Entretien
         return $this;
     }
 
-    public function getPostulation(): ?Postulation
+    public function getLien(): ?string
     {
-        return $this->postulation;
+        return $this->lien;
     }
 
-    public function setPostulation(?Postulation $postulation): self
+    public function setLien(?string $lien): self
     {
-        $this->postulation = $postulation;
+        $this->lien = $lien;
+        return $this;
+    }
+
+    public function getNotes(): ?string
+    {
+        return $this->notes;
+    }
+
+    public function setNotes(?string $notes): self
+    {
+        $this->notes = $notes;
+        return $this;
+    }
+
+    public function getCandidat(): ?User
+    {
+        return $this->candidat;
+    }
+
+    public function setCandidat(?User $candidat): self
+    {
+        $this->candidat = $candidat;
+        if ($candidat) {
+            $this->candidatId = $candidat->getId();
+        }
+        return $this;
+    }
+
+    public function getCandidatId(): ?int
+    {
+        return $this->candidatId;
+    }
+
+    public function setCandidatId(?int $candidatId): self
+    {
+        $this->candidatId = $candidatId;
+        return $this;
+    }
+
+    public function getRendu(): ?RenduMission
+    {
+        return $this->rendu;
+    }
+
+    public function setRendu(?RenduMission $rendu): self
+    {
+        $this->rendu = $rendu;
+        if ($rendu) {
+            $this->renduId = $rendu->getId();
+            $this->candidat = $rendu->getUser();
+            if ($this->candidat) {
+                $this->candidatId = $this->candidat->getId();
+            }
+        }
+        return $this;
+    }
+
+    public function getRenduId(): ?int
+    {
+        return $this->renduId;
+    }
+
+    public function setRenduId(?int $renduId): self
+    {
+        $this->renduId = $renduId;
         return $this;
     }
 }

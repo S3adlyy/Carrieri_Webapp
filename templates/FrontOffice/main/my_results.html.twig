@@ -1,0 +1,571 @@
+{# templates/FrontOffice/main/my_results.html.twig #}
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Mes résultats{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Supprimer tous les conteneurs restrictifs */
+        .fo-candidate-content {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .row {
+            margin: 0 !important;
+        }
+
+        .col-12 {
+            padding: 0 !important;
+        }
+
+        /* Cacher le breadcrumb */
+        .section-top, .section-top-title {
+            display: none !important;
+        }
+
+        body {
+            background: #f5f7fb;
+        }
+    </style>
+{% endblock %}
+
+{% block candidate_page_heading %}{% endblock %}
+{% block candidate_breadcrumb %}{% endblock %}
+
+{% block candidate_content %}
+    <div class="myresults-fullwidth">
+        <div class="myresults-header">
+            <div class="myresults-header-content">
+                <h1><i class="fas fa-chart-line"></i> Mes résultats</h1>
+                <p>Retrouvez ici toutes vos soumissions et leurs statuts</p>
+            </div>
+        </div>
+
+        {% if soumissions|length > 0 %}
+            <div class="myresults-table-container">
+                <div class="table-responsive">
+                    <table class="myresults-table">
+                        <thead>
+                        <tr>
+                            <th>Mission</th>
+                            <th>Date de soumission</th>
+                            <th>Langage</th>
+                            <th>Score</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for soumission in soumissions %}
+                            <tr>
+                                <td class="mission-name">
+                                    <strong>{{ soumission.mission.type }}</strong>
+                                    <small>#{{ soumission.mission.id }}</small>
+                                </td>
+                                <td>{{ soumission.dateRendu|date('d/m/Y H:i') }}</td>
+                                <td>
+                                    <span class="lang-badge">{{ soumission.langue|upper }}</span>
+                                </td>
+                                <td>
+                                    <div class="score-cell">
+                                    <span class="score-value {% if soumission.score >= soumission.mission.scoreMin %}score-success{% else %}score-failed{% endif %}">
+                                        {{ soumission.score|default(0)|round }}%
+                                    </span>
+                                        <div class="score-bar-mini">
+                                            <div class="score-fill-mini" style="width: {{ soumission.score|default(0)|round }}%"></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if soumission.statut == 'accepte' %}
+                                        <span class="status-badge status-accepted">
+                                        <i class="fas fa-check-circle"></i> Acceptée
+                                    </span>
+                                    {% elseif soumission.statut == 'refuse' %}
+                                        <span class="status-badge status-rejected">
+                                        <i class="fas fa-times-circle"></i> Refusée
+                                    </span>
+                                    {% else %}
+                                        <span class="status-badge status-pending">
+                                        <i class="fas fa-hourglass-half"></i> En attente
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ path('app_candidate_rendu_status', {'id': soumission.id}) }}" class="btn-view-result">
+                                        <i class="fas fa-eye"></i> Détails
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Cartes statistiques -->
+            <div class="myresults-stats">
+                <div class="stat-card">
+                    <div class="stat-icon green">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number">{{ soumissions|filter(s => s.statut == 'accepte')|length }}</span>
+                        <span class="stat-label">Acceptées</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon red">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number">{{ soumissions|filter(s => s.statut == 'refuse')|length }}</span>
+                        <span class="stat-label">Refusées</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon orange">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number">{{ soumissions|filter(s => s.statut == 'en_attente')|length }}</span>
+                        <span class="stat-label">En attente</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon blue">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="stat-info">
+                        <span class="stat-number">{{ soumissions|length }}</span>
+                        <span class="stat-label">Total</span>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="myresults-empty">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h3>Aucune soumission</h3>
+                <p>Vous n'avez pas encore soumis de mission.</p>
+                <a href="{{ path('app_candidate_mission') }}" class="btn-primary-custom">
+                    <i class="fas fa-tasks"></i> Découvrir les missions
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        /* Fullwidth styles */
+        .myresults-fullwidth {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+            background: #f5f7fb;
+            min-height: calc(100vh - 140px);
+        }
+
+        /* Header */
+        .myresults-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 50px;
+            width: 100%;
+        }
+
+        .myresults-header-content {
+            width: 100%;
+            text-align: center;
+        }
+
+        .myresults-header-content h1 {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 10px 0;
+        }
+
+        .myresults-header-content h1 i {
+            margin-right: 12px;
+        }
+
+        .myresults-header-content p {
+            font-size: 16px;
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+        }
+
+        /* Table container */
+        .myresults-table-container {
+            width: 100%;
+            padding: 30px 50px;
+            margin: 0;
+        }
+
+        .myresults-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .myresults-table thead th {
+            text-align: left;
+            padding: 15px 20px;
+            background: #f8fafc;
+            color: #1f2937;
+            font-weight: 600;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .myresults-table tbody td {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            vertical-align: middle;
+        }
+
+        .myresults-table tbody tr:hover {
+            background: #f8fafc;
+        }
+
+        .mission-name {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mission-name strong {
+            font-size: 16px;
+            color: #1f2937;
+        }
+
+        .mission-name small {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .lang-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e0e7ff;
+            color: #4f46e5;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .score-cell {
+            min-width: 100px;
+        }
+
+        .score-value {
+            display: inline-block;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .score-success {
+            color: #059669;
+        }
+
+        .score-failed {
+            color: #dc2626;
+        }
+
+        .score-bar-mini {
+            background: #e2e8f0;
+            border-radius: 4px;
+            height: 4px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .score-fill-mini {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-accepted {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-rejected {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .btn-view-result {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: #f1f5f9;
+            color: #475569;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .btn-view-result:hover {
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Stats cards */
+        .myresults-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%;
+            padding: 0 50px 40px 50px;
+            margin: 0;
+        }
+
+        .stat-card {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            border-radius: 16px;
+            transition: transform 0.3s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .stat-icon i {
+            font-size: 24px;
+        }
+
+        .stat-icon.green {
+            background: #d1fae5;
+        }
+
+        .stat-icon.green i {
+            color: #059669;
+        }
+
+        .stat-icon.red {
+            background: #fee2e2;
+        }
+
+        .stat-icon.red i {
+            color: #dc2626;
+        }
+
+        .stat-icon.orange {
+            background: #fef3c7;
+        }
+
+        .stat-icon.orange i {
+            color: #d97706;
+        }
+
+        .stat-icon.blue {
+            background: #e0e7ff;
+        }
+
+        .stat-icon.blue i {
+            color: #4f46e5;
+        }
+
+        .stat-info {
+            flex: 1;
+        }
+
+        .stat-number {
+            display: block;
+            font-size: 28px;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        /* Empty state */
+        .myresults-empty {
+            text-align: center;
+            padding: 80px 50px;
+            width: 100%;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .empty-icon i {
+            font-size: 40px;
+            color: #94a3b8;
+        }
+
+        .myresults-empty h3 {
+            font-size: 20px;
+            color: #1f2937;
+            margin-bottom: 10px;
+        }
+
+        .myresults-empty p {
+            color: #6b7280;
+            margin-bottom: 25px;
+        }
+
+        .btn-primary-custom {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .myresults-stats {
+                grid-template-columns: repeat(2, 1fr);
+                padding: 0 30px 30px 30px;
+            }
+
+            .myresults-table-container {
+                padding: 20px 30px;
+            }
+
+            .myresults-header {
+                padding: 30px 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .myresults-header {
+                padding: 25px 20px;
+            }
+
+            .myresults-header-content h1 {
+                font-size: 24px;
+            }
+
+            .myresults-table-container {
+                padding: 15px 20px;
+                overflow-x: auto;
+            }
+
+            .myresults-table thead th,
+            .myresults-table tbody td {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+
+            .myresults-stats {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+                padding: 0 20px 30px 20px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-number {
+                font-size: 22px;
+            }
+
+            .stat-icon {
+                width: 45px;
+                height: 45px;
+            }
+
+            .stat-icon i {
+                font-size: 20px;
+            }
+
+            .myresults-empty {
+                padding: 50px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .myresults-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .mission-name strong {
+                font-size: 14px;
+            }
+
+            .btn-view-result {
+                padding: 4px 10px;
+                font-size: 11px;
+            }
+
+            .status-badge {
+                padding: 3px 8px;
+                font-size: 10px;
+            }
+        }
+    </style>
+{% endblock %}

@@ -1,0 +1,728 @@
+{# templates/FrontOffice/main/rendu_status.html.twig #}
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Statut de votre soumission - {{ mission.type }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Supprimer tous les conteneurs restrictifs */
+        .fo-candidate-content {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+        }
+
+        .container {
+            max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+
+        .row {
+            margin: 0 !important;
+        }
+
+        .col-lg-8, .col-md-10 {
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+            padding: 0 !important;
+        }
+
+        /* Cacher le breadcrumb */
+        .section-top, .section-top-title {
+            display: none !important;
+        }
+
+        body {
+            background: #f5f7fb;
+        }
+    </style>
+{% endblock %}
+
+{% block candidate_page_heading %}{% endblock %}
+{% block candidate_breadcrumb %}{% endblock %}
+
+{% block candidate_content %}
+    <div class="status-fullwidth">
+        <!-- En-tête -->
+        <div class="status-header-full">
+            <div class="status-header-content">
+                <div class="status-icon-full">
+                    {% if rendu.statut == 'accepte' %}
+                        <i class="fas fa-check-circle"></i>
+                    {% elseif rendu.statut == 'refuse' %}
+                        <i class="fas fa-times-circle"></i>
+                    {% else %}
+                        <i class="fas fa-clock"></i>
+                    {% endif %}
+                </div>
+                <h1 class="status-title-full">
+                    {% if rendu.statut == 'accepte' %}
+                        Soumission acceptée !
+                    {% elseif rendu.statut == 'refuse' %}
+                        Soumission refusée
+                    {% else %}
+                        Soumission en attente
+                    {% endif %}
+                </h1>
+                <p class="status-subtitle">
+                    Mission: {{ mission.type }} | Score requis: {{ mission.scoreMin }} points
+                </p>
+            </div>
+        </div>
+
+        <!-- Grille principale 2 colonnes pleine largeur -->
+        <div class="status-grid">
+            <!-- Colonne gauche -->
+            <div class="status-col-left">
+                <!-- Informations de la mission -->
+                <div class="card-info">
+                    <div class="card-header-custom">
+                        <i class="fas fa-info-circle"></i> Informations de la mission
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="info-row">
+                            <span class="info-label">Mission :</span>
+                            <span class="info-value">{{ mission.type }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Score requis :</span>
+                            <span class="info-value">{{ mission.scoreMin }} points</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Date de soumission :</span>
+                            <span class="info-value">{{ rendu.dateRendu|date('d/m/Y à H:i') }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Langage utilisé :</span>
+                            <span class="info-value">{{ rendu.langue|upper }}</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Score obtenu :</span>
+                            <span class="info-value">
+                            <span class="score-badge {{ rendu.score >= mission.scoreMin ? 'score-success' : 'score-failed' }}">
+                                {{ rendu.score|default(0)|round }} / 100
+                            </span>
+                        </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barre de progression -->
+                <div class="card-score">
+                    <div class="card-header-custom">
+                        <i class="fas fa-chart-line"></i> Progression
+                    </div>
+                    <div class="card-body-custom">
+                        <div class="score-label-large">
+                            <span>Votre score</span>
+                            <span class="score-percent">{{ rendu.score|default(0)|round }}%</span>
+                        </div>
+                        <div class="score-progress-large">
+                            <div class="score-progress-fill-large" style="width: {{ rendu.score|default(0)|round }}%"></div>
+                        </div>
+                        <div class="score-threshold-large">
+                            <div class="threshold-line-large" style="left: {{ mission.scoreMin }}%"></div>
+                            <div class="threshold-label-large">Seuil requis: {{ mission.scoreMin }}%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statut -->
+                <div class="card-status">
+                    <div class="card-header-custom">
+                        <i class="fas fa-flag-checkered"></i> Statut de la soumission
+                    </div>
+                    <div class="card-body-custom text-center">
+                        {% if rendu.statut == 'accepte' %}
+                            <div class="status-badge-large status-accepted-large">
+                                <i class="fas fa-check-circle"></i> Acceptée
+                            </div>
+                            <p class="status-message-large success">
+                                Félicitations ! Votre solution a été acceptée par le recruteur.
+                            </p>
+                        {% elseif rendu.statut == 'refuse' %}
+                            <div class="status-badge-large status-rejected-large">
+                                <i class="fas fa-times-circle"></i> Refusée
+                            </div>
+                            <p class="status-message-large error">
+                                Votre solution n'a pas été retenue. N'hésitez pas à réessayer avec une autre approche.
+                            </p>
+                        {% else %}
+                            <div class="status-badge-large status-pending-large">
+                                <i class="fas fa-hourglass-half"></i> En attente
+                            </div>
+                            <p class="status-message-large pending">
+                                Votre soumission est en cours d'examen par le recruteur.
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne droite -->
+            <div class="status-col-right">
+                <!-- Feedback -->
+                {% if rendu.feedback %}
+                    <div class="card-feedback">
+                        <div class="card-header-custom">
+                            <i class="fas fa-comment-dots"></i> Feedback du recruteur
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="feedback-content-large">
+                                <i class="fas fa-quote-left"></i>
+                                <p>{{ rendu.feedback|nl2br }}</p>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Entretien -->
+                {% if rendu.entretiens|length > 0 %}
+                    {% set entretien = rendu.entretiens|first %}
+                    <div class="card-interview">
+                        <div class="card-header-custom">
+                            <i class="fas fa-calendar-alt"></i> Entretien programmé
+                        </div>
+                        <div class="card-body-custom">
+                            <div class="interview-info-large">
+                                <div class="interview-icon-large">
+                                    <i class="fas fa-video"></i>
+                                </div>
+                                <div class="interview-details">
+                                    <h4>{{ entretien.type }}</h4>
+                                    <p><i class="fas fa-calendar-day"></i> {{ entretien.dateEntretien|date('l d/m/Y') }}</p>
+                                    <p><i class="fas fa-clock"></i> {{ entretien.dateEntretien|date('H:i') }}</p>
+                                </div>
+                            </div>
+
+                            {% if entretien.lien %}
+                                <div class="interview-link-large">
+                                    <a href="{{ entretien.lien }}" target="_blank" class="btn-join">
+                                        <i class="fas fa-video"></i> Rejoindre la visioconférence
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                            {% if entretien.notes %}
+                                <div class="interview-notes-large">
+                                    <strong><i class="fas fa-sticky-note"></i> Notes :</strong>
+                                    <p>{{ entretien.notes|nl2br }}</p>
+                                </div>
+                            {% endif %}
+
+                            <div class="interview-calendar-large">
+                                <button class="btn-calendar" onclick="addToCalendar({{ entretien.id }})">
+                                    <i class="fas fa-calendar-plus"></i> Ajouter à mon calendrier
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                <!-- Résultats des tests -->
+                {% if rendu.resultat %}
+                    <div class="card-results">
+                        <div class="card-header-custom">
+                            <i class="fas fa-vial"></i> Résultats des tests
+                        </div>
+                        <div class="card-body-custom p-0">
+                            <div class="results-content-large">
+                                {{ rendu.resultat|raw }}
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="status-actions">
+            <a href="{{ path('app_candidate_mission_show', {'id': mission.id}) }}" class="btn-action btn-back">
+                <i class="fas fa-arrow-left"></i> Retour à la mission
+            </a>
+            <a href="{{ path('app_candidate_rendu_mission', {'id': mission.id}) }}" class="btn-action btn-retry">
+                <i class="fas fa-redo-alt"></i> Nouvelle version
+            </a>
+            <a href="{{ path('app_candidate_mission') }}" class="btn-action btn-missions">
+                <i class="fas fa-tasks"></i> Toutes les missions
+            </a>
+        </div>
+    </div>
+
+    <style>
+        /* Fullwidth styles - sans espaces vides */
+        .status-fullwidth {
+            width: 100%;
+            max-width: 100%;
+            padding: 0;
+            margin: 0;
+            background: #f5f7fb;
+            min-height: calc(100vh - 140px);
+        }
+
+        /* Header */
+        .status-header-full {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px 50px;
+            width: 100%;
+        }
+
+        .status-header-content {
+            width: 100%;
+            text-align: center;
+        }
+
+        .status-icon-full {
+            font-size: 64px;
+            margin-bottom: 20px;
+            color: white;
+        }
+
+        .status-title-full {
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 10px 0;
+        }
+
+        .status-subtitle {
+            font-size: 16px;
+            color: rgba(255,255,255,0.9);
+            margin: 0;
+        }
+
+        /* Grille 2 colonnes - pleine largeur */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            width: 100%;
+            padding: 30px 50px;
+            margin: 0;
+        }
+
+        /* Cartes communes */
+        .card-info, .card-score, .card-status, .card-feedback, .card-interview, .card-results {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .card-header-custom {
+            background: #f8fafc;
+            padding: 15px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            color: #1f2937;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .card-header-custom i {
+            color: #667eea;
+            margin-right: 8px;
+        }
+
+        .card-body-custom {
+            padding: 20px;
+        }
+
+        /* Info rows */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #4b5563;
+        }
+
+        .info-value {
+            color: #1f2937;
+            font-weight: 500;
+        }
+
+        .score-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .score-success {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .score-failed {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        /* Score progression */
+        .score-label-large {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .score-percent {
+            color: #667eea;
+            font-size: 18px;
+        }
+
+        .score-progress-large {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 12px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .score-progress-fill-large {
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s ease;
+        }
+
+        .score-threshold-large {
+            position: relative;
+            height: 20px;
+        }
+
+        .threshold-line-large {
+            position: absolute;
+            width: 2px;
+            height: 20px;
+            background: #ef4444;
+            top: 0;
+        }
+
+        .threshold-label-large {
+            position: absolute;
+            right: 0;
+            top: -25px;
+            font-size: 11px;
+            color: #ef4444;
+            font-weight: 600;
+        }
+
+        /* Status badge */
+        .status-badge-large {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        .status-accepted-large {
+            background: #d1fae5;
+            color: #059669;
+        }
+
+        .status-rejected-large {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .status-pending-large {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .status-message-large {
+            margin: 0;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .status-message-large.success {
+            color: #059669;
+        }
+
+        .status-message-large.error {
+            color: #dc2626;
+        }
+
+        .status-message-large.pending {
+            color: #d97706;
+        }
+
+        /* Feedback */
+        .feedback-content-large {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e8f4ff 100%);
+            padding: 20px;
+            border-radius: 12px;
+            position: relative;
+        }
+
+        .feedback-content-large i:first-child {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 24px;
+            color: #764ba2;
+            opacity: 0.3;
+        }
+
+        .feedback-content-large p {
+            margin: 0;
+            padding-left: 35px;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        /* Interview */
+        .interview-info-large {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .interview-icon-large {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .interview-icon-large i {
+            font-size: 28px;
+            color: white;
+        }
+
+        .interview-details {
+            flex: 1;
+        }
+
+        .interview-details h4 {
+            margin: 0 0 8px 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .interview-details p {
+            margin: 4px 0;
+            color: #4b5563;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .interview-details p i {
+            color: #667eea;
+            width: 20px;
+        }
+
+        .interview-link-large {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .btn-join {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-join:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+        .interview-notes-large {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 15px 0;
+        }
+
+        .interview-calendar-large {
+            text-align: center;
+            margin-top: 15px;
+        }
+
+        .btn-calendar {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-calendar:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        /* Results */
+        .results-content-large {
+            background: #1e1e2e;
+            padding: 20px;
+            color: #fff;
+            overflow-x: auto;
+        }
+
+        /* Actions */
+        .status-actions {
+            width: 100%;
+            padding: 0 50px 40px 50px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-action {
+            padding: 12px 28px;
+            border-radius: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back {
+            background: #f1f5f9;
+            color: #475569;
+        }
+
+        .btn-back:hover {
+            background: #e2e8f0;
+            text-decoration: none;
+            color: #1f2937;
+        }
+
+        .btn-retry {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-retry:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn-missions {
+            background: white;
+            border: 2px solid #667eea;
+            color: #667eea;
+        }
+
+        .btn-missions:hover {
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 992px) {
+            .status-grid {
+                grid-template-columns: 1fr;
+                padding: 30px 30px;
+            }
+
+            .status-header-full {
+                padding: 30px 30px;
+            }
+
+            .status-actions {
+                padding: 0 30px 40px 30px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .status-grid {
+                padding: 20px 20px;
+            }
+
+            .status-header-full {
+                padding: 25px 20px;
+            }
+
+            .status-title-full {
+                font-size: 24px;
+            }
+
+            .status-actions {
+                padding: 0 20px 30px 20px;
+                flex-direction: column;
+            }
+
+            .btn-action {
+                justify-content: center;
+            }
+
+            .interview-info-large {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .info-row {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+    </style>
+
+    <script>
+        function addToCalendar(entretienId) {
+            fetch(`/candidat/entretien/${entretienId}/ics`)
+                .then(response => response.blob())
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'entretien.ics';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    alert('Impossible de générer le fichier calendrier');
+                });
+        }
+    </script>
+{% endblock %}

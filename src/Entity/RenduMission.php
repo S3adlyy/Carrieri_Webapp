@@ -5,6 +5,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Table(name: 'rendu_mission')]
@@ -43,6 +45,9 @@ class RenduMission
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $langue = null;
 
+    #[ORM\Column(type: 'string', length: 50, nullable: true, options: ['default' => 'en_attente'])]
+    private ?string $statut = 'en_attente';
+
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'candidat_id', referencedColumnName: 'id')]
     private ?User $user = null;
@@ -50,6 +55,19 @@ class RenduMission
     #[ORM\ManyToOne(targetEntity: Mission::class)]
     #[ORM\JoinColumn(name: 'mission_id', referencedColumnName: 'id')]
     private ?Mission $mission = null;
+
+    /**
+     * @var Collection<int, Entretien>
+     */
+    #[ORM\OneToMany(targetEntity: Entretien::class, mappedBy: 'rendu')]
+    private Collection $entretiens;
+
+    public function __construct()
+    {
+        $this->entretiens = new ArrayCollection();
+    }
+
+    // ... tous vos autres getters et setters ...
 
     public function getId(): ?int
     {
@@ -161,6 +179,17 @@ class RenduMission
         return $this;
     }
 
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(?string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
     public function getUser(): ?User
     {
         return $this->user;
@@ -189,22 +218,30 @@ class RenduMission
         return $this;
     }
 
-    // Dans src/Entity/RenduMission.php, ajoutez :
-
-    #[ORM\Column(type: 'string', length: 50, nullable: true, options: ['default' => 'en_attente'])]
-    private ?string $statut = 'en_attente';
-
-// Ajoutez les getter et setter
-    public function getStatut(): ?string
+    /**
+     * @return Collection<int, Entretien>
+     */
+    public function getEntretiens(): Collection
     {
-        return $this->statut;
+        return $this->entretiens;
     }
 
-    public function setStatut(?string $statut): self
+    public function addEntretien(Entretien $entretien): self
     {
-        $this->statut = $statut;
+        if (!$this->entretiens->contains($entretien)) {
+            $this->entretiens->add($entretien);
+            $entretien->setRendu($this);
+        }
         return $this;
     }
 
-
+    public function removeEntretien(Entretien $entretien): self
+    {
+        if ($this->entretiens->removeElement($entretien)) {
+            if ($entretien->getRendu() === $this) {
+                $entretien->setRendu(null);
+            }
+        }
+        return $this;
+    }
 }

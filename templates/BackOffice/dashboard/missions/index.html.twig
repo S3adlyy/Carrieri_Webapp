@@ -17,6 +17,11 @@
                 <a href="{{ path('app_admin_missions_create') }}" class="btn btn-primary btn-sm">
                     <i class="fas fa-plus"></i> Nouvelle mission
                 </a>
+
+                <a href="{{ path('app_admin_candidats_acceptes') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-users"></i> Candidats acceptés
+                </a>
+
                 <span class="badge badge-info ml-2">{{ missions|length }} mission(s)</span>
             </div>
         </div>
@@ -75,17 +80,6 @@
                     <thead>
                     <tr>
                         <th>
-                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'id', 'sort_order': (sort_by|default('id') == 'id' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
-                               class="text-dark text-decoration-none">
-                                ID
-                                {% if sort_by|default('id') == 'id' %}
-                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
-                                {% else %}
-                                    <i class="fas fa-sort text-muted"></i>
-                                {% endif %}
-                            </a>
-                        </th>
-                        <th>
                             <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'description', 'sort_order': (sort_by|default('id') == 'description' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC'}) }}"
                                class="text-dark text-decoration-none">
                                 Description
@@ -135,7 +129,6 @@
                     <tbody>
                     {% for m in missions %}
                         <tr>
-                            <td>{{ m.id }}</td>
                             <td>{% set d = m.description|default('') %}{{ d|length > 120 ? d|slice(0, 117) ~ '…' : (d ?: '—') }}</td>
                             <td>{{ m.type|default('—') }}</td>
                             <td>
