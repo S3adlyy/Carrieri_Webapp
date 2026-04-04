@@ -7,75 +7,118 @@
     {{ parent() }}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        /* Aligné sur mission.html.twig + front-overrides (candidat) */
+        .rendu-mission-root {
+            --rm-primary: #667eea;
+            --rm-secondary: #764ba2;
+            --rm-accent: #2c7aff;
+            --rm-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --rm-text: #2d3748;
+            --rm-muted: #718096;
+            --rm-border: #e2e8f0;
+            --rm-surface: #ffffff;
+            --rm-soft: #f7fafc;
+            --rm-code-bg: #282a36;
+            --rendu-nav-offset: 132px;
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to left, rgb(228, 242, 254), rgb(255, 238, 254));
         }
 
-        /* Reset des marges pour prendre tout l'espace */
-        .fo-candidate-content {
-            padding: 0 !important;
-            margin: 0 !important;
-            max-width: 100% !important;
+        .fo-candidate-content.login_register {
             position: relative;
             z-index: 2;
         }
 
-        .container {
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        .row {
-            margin: 0 !important;
-        }
-
-        .col-lg-8, .col-md-10 {
-            max-width: 100% !important;
-            flex: 0 0 100% !important;
-        }
-
-        /* Cacher le breadcrumb */
-        .section-top, .section-top-title {
+        /* Plein écran sous la navbar (style LeetCode), charte inchangée */
+        body:has(.rendu-mission-root) .section-top {
             display: none !important;
         }
 
-        body {
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-            overflow: hidden;
+        body:has(.rendu-mission-root) section.login_register.fo-candidate-content.section-padding {
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height: calc(100dvh - var(--rendu-nav-offset, 132px));
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Container Spline 3D en arrière-plan */
-        .spline-background {
-            position: fixed;
-            top: 0;
-            left: 0;
+        body:has(.rendu-mission-root) section.login_register.fo-candidate-content > .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
             width: 100%;
-            height: 100%;
-            z-index: 0;
-            pointer-events: none;
-            opacity: 0.3;
+            max-width: 100% !important;
         }
 
-        spline-viewer {
-            width: 100%;
-            height: 100%;
+        body:has(.rendu-mission-root) section.login_register.fo-candidate-content .row {
+            flex: 1;
+            min-height: 0;
+            display: flex;
         }
 
-        /* S'assurer que la navbar reste au-dessus */
-        .top_header_banner {
-            position: relative;
-            z-index: 10 !important;
+        body:has(.rendu-mission-root) section.login_register.fo-candidate-content [class*="col-"] {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
         }
 
-        .logo-contact, #navigation {
-            position: relative;
-            z-index: 10 !important;
+        body:has(.rendu-mission-root) .rendu-mission-root .container {
+            max-width: 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
         }
 
-        /* Mode plein écran */
+        body:has(.rendu-mission-root) .rendu-mission-root .row {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+
+        body:has(.rendu-mission-root) .rendu-mission-root .col-lg-8,
+        body:has(.rendu-mission-root) .rendu-mission-root .col-md-10 {
+            max-width: 100% !important;
+            flex: 0 0 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        .rendu-mission-topbar {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.9);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+        }
+
+        .rendu-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--rm-accent);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .rendu-back-link:hover {
+            color: #0b104a;
+            text-decoration: none;
+        }
+
+        .rendu-back-link i {
+            font-size: 0.85rem;
+        }
+
+        /* Mode plein écran — focus éditeur */
         .fullscreen-mode {
             position: fixed !important;
             top: 0 !important;
@@ -85,12 +128,13 @@
             width: 100% !important;
             height: 100% !important;
             z-index: 9999 !important;
-            background: rgba(20, 20, 30, 0.98) !important;
-            backdrop-filter: blur(20px) !important;
+            background: rgba(15, 23, 42, 0.92) !important;
+            backdrop-filter: blur(12px) !important;
         }
 
         .fullscreen-mode .leetcode-panel-right {
             width: 100% !important;
+            border-radius: 0 !important;
         }
 
         .fullscreen-mode .leetcode-panel-left {
@@ -99,18 +143,112 @@
     </style>
 {% endblock %}
 
-{% block candidate_page_heading %}{% endblock %}
-{% block candidate_breadcrumb %}{% endblock %}
+{% block candidate_page_heading %}Rendu de mission{% endblock %}
+{% block candidate_breadcrumb %} / Missions / {{ mission.type }}{% endblock %}
 
 {% block candidate_content %}
-    <!-- Spline 3D Background -->
-    <div class="spline-background">
-        <spline-viewer url="https://prod.spline.design/mlkMZXmoLQbdGmeF/scene.splinecode"></spline-viewer>
+    <div class="rendu-mission-root">
+    <div class="rendu-mission-topbar">
+        <a href="{{ path('app_candidate_mission') }}" class="rendu-back-link">
+            <i class="fas fa-arrow-left"></i> Retour aux missions
+        </a>
     </div>
 
     <div class="leetcode-container">
         <div class="leetcode-panels">
-            <!-- Panneau gauche - Description -->
+            <!-- Panneau gauche — Éditeur (ordre DOM / LeetCode) -->
+            <div class="leetcode-panel-right" id="editorPanel">
+                <div class="editor-header">
+                    <div class="language-selector">
+                        <label for="language">
+                            <i class="fas fa-code"></i> Langage
+                        </label>
+                        <select id="language" class="language-select">
+                            <option value="python" selected>Python</option>
+                            <option value="javascript">JavaScript</option>
+                            <option value="php">PHP</option>
+                            <option value="java">Java</option>
+                            <option value="cpp">C++</option>
+                        </select>
+                    </div>
+                    <div class="editor-actions">
+                        <button class="fullscreen-btn" id="fullscreenBtn" title="Mode plein écran">
+                            <i class="fas fa-expand"></i>
+                        </button>
+                        <button class="reset-btn" id="resetCode" title="Réinitialiser le code">
+                            <i class="fas fa-undo-alt"></i> Réinitialiser
+                        </button>
+                    </div>
+                </div>
+
+                <form method="post" id="codeForm" class="editor-form">
+                <div class="rendu-cm-shell">
+                <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
+# Essayez votre code ici !
+
+def twoSum(nums, target):
+    """
+    :type nums: List[int]
+    :type target: int
+    :rtype: List[int]
+    """
+    seen = {}
+    for i, num in enumerate(nums):
+        complement = target - num
+        if complement in seen:
+            return [seen[complement], i]
+        seen[num] = i
+    return []
+
+# Testez votre code avec print
+print("Bienvenue dans l'éditeur de code!")
+print("Exemple d'utilisation:")
+result = twoSum([2, 7, 11, 15], 9)
+print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
+                </div>
+                    <input type="hidden" name="langue" id="selectedLangue" value="python">
+
+                    <div class="editor-footer">
+                        <button type="button" class="run-btn" id="runCode">
+                            <i class="fas fa-play"></i> Exécuter
+                        </button>
+                        <button type="submit" class="submit-btn" id="submitCode">
+                            <i class="fas fa-paper-plane"></i> Soumettre
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Résultats - Terminal unique -->
+                <div class="results-container" id="resultsPanel" style="display: none;">
+                    <div class="results-header">
+                        <h3>
+                            <i class="fas fa-terminal"></i> Terminal - Résultats
+                        </h3>
+                        <button class="close-results" id="closeResults" title="Fermer">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="results-content" id="resultsContent">
+                        <div class="test-results">
+                            <div class="test-summary">
+                                <h4>Prêt à exécuter</h4>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 0%"></div>
+                                </div>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-message" style="color: #718096;">
+                                        <i class="fas fa-code"></i> Cliquez sur « Exécuter » pour tester votre code
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panneau droit — Description -->
             <div class="leetcode-panel-left">
                 <div class="problem-content">
                     <div class="problem-header">
@@ -187,387 +325,361 @@
                     {% endif %}
                 </div>
             </div>
-
-            <!-- Panneau droit - Éditeur de code -->
-            <div class="leetcode-panel-right" id="editorPanel">
-                <div class="editor-header">
-                    <div class="language-selector">
-                        <label for="language">
-                            <i class="fas fa-code"></i> Langage
-                        </label>
-                        <select id="language" class="language-select">
-                            <option value="python" selected>Python</option>
-                            <option value="javascript">JavaScript</option>
-                            <option value="php">PHP</option>
-                            <option value="java">Java</option>
-                            <option value="cpp">C++</option>
-                        </select>
-                    </div>
-                    <div class="editor-actions">
-                        <button class="fullscreen-btn" id="fullscreenBtn" title="Mode plein écran">
-                            <i class="fas fa-expand"></i>
-                        </button>
-                        <button class="reset-btn" id="resetCode" title="Réinitialiser le code">
-                            <i class="fas fa-undo-alt"></i> Réinitialiser
-                        </button>
-                    </div>
-                </div>
-
-                <form method="post" id="codeForm" class="editor-form">
-                <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
-# Essayez votre code ici !
-
-def twoSum(nums, target):
-    """
-    :type nums: List[int]
-    :type target: int
-    :rtype: List[int]
-    """
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            return [seen[complement], i]
-        seen[num] = i
-    return []
-
-# Testez votre code avec print
-print("Bienvenue dans l'éditeur de code!")
-print("Exemple d'utilisation:")
-result = twoSum([2, 7, 11, 15], 9)
-print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
-                    <input type="hidden" name="langue" id="selectedLangue" value="python">
-
-                    <div class="editor-footer">
-                        <button type="button" class="run-btn" id="runCode">
-                            <i class="fas fa-play"></i> Exécuter
-                        </button>
-                        <button type="submit" class="submit-btn" id="submitCode">
-                            <i class="fas fa-paper-plane"></i> Soumettre
-                        </button>
-                    </div>
-                </form>
-
-                <!-- Résultats - Terminal unique -->
-                <div class="results-container" id="resultsPanel" style="display: none;">
-                    <div class="results-header">
-                        <h3>
-                            <i class="fas fa-terminal"></i> Terminal - Résultats
-                        </h3>
-                        <button class="close-results" id="closeResults" title="Fermer">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </div>
-                    <div class="results-content" id="resultsContent">
-                        <div class="test-results">
-                            <div class="test-summary">
-                                <h4>Prêt à exécuter</h4>
-                                <div class="progress-bar">
-                                    <div class="progress-fill" style="width: 0%"></div>
-                                </div>
-                            </div>
-                            <div class="test-details">
-                                <div class="test-item">
-                                    <div class="test-message" style="color: rgba(255,255,255,0.6);">
-                                        <i class="fas fa-code"></i> Cliquez sur "Exécuter" pour tester votre code
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
+    </div>
     </div>
 
     <style>
-        /* Container principal - prend tout l'espace sous la navbar */
-        .leetcode-container {
+        /* Split plein écran type LeetCode, charte Carrieri */
+        .rendu-mission-root .leetcode-container {
             position: relative;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: transparent;
-            overflow: hidden;
             z-index: 2;
-            height: calc(100vh - 140px);
-            margin-top: 0;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            width: 100%;
+            max-width: none;
+            margin: 0;
         }
 
-        .leetcode-panels {
+        .rendu-mission-root .leetcode-panels {
             display: flex;
             width: 100%;
-            height: 100%;
+            flex: 1;
+            min-height: 0;
             gap: 0;
+            align-items: stretch;
         }
 
-        /* Panneau gauche - Description améliorée */
-        .leetcode-panel-left {
+        /* Éditeur à gauche ~55 %, énoncé à droite ~45 %, bords droits type workspace */
+        .rendu-mission-root .leetcode-panel-right {
+            width: 55%;
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
+            border-right: 1px solid rgba(226, 232, 240, 0.95);
+        }
+
+        .rendu-mission-root .leetcode-panel-right:hover {
+            box-shadow: none;
+        }
+
+        .rendu-mission-root .leetcode-panel-left {
             width: 45%;
-            background: rgba(15, 25, 45, 0.65);
-            backdrop-filter: blur(20px);
-            overflow-y: auto;
-            padding: 28px 32px;
-            border-right: 1px solid rgba(0, 255, 255, 0.15);
-            scroll-behavior: smooth;
-            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+            border-radius: 0;
+            box-shadow: none;
+            border: none;
         }
 
-        .problem-content {
-            max-width: 800px;
-            margin: 0 auto;
+        .rendu-mission-root .rendu-cm-shell {
+            margin-left: 0;
+            margin-right: 0;
+            flex: 1;
+            min-height: 180px;
+        }
+
+        .leetcode-panel-left {
+            width: 42%;
+            min-width: 0;
+            background: var(--rm-surface, #fff);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--rm-border, #e2e8f0);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .leetcode-panel-left .problem-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem 1.5rem 1.75rem;
+            scroll-behavior: smooth;
         }
 
         .problem-header {
-            margin-bottom: 28px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid rgba(0, 255, 255, 0.2);
+            margin: 0;
+            padding: 1.35rem 1.5rem 1.25rem;
+            background: var(--rm-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            color: #fff;
+            border-bottom: none;
         }
 
         .problem-title-section {
-            margin-bottom: 12px;
+            margin-bottom: 0.5rem;
         }
 
         .problem-number {
-            font-size: 13px;
-            color: #00ffff;
+            font-size: 0.72rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.88);
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            font-weight: 600;
+            gap: 0.5rem;
+            margin-bottom: 0.35rem;
+        }
+
+        .problem-number i {
+            opacity: 0.9;
         }
 
         .problem-title {
-            font-size: 28px;
-            font-weight: 800;
-            background: linear-gradient(135deg, #ffffff, #00ffff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
+            font-family: 'Lexend', system-ui, sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
             margin: 0;
-            text-shadow: 0 2px 10px rgba(0, 255, 255, 0.2);
+            line-height: 1.25;
         }
 
         .problem-meta {
-            display: flex;
-            gap: 12px;
-            align-items: center;
+            margin-top: 0.85rem;
         }
 
         .score-badge {
-            font-size: 12px;
-            padding: 5px 14px;
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.2), rgba(255, 152, 0, 0.2));
-            border: 1px solid rgba(255, 193, 7, 0.4);
-            color: #ffc107;
-            border-radius: 20px;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.85rem;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            color: #fff;
+            border-radius: 999px;
             font-weight: 700;
             display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.4rem;
         }
 
         .problem-description {
-            margin-bottom: 28px;
+            margin-bottom: 1.5rem;
         }
 
         .problem-description p {
-            color: rgba(255, 255, 255, 0.9);
-            line-height: 1.7;
-            font-size: 15px;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            color: var(--rm-text, #2d3748);
+            line-height: 1.75;
+            font-size: 0.95rem;
+            margin: 0;
         }
 
         .problem-examples h3,
         .problem-constraints h3 {
-            font-size: 18px;
+            font-family: 'Lexend', system-ui, sans-serif;
+            font-size: 1.05rem;
             font-weight: 700;
-            background: linear-gradient(135deg, #ffffff, #00ffff);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            margin-bottom: 16px;
+            color: #0b104a;
+            margin: 0 0 0.9rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.5rem;
+        }
+
+        .problem-examples h3 i,
+        .problem-constraints h3 i {
+            color: var(--rm-primary, #667eea);
         }
 
         .example {
-            background: rgba(0, 255, 255, 0.08);
-            border-radius: 12px;
-            padding: 16px 20px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
-            transition: all 0.3s ease;
+            background: var(--rm-soft, #f7fafc);
+            border-radius: 14px;
+            padding: 1rem 1.1rem;
+            margin-bottom: 0.75rem;
+            border: 1px solid var(--rm-border, #e2e8f0);
+            transition: box-shadow 0.2s, border-color 0.2s;
         }
 
         .example:hover {
-            background: rgba(0, 255, 255, 0.12);
-            transform: translateX(4px);
-            border-color: rgba(0, 255, 255, 0.4);
+            border-color: rgba(102, 126, 234, 0.45);
+            box-shadow: 0 4px 14px rgba(102, 126, 234, 0.12);
         }
 
         .example-title {
             font-weight: 700;
-            color: #00ffff;
-            margin-bottom: 10px;
-            font-size: 14px;
+            color: var(--rm-primary, #667eea);
+            margin-bottom: 0.5rem;
+            font-size: 0.82rem;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.35rem;
         }
 
         .example-content {
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.85);
-            line-height: 1.6;
+            font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Monaco, monospace;
+            font-size: 0.8rem;
+            color: var(--rm-text, #2d3748);
+            line-height: 1.55;
         }
 
         .example-content div {
-            margin-bottom: 5px;
+            margin-bottom: 0.25rem;
         }
 
         .example-content strong {
-            color: #ffc107;
+            color: #b7791f;
         }
 
         .problem-constraints ul {
             margin: 0;
-            padding-left: 20px;
+            padding-left: 1.25rem;
         }
 
         .problem-constraints li {
-            color: rgba(255, 255, 255, 0.85);
-            margin-bottom: 8px;
-            font-size: 13px;
+            color: var(--rm-muted, #718096);
+            margin-bottom: 0.35rem;
+            font-size: 0.85rem;
         }
 
         .previous-submission {
-            margin-top: 32px;
-            padding: 20px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.08), rgba(0, 150, 255, 0.08));
-            border-radius: 12px;
-            border: 1px solid rgba(0, 255, 255, 0.2);
+            margin-top: 1.5rem;
+            padding: 1.1rem 1.2rem;
+            background: linear-gradient(135deg, #f8faff 0%, #f3e8ff 100%);
+            border-radius: 14px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
         }
 
         .previous-submission h3 {
-            font-size: 16px;
+            font-size: 0.95rem;
             font-weight: 700;
-            color: #00ffff;
-            margin-bottom: 14px;
+            color: #0b104a;
+            margin: 0 0 0.65rem;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.45rem;
         }
 
-        .submission-details {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .previous-submission h3 i {
+            color: var(--rm-primary, #667eea);
         }
 
         .submission-details div {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.85);
+            font-size: 0.82rem;
+            color: var(--rm-muted, #718096);
         }
 
         .submission-details .label {
             font-weight: 600;
-            color: #00ffff;
-            margin-right: 12px;
+            color: #0b104a;
+            margin-right: 0.35rem;
         }
 
         .submission-details .score {
-            color: #ffc107;
+            color: #c05621;
             font-weight: 700;
         }
 
-        /* Panneau droit - Éditeur amélioré */
+        /* Panneau éditeur — carte claire + zone code sombre */
         .leetcode-panel-right {
-            width: 55%;
-            background: rgba(10, 20, 30, 0.75);
-            backdrop-filter: blur(20px);
+            width: 58%;
+            min-width: 0;
+            background: var(--rm-surface, #fff);
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+            border: 1px solid var(--rm-border, #e2e8f0);
             display: flex;
             flex-direction: column;
-            height: 100%;
-            transition: all 0.3s ease;
+            min-height: 0;
+            transition: box-shadow 0.25s ease;
+        }
+
+        .leetcode-panel-right:hover {
+            box-shadow: 0 14px 44px rgba(102, 126, 234, 0.14);
         }
 
         .editor-header {
-            padding: 12px 24px;
-            background: rgba(0, 0, 0, 0.3);
-            border-bottom: 1px solid rgba(0, 255, 255, 0.15);
+            position: relative;
+            padding: 0.85rem 1.25rem;
+            padding-top: calc(0.85rem + 3px);
+            background: linear-gradient(180deg, #fafbff 0%, #f4f6fb 100%);
+            border-bottom: 1px solid var(--rm-border, #e2e8f0);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 0.65rem;
+        }
+
+        .editor-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--rm-gradient, linear-gradient(90deg, #667eea, #764ba2));
         }
 
         .language-selector {
             display: flex;
             align-items: center;
-            gap: 12px;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 13px;
-            font-weight: 500;
+            gap: 0.65rem;
+            color: #0b104a;
+            font-size: 0.82rem;
+            font-weight: 600;
         }
 
         .language-selector label {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.4rem;
+        }
+
+        .language-selector label i {
+            color: var(--rm-primary, #667eea);
         }
 
         .language-select {
-            padding: 6px 12px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 8px;
-            color: #00ffff;
-            font-size: 13px;
+            padding: 0.45rem 2rem 0.45rem 0.75rem;
+            background: #fff;
+            border: 1px solid var(--rm-border, #e2e8f0);
+            border-radius: 10px;
+            color: #0b104a;
+            font-size: 0.82rem;
+            font-weight: 600;
             cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s ease;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            min-width: 9.5rem;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23667eea' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.65rem center;
+            appearance: none;
         }
 
-        .language-select:hover {
-            background: rgba(0, 255, 255, 0.2);
-            border-color: #00ffff;
-        }
-
+        .language-select:hover,
         .language-select:focus {
             outline: none;
-            border-color: #00ffff;
-            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+            border-color: #2c7aff;
+            box-shadow: 0 0 0 3px rgba(44, 122, 255, 0.2);
         }
 
         .editor-actions {
             display: flex;
-            gap: 12px;
+            gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
-        .fullscreen-btn, .reset-btn {
-            padding: 6px 12px;
-            background: rgba(0, 255, 255, 0.1);
-            border: 1px solid rgba(0, 255, 255, 0.3);
-            border-radius: 8px;
-            color: #00ffff;
-            font-size: 13px;
+        .fullscreen-btn,
+        .reset-btn {
+            padding: 0.45rem 0.85rem;
+            background: #fff;
+            border: 1px solid var(--rm-border, #e2e8f0);
+            border-radius: 10px;
+            color: #0b104a;
+            font-size: 0.78rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
+            transition: background 0.2s, border-color 0.2s, color 0.2s;
+            display: inline-flex;
             align-items: center;
-            gap: 6px;
+            gap: 0.4rem;
         }
 
-        .fullscreen-btn:hover, .reset-btn:hover {
-            background: rgba(0, 255, 255, 0.2);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 255, 255, 0.2);
+        .fullscreen-btn:hover,
+        .reset-btn:hover {
+            background: #f0f4ff;
+            border-color: rgba(44, 122, 255, 0.35);
+            color: #2c7aff;
         }
 
         .editor-form {
@@ -577,198 +689,218 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
             min-height: 0;
         }
 
+        .rendu-cm-shell {
+            flex: 1;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+            margin: 0 1rem 0;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 1px solid #1e1f2e;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+            background: var(--rm-code-bg, #282a36);
+        }
+
         #codeEditor {
             display: none;
         }
 
-        .CodeMirror {
+        .rendu-cm-shell .CodeMirror {
             flex: 1;
-            height: auto !important;
-            font-size: 14px;
-            font-family: 'Monaco', 'Courier New', monospace;
-            background: rgba(0, 0, 0, 0.4) !important;
+            height: 100% !important;
+            min-height: 260px !important;
+            font-size: 13px;
+            line-height: 1.55;
+            font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Monaco, monospace;
             border-radius: 0;
         }
 
-        .CodeMirror-gutters {
-            background: rgba(0, 0, 0, 0.5) !important;
-            border-right: 1px solid rgba(0, 255, 255, 0.1);
+        .rendu-cm-shell .CodeMirror-scroll {
+            min-height: 260px;
+        }
+
+        .rendu-cm-shell .CodeMirror-gutters {
+            border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
         }
 
         .editor-footer {
-            padding: 12px 24px;
-            background: rgba(0, 0, 0, 0.3);
+            padding: 0.9rem 1.25rem;
+            background: linear-gradient(180deg, #fafbff 0%, #f4f6fb 100%);
             display: flex;
-            gap: 15px;
+            gap: 0.65rem;
             justify-content: flex-end;
-            border-top: 1px solid rgba(0, 255, 255, 0.15);
+            flex-wrap: wrap;
+            border-top: 1px solid var(--rm-border, #e2e8f0);
         }
 
-        .run-btn, .submit-btn {
-            padding: 10px 24px;
+        .run-btn,
+        .submit-btn {
+            padding: 0.65rem 1.25rem;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: inline-flex;
             align-items: center;
-            gap: 8px;
-            font-size: 14px;
+            gap: 0.45rem;
+            font-size: 0.88rem;
         }
 
         .run-btn {
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.2), rgba(0, 150, 255, 0.2));
-            border: 1px solid #00ffff;
-            color: #00ffff;
+            background: #fff;
+            border: 2px solid #2c7aff;
+            color: #2c7aff;
         }
 
         .run-btn:hover {
-            background: linear-gradient(135deg, #00ffff, #0099ff);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.3);
+            background: #2c7aff;
+            color: #fff;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(44, 122, 255, 0.35);
         }
 
         .submit-btn {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+            background: var(--rm-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
+            color: #fff;
+            border: none;
         }
 
         .submit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 22px rgba(102, 126, 234, 0.45);
         }
 
-        /* Résultats - Terminal amélioré */
+        /* Sortie / terminal — lisible sur fond clair */
         .results-container {
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            border-top: 1px solid rgba(0, 255, 255, 0.3);
-            max-height: 320px;
+            background: #f8fafc;
+            border-top: 1px solid var(--rm-border, #e2e8f0);
+            max-height: 300px;
             overflow-y: auto;
-            border-radius: 0;
         }
 
         .results-header {
-            padding: 12px 24px;
-            background: linear-gradient(135deg, rgba(0, 255, 255, 0.1), rgba(0, 150, 255, 0.05));
+            padding: 0.65rem 1.25rem;
+            background: #fff;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            border-bottom: 1px solid var(--rm-border, #e2e8f0);
         }
 
         .results-header h3 {
             margin: 0;
-            font-size: 14px;
+            font-size: 0.82rem;
             font-weight: 700;
-            color: #00ff9d;
+            color: #0b104a;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 0.45rem;
+        }
+
+        .results-header h3 i {
+            color: #2c7aff;
         }
 
         .close-results {
-            background: none;
+            background: #f1f5f9;
             border: none;
-            color: rgba(255, 255, 255, 0.6);
+            color: var(--rm-muted, #718096);
             cursor: pointer;
-            font-size: 18px;
-            transition: all 0.3s ease;
-            padding: 4px 8px;
-            border-radius: 6px;
+            font-size: 1rem;
+            padding: 0.35rem 0.55rem;
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
         }
 
         .close-results:hover {
-            color: #ff4757;
-            background: rgba(255, 71, 87, 0.1);
-            transform: rotate(90deg);
+            color: #c53030;
+            background: #fff5f5;
         }
 
         .results-content {
-            padding: 20px 24px;
+            padding: 1rem 1.25rem 1.25rem;
         }
 
         .test-results {
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 13px;
+            font-family: ui-monospace, Monaco, monospace;
+            font-size: 0.8rem;
         }
 
         .test-summary {
-            margin-bottom: 20px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+            margin-bottom: 1rem;
+            padding-bottom: 0.85rem;
+            border-bottom: 1px solid var(--rm-border, #e2e8f0);
         }
 
         .test-summary h4 {
-            margin: 0 0 12px 0;
-            color: #ffffff;
-            font-size: 14px;
+            margin: 0 0 0.5rem;
+            color: var(--rm-text, #2d3748);
+            font-size: 0.88rem;
             font-weight: 600;
         }
 
         .progress-bar {
-            background: rgba(62, 62, 66, 0.4);
-            border-radius: 10px;
+            background: #e2e8f0;
+            border-radius: 999px;
             height: 8px;
             overflow: hidden;
         }
 
         .progress-fill {
-            background: linear-gradient(90deg, #00ffff, #0099ff);
+            background: linear-gradient(90deg, #667eea, #2c7aff);
             height: 100%;
             transition: width 0.5s ease;
-            border-radius: 10px;
+            border-radius: 999px;
         }
 
         .test-details {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 0.65rem;
         }
 
         .test-item {
-            padding: 12px 16px;
+            padding: 0.75rem 1rem;
             border-radius: 10px;
-            background: rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
+            background: #fff;
+            border: 1px solid var(--rm-border, #e2e8f0);
         }
 
         .test-success {
-            border-left: 4px solid #00ff9d;
-            background: linear-gradient(90deg, rgba(0, 255, 157, 0.1), rgba(0, 255, 157, 0.02));
+            border-left: 4px solid #38a169;
+            background: #f0fff4;
         }
 
         .test-error {
-            border-left: 4px solid #ff4757;
-            background: linear-gradient(90deg, rgba(255, 71, 87, 0.1), rgba(255, 71, 87, 0.02));
+            border-left: 4px solid #e53e3e;
+            background: #fff5f5;
         }
 
         .test-header {
             font-weight: 700;
-            margin-bottom: 6px;
-            color: #ffffff;
-            font-size: 13px;
+            margin-bottom: 0.35rem;
+            color: var(--rm-text, #2d3748);
+            font-size: 0.82rem;
         }
 
         .test-message {
-            font-size: 12px;
-            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.78rem;
+            color: var(--rm-muted, #718096);
             line-height: 1.5;
         }
 
         .test-message pre {
-            margin: 8px 0 0 0;
-            padding: 10px;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 6px;
+            margin: 0.5rem 0 0;
+            padding: 0.65rem 0.75rem;
+            background: #1e293b;
+            color: #e2e8f0;
+            border-radius: 8px;
             overflow-x: auto;
-            font-family: 'Monaco', 'Courier New', monospace;
-            font-size: 12px;
+            font-size: 0.75rem;
         }
 
-        /* Scrollbar personnalisée */
         .leetcode-panel-left::-webkit-scrollbar,
         .results-container::-webkit-scrollbar,
         .CodeMirror-scroll::-webkit-scrollbar {
@@ -779,27 +911,15 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
         .leetcode-panel-left::-webkit-scrollbar-track,
         .results-container::-webkit-scrollbar-track,
         .CodeMirror-scroll::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.3);
+            background: rgba(0, 0, 0, 0.06);
             border-radius: 10px;
         }
 
         .leetcode-panel-left::-webkit-scrollbar-thumb,
         .results-container::-webkit-scrollbar-thumb,
         .CodeMirror-scroll::-webkit-scrollbar-thumb {
-            background: linear-gradient(135deg, #00ffff, #0099ff);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 10px;
-        }
-
-        .leetcode-panel-left::-webkit-scrollbar-thumb:hover,
-        .results-container::-webkit-scrollbar-thumb:hover,
-        .CodeMirror-scroll::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(135deg, #00ffff, #00ff9d);
-        }
-
-        /* Animation pour le chargement */
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
         }
 
         @keyframes spin {
@@ -811,48 +931,53 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
             animation: spin 1s linear infinite;
         }
 
-        /* Responsive */
-        @media (max-width: 768px) {
-            .leetcode-container {
-                height: calc(100vh - 120px);
-            }
-
-            .leetcode-panels {
+        @media (max-width: 992px) {
+            .rendu-mission-root .leetcode-panels {
                 flex-direction: column;
+                min-height: 0;
             }
 
-            .leetcode-panel-left,
-            .leetcode-panel-right {
+            .rendu-mission-root .leetcode-panel-left,
+            .rendu-mission-root .leetcode-panel-right {
                 width: 100% !important;
+                border-right: none !important;
             }
 
-            .leetcode-panel-left {
-                max-height: 40%;
-                padding: 20px;
+            /* DOM : éditeur puis énoncé */
+            .rendu-mission-root .leetcode-panel-right {
+                min-height: 42vh;
             }
 
-            .leetcode-panel-right {
-                min-height: 60%;
-            }
-
-            .problem-title {
-                font-size: 22px;
-            }
-
-            .results-container {
-                max-height: 200px;
+            .rendu-mission-root .leetcode-panel-left {
+                max-height: none;
+                flex: 1;
+                min-height: 35vh;
             }
         }
 
-        /* Transition pour le plein écran */
+        @media (max-width: 576px) {
+            .problem-title {
+                font-size: 1.25rem;
+            }
+
+            .editor-footer {
+                justify-content: stretch;
+            }
+
+            .run-btn,
+            .submit-btn {
+                flex: 1 1 auto;
+                justify-content: center;
+            }
+        }
+
         .fullscreen-mode {
-            transition: all 0.3s ease;
+            transition: box-shadow 0.3s ease;
         }
     </style>
 
     {% block javascripts %}
         {{ parent() }}
-        <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.74/build/spline-viewer.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/php/php.min.js"></script>
@@ -872,18 +997,15 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     lineNumbers: true,
                     mode: 'python',
                     theme: 'dracula',
-                    autoCloseBrackets: true,
                     matchBrackets: true,
                     indentUnit: 4,
                     tabSize: 4,
                     lineWrapping: true,
-                    styleActiveLine: true,
-                    matchTags: true,
-                    foldGutter: true,
-                    gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+                    gutters: ['CodeMirror-linenumbers']
                 });
 
                 setTimeout(() => editor.refresh(), 100);
+                window.addEventListener('resize', () => editor.refresh());
 
                 // Codes par défaut pour chaque langage
                 const defaultCodes = {
