@@ -1,4 +1,3 @@
-{# Purdue-style navbar for authenticated candidates (same grid as _navbar_landing) #}
 {% set route = app.request.attributes.get('_route') %}
 {% set user = app.user %}
 {% set display = user ? ((user.firstName|default('') ~ ' ' ~ user.lastName|default(''))|trim) : '' %}
@@ -37,6 +36,7 @@
 					<ul>
 						<li><a href="{{ path('app_candidate_cours') }}" class="{{ route == 'app_candidate_cours' ? 'active' : '' }}">Cours</a></li>
 						<li><a href="{{ path('app_candidate_offres') }}" class="{{ route == 'app_candidate_offres' ? 'active' : '' }}">Offre d'emploi</a></li>
+						<li><a href="{{ path('app_candidate_postulations') }}" class="{{ route == 'app_candidate_postulations' ? 'active' : '' }}">Mes postulations</a></li>
 						<li><a href="{{ path('app_candidate_mission') }}" class="{{ route == 'app_candidate_mission' ? 'active' : '' }}">Mission</a></li>
 						<li><a href="{{ path('app_candidate_reclamation') }}" class="{{ route == 'app_candidate_reclamation' ? 'active' : '' }}">Réclamation</a></li>
 						<li><a href="{{ path('app_candidate_messagerie') }}" class="{{ route == 'app_candidate_messagerie' ? 'active' : '' }}">Messagerie</a></li>
@@ -69,6 +69,7 @@
 				</li>
 				<li><a href="{{ path('app_candidate_cours') }}">Cours</a></li>
 				<li><a href="{{ path('app_candidate_offres') }}">Offre d'emploi</a></li>
+				<li><a href="{{ path('app_candidate_postulations') }}">Mes postulations</a></li>
 				<li><a href="{{ path('app_candidate_mission') }}">Mission</a></li>
 				<li><a href="{{ path('app_candidate_reclamation') }}">Réclamation</a></li>
 				<li><a href="{{ path('app_candidate_messagerie') }}">Messagerie</a></li>

@@ -1,0 +1,264 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Mes postulations{% endblock %}
+
+{% block candidate_page_heading %}Mes postulations{% endblock %}
+
+{% block candidate_breadcrumb %} / Mes postulations{% endblock %}
+
+{% block candidate_content %}
+    <div class="fo-postulations-page">
+        {% if postulations is defined and postulations|length > 0 %}
+            <div class="row">
+                {% for postulation in postulations %}
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="fo-postulation-card text-start">
+                            <div class="fo-postulation-card__top">
+                                <div>
+                                    <h3 class="fo-postulation-card__title">
+                                        {{ postulation.offreEmploi ? postulation.offreEmploi.titre : 'Offre indisponible' }}
+                                    </h3>
+                                    <div class="fo-postulation-card__company">
+                                        {{ postulation.offreEmploi and postulation.offreEmploi.entreprise ? postulation.offreEmploi.entreprise : '—' }}
+                                    </div>
+                                </div>
+
+                                <span class="fo-status-badge
+                                    {% if postulation.statut == 'Acceptée' %}
+                                        fo-status-success
+                                    {% elseif postulation.statut == 'Refusée' %}
+                                        fo-status-danger
+                                    {% else %}
+                                        fo-status-warning
+                                    {% endif %}
+                                ">
+                                    {{ postulation.statut }}
+                                </span>
+                            </div>
+
+                            <div class="fo-postulation-meta">
+                                <div class="fo-meta-item">
+                                    <span class="fo-meta-item__label">Date de postulation</span>
+                                    <span class="fo-meta-item__value">
+                                        {{ postulation.datePostulation ? postulation.datePostulation|date('d/m/Y H:i') : '—' }}
+                                    </span>
+                                </div>
+
+                                <div class="fo-meta-item">
+                                    <span class="fo-meta-item__label">Localisation</span>
+                                    <span class="fo-meta-item__value">
+                                        {{ postulation.offreEmploi and postulation.offreEmploi.localisation ? postulation.offreEmploi.localisation : '—' }}
+                                    </span>
+                                </div>
+
+                                <div class="fo-meta-item">
+                                    <span class="fo-meta-item__label">Type de contrat</span>
+                                    <span class="fo-meta-item__value">
+                                        {{ postulation.offreEmploi and postulation.offreEmploi.typeContrat ? postulation.offreEmploi.typeContrat : '—' }}
+                                    </span>
+                                </div>
+
+                                <div class="fo-meta-item">
+                                    <span class="fo-meta-item__label">CV envoyé</span>
+                                    <span class="fo-meta-item__value">
+                                        {{ postulation.cvPath ? 'Oui' : 'Non' }}
+                                    </span>
+                                </div>
+                            </div>
+
+                            <div class="fo-postulation-motivation">
+                                {{
+                                    postulation.motivationCandidature|length > 180
+                                        ? postulation.motivationCandidature|slice(0, 180) ~ '...'
+                                        : postulation.motivationCandidature
+                                }}
+                            </div>
+
+                            {% if postulation.offreEmploi %}
+                                <div class="fo-postulation-actions">
+                                    <a href="{{ path('app_candidate_offre_show', {'id': postulation.offreEmploi.id}) }}" class="fo-postulation-btn">
+                                        Voir l'offre
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="fo-empty-box">
+                <h3>Aucune postulation</h3>
+                <p class="mb-0">Vous n’avez encore postulé à aucune offre.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .fo-candidate-content {
+            background: linear-gradient(90deg, #f7eef9 0%, #eef6ff 100%);
+        }
+
+        .fo-postulations-page {
+            width: 100%;
+        }
+
+        .fo-postulation-card {
+            height: 100%;
+            border-radius: 22px;
+            background: rgba(255,255,255,0.92);
+            box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
+            transition: all 0.25s ease;
+            overflow: hidden;
+            padding: 28px;
+            text-align: left;
+        }
+
+        .fo-postulation-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 18px 40px rgba(31, 55, 120, 0.16);
+        }
+
+        .fo-postulation-card__top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-bottom: 22px;
+        }
+
+        .fo-postulation-card__title {
+            font-size: 28px;
+            font-weight: 800;
+            color: #1f3470;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+
+        .fo-postulation-card__company {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: #6b7280;
+        }
+
+        .fo-status-badge {
+            display: inline-block;
+            padding: 10px 16px;
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 4px;
+        }
+
+        .fo-status-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #059669;
+        }
+
+        .fo-status-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #dc2626;
+        }
+
+        .fo-status-warning {
+            background: rgba(245, 158, 11, 0.15);
+            color: #d97706;
+        }
+
+        .fo-postulation-meta {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 24px;
+        }
+
+        .fo-meta-item {
+            background: #f8fbff;
+            border: 1px solid #e6eefc;
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+
+        .fo-meta-item__label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .fo-meta-item__value {
+            display: block;
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .fo-postulation-motivation {
+            color: #5f6780;
+            font-size: 15px;
+            line-height: 1.8;
+            background: #fcfcff;
+            border-left: 4px solid #3b82f6;
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+        }
+
+        .fo-postulation-actions {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .fo-postulation-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 11px 24px;
+            font-weight: 700;
+            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.20);
+            transition: 0.25s ease;
+            text-decoration: none;
+        }
+
+        .fo-postulation-btn:hover {
+            color: white;
+            text-decoration: none;
+            transform: translateY(-2px);
+            box-shadow: 0 14px 24px rgba(37, 99, 235, 0.28);
+        }
+
+        .fo-empty-box {
+            max-width: 720px;
+            margin: 0 auto;
+            background: rgba(255,255,255,0.92);
+            border-radius: 22px;
+            padding: 50px 30px;
+            box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
+            color: #5b647d;
+            text-align: center;
+        }
+
+        .fo-empty-box h3 {
+            color: #223a7a;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        @media (max-width: 991px) {
+            .fo-postulation-card__title {
+                font-size: 24px;
+            }
+
+            .fo-postulation-meta {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+{% endblock %}

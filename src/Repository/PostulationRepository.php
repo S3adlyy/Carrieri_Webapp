@@ -2,7 +2,9 @@
 
 namespace App\Repository;
 
+use App\Entity\OffreEmploi;
 use App\Entity\Postulation;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,16 +18,28 @@ class PostulationRepository extends ServiceEntityRepository
         parent::__construct($registry, Postulation::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+     public function hasUserAppliedToOffer(User $user, OffreEmploi $offre): bool
+    {
+        return $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->andWhere('p.user = :user')
+            ->andWhere('p.offreEmploi = :offre')
+            ->setParameter('user', $user)
+            ->setParameter('offre', $offre)
+            ->getQuery()
+            ->getSingleScalarResult() > 0;
+    }
+
+    public function findByCandidate(User $user): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.offreEmploi', 'o')
+            ->addSelect('o')
+            ->andWhere('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.datePostulation', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
 }

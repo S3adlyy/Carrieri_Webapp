@@ -9,6 +9,18 @@
 {% block candidate_content %}
     <div class="fo-apply-page">
 
+        {% for message in app.flashes('success') %}
+            <div class="fo-alert fo-alert-success">
+                {{ message }}
+            </div>
+        {% endfor %}
+
+        {% for message in app.flashes('error') %}
+            <div class="fo-alert fo-alert-danger">
+                {{ message }}
+            </div>
+        {% endfor %}
+
         <div class="fo-apply-card">
             <div class="fo-apply-card__header">
                 <h2 class="fo-apply-title">{{ offre.titre }}</h2>
@@ -30,15 +42,23 @@
                 </div>
             </div>
 
-            <form>
+            <form method="post" enctype="multipart/form-data">
                 <div class="fo-form-group">
                     <label for="motivation">Motivation</label>
-                    <textarea id="motivation" class="fo-form-control" rows="6" placeholder="Écrivez ici votre motivation..."></textarea>
+                    <textarea
+                        id="motivation"
+                        name="motivation"
+                        class="fo-form-control"
+                        rows="6"
+                        placeholder="Écrivez ici votre motivation..."
+                    >{{ motivation|default('') }}</textarea>
+                    <small class="fo-help-text">Minimum 20 caractères, maximum 2000 caractères.</small>
                 </div>
 
                 <div class="fo-form-group">
                     <label for="cv">CV</label>
-                    <input type="file" id="cv" class="fo-form-control">
+                    <input type="file" id="cv" name="cv" class="fo-form-control" accept=".pdf,.doc,.docx">
+                    <small class="fo-help-text">Formats autorisés : PDF, DOC, DOCX. Taille max : 2 Mo.</small>
                 </div>
 
                 <div class="fo-apply-actions">
@@ -46,7 +66,7 @@
                         Retour
                     </a>
 
-                    <button type="button" class="fo-btn-primary">
+                    <button type="submit" class="fo-btn-primary">
                         Envoyer ma candidature
                     </button>
                 </div>
@@ -62,6 +82,26 @@
 
         .fo-apply-page {
             width: 100%;
+        }
+
+        .fo-alert {
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .fo-alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .fo-alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
         }
 
         .fo-apply-card {
@@ -141,6 +181,13 @@
         textarea.fo-form-control {
             resize: vertical;
             min-height: 140px;
+        }
+
+        .fo-help-text {
+            display: block;
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 13px;
         }
 
         .fo-apply-actions {

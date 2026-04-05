@@ -15,7 +15,7 @@ class Postulation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $datePostulation = null;
 
     #[ORM\Column]
