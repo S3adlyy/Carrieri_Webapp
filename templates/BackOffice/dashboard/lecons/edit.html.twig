@@ -11,6 +11,7 @@
 {% endblock %}
 
 {% block stylesheets %}
+{{ parent() }}
 <style>
     .lesson-form .form-group { margin-bottom: 1.5rem; position: relative; }
     .form-label { font-size: 14px; margin-bottom: 8px; color: #2c3e50; display: block; font-weight: 600; }
@@ -18,9 +19,12 @@
     .form-control:focus { outline: none; border-color: #667eea; }
     .form-group.valid .form-control { border-color: #10b981; background-color: #f0fdf4; }
     .form-group.invalid .form-control { border-color: #dc2626; background-color: #fef2f2; }
-    .validation-icon { position: absolute; right: 12px; top: 42px; font-size: 16px; }
-    .form-group.valid .validation-icon i { color: #10b981; }
-    .form-group.invalid .validation-icon i { color: #dc2626; }
+    .validation-icon { position: absolute; right: 12px; top: 42px; font-size: 16px; display: none; }
+    .validation-icon i { display: none; }
+    .form-group.valid .validation-icon,
+    .form-group.invalid .validation-icon { display: block; }
+    .form-group.valid .validation-icon .fa-check-circle { display: inline-block; color: #10b981; }
+    .form-group.invalid .validation-icon .fa-times-circle { display: inline-block; color: #dc2626; }
     .error-message { font-size: 12px; margin-top: 5px; padding: 6px 12px; border-radius: 6px; display: none; }
     .form-group.invalid .error-message { display: block; background-color: #fef2f2; color: #dc2626; border-left: 3px solid #dc2626; }
     .form-status { margin: 20px 0; padding: 12px 16px; border-radius: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; }
@@ -52,12 +56,14 @@
                 {{ form_widget(form.titre, {'attr': {'class': 'form-control' ~ (form.titre.vars.errors|length ? ' is-invalid' : '')}}) }}
                 <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                 {{ form_errors(form.titre) }}
+                <div class="error-message"></div>
             </div>
             <div class="form-group">
                 {{ form_label(form.contenu) }}
                 {{ form_widget(form.contenu, {'attr': {'class': 'form-control' ~ (form.contenu.vars.errors|length ? ' is-invalid' : '')}}) }}
                 <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                 {{ form_errors(form.contenu) }}
+                <div class="error-message"></div>
             </div>
             <div class="row">
                 <div class="col-md-12">
@@ -66,6 +72,7 @@
                         {{ form_widget(form.module, {'attr': {'class': 'form-control' ~ (form.module.vars.errors|length ? ' is-invalid' : '')}}) }}
                         <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                         {{ form_errors(form.module) }}
+                        <div class="error-message"></div>
                     </div>
                 </div>
             </div>
@@ -74,6 +81,7 @@
                 {{ form_widget(form.video, {'attr': {'class': 'form-control' ~ (form.video.vars.errors|length ? ' is-invalid' : '')}}) }}
                 <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                 {{ form_errors(form.video) }}
+                <div class="error-message"></div>
             </div>
             <div class="form-status">
                 <div class="status-indicator invalid"><i class="fas fa-times-circle"></i> Formulaire incomplet</div>
@@ -92,6 +100,7 @@
 {% endblock %}
 
 {% block javascripts %}
+{{ parent() }}
 <script>
 (function () {
     function getMessage(field) {

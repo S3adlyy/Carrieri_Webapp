@@ -8,6 +8,15 @@
     <li class="breadcrumb-item active">Leçons</li>
 {% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .bo-card { border: 0; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+        .bo-card .card-header { background: #fff; border-bottom: 1px solid #eef2f7; }
+        .bo-table thead th { border-top: 0; font-size: 12px; text-transform: uppercase; color: #6b7280; background: #f8fafc; letter-spacing: .03em; }
+    </style>
+{% endblock %}
+
 {% block body %}
     {% set q = app.request.query.get('q')|default('')|trim %}
     {% set q_lower = q|lower %}
@@ -21,7 +30,7 @@
         {% endfor %}
     {% endfor %}
 
-    <div class="card">
+    <div class="card bo-card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title mb-0">Liste des leçons</h3>
             {% if is_admin_view|default(false) %}
@@ -69,8 +78,8 @@
         {% endif %}
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0" id="lecons-order-table">
-                    <thead class="thead-dark">
+                <table class="table table-hover mb-0 bo-table" id="lecons-order-table">
+                    <thead>
                     <tr>
                         {% if selected_module is defined and selected_module %}<th style="width:40px;"></th>{% endif %}
                         <th>#</th>

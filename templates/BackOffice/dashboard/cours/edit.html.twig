@@ -11,6 +11,7 @@
 {% endblock %}
 
 {% block stylesheets %}
+{{ parent() }}
 <style>
     .course-form .form-group { margin-bottom: 1.5rem; position: relative; }
     .form-label { font-size: 14px; margin-bottom: 8px; color: #2c3e50; display: block; font-weight: 600; }
@@ -18,9 +19,12 @@
     .form-control:focus { outline: none; border-color: #667eea; }
     .form-group.valid .form-control { border-color: #10b981; background-color: #f0fdf4; }
     .form-group.invalid .form-control { border-color: #dc2626; background-color: #fef2f2; }
-    .validation-icon { position: absolute; right: 12px; top: 42px; font-size: 16px; }
-    .form-group.valid .validation-icon i { color: #10b981; }
-    .form-group.invalid .validation-icon i { color: #dc2626; }
+    .validation-icon { position: absolute; right: 12px; top: 42px; font-size: 16px; display: none; }
+    .validation-icon i { display: none; }
+    .form-group.valid .validation-icon,
+    .form-group.invalid .validation-icon { display: block; }
+    .form-group.valid .validation-icon .fa-check-circle { display: inline-block; color: #10b981; }
+    .form-group.invalid .validation-icon .fa-times-circle { display: inline-block; color: #dc2626; }
     .error-message { font-size: 12px; margin-top: 5px; padding: 6px 12px; border-radius: 6px; display: none; }
     .form-group.invalid .error-message { display: block; background-color: #fef2f2; color: #dc2626; border-left: 3px solid #dc2626; }
     .form-hint { margin-top: 5px; }
@@ -55,6 +59,7 @@
                     {{ form_widget(form.titre, {'attr': {'class': 'form-control' ~ (form.titre.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.titre) }}
+                    <div class="error-message"></div>
                     <div class="form-hint"><small class="text-muted">Minimum 3 caractères.</small></div>
                 </div>
                 <div class="form-group">
@@ -62,6 +67,7 @@
                     {{ form_widget(form.description, {'attr': {'class': 'form-control' ~ (form.description.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.description) }}
+                    <div class="error-message"></div>
                     <div class="form-hint"><small class="text-muted">Minimum 10 caractères.</small></div>
                 </div>
                 <div class="form-group">
@@ -69,6 +75,7 @@
                     {{ form_widget(form.competencesVisees, {'attr': {'class': 'form-control' ~ (form.competencesVisees.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.competencesVisees) }}
+                    <div class="error-message"></div>
                     <div class="form-hint"><small class="text-muted">Minimum 3 caractères.</small></div>
                 </div>
                 <div class="form-group">
@@ -83,30 +90,35 @@
                     {{ form_widget(form.niveau, {'attr': {'class': 'form-control' ~ (form.niveau.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.niveau) }}
+                    <div class="error-message"></div>
                 </div>
                 <div class="form-group">
                     {{ form_label(form.duree) }}
                     {{ form_widget(form.duree, {'attr': {'class': 'form-control' ~ (form.duree.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.duree) }}
+                    <div class="error-message"></div>
                 </div>
                 <div class="form-group">
                     {{ form_label(form.prix) }}
                     {{ form_widget(form.prix, {'attr': {'class': 'form-control' ~ (form.prix.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.prix) }}
+                    <div class="error-message"></div>
                 </div>
                 <div class="form-group">
                     {{ form_label(form.estPayant) }}
                     {{ form_widget(form.estPayant, {'attr': {'class': 'form-control' ~ (form.estPayant.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.estPayant) }}
+                    <div class="error-message"></div>
                 </div>
                 <div class="form-group">
                     {{ form_label(form.estObligatoire) }}
                     {{ form_widget(form.estObligatoire, {'attr': {'class': 'form-control' ~ (form.estObligatoire.vars.errors|length ? ' is-invalid' : '')}}) }}
                     <div class="validation-icon"><i class="fas fa-check-circle"></i><i class="fas fa-times-circle"></i></div>
                     {{ form_errors(form.estObligatoire) }}
+                    <div class="error-message"></div>
                 </div>
             </div>
         </div>
@@ -127,6 +139,7 @@
 {% endblock %}
 
 {% block javascripts %}
+{{ parent() }}
 <script>
 (function () {
     function getMessage(field, form) {
