@@ -47,4 +47,46 @@ class OffreEmploiRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function searchAndFilter(?string $keyword, ?string $type, ?string $localisation, ?float $salaireMin): array
+    {
+        $qb = $this->createQueryBuilder('o')
+            ->andWhere('o.dateExpiration IS NULL OR o.dateExpiration > :now')
+            ->setParameter('now', new \DateTime());
+
+        if ($keyword && trim($keyword) !== '') {
+            $qb->andWhere('
+                o.titre LIKE :kw
+                OR o.entreprise LIKE :kw
+                OR o.localisation LIKE :kw
+                OR o.description LIKE :kw
+                OR o.typeContrat LIKE :kw
+                OR o.niveauQualification LIKE :kw
+                OR o.experienceRequise LIKE :kw
+                OR o.competencesRequises LIKE :kw
+                OR o.secteurActivite LIKE :kw
+                OR o.contactRecruteur LIKE :kw
+            ')
+            ->setParameter('kw', '%' . trim($keyword) . '%');
+        }
+
+        if ($type && trim($type) !== '') {
+            $qb->andWhere('o.typeContrat = :type')
+            ->setParameter('type', trim($type));
+        }
+
+        if ($localisation && trim($localisation) !== '') {
+            $qb->andWhere('o.localisation LIKE :loc')
+            ->setParameter('loc', '%' . trim($localisation) . '%');
+        }
+
+        if ($salaireMin !== null && $salaireMin !== 0.0) {
+            $qb->andWhere('o.salaire >= :sal')
+            ->setParameter('sal', $salaireMin);
+        }
+
+        return $qb->orderBy('o.datePublication', 'DESC')
+                ->getQuery()
+                ->getResult();
+    }
+
 }

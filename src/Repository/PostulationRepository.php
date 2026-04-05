@@ -42,4 +42,14 @@ class PostulationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    public function getStatsByUser(User $user): array
+    {
+        return [
+            'total' => $this->count(['user' => $user]),
+            'accepted' => $this->count(['user' => $user, 'statut' => 'Acceptée']),
+            'refused' => $this->count(['user' => $user, 'statut' => 'Refusée']),
+            'pending' => $this->count(['user' => $user, 'statut' => 'En attente']),
+        ];
+    }
+
 }

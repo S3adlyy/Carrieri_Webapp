@@ -31,16 +31,58 @@
 
         <div class="fo-company">{{ offre.entreprise }}</div>
 
+        {# ===== STATS ===== #}
+        <div class="fo-stats-grid">
+            <div class="fo-stat-card fo-stat-salary">
+                <span class="fo-stat-label">Salaire</span>
+                <strong class="fo-stat-value">{{ offre.salaire }} DT</strong>
+            </div>
+
+            <div class="fo-stat-card fo-stat-days">
+                <span class="fo-stat-label">Jours restants</span>
+                <strong class="fo-stat-value">
+                    {{ joursRestants is not null ? joursRestants : '—' }}
+                </strong>
+            </div>
+
+            <div class="fo-stat-card fo-stat-missions">
+                <span class="fo-stat-label">Missions</span>
+                <strong class="fo-stat-value">{{ missionsCount }}</strong>
+            </div>
+
+            <div class="fo-stat-card {% if alreadyApplied %}
+                {% if postulationStatus == 'Acceptée' %}
+                    fo-stat-accepted
+                {% elseif postulationStatus == 'Refusée' %}
+                    fo-stat-refused
+                {% else %}
+                    fo-stat-pending
+                {% endif %}
+            {% else %}
+                fo-stat-not-applied
+            {% endif %}">
+                <span class="fo-stat-label">Candidature</span>
+                <strong class="fo-stat-value">
+                    {% if alreadyApplied %}
+                        {% if postulationStatus == 'Acceptée' %}
+                            Acceptée
+                        {% elseif postulationStatus == 'Refusée' %}
+                            Refusée
+                        {% else %}
+                            En attente
+                        {% endif %}
+                    {% else %}
+                        Pas encore postulé
+                    {% endif %}
+                </strong>
+            </div>
+        </div>
+
         <div class="fo-meta-grid">
 
             <div class="fo-meta-box">
                 <span>Localisation</span>
                 <strong>{{ offre.localisation }}</strong>
-            </div>
-
-            <div class="fo-meta-box">
-                <span>Salaire</span>
-                <strong>{{ offre.salaire }} DT</strong>
             </div>
 
             <div class="fo-meta-box">
@@ -65,6 +107,11 @@
                 <strong>{{ offre.contactRecruteur }}</strong>
             </div>
 
+            <div class="fo-meta-box">
+                <span>Secteur</span>
+                <strong>{{ offre.secteurActivite }}</strong>
+            </div>
+
         </div>
 
         <div class="fo-description">
@@ -74,7 +121,7 @@
 
         <div class="fo-missions-section">
             <div class="fo-missions-header">
-                <h4>Exemples de Missions associées à cet Offre</h4>
+                <h4>Missions associées à ce recruteur</h4>
                 <button type="button" class="fo-toggle-btn" id="missionToggleBtn" onclick="toggleMissions()">
                     ↓
                 </button>
@@ -105,7 +152,7 @@
                     {% endfor %}
                 {% else %}
                     <div class="fo-no-missions">
-                        Aucune mission liée à cet offre.
+                        Aucune mission liée à ce recruteur.
                     </div>
                 {% endif %}
             </div>
@@ -116,9 +163,13 @@
                 Retour aux offres
             </a>
 
-            <a href="{{ path('app_candidate_offre_apply', {'id': offre.id}) }}" class="fo-btn-primary">
-                Postuler
-            </a>
+            {% if alreadyApplied %}
+                <span class="fo-btn-disabled">Déjà postulé</span>
+            {% else %}
+                <a href="{{ path('app_candidate_offre_apply', {'id': offre.id}) }}" class="fo-btn-primary">
+                    Postuler
+                </a>
+            {% endif %}
         </div>
 
     </div>
@@ -154,6 +205,111 @@
         font-weight: 700;
         color: #6b7280;
         margin-bottom: 25px;
+    }
+
+    .fo-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .fo-stat-card {
+        border-radius: 18px;
+        padding: 18px;
+        text-align: center;
+        box-shadow: 0 10px 22px rgba(31, 55, 120, 0.08);
+        border: 1px solid transparent;
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .fo-stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 28px rgba(31, 55, 120, 0.12);
+    }
+
+    .fo-stat-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 800;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .fo-stat-value {
+        font-size: 20px;
+        font-weight: 800;
+    }
+
+    .fo-stat-salary {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-color: #bfdbfe;
+    }
+
+    .fo-stat-salary .fo-stat-label,
+    .fo-stat-salary .fo-stat-value {
+        color: #1d4ed8;
+    }
+
+    .fo-stat-days {
+        background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+        border-color: #fdba74;
+    }
+
+    .fo-stat-days .fo-stat-label,
+    .fo-stat-days .fo-stat-value {
+        color: #c2410c;
+    }
+
+    .fo-stat-missions {
+        background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+        border-color: #c4b5fd;
+    }
+
+    .fo-stat-missions .fo-stat-label,
+    .fo-stat-missions .fo-stat-value {
+        color: #6d28d9;
+    }
+
+    .fo-stat-applied {
+        background: linear-gradient(135deg, #d1fae5 0%, #bbf7d0 100%);
+        border-color: #86efac;
+    }
+
+    .fo-stat-applied .fo-stat-label,
+    .fo-stat-applied .fo-stat-value {
+        color: #15803d;
+    }
+
+    .fo-stat-pending {
+        background: linear-gradient(135deg, #fff7ed 0%, #feebc8 100%);
+        border-color: #fef08a;
+    }
+
+    .fo-stat-pending .fo-stat-label,
+    .fo-stat-pending .fo-stat-value {
+        color: #f59e0b;
+    }
+
+    .fo-stat-refused {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border-color: #fca5a5;
+    }
+
+    .fo-stat-refused .fo-stat-label,
+    .fo-stat-refused .fo-stat-value {
+        color: #b91c1c;
+    }
+
+    .fo-stat-not-applied {
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        border-color: #fca5a5;
+    }
+
+    .fo-stat-not-applied .fo-stat-label,
+    .fo-stat-not-applied .fo-stat-value {
+        color: #b91c1c;
     }
 
     .fo-meta-grid {
@@ -300,13 +456,17 @@
     }
 
     .fo-btn-primary {
-        background: linear-gradient(90deg, #3b82f6, #2563eb);
-        color: white;
-        padding: 12px 25px;
-        border-radius: 999px;
-        font-weight: 700;
-        text-decoration: none;
-    }
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-weight: 700;
+            text-decoration: none;
+        }
 
     .fo-btn-secondary {
         background: #e5e7eb;
@@ -317,13 +477,32 @@
         text-decoration: none;
     }
 
+    .fo-btn-disabled {
+        background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+        color: #166534;
+        padding: 12px 25px;
+        border-radius: 999px;
+        font-weight: 800;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #86efac;
+    }
+
     .fo-badge-cdi { background: #dbeafe; color: #2563eb; padding: 8px 12px; border-radius: 999px; }
     .fo-badge-cdd { background: #fef3c7; color: #d97706; padding: 8px 12px; border-radius: 999px; }
     .fo-badge-stage { background: #d1fae5; color: #059669; padding: 8px 12px; border-radius: 999px; }
     .fo-badge-other { background: #ede9fe; color: #7c3aed; padding: 8px 12px; border-radius: 999px; }
 
+    @media (max-width: 991px) {
+        .fo-stats-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
     @media (max-width: 768px) {
-        .fo-meta-grid {
+        .fo-meta-grid,
+        .fo-stats-grid {
             grid-template-columns: 1fr;
         }
 

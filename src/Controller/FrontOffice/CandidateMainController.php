@@ -17,11 +17,20 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
+use Psr\Log\LoggerInterface;
 
 #[Route('/candidat')]
 #[IsGranted('ROLE_CANDIDAT')]
 class CandidateMainController extends AbstractController
 {
+    private $logger;
+
+    // Inject the logger service via constructor
+    public function __construct(LoggerInterface $logger)
+    {
+        $this->logger = $logger;
+    }
+
     #[Route('', name: 'app_candidate_main')]
     public function main(): Response
     {
@@ -35,9 +44,19 @@ class CandidateMainController extends AbstractController
     }
 
     #[Route('/offres', name: 'app_candidate_offres')]
-    public function offres(OffreEmploiRepository $offreEmploiRepository): Response
+    public function offres(Request $request, OffreEmploiRepository $offreEmploiRepository): Response
     {
-        $offres = $offreEmploiRepository->findActiveOffers();
+        $keyword = $request->query->get('keyword');
+        $type = $request->query->get('type');
+        $localisation = $request->query->get('localisation');
+        $salaireMin = $request->query->get('salaire');
+
+        $offres = $offreEmploiRepository->searchAndFilter(
+            $keyword,
+            $type,
+            $localisation,
+            $salaireMin ? (float) $salaireMin : null
+        );
 
         return $this->render('FrontOffice/main/offres.html.twig', [
             'offres' => $offres,
@@ -45,20 +64,59 @@ class CandidateMainController extends AbstractController
     }
 
     #[Route('/offres/{id}', name: 'app_candidate_offre_show', requirements: ['id' => '\d+'])]
-    public function showOffre(OffreEmploi $offre, MissionRepository $missionRepository): Response
-    {
+    public function showOffre(
+        OffreEmploi $offre,
+        MissionRepository $missionRepository,
+        PostulationRepository $postulationRepository
+    ): Response {
+        // Ensure that the offer is not expired
         if ($offre->getDateExpiration() && $offre->getDateExpiration() < new \DateTime()) {
             throw $this->createNotFoundException('Cette offre n’est plus disponible.');
         }
 
+        // Retrieve missions linked to the offer's recruiter
         $missions = [];
         if ($offre->getRecruteurId() !== null) {
             $missions = $missionRepository->findByCreatedById($offre->getRecruteurId());
         }
 
+        // Set up postulation status
+        $alreadyApplied = false;
+        $postulationStatus = null;
+
+        $user = $this->getUser();
+        if ($user instanceof User) {
+            // Check if the user has applied to this offer
+            $alreadyApplied = $postulationRepository->hasUserAppliedToOffer($user, $offre);
+
+            if ($alreadyApplied) {
+                // Get the postulation status for the user and this offer
+                $postulation = $postulationRepository->findOneBy([
+                    'user' => $user,
+                    'offreEmploi' => $offre,
+                ]);
+
+                // Ensure the correct status is fetched
+                $postulationStatus = $postulation ? $postulation->getStatut() : null;
+            }
+        }
+
+        // Calculate the remaining days until expiration
+        $joursRestants = null;
+        if ($offre->getDateExpiration()) {
+            $today = new \DateTime();
+            $interval = $today->diff($offre->getDateExpiration());
+            $joursRestants = max(0, (int) $interval->format('%r%a')); // Get positive days left
+        }
+
+        // Render the page with the necessary data passed to Twig
         return $this->render('FrontOffice/main/offre_show.html.twig', [
-            'offre' => $offre,
-            'missions' => $missions,
+            'offre' => $offre,                      // Offer details
+            'missions' => $missions,                // Associated missions
+            'alreadyApplied' => $alreadyApplied,    // Whether the user has applied
+            'postulationStatus' => $postulationStatus,  // The postulation status (Acceptée, Refusée, En attente)
+            'joursRestants' => $joursRestants,      // Remaining days
+            'missionsCount' => count($missions),    // Number of associated missions
         ]);
     }
 
@@ -194,5 +252,4 @@ class CandidateMainController extends AbstractController
             'postulations' => $postulationRepository->findByCandidate($user),
         ]);
     }
-
 }
