@@ -1,0 +1,195 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Postuler{% endblock %}
+
+{% block candidate_page_heading %}Postuler à une offre{% endblock %}
+
+{% block candidate_breadcrumb %} / Postuler{% endblock %}
+
+{% block candidate_content %}
+    <div class="fo-apply-page">
+
+        <div class="fo-apply-card">
+            <div class="fo-apply-card__header">
+                <h2 class="fo-apply-title">{{ offre.titre }}</h2>
+                <div class="fo-apply-company">{{ offre.entreprise }}</div>
+            </div>
+
+            <div class="fo-apply-info">
+                <div class="fo-apply-info__item">
+                    <span>Localisation</span>
+                    <strong>{{ offre.localisation }}</strong>
+                </div>
+                <div class="fo-apply-info__item">
+                    <span>Type de contrat</span>
+                    <strong>{{ offre.typeContrat }}</strong>
+                </div>
+                <div class="fo-apply-info__item">
+                    <span>Expiration</span>
+                    <strong>{{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}</strong>
+                </div>
+            </div>
+
+            <form>
+                <div class="fo-form-group">
+                    <label for="motivation">Motivation</label>
+                    <textarea id="motivation" class="fo-form-control" rows="6" placeholder="Écrivez ici votre motivation..."></textarea>
+                </div>
+
+                <div class="fo-form-group">
+                    <label for="cv">CV</label>
+                    <input type="file" id="cv" class="fo-form-control">
+                </div>
+
+                <div class="fo-apply-actions">
+                    <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="fo-btn-secondary">
+                        Retour
+                    </a>
+
+                    <button type="button" class="fo-btn-primary">
+                        Envoyer ma candidature
+                    </button>
+                </div>
+            </form>
+        </div>
+
+    </div>
+
+    <style>
+        .fo-candidate-content {
+            background: linear-gradient(90deg, #f7eef9 0%, #eef6ff 100%);
+        }
+
+        .fo-apply-page {
+            width: 100%;
+        }
+
+        .fo-apply-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 22px;
+            padding: 36px;
+            box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
+            text-align: left;
+        }
+
+        .fo-apply-card__header {
+            margin-bottom: 24px;
+        }
+
+        .fo-apply-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #1f3470;
+            margin-bottom: 8px;
+        }
+
+        .fo-apply-company {
+            font-size: 16px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .fo-apply-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .fo-apply-info__item {
+            background: #f8fbff;
+            border: 1px solid #e6eefc;
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+
+        .fo-apply-info__item span {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .fo-apply-info__item strong {
+            font-size: 15px;
+            color: #1f2937;
+        }
+
+        .fo-form-group {
+            margin-bottom: 22px;
+        }
+
+        .fo-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #223a7a;
+        }
+
+        .fo-form-control {
+            width: 100%;
+            border: 1px solid #dbe4f3;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 15px;
+            background: #fff;
+            color: #1f2937;
+        }
+
+        textarea.fo-form-control {
+            resize: vertical;
+            min-height: 140px;
+        }
+
+        .fo-apply-actions {
+            margin-top: 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .fo-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .fo-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e5e7eb;
+            color: #1f2937;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .fo-btn-primary:hover,
+        .fo-btn-secondary:hover {
+            text-decoration: none;
+        }
+
+        @media (max-width: 991px) {
+            .fo-apply-info {
+                grid-template-columns: 1fr;
+            }
+
+            .fo-apply-title {
+                font-size: 26px;
+            }
+        }
+    </style>
+{% endblock %}

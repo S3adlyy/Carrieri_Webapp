@@ -1,0 +1,196 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Détail de l'offre{% endblock %}
+
+{% block candidate_page_heading %}Détail de l'offre{% endblock %}
+
+{% block candidate_breadcrumb %} / Détail{% endblock %}
+
+{% block candidate_content %}
+
+<div class="fo-offre-detail">
+
+    <div class="fo-offre-detail-card">
+
+        <div class="fo-offre-detail-header">
+            <h2 class="fo-title">{{ offre.titre }}</h2>
+            <span class="fo-badge
+                {% if offre.typeContrat == 'CDI' %}
+                    fo-badge-cdi
+                {% elseif offre.typeContrat == 'CDD' %}
+                    fo-badge-cdd
+                {% elseif offre.typeContrat == 'Stage' %}
+                    fo-badge-stage
+                {% else %}
+                    fo-badge-other
+                {% endif %}
+            ">
+                {{ offre.typeContrat }}
+            </span>
+        </div>
+
+        <div class="fo-company">{{ offre.entreprise }}</div>
+
+        <div class="fo-meta-grid">
+
+            <div class="fo-meta-box">
+                <span>Localisation</span>
+                <strong>{{ offre.localisation }}</strong>
+            </div>
+
+            <div class="fo-meta-box">
+                <span>Salaire</span>
+                <strong>{{ offre.salaire }} DT</strong>
+            </div>
+
+            <div class="fo-meta-box">
+                <span>Qualification</span>
+                <strong>{{ offre.niveauQualification }}</strong>
+            </div>
+
+            <div class="fo-meta-box">
+                <span>Expérience</span>
+                <strong>{{ offre.experienceRequise }}</strong>
+            </div>
+
+            <div class="fo-meta-box">
+                <span>Expiration</span>
+                <strong>
+                    {{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}
+                </strong>
+            </div>
+
+            <div class="fo-meta-box">
+                <span>Contact</span>
+                <strong>{{ offre.contactRecruteur }}</strong>
+            </div>
+
+        </div>
+
+        <div class="fo-description">
+            <h4>Description</h4>
+            <p>{{ offre.description|nl2br }}</p>
+        </div>
+
+        <div class="fo-actions">
+            <a href="{{ path('app_candidate_offres') }}" class="fo-btn-secondary">
+                Retour aux offres
+            </a>
+
+            <a href="{{ path('app_candidate_offre_apply', {'id': offre.id}) }}" class="fo-btn-primary">
+                Postuler
+            </a>
+        </div>
+
+    </div>
+
+</div>
+
+<style>
+    .fo-offre-detail-card {
+        background: rgba(255,255,255,0.95);
+        border-radius: 22px;
+        padding: 40px;
+        box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
+        text-align: left;
+    }
+
+    .fo-offre-detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .fo-title {
+        font-size: 34px;
+        font-weight: 800;
+        color: #1f3470;
+    }
+
+    .fo-company {
+        font-size: 16px;
+        font-weight: 700;
+        color: #6b7280;
+        margin-bottom: 25px;
+    }
+
+    .fo-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+
+    .fo-meta-box {
+        background: #f8fbff;
+        border: 1px solid #e6eefc;
+        border-radius: 12px;
+        padding: 15px;
+    }
+
+    .fo-meta-box span {
+        font-size: 13px;
+        color: #3b82f6;
+        font-weight: 700;
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .fo-meta-box strong {
+        font-size: 15px;
+        color: #1f2937;
+    }
+
+    .fo-description h4 {
+        color: #223a7a;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .fo-description p {
+        color: #5f6780;
+        line-height: 1.8;
+    }
+
+    .fo-actions {
+        margin-top: 30px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .fo-btn-primary {
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
+        color: white;
+        padding: 12px 25px;
+        border-radius: 999px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .fo-btn-secondary {
+        background: #e5e7eb;
+        color: #1f2937;
+        padding: 12px 25px;
+        border-radius: 999px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .fo-badge-cdi { background: #dbeafe; color: #2563eb; padding: 8px 12px; border-radius: 999px; }
+    .fo-badge-cdd { background: #fef3c7; color: #d97706; padding: 8px 12px; border-radius: 999px; }
+    .fo-badge-stage { background: #d1fae5; color: #059669; padding: 8px 12px; border-radius: 999px; }
+    .fo-badge-other { background: #ede9fe; color: #7c3aed; padding: 8px 12px; border-radius: 999px; }
+
+    @media (max-width: 768px) {
+        .fo-meta-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+{% endblock %}
