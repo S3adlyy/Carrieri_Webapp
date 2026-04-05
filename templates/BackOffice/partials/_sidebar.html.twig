@@ -54,6 +54,15 @@
                     <p>Offres d'emploi</p>
                 </a>
                 </li>
+
+                <!-- Add a link to Postulations in the Sidebar -->
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_postulations_list') }}" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_admin_postulations' %}active{% endif %}">
+                        <i class="nav-icon fas fa-clipboard-list"></i>
+                        <p>Postulations</p>
+                    </a>
+                </li>
+
                 <li class="nav-item">
                     <a href="{{ path('app_admin_certifications') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_certifications' %}active{% endif %}">
                         <i class="nav-icon fas fa-certificate"></i>

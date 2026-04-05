@@ -1,0 +1,56 @@
+{% extends 'BackOffice/dashboard/index.html.twig' %}
+
+{% block content %}
+    <h2>Postulations</h2>
+
+    <!-- Displaying the user statistics -->
+    <div class="row">
+        <div class="col-lg-4 col-md-6 col-6">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ stats.total }}</h3>
+                    <p>Total Applications</p>
+                </div>
+                <div class="icon"><i class="fas fa-users"></i></div>
+                <a href="{{ path('app_admin_postulations_list') }}" class="small-box-footer">See All Applications</a>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-6">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ stats.accepted }}</h3>
+                    <p>Accepted Applications</p>
+                </div>
+                <div class="icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-6">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3>{{ stats.refused }}</h3>
+                    <p>Refused Applications</p>
+                </div>
+                <div class="icon"><i class="fas fa-times-circle"></i></div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 col-6">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ stats.pending }}</h3>
+                    <p>Pending Applications</p>
+                </div>
+                <div class="icon"><i class="fas fa-clock"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <h2>Users Who Applied</h2>
+    <ul>
+        {% for user in stats.users %}
+            <li>{{ user.name }} - Status: {{ user.status }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

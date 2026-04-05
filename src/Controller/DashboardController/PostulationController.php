@@ -1,0 +1,155 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controller\DashboardController;
+
+use App\Entity\User;
+use App\Repository\PostulationRepository;
+use App\Repository\OffreEmploiRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
+
+#[Route('/admin/postulations')]
+class PostulationController extends AbstractController
+{
+    public function __construct(
+        private EntityManagerInterface $entityManager,
+        private PostulationRepository $postulationRepository,
+        private OffreEmploiRepository $offreEmploiRepository,
+    ) {
+    }
+
+    #[Route('/', name: 'app_admin_postulations_list')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function index(): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Fetch all postulations for the recruiter
+        $postulations = $this->postulationRepository->findByRecruiter($user);
+        $stats = $this->getStats($user);
+
+        return $this->render('BackOffice/dashboard/postulations/index.html.twig', [
+            'postulations' => $postulations,
+            'stats' => $stats,
+            'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
+        ]);
+    }
+
+    #[Route('/offre/{id}', name: 'app_admin_postulations_by_offre')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function byOffre(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $offre = $this->offreEmploiRepository->find($id);
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+            $this->addFlash('error', 'Offre non trouvée ou accès non autorisé.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        $postulations = $this->postulationRepository->findByOffreAndRecruiter($id, $user);
+
+        return $this->render('BackOffice/dashboard/postulations/by_offre.html.twig', [
+            'postulations' => $postulations,
+            'offre' => $offre,
+            'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
+        ]);
+    }
+
+    #[Route('/{id}/statut', name: 'app_admin_postulations_update_statut', methods: ['POST'])]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function updateStatut(int $id, Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $postulation = $this->postulationRepository->find($id);
+        if (!$postulation) {
+            $this->addFlash('error', 'Postulation non trouvée.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        // Make sure the recruiter owns the offer
+        $offre = $postulation->getOffreEmploi();
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+            $this->addFlash('error', 'Accès non autorisé.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        $statut = $request->request->get('statut');
+        $allowedStatuts = ['En attente', 'Acceptée', 'Refusée'];
+
+        if (!in_array($statut, $allowedStatuts)) {
+            $this->addFlash('error', 'Statut invalide.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        if (!$this->isCsrfTokenValid('statut' . $postulation->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        $postulation->setStatut($statut);
+        $this->entityManager->flush();
+
+        $this->addFlash('success', 'Statut mis à jour avec succès.');
+
+        // Redirect back to the offer's postulations
+        return $this->redirectToRoute('app_admin_postulations_by_offre', ['id' => $offre->getId()]);
+    }
+
+    private function getStats(User $user): array
+    {
+        $postulations = $this->postulationRepository->findByRecruiter($user);
+        $total = count($postulations);
+        $accepted = 0;
+        $refused = 0;
+        $pending = 0;
+        $users = [];
+
+        foreach ($postulations as $p) {
+            match ($p->getStatut()) {
+                'Acceptée' => $accepted++,
+                'Refusée' => $refused++,
+                default => $pending++,
+            };
+
+            $user = $p->getUser();
+            if ($user) {
+                // Ensure the proxy is loaded before calling getFullName
+                if ($user instanceof Proxy) {
+                    $user->__load();
+                }
+
+                // Add users and their postulation status to the array
+                $users[] = [
+                    'name' => $user->getFullName(),
+                    'status' => $p->getStatut(),
+                ];
+            }
+        }
+
+        return [
+            'total' => $total,
+            'accepted' => $accepted,
+            'refused' => $refused,
+            'pending' => $pending,
+            'users' => $users,  // Return the list of users
+        ];
+    }
+
+}

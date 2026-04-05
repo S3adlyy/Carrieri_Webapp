@@ -1,0 +1,43 @@
+{% extends 'BackOffice/dashboard/index.html.twig' %}
+
+{% block content %}
+    <h2>Postulations pour l'offre {{ offre.titre }}</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Candidat</th>
+                <th>Motivation</th>
+                <th>CV</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for postulation in postulations %}
+                <tr>
+                    <td>{{ postulation.user.fullName }}</td>
+                    <td>{{ postulation.motivationCandidature }}</td>
+                    <td>
+                        <a href="{{ asset(postulation.cvPath) }}" target="_blank">Télécharger le CV</a>
+                    </td>
+                    <td>
+                        <span class="badge 
+                            {% if postulation.statut == 'Acceptée' %}badge-success
+                            {% elseif postulation.statut == 'Refusée' %}badge-danger
+                            {% else %}badge-warning{% endif %}">
+                            {{ postulation.statut }}
+                        </span>
+                    </td>
+                    <td>
+                        <form action="{{ path('app_admin_postulations_update_statut', {'id': postulation.id}) }}" method="POST">
+                            <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ postulation.id) }}">
+                            <button type="submit" name="statut" value="Acceptée" class="btn btn-success">Accepter</button>
+                            <button type="submit" name="statut" value="Refusée" class="btn btn-danger">Refuser</button>
+                            <button type="submit" name="statut" value="En attente" class="btn btn-warning">En attente</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

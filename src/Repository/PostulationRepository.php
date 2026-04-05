@@ -52,4 +52,30 @@ class PostulationRepository extends ServiceEntityRepository
         ];
     }
 
+    public function findByRecruiter(User $recruiter): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.offreEmploi', 'o')
+            ->addSelect('o')
+            ->andWhere('o.user = :recruiter')
+            ->setParameter('recruiter', $recruiter)
+            ->orderBy('p.datePostulation', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function findByOffreAndRecruiter(int $offreId, User $recruiter): array
+    {
+        return $this->createQueryBuilder('p')
+            ->leftJoin('p.offreEmploi', 'o')
+            ->addSelect('o')
+            ->andWhere('o.user = :recruiter')
+            ->andWhere('p.offreEmploi = :offreId')
+            ->setParameter('recruiter', $recruiter)
+            ->setParameter('offreId', $offreId)
+            ->orderBy('p.datePostulation', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
 }
