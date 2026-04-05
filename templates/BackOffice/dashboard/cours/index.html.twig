@@ -286,7 +286,6 @@
                 <table class="table table-hover mb-0 bo-table">
                     <thead>
                     <tr>
-                        <th>#</th>
                         <th>Titre</th>
                         <th>Niveau</th>
                         <th>Durée (h)</th>
@@ -305,7 +304,6 @@
                         {% if matches_query and matches_level %}
                             {% set shown = shown + 1 %}
                             <tr>
-                                <td>{{ c.id }}</td>
                                 <td>
                                     <a href="{{ path('app_admin_modules_index', {cours: c.id}) }}" title="Ouvrir les modules de ce cours">
                                         <strong>{{ c.titre|default('—') }}</strong>
@@ -356,7 +354,7 @@
                     {% endfor %}
                     {% if shown == 0 %}
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-3">Aucun cours trouvé.</td>
+                            <td colspan="7" class="text-center text-muted py-3">Aucun cours trouvé.</td>
                         </tr>
                     {% endif %}
                     </tbody>

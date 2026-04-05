@@ -82,7 +82,6 @@
                     <thead>
                     <tr>
                         {% if selected_cours is defined and selected_cours %}<th style="width:40px;"></th>{% endif %}
-                        <th>#</th>
                         <th>Titre</th>
                         <th>Description</th>
                         <th>Ordre</th>
@@ -101,7 +100,6 @@
                                 {% if selected_cours is defined and selected_cours %}
                                     <td class="text-center text-muted drag-handle" style="cursor: move;"><i class="fas fa-grip-vertical"></i></td>
                                 {% endif %}
-                                <td>{{ m.id }}</td>
                                 <td>
                                     <a href="{{ path('app_admin_lecons_index', {module: m.id}) }}" title="Ouvrir les leçons de ce module">
                                         <strong>{{ m.titre|default('—') }}</strong>
@@ -131,7 +129,7 @@
                     {% endfor %}
                     {% if shown == 0 %}
                         <tr>
-                            <td colspan="{{ selected_cours is defined and selected_cours ? 7 : 6 }}" class="text-center text-muted py-3">Aucun module trouvé.</td>
+                            <td colspan="{{ selected_cours is defined and selected_cours ? 6 : 5 }}" class="text-center text-muted py-3">Aucun module trouvé.</td>
                         </tr>
                     {% endif %}
                     </tbody>

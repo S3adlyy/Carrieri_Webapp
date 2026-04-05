@@ -82,7 +82,6 @@
                     <thead>
                     <tr>
                         {% if selected_module is defined and selected_module %}<th style="width:40px;"></th>{% endif %}
-                        <th>#</th>
                         <th>Titre</th>
                         <th>Ordre</th>
                         <th>Module</th>
@@ -101,7 +100,6 @@
                                 {% if selected_module is defined and selected_module %}
                                     <td class="text-center text-muted drag-handle" style="cursor: move;"><i class="fas fa-grip-vertical"></i></td>
                                 {% endif %}
-                                <td>{{ l.id }}</td>
                                 <td><strong>{{ l.titre|default('—') }}</strong></td>
                                 <td><span class="badge badge-secondary">{{ l.ordre|default('—') }}</span></td>
                                 <td>
@@ -129,7 +127,7 @@
                     {% endfor %}
                     {% if shown == 0 %}
                         <tr>
-                            <td colspan="{{ selected_module is defined and selected_module ? 7 : 6 }}" class="text-center text-muted py-3">Aucune leçon trouvée.</td>
+                            <td colspan="{{ selected_module is defined and selected_module ? 6 : 5 }}" class="text-center text-muted py-3">Aucune leçon trouvée.</td>
                         </tr>
                     {% endif %}
                     </tbody>
