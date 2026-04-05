@@ -24,7 +24,7 @@ class Mission
     #[ORM\Column]
     private ?string $type = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $createdAt = null;
 
     #[ORM\Column]

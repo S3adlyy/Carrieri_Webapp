@@ -72,6 +72,45 @@
             <p>{{ offre.description|nl2br }}</p>
         </div>
 
+        <div class="fo-missions-section">
+            <div class="fo-missions-header">
+                <h4>Exemples de Missions associées à cet Offre</h4>
+                <button type="button" class="fo-toggle-btn" id="missionToggleBtn" onclick="toggleMissions()">
+                    ↓
+                </button>
+            </div>
+
+            <div id="missionsBlock" class="fo-missions-list" style="display: none;">
+                {% if missions is defined and missions|length > 0 %}
+                    {% for mission in missions %}
+                        <div class="fo-mission-card">
+                            <div class="fo-mission-top">
+                                <span class="fo-mission-type">
+                                    {{ mission.type ?: 'Mission' }}
+                                </span>
+                                <span class="fo-mission-score">
+                                    Score min : {{ mission.scoreMin ?: '—' }}
+                                </span>
+                            </div>
+
+                            <div class="fo-mission-description">
+                                {{ mission.description ?: 'Aucune description.' }}
+                            </div>
+
+                            <div class="fo-mission-date">
+                                Créée le :
+                                {{ mission.createdAt ? mission.createdAt|date('d/m/Y H:i') : '—' }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="fo-no-missions">
+                        Aucune mission liée à cet offre.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
         <div class="fo-actions">
             <a href="{{ path('app_candidate_offres') }}" class="fo-btn-secondary">
                 Retour aux offres
@@ -144,6 +183,10 @@
         color: #1f2937;
     }
 
+    .fo-description {
+        margin-bottom: 30px;
+    }
+
     .fo-description h4 {
         color: #223a7a;
         font-weight: 800;
@@ -153,6 +196,99 @@
     .fo-description p {
         color: #5f6780;
         line-height: 1.8;
+    }
+
+    .fo-missions-section {
+        margin-top: 20px;
+        margin-bottom: 30px;
+        background: #f9fbff;
+        border: 1px solid #e6eefc;
+        border-radius: 18px;
+        padding: 22px;
+    }
+
+    .fo-missions-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 15px;
+    }
+
+    .fo-missions-header h4 {
+        margin: 0;
+        color: #223a7a;
+        font-weight: 800;
+    }
+
+    .fo-toggle-btn {
+        background: linear-gradient(90deg, #3b82f6, #2563eb);
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+
+    .fo-missions-list {
+        margin-top: 15px;
+    }
+
+    .fo-mission-card {
+        background: #fff;
+        border: 1px solid #e5edf9;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 14px;
+        box-shadow: 0 6px 18px rgba(31, 55, 120, 0.06);
+    }
+
+    .fo-mission-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .fo-mission-type {
+        display: inline-block;
+        background: rgba(59, 130, 246, 0.12);
+        color: #2563eb;
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .fo-mission-score {
+        color: #1f3470;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .fo-mission-description {
+        color: #5f6780;
+        line-height: 1.7;
+        margin-bottom: 8px;
+    }
+
+    .fo-mission-date {
+        color: #6b7280;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .fo-no-missions {
+        color: #6b7280;
+        font-weight: 600;
+        padding: 10px 0;
     }
 
     .fo-actions {
@@ -190,7 +326,27 @@
         .fo-meta-grid {
             grid-template-columns: 1fr;
         }
+
+        .fo-mission-top {
+            flex-direction: column;
+            align-items: flex-start;
+        }
     }
 </style>
+
+<script>
+    function toggleMissions() {
+        const block = document.getElementById('missionsBlock');
+        const btn = document.getElementById('missionToggleBtn');
+
+        if (block.style.display === 'none') {
+            block.style.display = 'block';
+            btn.style.transform = 'rotate(180deg)';
+        } else {
+            block.style.display = 'none';
+            btn.style.transform = 'rotate(0deg)';
+        }
+    }
+</script>
 
 {% endblock %}

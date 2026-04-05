@@ -28,6 +28,9 @@ class MissionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return Mission[]
+     */
     public function findByCreatedById(int $createdById): array
     {
         return $this->createQueryBuilder('m')
@@ -37,5 +40,4 @@ class MissionRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
-    
 }
