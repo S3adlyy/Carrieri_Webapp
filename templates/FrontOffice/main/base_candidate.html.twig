@@ -22,9 +22,9 @@
 	</div>
 
 	<section class="login_register fo-candidate-content section-padding">
-		<div class="container">
-			<div class="row justify-content-center">
-				<div class="col-lg-8 col-md-10 text-center">
+		<div class="{% block candidate_content_container_class %}container{% endblock %}">
+			<div class="{% block candidate_content_row_class %}row justify-content-center{% endblock %}">
+				<div class="{% block candidate_content_col_class %}col-lg-8 col-md-10 text-center{% endblock %}">
 					{% block candidate_content %}
 						<p class="mb-0" style="color: #5c6478;">Contenu à venir.</p>
 					{% endblock %}

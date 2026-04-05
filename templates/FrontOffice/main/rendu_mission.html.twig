@@ -5,373 +5,475 @@
 
 {% block stylesheets %}
     {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260405-1">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/dracula.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
-
-        :root {
-            --indigo:       #4f46e5;
-            --indigo-light: #6366f1;
-            --indigo-dark:  #3730a3;
-            --violet:       #7c3aed;
-            --surface:      #ffffff;
-            --bg:           #f1f5f9;
-            --text-primary: #0f172a;
-            --text-secondary:#64748b;
-            --border:       #e2e8f0;
-            --code-bg:      #1e1e2e;
-            --radius-lg:    14px;
-            --radius-md:    8px;
-            --shadow-sm:    0 1px 3px rgba(0,0,0,.06);
-            --shadow-lg:    0 12px 40px rgba(79,70,229,.14);
-        }
-
-        /* ── Full-screen shell overrides ── */
+        /* Overrides pour la page mission */
         .fo-candidate-content {
-            padding: 0 !important; margin: 0 !important; max-width: 100% !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
         }
         .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
         .row { margin: 0 !important; }
         .col-lg-8, .col-md-10 { max-width: 100% !important; flex: 0 0 100% !important; padding: 0 !important; }
+        .section-top, .section-top-title { display: none !important; }
 
-        /* Root */
+        /* Root avec charte FXML */
         .rendu-mission-root {
             --rendu-nav-offset: 132px;
-            width: 100%; flex: 1; min-height: 0;
-            display: flex; flex-direction: column;
-            background: var(--bg);
+            width: 100%;
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            background: #f1f5f9;
             font-family: 'DM Sans', sans-serif;
         }
 
-        body:has(.rendu-mission-root) .section-top { display: none !important; }
-
         body:has(.rendu-mission-root) section.login_register.fo-candidate-content.section-padding {
-            padding: 0 !important; margin: 0 !important;
+            padding: 0 !important;
+            margin: 0 !important;
             min-height: calc(100dvh - var(--rendu-nav-offset, 132px));
-            display: flex; flex-direction: column;
-        }
-        body:has(.rendu-mission-root) section.login_register.fo-candidate-content > .container {
-            flex: 1; display: flex; flex-direction: column;
-            min-height: 0; width: 100%; max-width: 100% !important;
-        }
-        body:has(.rendu-mission-root) section.login_register.fo-candidate-content .row {
-            flex: 1; min-height: 0; display: flex;
-        }
-        body:has(.rendu-mission-root) section.login_register.fo-candidate-content [class*="col-"] {
-            flex: 1; display: flex; flex-direction: column; min-height: 0;
-        }
-        body:has(.rendu-mission-root) .rendu-mission-root .container {
-            max-width: 100% !important; padding-left: 0 !important; padding-right: 0 !important;
-        }
-        body:has(.rendu-mission-root) .rendu-mission-root .row { margin-left: 0 !important; margin-right: 0 !important; }
-        body:has(.rendu-mission-root) .rendu-mission-root .col-lg-8,
-        body:has(.rendu-mission-root) .rendu-mission-root .col-md-10 {
-            max-width: 100% !important; flex: 0 0 100% !important;
-            padding-left: 0 !important; padding-right: 0 !important;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* ── Top bar ── */
+        /* Top bar */
         .rm-topbar {
             flex-shrink: 0;
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 20px;
-            height: 48px;
-            background: #0f172a;
-            border-bottom: 1px solid rgba(255,255,255,.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 24px;
+            height: 56px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            border-bottom: 1px solid rgba(255,255,255,.08);
             gap: 12px;
         }
 
-        .rm-topbar-left { display: flex; align-items: center; gap: 16px; }
+        .rm-topbar-left { display: flex; align-items: center; gap: 20px; }
 
         .rm-back-link {
-            display: inline-flex; align-items: center; gap: 7px;
-            font-size: 12.5px; font-weight: 600;
-            color: rgba(255,255,255,.55);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            color: rgba(255,255,255,.6);
             text-decoration: none;
-            transition: color .2s;
+            transition: all 0.2s ease;
+            padding: 6px 12px;
+            border-radius: 8px;
+            background: rgba(255,255,255,.05);
         }
-        .rm-back-link:hover { color: #fff; text-decoration: none; }
-        .rm-back-link i { font-size: 11px; }
+
+        .rm-back-link:hover {
+            color: #fff;
+            background: rgba(255,255,255,.1);
+            text-decoration: none;
+            transform: translateX(-2px);
+        }
+
+        .rm-back-link i { font-size: 12px; }
 
         .rm-breadcrumb {
-            display: flex; align-items: center; gap: 6px;
-            font-size: 12px; color: rgba(255,255,255,.35);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            color: rgba(255,255,255,.4);
         }
-        .rm-breadcrumb span { color: rgba(255,255,255,.7); font-weight: 600; }
+
+        .rm-breadcrumb span { color: rgba(255,255,255,.8); font-weight: 600; }
 
         .rm-topbar-meta {
-            display: flex; align-items: center; gap: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
+
         .rm-badge {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 3px 10px;
-            border-radius: 20px; font-size: 11px; font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: 50px;
+            font-size: 11.5px;
+            font-weight: 700;
         }
-        .rm-badge-id   { background: rgba(255,255,255,.08); color: rgba(255,255,255,.55); }
-        .rm-badge-score { background: rgba(79,70,229,.35); color: #a5b4fc; border: 1px solid rgba(99,102,241,.4); }
 
-        /* ── Main split layout ── */
+        .rm-badge-id {
+            background: rgba(255,255,255,.08);
+            color: rgba(255,255,255,.6);
+            border: 1px solid rgba(255,255,255,.1);
+        }
+
+        .rm-badge-score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        /* Layout split */
         .rm-layout {
-            flex: 1; display: flex; min-height: 0; width: 100%;
+            flex: 1;
+            display: flex;
+            min-height: 0;
+            width: 100%;
         }
 
-        /* ── LEFT: Problem description ── */
+        /* Panel gauche - Description */
         .rm-panel-desc {
             width: 40%;
-            min-width: 300px;
-            background: var(--surface);
-            border-right: 1px solid var(--border);
-            display: flex; flex-direction: column;
+            min-width: 320px;
+            background: #fff;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
         .rm-desc-header {
-            padding: 20px 22px 16px;
-            border-bottom: 1px solid var(--border);
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            padding: 24px 28px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             flex-shrink: 0;
         }
+
         .rm-mission-label {
-            font-size: 10.5px; font-weight: 700; letter-spacing: .8px;
-            text-transform: uppercase; color: rgba(255,255,255,.45);
-            margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.5);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
+
         .rm-mission-title {
             font-family: 'Sora', sans-serif;
-            font-size: 20px; font-weight: 800; color: #fff;
-            margin: 0 0 10px; line-height: 1.25;
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            margin: 0 0 12px;
+            line-height: 1.3;
         }
+
         .rm-mission-score-pill {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 4px 12px;
-            background: rgba(99,102,241,.25);
-            border: 1px solid rgba(99,102,241,.4);
-            border-radius: 20px; font-size: 11.5px; font-weight: 700;
-            color: #a5b4fc;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            background: rgba(255,255,255,.15);
+            border: 1px solid rgba(255,255,255,.2);
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 700;
+            color: #c7d2fe;
         }
 
         .rm-desc-body {
-            flex: 1; overflow-y: auto;
-            padding: 20px 22px 24px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
             scroll-behavior: smooth;
         }
+
         .rm-desc-body::-webkit-scrollbar { width: 6px; }
-        .rm-desc-body::-webkit-scrollbar-track { background: transparent; }
-        .rm-desc-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        .rm-desc-body::-webkit-scrollbar-track { background: #f1f5f9; }
+        .rm-desc-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
 
         .rm-section-title {
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: .6px; color: var(--text-secondary);
-            margin: 0 0 10px; display: flex; align-items: center; gap: 7px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #64748b;
+            margin: 0 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        .rm-section-title i { color: var(--indigo); font-size: 11px; }
+
+        .rm-section-title i { color: #667eea; font-size: 12px; }
 
         .rm-description {
-            font-size: 14px; line-height: 1.75; color: var(--text-primary);
-            margin-bottom: 24px;
+            font-size: 14px;
+            line-height: 1.7;
+            color: #1f2937;
+            margin-bottom: 28px;
         }
 
         .rm-example {
-            background: var(--bg);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-md);
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
             overflow: hidden;
-            margin-bottom: 10px;
-            transition: border-color .2s;
+            margin-bottom: 12px;
+            transition: all 0.2s ease;
         }
-        .rm-example:hover { border-color: var(--indigo-light); }
+
+        .rm-example:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+        }
 
         .rm-example-label {
-            padding: 7px 12px;
-            background: #f8fafc;
-            border-bottom: 1px solid var(--border);
-            font-size: 11px; font-weight: 700; color: var(--indigo);
-            display: flex; align-items: center; gap: 5px;
+            padding: 8px 14px;
+            background: #f1f5f9;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 11px;
+            font-weight: 700;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
+
         .rm-example-body {
-            padding: 10px 12px;
+            padding: 12px 14px;
             font-family: ui-monospace, 'Cascadia Code', Monaco, monospace;
-            font-size: 12px; line-height: 1.6; color: var(--text-primary);
+            font-size: 12px;
+            line-height: 1.6;
+            color: #1f2937;
         }
-        .rm-example-body div { margin-bottom: 3px; }
-        .rm-example-body strong { color: #92400e; }
 
         .rm-constraints {
-            margin-top: 20px;
-        }
-        .rm-constraints ul {
-            margin: 0; padding-left: 18px;
-        }
-        .rm-constraints li {
-            font-size: 13px; color: var(--text-secondary);
-            margin-bottom: 4px; line-height: 1.5;
+            margin-top: 24px;
         }
 
-        /* Previous submission box */
+        .rm-constraints ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .rm-constraints li {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        /* Dernière soumission */
         .rm-prev-sub {
-            margin-top: 22px;
+            margin-top: 28px;
             background: linear-gradient(135deg, #f5f3ff 0%, #eef2ff 100%);
             border: 1px solid #ddd6fe;
-            border-radius: var(--radius-md);
-            padding: 14px 16px;
+            border-radius: 16px;
+            padding: 16px 20px;
         }
-        .rm-prev-sub-title {
-            font-size: 11px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: .5px; color: var(--indigo); margin-bottom: 10px;
-            display: flex; align-items: center; gap: 6px;
-        }
-        .rm-prev-sub-row {
-            display: flex; align-items: center; justify-content: space-between;
-            font-size: 12.5px; color: var(--text-secondary);
-            padding: 5px 0; border-bottom: 1px solid rgba(221,214,254,.5);
-        }
-        .rm-prev-sub-row:last-child { border-bottom: none; }
-        .rm-prev-sub-row strong { color: var(--text-primary); font-weight: 600; }
 
-        /* ── RIGHT: Editor ── */
+        .rm-prev-sub-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #667eea;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .rm-prev-sub-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #64748b;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(221, 214, 254, 0.5);
+        }
+
+        .rm-prev-sub-row:last-child { border-bottom: none; }
+        .rm-prev-sub-row strong { color: #1f2937; font-weight: 700; }
+
+        /* Panel droit - Éditeur */
         .rm-panel-editor {
-            flex: 1; min-width: 0;
-            display: flex; flex-direction: column;
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
             background: #1e1e2e;
         }
 
-        /* Editor top bar */
         .rm-editor-bar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 0 16px;
-            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            height: 52px;
             background: #161622;
             border-bottom: 1px solid rgba(255,255,255,.06);
             flex-shrink: 0;
-            gap: 10px;
+            gap: 12px;
         }
 
-        .rm-editor-bar-left { display: flex; align-items: center; gap: 10px; }
-        .rm-editor-bar-right { display: flex; align-items: center; gap: 8px; }
+        .rm-editor-bar-left { display: flex; align-items: center; gap: 14px; }
+        .rm-editor-bar-right { display: flex; align-items: center; gap: 10px; }
 
-        /* Language selector */
         .rm-lang-label {
-            font-size: 11px; font-weight: 600; color: rgba(255,255,255,.4);
-            display: flex; align-items: center; gap: 5px;
-            text-transform: uppercase; letter-spacing: .4px;
+            font-size: 11px;
+            font-weight: 700;
+            color: rgba(255,255,255,.5);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
-        .rm-lang-label i { color: var(--indigo-light); font-size: 11px; }
+
+        .rm-lang-label i { color: #667eea; font-size: 12px; }
 
         .rm-lang-select {
-            padding: 5px 28px 5px 10px;
-            background: rgba(255,255,255,.07);
-            border: 1px solid rgba(255,255,255,.1);
-            border-radius: 6px;
+            padding: 6px 30px 6px 12px;
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: 8px;
             color: #e2e8f0;
-            font-size: 12px; font-weight: 600;
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
             outline: none;
             appearance: none;
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%236366f1' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 8px center;
-            transition: border-color .2s, background .2s;
+            background-position: right 10px center;
+            transition: all 0.2s ease;
         }
-        .rm-lang-select:focus { border-color: var(--indigo-light); background-color: rgba(99,102,241,.15); }
-        .rm-lang-select option { background: #1e1e2e; color: #e2e8f0; }
 
-        /* Editor toolbar buttons */
+        .rm-lang-select:focus {
+            border-color: #667eea;
+            background-color: rgba(102, 126, 234, 0.15);
+        }
+
         .rm-tool-btn {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 5px 10px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
             background: rgba(255,255,255,.06);
             border: 1px solid rgba(255,255,255,.09);
-            border-radius: 6px;
-            color: rgba(255,255,255,.55);
-            font-size: 11.5px; font-weight: 600;
+            border-radius: 8px;
+            color: rgba(255,255,255,.6);
+            font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: all .2s;
+            transition: all 0.2s ease;
         }
-        .rm-tool-btn:hover { background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.2); }
-        .rm-tool-btn i { font-size: 11px; }
 
-        /* CodeMirror shell */
+        .rm-tool-btn:hover {
+            background: rgba(255,255,255,.12);
+            color: #fff;
+            border-color: rgba(255,255,255,.2);
+        }
+
+        /* CodeMirror */
         .rm-cm-shell {
-            flex: 1; min-height: 180px; display: flex; flex-direction: column;
+            flex: 1;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
+
         #codeEditor { display: none; }
+
         .rm-cm-shell .CodeMirror {
-            flex: 1; height: 100% !important; min-height: 260px !important;
-            font-size: 13px; line-height: 1.6;
+            flex: 1;
+            height: 100% !important;
+            min-height: 260px !important;
+            font-size: 13px;
+            line-height: 1.6;
             font-family: ui-monospace, 'Cascadia Code', 'Segoe UI Mono', Monaco, monospace;
             background: #1e1e2e !important;
         }
-        .rm-cm-shell .CodeMirror-scroll { min-height: 260px; }
-        .rm-cm-shell .CodeMirror-gutters {
-            background: #161622 !important;
-            border-right: 1px solid rgba(255,255,255,.07) !important;
-        }
-        .rm-cm-shell .CodeMirror-linenumber { color: rgba(255,255,255,.2) !important; }
-        .rm-cm-shell .CodeMirror-scroll::-webkit-scrollbar { width: 7px; height: 7px; }
-        .rm-cm-shell .CodeMirror-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,.2); }
-        .rm-cm-shell .CodeMirror-scroll::-webkit-scrollbar-thumb { background: rgba(99,102,241,.4); border-radius: 4px; }
 
-        /* Editor footer (run / submit) */
+        /* Footer éditeur */
         .rm-editor-footer {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
             background: #161622;
             border-top: 1px solid rgba(255,255,255,.06);
             flex-shrink: 0;
-            gap: 10px;
+            gap: 12px;
             flex-wrap: wrap;
         }
-        .rm-footer-left { display: flex; align-items: center; gap: 8px; }
+
+        .rm-footer-left { display: flex; align-items: center; gap: 12px; }
+
         .rm-footer-hint {
-            font-size: 11.5px; color: rgba(255,255,255,.3);
-            display: flex; align-items: center; gap: 5px;
+            font-size: 11.5px;
+            color: rgba(255,255,255,.4);
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
+
         .rm-footer-hint kbd {
             background: rgba(255,255,255,.08);
             border: 1px solid rgba(255,255,255,.12);
-            border-radius: 4px; padding: 1px 5px; font-size: 10px; color: rgba(255,255,255,.5);
+            border-radius: 5px;
+            padding: 2px 6px;
+            font-size: 10px;
+            color: rgba(255,255,255,.6);
             font-family: monospace;
         }
-        .rm-footer-right { display: flex; gap: 8px; }
+
+        .rm-footer-right { display: flex; gap: 10px; }
 
         .rm-btn-run {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 20px;
             background: transparent;
-            border: 1.5px solid var(--indigo-light);
-            border-radius: 6px;
-            color: var(--indigo-light);
-            font-size: 12.5px; font-weight: 700;
+            border: 1.5px solid #667eea;
+            border-radius: 8px;
+            color: #a5b4fc;
+            font-size: 13px;
+            font-weight: 700;
             cursor: pointer;
             font-family: 'DM Sans', sans-serif;
-            transition: all .2s;
+            transition: all 0.2s ease;
         }
-        .rm-btn-run:hover { background: rgba(99,102,241,.15); color: #a5b4fc; border-color: #a5b4fc; }
-        .rm-btn-run i { font-size: 11px; }
 
-        .rm-btn-submit {
-            display: inline-flex; align-items: center; gap: 6px;
-            padding: 8px 20px;
-            background: var(--indigo);
-            border: none; border-radius: 6px;
-            color: #fff;
-            font-size: 12.5px; font-weight: 700;
-            cursor: pointer;
-            font-family: 'DM Sans', sans-serif;
-            transition: background .2s, box-shadow .2s, transform .15s;
-        }
-        .rm-btn-submit:hover {
-            background: var(--indigo-dark);
-            box-shadow: 0 4px 16px rgba(79,70,229,.45);
+        .rm-btn-run:hover {
+            background: rgba(102, 126, 234, 0.15);
+            color: #c7d2fe;
+            border-color: #a5b4fc;
             transform: translateY(-1px);
         }
-        .rm-btn-submit i { font-size: 11px; }
 
-        /* ── Terminal / Results panel ── */
+        .rm-btn-submit {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 9px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            font-family: 'DM Sans', sans-serif;
+            transition: all 0.2s ease;
+        }
+
+        .rm-btn-submit:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
+        }
+
+        /* Terminal */
         .rm-terminal {
             flex-shrink: 0;
             max-height: 280px;
@@ -381,23 +483,33 @@
             flex-direction: column;
             overflow: hidden;
         }
+
         .rm-terminal.open { display: flex; }
 
         .rm-terminal-bar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
             background: #161622;
             border-bottom: 1px solid rgba(255,255,255,.06);
             flex-shrink: 0;
         }
-        .rm-terminal-title {
-            display: flex; align-items: center; gap: 7px;
-            font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,.6);
-            text-transform: uppercase; letter-spacing: .5px;
-        }
-        .rm-terminal-title i { color: var(--indigo-light); font-size: 12px; }
 
-        .rm-terminal-dots { display: flex; gap: 5px; }
+        .rm-terminal-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255,255,255,.6);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .rm-terminal-title i { color: #667eea; font-size: 13px; }
+
+        .rm-terminal-dots { display: flex; gap: 6px; }
         .rm-dot { width: 10px; height: 10px; border-radius: 50%; }
         .rm-dot-red    { background: #ff5f57; }
         .rm-dot-yellow { background: #febc2e; }
@@ -405,71 +517,128 @@
 
         .rm-terminal-close {
             background: rgba(255,255,255,.07);
-            border: none; border-radius: 4px;
-            color: rgba(255,255,255,.4); cursor: pointer;
-            font-size: 12px; padding: 3px 7px;
-            transition: all .2s;
+            border: none;
+            border-radius: 6px;
+            color: rgba(255,255,255,.5);
+            cursor: pointer;
+            font-size: 12px;
+            padding: 4px 10px;
+            transition: all 0.2s ease;
         }
-        .rm-terminal-close:hover { background: rgba(239,68,68,.2); color: #fca5a5; }
+
+        .rm-terminal-close:hover {
+            background: rgba(239,68,68,.2);
+            color: #fca5a5;
+        }
 
         .rm-terminal-body {
-            flex: 1; overflow-y: auto; padding: 14px 16px;
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px 20px;
             font-family: ui-monospace, 'Cascadia Code', Monaco, monospace;
             font-size: 12.5px;
         }
-        .rm-terminal-body::-webkit-scrollbar { width: 5px; }
-        .rm-terminal-body::-webkit-scrollbar-thumb { background: rgba(99,102,241,.3); border-radius: 4px; }
 
-        /* Test result items */
+        /* Test results */
         .test-results { font-family: inherit; }
-        .test-summary { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,.06); }
-        .test-summary h4 { margin: 0 0 8px; font-size: 13px; font-weight: 700; color: #e2e8f0; }
-        .progress-bar { background: rgba(255,255,255,.08); border-radius: 999px; height: 6px; overflow: hidden; }
-        .progress-fill { height: 100%; transition: width .5s ease; border-radius: 999px;
-            background: linear-gradient(90deg, var(--indigo-light), var(--violet)); }
 
-        .test-details { display: flex; flex-direction: column; gap: 6px; }
+        .test-summary {
+            margin-bottom: 14px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,.06);
+        }
+
+        .test-summary h4 {
+            margin: 0 0 10px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #e2e8f0;
+        }
+
+        .progress-bar {
+            background: rgba(255,255,255,.08);
+            border-radius: 999px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .test-details { display: flex; flex-direction: column; gap: 8px; }
+
         .test-item {
-            padding: 8px 12px; border-radius: 6px;
+            padding: 10px 14px;
+            border-radius: 8px;
             background: rgba(255,255,255,.04);
             border: 1px solid rgba(255,255,255,.07);
             border-left-width: 3px;
         }
+
         .test-success { border-left-color: #10b981; background: rgba(16,185,129,.07); }
         .test-error   { border-left-color: #ef4444; background: rgba(239,68,68,.07); }
-        .test-header { font-weight: 700; margin-bottom: 3px; color: #e2e8f0; font-size: 12px; }
-        .test-message { font-size: 11.5px; color: rgba(255,255,255,.55); line-height: 1.5; }
-        .test-message pre {
-            margin: 6px 0 0; padding: 8px 10px;
-            background: rgba(0,0,0,.35); color: #e2e8f0;
-            border-radius: 5px; overflow-x: auto; font-size: 11px;
+
+        .test-header {
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #e2e8f0;
+            font-size: 12px;
         }
 
-        /* ── Fullscreen mode ── */
+        .test-message {
+            font-size: 11.5px;
+            color: rgba(255,255,255,.6);
+            line-height: 1.5;
+        }
+
+        .test-message pre {
+            margin: 8px 0 0;
+            padding: 8px 12px;
+            background: rgba(0,0,0,.35);
+            color: #e2e8f0;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 11px;
+        }
+
+        /* Fullscreen */
         .fullscreen-mode {
-            position: fixed !important; top: 0 !important; left: 0 !important;
-            right: 0 !important; bottom: 0 !important;
-            width: 100% !important; height: 100% !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
             z-index: 9999 !important;
         }
+
         .fullscreen-mode .rm-panel-desc { display: none !important; }
         .fullscreen-mode .rm-panel-editor { width: 100% !important; }
 
-        /* ── Responsive ── */
+        /* Responsive */
         @media (max-width: 992px) {
             .rm-layout { flex-direction: column; }
-            .rm-panel-desc { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid var(--border); }
+            .rm-panel-desc { width: 100%; max-height: 45vh; border-right: none; border-bottom: 1px solid #e2e8f0; }
             .rm-panel-editor { flex: 1; }
         }
+
         @media (max-width: 576px) {
-            .rm-topbar { padding: 0 12px; }
+            .rm-topbar { padding: 0 16px; }
             .rm-breadcrumb { display: none; }
             .rm-footer-hint { display: none; }
             .rm-btn-run, .rm-btn-submit { flex: 1; justify-content: center; }
         }
 
-        /* Spinner */
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .fa-spinner { animation: spin 1s linear infinite; }
     </style>
 {% endblock %}
@@ -480,27 +649,27 @@
 {% block candidate_content %}
     <div class="rendu-mission-root" id="rendumissionroot">
 
-        {# ── Top bar ── #}
+        {# Top bar avec gradient FXML #}
         <div class="rm-topbar">
             <div class="rm-topbar-left">
                 <a href="{{ path('app_candidate_mission') }}" class="rm-back-link">
                     <i class="fas fa-arrow-left"></i> Missions
                 </a>
                 <div class="rm-breadcrumb">
-                    <i class="fas fa-chevron-right" style="font-size:9px"></i>
+                    <i class="fas fa-chevron-right" style="font-size: 9px"></i>
                     <span>{{ mission.type }}</span>
                 </div>
             </div>
             <div class="rm-topbar-meta">
-                <span class="rm-badge rm-badge-id"><i class="fas fa-hashtag" style="font-size:9px"></i> {{ mission.id }}</span>
-                <span class="rm-badge rm-badge-score"><i class="fas fa-star" style="font-size:9px"></i> Score requis : {{ mission.scoreMin }}</span>
+                <span class="rm-badge rm-badge-id"><i class="fas fa-hashtag" style="font-size: 9px"></i> {{ mission.id }}</span>
+                <span class="rm-badge rm-badge-score"><i class="fas fa-star" style="font-size: 9px"></i> Score requis : {{ mission.scoreMin }}</span>
             </div>
         </div>
 
-        {# ── Split layout ── #}
+        {# Split layout #}
         <div class="rm-layout">
 
-            {# ── LEFT: Problem description ── #}
+            {# Panel gauche - Description #}
             <div class="rm-panel-desc">
                 <div class="rm-desc-header">
                     <div class="rm-mission-label">
@@ -508,20 +677,17 @@
                     </div>
                     <h1 class="rm-mission-title">{{ mission.type }}</h1>
                     <span class="rm-mission-score-pill">
-                    <i class="fas fa-star"></i> Score requis : {{ mission.scoreMin }} pts
-                </span>
+                        <i class="fas fa-star"></i> Score requis : {{ mission.scoreMin }} pts
+                    </span>
                 </div>
 
                 <div class="rm-desc-body">
-
-                    {# Description #}
                     <div class="rm-section-title"><i class="fas fa-align-left"></i> Description</div>
                     <div class="rm-description">
                         {{ mission.description|nl2br }}
                     </div>
 
-                    {# Examples #}
-                    <div class="rm-section-title" style="margin-bottom:12px"><i class="fas fa-flask"></i> Exemples</div>
+                    <div class="rm-section-title" style="margin-bottom: 12px"><i class="fas fa-flask"></i> Exemples</div>
 
                     <div class="rm-example">
                         <div class="rm-example-label"><i class="fas fa-play-circle"></i> Exemple 1</div>
@@ -548,9 +714,8 @@
                         </div>
                     </div>
 
-                    {# Constraints #}
                     <div class="rm-constraints">
-                        <div class="rm-section-title" style="margin-bottom:10px"><i class="fas fa-exclamation-triangle"></i> Contraintes</div>
+                        <div class="rm-section-title" style="margin-bottom: 10px"><i class="fas fa-exclamation-triangle"></i> Contraintes</div>
                         <ul>
                             <li>2 ≤ nums.length ≤ 10⁴</li>
                             <li>-10⁹ ≤ nums[i] ≤ 10⁹</li>
@@ -558,7 +723,6 @@
                         </ul>
                     </div>
 
-                    {# Previous submission #}
                     {% if existingRendu %}
                         <div class="rm-prev-sub">
                             <div class="rm-prev-sub-title">
@@ -570,7 +734,7 @@
                             </div>
                             <div class="rm-prev-sub-row">
                                 <span>Score</span>
-                                <strong style="color:var(--indigo-light)">{{ existingRendu.score|default(0)|round }} / 100</strong>
+                                <strong style="color:#667eea">{{ existingRendu.score|default(0)|round }} / 100</strong>
                             </div>
                             <div class="rm-prev-sub-row">
                                 <span>Langage</span>
@@ -578,14 +742,11 @@
                             </div>
                         </div>
                     {% endif %}
-
                 </div>
             </div>
 
-            {# ── RIGHT: Editor ── #}
+            {# Panel droit - Éditeur #}
             <div class="rm-panel-editor" id="editorPanel">
-
-                {# Editor bar #}
                 <div class="rm-editor-bar">
                     <div class="rm-editor-bar-left">
                         <span class="rm-lang-label"><i class="fas fa-code"></i> Langage</span>
@@ -607,10 +768,9 @@
                     </div>
                 </div>
 
-                {# CodeMirror editor form #}
                 <form method="post" id="codeForm" style="flex:1;display:flex;flex-direction:column;min-height:0">
                     <div class="rm-cm-shell">
-                    <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
+                        <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
 # Essayez votre code ici !
 
 def twoSum(nums, target):
@@ -635,12 +795,11 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     </div>
                     <input type="hidden" name="langue" id="selectedLangue" value="python">
 
-                    {# Footer actions #}
                     <div class="rm-editor-footer">
                         <div class="rm-footer-left">
-                        <span class="rm-footer-hint">
-                            <kbd>Ctrl</kbd>+<kbd>Enter</kbd> Exécuter
-                        </span>
+                            <span class="rm-footer-hint">
+                                <kbd>Ctrl</kbd>+<kbd>Enter</kbd> Exécuter
+                            </span>
                         </div>
                         <div class="rm-footer-right">
                             <button type="button" class="rm-btn-run" id="runCode">
@@ -653,7 +812,6 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     </div>
                 </form>
 
-                {# Terminal / Results #}
                 <div class="rm-terminal" id="resultsPanel">
                     <div class="rm-terminal-bar">
                         <div style="display:flex;align-items:center;gap:10px">
@@ -686,10 +844,9 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                         </div>
                     </div>
                 </div>
-
-            </div>{# end editor panel #}
-        </div>{# end layout #}
-    </div>{# end root #}
+            </div>
+        </div>
+    </div>
 
     {% block javascripts %}
         {{ parent() }}
@@ -709,7 +866,7 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                 const resultsContent = document.getElementById('resultsContent');
                 let isFullscreen = false;
 
-                // ── Init CodeMirror ──
+                // Init CodeMirror
                 let editor = CodeMirror.fromTextArea(textarea, {
                     lineNumbers:   true,
                     mode:          'python',
@@ -723,7 +880,6 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                 setTimeout(() => editor.refresh(), 100);
                 window.addEventListener('resize', () => editor.refresh());
 
-                // ── Default code templates ──
                 const defaultCodes = {
                     python: `# Solution Python pour Two Sum
 # Essayez votre code ici !
@@ -765,13 +921,9 @@ var twoSum = function(nums, target) {
     return [];
 };
 
-// Test
 console.log("Bienvenue dans l'éditeur de code!");
 console.log("twoSum([2, 7, 11, 15], 9) =", twoSum([2, 7, 11, 15], 9));`,
                     php: `<?php
-/**
- * Solution PHP pour Two Sum
- */
 function twoSum($nums, $target) {
     $map = [];
     for ($i = 0; $i < count($nums); $i++) {
@@ -831,15 +983,12 @@ public:
 
 int main() {
     Solution sol;
-    vector<int> nums = {2, 7, 11, 15};
     int target = 9;
-    vector<int> result = sol.twoSum(nums, target);
     cout << "twoSum([2, 7, 11, 15], 9) = [" << result[0] << "," << result[1] << "]" << endl;
     return 0;
 }`
                 };
 
-                // ── Fullscreen ──
                 function toggleFullscreen() {
                     if (!isFullscreen) {
                         editorPanel.classList.add('fullscreen-mode');
@@ -857,7 +1006,6 @@ int main() {
                 fullscreenBtn.addEventListener('click', toggleFullscreen);
                 document.addEventListener('keydown', e => { if (e.key === 'Escape' && isFullscreen) toggleFullscreen(); });
 
-                // Ctrl+Enter shortcut to run
                 document.addEventListener('keydown', e => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                         e.preventDefault();
@@ -865,7 +1013,6 @@ int main() {
                     }
                 });
 
-                // ── Language change ──
                 languageSelect.addEventListener('change', function () {
                     const lang = this.value;
                     selectedLangue.value = lang;
@@ -874,13 +1021,11 @@ int main() {
                     if (defaultCodes[lang]) editor.setValue(defaultCodes[lang]);
                 });
 
-                // ── Reset ──
                 document.getElementById('resetCode').addEventListener('click', () => {
                     const lang = languageSelect.value;
                     editor.setValue(defaultCodes[lang] || defaultCodes.python);
                 });
 
-                // ── Helper ──
                 function escapeHtml(text) {
                     const div = document.createElement('div');
                     div.textContent = text;
@@ -891,7 +1036,6 @@ int main() {
                     resultsPanel.classList.add('open');
                 }
 
-                // ── Run code ──
                 document.getElementById('runCode').addEventListener('click', async function () {
                     const code = editor.getValue();
                     const language = languageSelect.value;
@@ -1009,12 +1153,10 @@ int main() {
                     }
                 });
 
-                // ── Close terminal ──
                 document.getElementById('closeResults').addEventListener('click', () => {
                     resultsPanel.classList.remove('open');
                 });
 
-                // ── Submit ──
                 document.getElementById('codeForm').addEventListener('submit', function () {
                     editor.save();
                     openTerminal();
