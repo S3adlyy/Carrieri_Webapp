@@ -36,4 +36,15 @@ class OffreEmploiRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function findActiveOffers(): array
+    {
+        return $this->createQueryBuilder('o')
+            ->andWhere('o.dateExpiration > :now')
+            ->setParameter('now', new \DateTime())
+            ->orderBy('o.datePublication', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
 }
