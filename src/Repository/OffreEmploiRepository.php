@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\OffreEmploi;
+use App\Entity\User;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -16,16 +17,23 @@ class OffreEmploiRepository extends ServiceEntityRepository
         parent::__construct($registry, OffreEmploi::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    public function findByUserWithSearch(User $user, string $search = ''): array
+    {
+        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles());
+
+        $qb = $this->createQueryBuilder('o')
+            ->orderBy('o.id', 'DESC');
+
+        if (!$isAdmin) {
+            $qb->andWhere('o.user = :user')
+               ->setParameter('user', $user);
+        }
+
+        if ($search !== '') {
+            $qb->andWhere('o.titre LIKE :search OR o.entreprise LIKE :search OR o.localisation LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }

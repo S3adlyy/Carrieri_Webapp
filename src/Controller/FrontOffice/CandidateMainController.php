@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\FrontOffice;
 
+use App\Repository\OffreEmploiRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -26,9 +27,13 @@ class CandidateMainController extends AbstractController
     }
 
     #[Route('/offres', name: 'app_candidate_offres')]
-    public function offres(): Response
+    public function offres(OffreEmploiRepository $offreEmploiRepository): Response
     {
-        return $this->render('FrontOffice/main/offres.html.twig');
+        $offres = $offreEmploiRepository->findActiveOffers();
+
+        return $this->render('FrontOffice/main/offres.html.twig', [
+            'offres' => $offres,
+        ]);
     }
 
     #[Route('/mission', name: 'app_candidate_mission')]

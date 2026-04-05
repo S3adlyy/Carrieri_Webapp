@@ -1,0 +1,186 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Créer une offre d'emploi{% endblock %}
+{% block page_title %}Créer une offre{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_offres_list') }}">Offres d'emploi</a></li>
+    <li class="breadcrumb-item active">Créer</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Nouvelle offre d'emploi</h3>
+        </div>
+        <div class="card-body">
+
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'offre-form'}}) }}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.titre, {'attr': {
+                            'class': 'form-control' ~ (form.titre.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': "Ex: Développeur Symfony Senior..."
+                        }}) }}
+                        {{ form_errors(form.titre) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.typeContrat, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.typeContrat, {'attr': {
+                            'class': 'form-control' ~ (form.typeContrat.vars.errors|length ? ' is-invalid' : '')
+                        }}) }}
+                        {{ form_errors(form.typeContrat) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.description, {'attr': {
+                    'class': 'form-control' ~ (form.description.vars.errors|length ? ' is-invalid' : ''),
+                    'rows': 5,
+                    'placeholder': "Décrivez l'offre en détail..."
+                }}) }}
+                {{ form_errors(form.description) }}
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.entreprise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.entreprise, {'attr': {
+                            'class': 'form-control' ~ (form.entreprise.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': "Nom de l'entreprise"
+                        }}) }}
+                        {{ form_errors(form.entreprise) }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.localisation, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.localisation, {'attr': {
+                            'class': 'form-control' ~ (form.localisation.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': 'Ex: Tunis, Paris, Remote...'
+                        }}) }}
+                        {{ form_errors(form.localisation) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.salaire, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.salaire, {'attr': {
+                            'class': 'form-control' ~ (form.salaire.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': 'Ex: 2500'
+                        }}) }}
+                        {{ form_errors(form.salaire) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.niveauQualification, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.niveauQualification, {'attr': {
+                            'class': 'form-control' ~ (form.niveauQualification.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': 'Ex: Bac+3, Master...'
+                        }}) }}
+                        {{ form_errors(form.niveauQualification) }}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.experienceRequise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.experienceRequise, {'attr': {
+                            'class': 'form-control' ~ (form.experienceRequise.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': 'Ex: 2 ans, Débutant accepté...'
+                        }}) }}
+                        {{ form_errors(form.experienceRequise) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.competencesRequises, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.competencesRequises, {'attr': {
+                    'class': 'form-control' ~ (form.competencesRequises.vars.errors|length ? ' is-invalid' : ''),
+                    'rows': 3,
+                    'placeholder': 'Ex: PHP, Symfony, MySQL...'
+                }}) }}
+                {{ form_errors(form.competencesRequises) }}
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.secteurActivite, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.secteurActivite, {'attr': {
+                            'class': 'form-control' ~ (form.secteurActivite.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': 'Ex: Informatique, Finance...'
+                        }}) }}
+                        {{ form_errors(form.secteurActivite) }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.contactRecruteur, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.contactRecruteur, {'attr': {
+                            'class': 'form-control' ~ (form.contactRecruteur.vars.errors|length ? ' is-invalid' : ''),
+                            'placeholder': 'contact@entreprise.com'
+                        }}) }}
+                        {{ form_errors(form.contactRecruteur) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.dateExpiration, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.dateExpiration, {'attr': {
+                    'class': 'form-control' ~ (form.dateExpiration.vars.errors|length ? ' is-invalid' : '')
+                }}) }}
+                <small class="text-muted"><i class="fas fa-info-circle"></i> La date doit être dans le futur</small>
+                {{ form_errors(form.dateExpiration) }}
+            </div>
+
+            <div class="form-actions mt-4 pt-3" style="border-top: 1px solid #e2e8f0;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Créer l'offre
+                </button>
+                <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary ml-2">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <style>
+        .form-control.is-invalid {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+        .invalid-feedback {
+            display: block;
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 6px 12px;
+            background-color: #fef2f2;
+            border-radius: 6px;
+            border-left: 3px solid #dc2626;
+        }
+    </style>
+{% endblock %}

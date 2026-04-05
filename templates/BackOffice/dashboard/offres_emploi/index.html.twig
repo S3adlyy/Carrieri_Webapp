@@ -1,8 +1,6 @@
-{# templates/BackOffice/dashboard/offres_emploi/index.html.twig #}
 {% extends 'BackOffice/base.html.twig' %}
 
 {% block title %}Gestion des offres d'emploi{% endblock %}
-
 {% block page_title %}Offres d'emploi{% endblock %}
 
 {% block breadcrumbs %}
@@ -10,46 +8,164 @@
 {% endblock %}
 
 {% block body %}
+    {# Stats #}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="small-box bg-primary">
+                <div class="inner"><h3>{{ stats.total }}</h3><p>Total offres</p></div>
+                <div class="icon"><i class="fas fa-briefcase"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-success">
+                <div class="inner"><h3>{{ stats.actives }}</h3><p>Offres actives</p></div>
+                <div class="icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-warning">
+                <div class="inner"><h3>{{ stats.expirees }}</h3><p>Offres expirées</p></div>
+                <div class="icon"><i class="fas fa-clock"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-info">
+                <div class="inner"><h3>{{ stats.par_contrat.CDI }}</h3><p>CDI</p></div>
+                <div class="icon"><i class="fas fa-file-contract"></i></div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Liste des offres d'emploi</h3>
-            <span class="badge badge-info">{{ offres|length }} offre(s)</span>
+            <div class="card-tools">
+                <a href="{{ path('app_admin_offres_create') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Nouvelle offre
+                </a>
+                <span class="badge badge-info ml-2">{{ offres|length }} offre(s)</span>
+            </div>
         </div>
+
+        <div class="card-body">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ type }} alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <form method="get" action="{{ path('app_admin_offres_list') }}" class="mb-3">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control"
+                           placeholder="Rechercher par titre, entreprise, localisation..."
+                           value="{{ search|default('') }}">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="submit">
+                            <i class="fas fa-search"></i> Rechercher
+                        </button>
+                        {% if search|default('') %}
+                            <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Réinitialiser
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+
         <div class="card-body p-0">
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0">
                     <thead>
                     <tr>
-                        <th>ID</th>
                         <th>Titre</th>
                         <th>Entreprise</th>
                         <th>Localisation</th>
                         <th>Contrat</th>
-                        <th>Publiée le</th>
-                        {% if is_admin_view|default(false) %}
-                            <th>Recruteur</th>
-                        {% endif %}
+                        <th>Salaire</th>
+                        <th>Expiration</th>
+                        <th>Statut</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {% for o in offres %}
                         <tr>
-                            <td>{{ o.id }}</td>
-                            <td>{{ o.titre|default('—') }}</td>
+                            <td><strong>{{ o.titre|default('—') }}</strong></td>
                             <td>{{ o.entreprise|default('—') }}</td>
-                            <td>{{ o.localisation|default('—') }}</td>
-                            <td>{{ o.typeContrat|default('—') }}</td>
-                            <td>{% if o.datePublication %}{{ o.datePublication|date('d/m/Y') }}{% else %}—{% endif %}</td>
-                            {% if is_admin_view|default(false) %}
-                                <td>
-                                    {% set u = o.user %}
-                                    {% if u %}{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}{% else %}—{% endif %}
-                                </td>
-                            {% endif %}
+                            <td><i class="fas fa-map-marker-alt text-muted"></i> {{ o.localisation|default('—') }}</td>
+                            <td>
+                                {% if o.typeContrat == 'CDI' %}
+                                    <span class="badge badge-success">CDI</span>
+                                {% elseif o.typeContrat == 'CDD' %}
+                                    <span class="badge badge-warning">CDD</span>
+                                {% elseif o.typeContrat == 'Stage' %}
+                                    <span class="badge badge-info">Stage</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ o.typeContrat|default('—') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ o.salaire ? o.salaire ~ ' DT' : '—' }}</td>
+                            <td>{{ o.dateExpiration ? o.dateExpiration|date('d/m/Y H:i') : '—' }}</td>                            <td>
+                                {% if o.dateExpiration and o.dateExpiration > date() %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Expirée</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ path('app_admin_offres_show', {'id': o.id}) }}"
+                                       class="btn btn-info" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_admin_offres_edit', {'id': o.id}) }}"
+                                       class="btn btn-warning" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-danger"
+                                            data-toggle="modal"
+                                            data-target="#deleteModal{{ o.id }}"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <div class="modal fade" id="deleteModal{{ o.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Êtes-vous sûr de vouloir supprimer cette offre ?</p>
+                                                <p class="text-muted"><strong>{{ o.titre }}</strong> — {{ o.entreprise }}</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                                <form method="post" action="{{ path('app_admin_offres_delete', {'id': o.id}) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ o.id) }}">
+                                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="{{ is_admin_view|default(false) ? 7 : 6 }}" class="text-center text-muted">Aucune offre.</td>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="fas fa-briefcase fa-2x mb-2"></i>
+                                <p>Aucune offre trouvée.</p>
+                                <a href="{{ path('app_admin_offres_create') }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Créer votre première offre
+                                </a>
+                            </td>
                         </tr>
                     {% endfor %}
                     </tbody>

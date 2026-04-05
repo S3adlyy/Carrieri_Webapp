@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Table(name: 'offre_emploi')]
 #[ORM\Entity]
@@ -16,42 +17,60 @@ class OffreEmploi
     private ?int $id = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Le titre est obligatoire')]
+    #[Assert\Length(min: 5, max: 100, minMessage: 'Le titre doit avoir au moins 5 caractères')]
     private ?string $titre = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'La description est obligatoire')]
+    #[Assert\Length(min: 10, minMessage: 'La description doit avoir au moins 10 caractères')]
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Le salaire est obligatoire')]
+    #[Assert\Positive(message: 'Le salaire doit être positif')]
     private ?float $salaire = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Le type de contrat est obligatoire')]
+    #[Assert\Choice(choices: ['CDI', 'CDD', 'Stage', 'Freelance'], message: 'Type de contrat invalide')]
     private ?string $typeContrat = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'La localisation est obligatoire')]
     private ?string $localisation = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $datePublication = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]    
+    #[Assert\NotBlank(message: "La date d'expiration est obligatoire")]
+    #[Assert\GreaterThan('today', message: "La date d'expiration doit être dans le futur")]
     private ?\DateTimeInterface $dateExpiration = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Le niveau de qualification est obligatoire')]
     private ?string $niveauQualification = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: "L'expérience requise est obligatoire")]
     private ?string $experienceRequise = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Les compétences requises sont obligatoires')]
     private ?string $competencesRequises = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: "Le secteur d'activité est obligatoire")]
     private ?string $secteurActivite = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: "L'entreprise est obligatoire")]
     private ?string $entreprise = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: 'Le contact recruteur est obligatoire')]
+    #[Assert\Email(message: 'Email de contact invalide')]
     private ?string $contactRecruteur = null;
 
     #[ORM\Column]
