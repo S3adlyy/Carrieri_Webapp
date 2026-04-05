@@ -1,0 +1,42 @@
+{# Minimal Purdue navbar: optional back-to-home, logo, Login CTA #}
+{% set show_back_nav = show_back_nav|default(false) %}
+{% set hide_login_cta = hide_login_cta|default(false) %}
+<div id="navigation" class="navbar-light bg-faded site-navigation">
+	<div class="container">
+		<div class="row">
+			<div class="col-20 align-self-center">
+				<div class="d-flex align-items-center flex-nowrap">
+					{% if show_back_nav %}
+						<a href="{{ path('app_home') }}" class="fo-nav-back" title="Back to home" aria-label="Back to home">
+							<i class="fa-solid fa-arrow-left-long" aria-hidden="true"></i>
+						</a>
+					{% endif %}
+					<a href="{{ path('app_home') }}" class="site-brand d-flex align-items-center flex-nowrap text-decoration-none{% if show_back_nav %} ms-2{% endif %}">
+						<span class="site-logo">
+							<img src="{{ asset('FrontOffice/img/logo.png') }}" alt="" decoding="async">
+						</span>
+						<span class="site-brand__name">Carrieri</span>
+					</a>
+				</div>
+			</div>
+			<div class="col-60 d-flex align-items-center">
+				<nav id="main-menu">
+
+				</nav>
+			</div>
+			<div class="col-30 d-none d-xl-block text-end align-self-center">
+				{% if not hide_login_cta %}
+					<div class="call_to_action">
+						<a class="btn_two" href="{{ path('app_login') }}">Login</a>
+					</div>
+				{% endif %}
+			</div>
+			<ul class="mobile_menu">
+				<li><a href="{{ path('app_home') }}">Home</a></li>
+				{% if not hide_login_cta %}
+					<li><a href="{{ path('app_login') }}">Login</a></li>
+				{% endif %}
+			</ul>
+		</div>
+	</div>
+</div>

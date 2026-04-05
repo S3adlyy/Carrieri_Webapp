@@ -16,6 +16,60 @@ class UserRepository extends ServiceEntityRepository
         parent::__construct($registry, User::class);
     }
 
+    public function findOneByEmail(string $email): ?User
+    {
+        return $this->findOneBy(['email' => $email]);
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findRecent(int $limit): array
+    {
+        return $this->createQueryBuilder('u')
+            ->orderBy('u.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findRecentCandidates(int $limit): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.type IN (:types)')
+            ->setParameter('types', ['CANDIDATE', 'CANDIDAT'])
+            ->orderBy('u.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countCandidatesForRecruiter(): int
+    {
+        return (int) $this->createQueryBuilder('u')
+            ->select('COUNT(u.id)')
+            ->where('u.type IN (:types)')
+            ->setParameter('types', ['CANDIDATE', 'CANDIDAT'])
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * @return User[]
+     */
+    public function findAllCandidatesOrdered(): array
+    {
+        return $this->createQueryBuilder('u')
+            ->where('u.type IN (:types)')
+            ->setParameter('types', ['CANDIDATE', 'CANDIDAT'])
+            ->orderBy('u.id', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
     // Ajoutez vos méthodes personnalisées ici
     // public function findBySomething($value): array
     // {

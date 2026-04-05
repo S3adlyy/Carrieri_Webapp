@@ -10,88 +10,103 @@
 {% endblock %}
 
 {% block body %}
-    <!-- Stats Cards -->
+    {% if is_admin_view is defined and not is_admin_view %}
+        <div class="alert alert-light border mb-3">
+            <i class="fas fa-user-tie text-primary"></i>
+            Vue recruteur : les totaux <strong>Missions</strong>, <strong>Cours</strong>, <strong>Offres</strong> et <strong>Réclamations</strong> concernent vos données.
+            <strong>Certifications</strong> compte les certifications obtenues sur <em>vos</em> cours.
+        </div>
+    {% endif %}
+
     <div class="row">
-        <div class="col-lg-3 col-6">
+        <div class="col-lg-4 col-md-6 col-6">
             <div class="small-box bg-info">
                 <div class="inner">
-                    <h3>{{ stats.users|default('150') }}</h3>
-                    <p>Utilisateurs</p>
+                    <h3>{{ stats.users }}</h3>
+                    <p>{% if is_admin_view|default(true) %}Utilisateurs{% else %}Candidats (inscrits){% endif %}</p>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <a href="#" class="small-box-footer">Plus d'infos <i class="fas fa-arrow-circle-right"></i></a>
+                <div class="icon"><i class="fas fa-users"></i></div>
+                <a href="{{ path('app_admin_utilisateurs') }}" class="small-box-footer">Voir la liste <i class="fas fa-arrow-circle-right"></i></a>
             </div>
         </div>
-
-        <div class="col-lg-3 col-6">
+        <div class="col-lg-4 col-md-6 col-6">
             <div class="small-box bg-success">
                 <div class="inner">
-                    <h3>{{ stats.cours|default('53') }}</h3>
-                    <p>Cours disponibles</p>
+                    <h3>{{ stats.cours }}</h3>
+                    <p>Cours</p>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-book"></i>
-                </div>
-                <a href="#" class="small-box-footer">Plus d'infos <i class="fas fa-arrow-circle-right"></i></a>
+                <div class="icon"><i class="fas fa-book"></i></div>
+                <a href="{{ path('app_admin_cours') }}" class="small-box-footer">Voir la liste <i class="fas fa-arrow-circle-right"></i></a>
             </div>
         </div>
-
-        <div class="col-lg-3 col-6">
+        <div class="col-lg-4 col-md-6 col-6">
             <div class="small-box bg-warning">
                 <div class="inner">
-                    <h3>{{ stats.missions|default('44') }}</h3>
+                    <h3>{{ stats.missions }}</h3>
                     <p>Missions</p>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <a href="#" class="small-box-footer">Plus d'infos <i class="fas fa-arrow-circle-right"></i></a>
+                <div class="icon"><i class="fas fa-tasks"></i></div>
+                <a href="{{ path('app_admin_missions') }}" class="small-box-footer">Voir la liste <i class="fas fa-arrow-circle-right"></i></a>
             </div>
         </div>
-
-        <div class="col-lg-3 col-6">
+        <div class="col-lg-4 col-md-6 col-6">
             <div class="small-box bg-danger">
                 <div class="inner">
-                    <h3>{{ stats.offres|default('65') }}</h3>
+                    <h3>{{ stats.offres }}</h3>
                     <p>Offres d'emploi</p>
                 </div>
-                <div class="icon">
-                    <i class="fas fa-briefcase"></i>
+                <div class="icon"><i class="fas fa-briefcase"></i></div>
+                <a href="{{ path('app_admin_offres_emploi') }}" class="small-box-footer">Voir la liste <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 col-6">
+            <div class="small-box bg-secondary">
+                <div class="inner">
+                    <h3>{{ stats.reclamations }}</h3>
+                    <p>Réclamations</p>
                 </div>
-                <a href="#" class="small-box-footer">Plus d'infos <i class="fas fa-arrow-circle-right"></i></a>
+                <div class="icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <a href="{{ path('app_admin_reclamations') }}" class="small-box-footer">Voir la liste <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+        <div class="col-lg-4 col-md-6 col-6">
+            <div class="small-box bg-dark">
+                <div class="inner">
+                    <h3>{{ stats.certifications }}</h3>
+                    <p>Certifications</p>
+                </div>
+                <div class="icon"><i class="fas fa-certificate"></i></div>
+                <a href="{{ path('app_admin_certifications') }}" class="small-box-footer">Voir la liste <i class="fas fa-arrow-circle-right"></i></a>
             </div>
         </div>
     </div>
 
-    <!-- Chart and Table -->
     <div class="row">
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Activité récente</h3>
+                    <h3 class="card-title">Activité récente (missions)</h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-striped mb-0">
                             <thead>
                             <tr>
-                                <th>Utilisateur</th>
-                                <th>Action</th>
+                                <th>Auteur</th>
+                                <th>Détail</th>
                                 <th>Date</th>
                             </tr>
                             </thead>
                             <tbody>
                             {% for activity in recent_activities|default([]) %}
                                 <tr>
-                                    <td>{{ activity.user }}</td>
-                                    <td>{{ activity.action }}</td>
-                                    <td>{{ activity.date|date('d/m/Y H:i') }}</td>
+                                    <td>{{ activity.label }}</td>
+                                    <td>{{ activity.detail }}</td>
+                                    <td>{% if activity.date %}{{ activity.date|date('d/m/Y H:i') }}{% else %}—{% endif %}</td>
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="3" class="text-center">Aucune activité récente</td>
+                                    <td colspan="3" class="text-center text-muted">Aucune activité récente</td>
                                 </tr>
                             {% endfor %}
                             </tbody>
@@ -104,16 +119,16 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title">Derniers utilisateurs</h3>
+                    <h3 class="card-title">{% if is_admin_view|default(true) %}Derniers inscrits{% else %}Derniers candidats{% endif %}</h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-bordered">
+                        <table class="table table-striped mb-0">
                             <thead>
                             <tr>
                                 <th>Nom</th>
                                 <th>Email</th>
-                                <th>Date</th>
+                                <th>Inscription</th>
                             </tr>
                             </thead>
                             <tbody>
@@ -121,11 +136,11 @@
                                 <tr>
                                     <td>{{ user.nom }}</td>
                                     <td>{{ user.email }}</td>
-                                    <td>{{ user.date|date('d/m/Y') }}</td>
+                                    <td>{% if user.date %}{{ user.date|date('d/m/Y') }}{% else %}—{% endif %}</td>
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="3" class="text-center">Aucun utilisateur récent</td>
+                                    <td colspan="3" class="text-center text-muted">Aucun utilisateur</td>
                                 </tr>
                             {% endfor %}
                             </tbody>

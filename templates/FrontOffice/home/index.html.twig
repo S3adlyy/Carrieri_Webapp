@@ -1,0 +1,53 @@
+﻿{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Welcome{% endblock %}
+
+{% block body %}
+	<div class="preloaders">
+		<span class="loader">Loading</span>
+	</div>
+
+	<div class="top_header_banner">
+		{% include 'FrontOffice/partials/_logo_contact.html.twig' %}
+		{% include 'FrontOffice/partials/_navbar_landing.html.twig' %}
+
+		<section id="home" class="home_bg">
+			<div class="container">
+				<div class="row">
+					<div class="col-lg-6 col-sm-6 col-xs-12">
+						<div class="home_content">
+							<h1>Welcome to your Recrutement space</h1>
+							<p>Sign in with your account to access job offers, courses, tasks, and your dashboard.</p>
+						</div>
+						<div class="home_btn">
+							<a href="{{ path('app_login') }}" class="cta"><span>Login to the application</span>
+								<svg width="13px" height="10px" viewBox="0 0 13 10">
+									<path d="M1,5 L11,5"></path>
+									<polyline points="8 1 12 5 8 9"></polyline>
+								</svg>
+							</a>
+						</div>
+					</div>
+					<div class="col-lg-6 col-sm-6 col-xs-12">
+						<div class="home_me_img">
+							<img src="{{ asset('themes/purdue/assets/images/all-img/home-image.png') }}" class="img-fluid" alt="">
+							<div class="home_ps">
+								<img src="{{ asset('themes/purdue/assets/images/icon/user2.svg') }}" alt="">
+								<h2>450+</h2>
+								<span>Recruiters</span>
+							</div>
+							<div class="home_ps2">
+								<img src="{{ asset('themes/purdue/assets/images/icon/file2.svg') }}" alt="">
+								<h2>120+</h2>
+								<span>Active Jobs</span>
+
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	{% include 'FrontOffice/partials/_footer_landing.html.twig' %}
+{% endblock %}

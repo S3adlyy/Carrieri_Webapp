@@ -16,6 +16,18 @@ class MissionRepository extends ServiceEntityRepository
         parent::__construct($registry, Mission::class);
     }
 
+    /**
+     * @return Mission[]
+     */
+    public function findRecent(int $limit): array
+    {
+        return $this->createQueryBuilder('m')
+            ->orderBy('m.id', 'DESC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
     // Ajoutez vos méthodes personnalisées ici
     // public function findBySomething($value): array
     // {
