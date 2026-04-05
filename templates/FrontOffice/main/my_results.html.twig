@@ -6,35 +6,15 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        /* Supprimer tous les conteneurs restrictifs */
         .fo-candidate-content {
             padding: 0 !important;
             margin: 0 !important;
             max-width: 100% !important;
         }
-
-        .container {
-            max-width: 100% !important;
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-
-        .row {
-            margin: 0 !important;
-        }
-
-        .col-12 {
-            padding: 0 !important;
-        }
-
-        /* Cacher le breadcrumb */
-        .section-top, .section-top-title {
-            display: none !important;
-        }
-
-        body {
-            background: #f5f7fb;
-        }
+        .container { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+        .row { margin: 0 !important; }
+        .col-12 { padding: 0 !important; }
+        .section-top, .section-top-title { display: none !important; }
     </style>
 {% endblock %}
 
@@ -42,530 +22,559 @@
 {% block candidate_breadcrumb %}{% endblock %}
 
 {% block candidate_content %}
-    <div class="myresults-fullwidth">
-        <div class="myresults-header">
-            <div class="myresults-header-content">
-                <h1><i class="fas fa-chart-line"></i> Mes résultats</h1>
-                <p>Retrouvez ici toutes vos soumissions et leurs statuts</p>
-            </div>
-        </div>
-
-        {% if soumissions|length > 0 %}
-            <div class="myresults-table-container">
-                <div class="table-responsive">
-                    <table class="myresults-table">
-                        <thead>
-                        <tr>
-                            <th>Mission</th>
-                            <th>Date de soumission</th>
-                            <th>Langage</th>
-                            <th>Score</th>
-                            <th>Statut</th>
-                            <th>Actions</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {% for soumission in soumissions %}
-                            <tr>
-                                <td class="mission-name">
-                                    <strong>{{ soumission.mission.type }}</strong>
-                                    <small>#{{ soumission.mission.id }}</small>
-                                </td>
-                                <td>{{ soumission.dateRendu|date('d/m/Y H:i') }}</td>
-                                <td>
-                                    <span class="lang-badge">{{ soumission.langue|upper }}</span>
-                                </td>
-                                <td>
-                                    <div class="score-cell">
-                                    <span class="score-value {% if soumission.score >= soumission.mission.scoreMin %}score-success{% else %}score-failed{% endif %}">
-                                        {{ soumission.score|default(0)|round }}%
-                                    </span>
-                                        <div class="score-bar-mini">
-                                            <div class="score-fill-mini" style="width: {{ soumission.score|default(0)|round }}%"></div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    {% if soumission.statut == 'accepte' %}
-                                        <span class="status-badge status-accepted">
-                                        <i class="fas fa-check-circle"></i> Acceptée
-                                    </span>
-                                    {% elseif soumission.statut == 'refuse' %}
-                                        <span class="status-badge status-rejected">
-                                        <i class="fas fa-times-circle"></i> Refusée
-                                    </span>
-                                    {% else %}
-                                        <span class="status-badge status-pending">
-                                        <i class="fas fa-hourglass-half"></i> En attente
-                                    </span>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <a href="{{ path('app_candidate_rendu_status', {'id': soumission.id}) }}" class="btn-view-result">
-                                        <i class="fas fa-eye"></i> Détails
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Cartes statistiques -->
-            <div class="myresults-stats">
-                <div class="stat-card">
-                    <div class="stat-icon green">
-                        <i class="fas fa-check-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number">{{ soumissions|filter(s => s.statut == 'accepte')|length }}</span>
-                        <span class="stat-label">Acceptées</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon red">
-                        <i class="fas fa-times-circle"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number">{{ soumissions|filter(s => s.statut == 'refuse')|length }}</span>
-                        <span class="stat-label">Refusées</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon orange">
-                        <i class="fas fa-hourglass-half"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number">{{ soumissions|filter(s => s.statut == 'en_attente')|length }}</span>
-                        <span class="stat-label">En attente</span>
-                    </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-icon blue">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-info">
-                        <span class="stat-number">{{ soumissions|length }}</span>
-                        <span class="stat-label">Total</span>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="myresults-empty">
-                <div class="empty-icon">
-                    <i class="fas fa-inbox"></i>
-                </div>
-                <h3>Aucune soumission</h3>
-                <p>Vous n'avez pas encore soumis de mission.</p>
-                <a href="{{ path('app_candidate_mission') }}" class="btn-primary-custom">
-                    <i class="fas fa-tasks"></i> Découvrir les missions
-                </a>
-            </div>
-        {% endif %}
-    </div>
 
     <style>
-        /* Fullwidth styles */
-        .myresults-fullwidth {
-            width: 100%;
-            max-width: 100%;
-            padding: 0;
-            margin: 0;
-            background: #f5f7fb;
-            min-height: calc(100vh - 140px);
+        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+        :root {
+            --indigo:        #4f46e5;
+            --indigo-light:  #6366f1;
+            --indigo-dark:   #3730a3;
+            --violet:        #7c3aed;
+            --success:       #10b981;
+            --success-bg:    #ecfdf5;
+            --danger:        #ef4444;
+            --danger-bg:     #fef2f2;
+            --warning:       #f59e0b;
+            --warning-bg:    #fffbeb;
+            --surface:       #ffffff;
+            --bg:            #f1f5f9;
+            --text-primary:  #0f172a;
+            --text-secondary:#64748b;
+            --border:        #e2e8f0;
+            --radius-lg:     16px;
+            --radius-md:     10px;
+            --radius-sm:     6px;
+            --shadow-sm:     0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+            --shadow-md:     0 4px 16px rgba(0,0,0,.08);
+            --shadow-lg:     0 12px 40px rgba(79,70,229,.14);
         }
 
-        /* Header */
-        .myresults-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 40px 50px;
-            width: 100%;
+        /* ── Page wrapper ── */
+        .r-page {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            color: var(--text-primary);
         }
 
-        .myresults-header-content {
-            width: 100%;
+        /* ── Page header banner ── */
+        .r-header {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+            padding: 36px 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .r-header-left h1 {
+            font-family: 'Sora', sans-serif;
+            font-size: 26px; font-weight: 800;
+            color: #fff; margin: 0 0 6px;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .r-header-left h1 .h-icon {
+            width: 40px; height: 40px;
+            background: rgba(255,255,255,.1);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px;
+        }
+        .r-header-left p {
+            font-size: 14px; color: rgba(255,255,255,.6); margin: 0;
+        }
+
+        /* ── KPI bar (inside header) ── */
+        .r-kpi-row {
+            display: flex; gap: 12px; flex-wrap: wrap;
+        }
+        .r-kpi {
+            background: rgba(255,255,255,.08);
+            border: 1px solid rgba(255,255,255,.12);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+            min-width: 110px;
             text-align: center;
+            backdrop-filter: blur(4px);
+            transition: background .2s;
+        }
+        .r-kpi:hover { background: rgba(255,255,255,.14); }
+        .r-kpi-num {
+            font-family: 'Sora', sans-serif;
+            font-size: 24px; font-weight: 800;
+            color: #fff; line-height: 1;
+            margin-bottom: 4px;
+        }
+        .r-kpi-num.clr-success { color: #6ee7b7; }
+        .r-kpi-num.clr-danger  { color: #fca5a5; }
+        .r-kpi-num.clr-warning { color: #fcd34d; }
+        .r-kpi-num.clr-indigo  { color: #a5b4fc; }
+        .r-kpi-label {
+            font-size: 11px; color: rgba(255,255,255,.55);
+            font-weight: 500; letter-spacing: .4px;
+            text-transform: uppercase;
         }
 
-        .myresults-header-content h1 {
-            font-size: 32px;
-            font-weight: 700;
-            color: white;
-            margin: 0 0 10px 0;
+        /* ── Main content area ── */
+        .r-body {
+            padding: 32px 48px 48px;
         }
 
-        .myresults-header-content h1 i {
-            margin-right: 12px;
+        /* ── Toolbar ── */
+        .r-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
         }
 
-        .myresults-header-content p {
-            font-size: 16px;
-            color: rgba(255,255,255,0.9);
-            margin: 0;
+        .r-search {
+            flex: 1; min-width: 200px;
+            position: relative;
         }
-
-        /* Table container */
-        .myresults-table-container {
+        .r-search i {
+            position: absolute; left: 14px; top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary); font-size: 13px;
+            pointer-events: none;
+        }
+        .r-search input {
             width: 100%;
-            padding: 30px 50px;
-            margin: 0;
+            padding: 9px 14px 9px 38px;
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            font-size: 13.5px;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--surface);
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .r-search input:focus {
+            border-color: var(--indigo-light);
+            box-shadow: 0 0 0 3px rgba(99,102,241,.15);
         }
 
-        .myresults-table {
+        .r-filter-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+        .r-chip {
+            padding: 6px 14px;
+            border: 1.5px solid var(--border);
+            border-radius: 50px;
+            font-size: 12.5px; font-weight: 500;
+            color: var(--text-secondary);
+            background: var(--surface);
+            cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px;
+            transition: all .2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .r-chip:hover { border-color: var(--indigo-light); color: var(--indigo); background: #eef2ff; }
+        .r-chip.active { border-color: var(--indigo); background: var(--indigo); color: #fff; }
+
+        .r-count-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .r-count-label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+        .r-count-label strong { color: var(--text-primary); }
+
+        /* ── Table card ── */
+        .r-table-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .r-table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            border-radius: 16px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-size: 13.5px;
         }
 
-        .myresults-table thead th {
+        .r-table thead th {
+            padding: 13px 18px;
             text-align: left;
-            padding: 15px 20px;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: .6px;
             background: #f8fafc;
-            color: #1f2937;
-            font-weight: 600;
-            border-bottom: 2px solid #e2e8f0;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
         }
 
-        .myresults-table tbody td {
-            padding: 15px 20px;
-            border-bottom: 1px solid #e2e8f0;
+        .r-table tbody td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border);
             vertical-align: middle;
+            color: var(--text-primary);
         }
-
-        .myresults-table tbody tr:hover {
-            background: #f8fafc;
+        .r-table tbody tr:last-child td { border-bottom: none; }
+        .r-table tbody tr {
+            transition: background .15s;
         }
+        .r-table tbody tr:hover { background: #f8faff; }
+        .r-table tbody tr.row-hidden { display: none; }
 
-        .mission-name {
-            display: flex;
-            flex-direction: column;
-        }
+        /* mission cell */
+        .cell-mission { display: flex; flex-direction: column; gap: 2px; }
+        .cell-mission strong { font-weight: 600; font-size: 14px; color: var(--text-primary); }
+        .cell-mission span { font-size: 11.5px; color: var(--text-secondary); }
 
-        .mission-name strong {
-            font-size: 16px;
-            color: #1f2937;
-        }
+        /* date cell */
+        .cell-date { white-space: nowrap; color: var(--text-secondary); font-size: 13px; }
 
-        .mission-name small {
-            font-size: 12px;
-            color: #9ca3af;
-        }
-
-        .lang-badge {
+        /* lang badge */
+        .lang-pill {
             display: inline-block;
-            padding: 4px 10px;
-            background: #e0e7ff;
-            color: #4f46e5;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .score-cell {
-            min-width: 100px;
-        }
-
-        .score-value {
-            display: inline-block;
-            font-weight: 700;
-            margin-bottom: 5px;
-        }
-
-        .score-success {
-            color: #059669;
-        }
-
-        .score-failed {
-            color: #dc2626;
-        }
-
-        .score-bar-mini {
-            background: #e2e8f0;
-            border-radius: 4px;
-            height: 4px;
-            width: 100%;
-            overflow: hidden;
-        }
-
-        .score-fill-mini {
-            background: linear-gradient(90deg, #667eea, #764ba2);
-            height: 100%;
-            border-radius: 4px;
-        }
-
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
+            padding: 3px 10px;
+            background: #eef2ff;
+            color: var(--indigo);
             border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-
-        .status-accepted {
-            background: #d1fae5;
-            color: #059669;
-        }
-
-        .status-rejected {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .status-pending {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .btn-view-result {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 14px;
-            background: #f1f5f9;
-            color: #475569;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-
-        .btn-view-result:hover {
-            background: #667eea;
-            color: white;
-            text-decoration: none;
-        }
-
-        /* Stats cards */
-        .myresults-stats {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 20px;
-            width: 100%;
-            padding: 0 50px 40px 50px;
-            margin: 0;
-        }
-
-        .stat-card {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            background: white;
-            border-radius: 16px;
-            transition: transform 0.3s;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-
-        .stat-card:hover {
-            transform: translateY(-3px);
-        }
-
-        .stat-icon {
-            width: 50px;
-            height: 50px;
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-icon i {
-            font-size: 24px;
-        }
-
-        .stat-icon.green {
-            background: #d1fae5;
-        }
-
-        .stat-icon.green i {
-            color: #059669;
-        }
-
-        .stat-icon.red {
-            background: #fee2e2;
-        }
-
-        .stat-icon.red i {
-            color: #dc2626;
-        }
-
-        .stat-icon.orange {
-            background: #fef3c7;
-        }
-
-        .stat-icon.orange i {
-            color: #d97706;
-        }
-
-        .stat-icon.blue {
-            background: #e0e7ff;
-        }
-
-        .stat-icon.blue i {
-            color: #4f46e5;
-        }
-
-        .stat-info {
-            flex: 1;
-        }
-
-        .stat-number {
-            display: block;
-            font-size: 28px;
+            font-size: 11.5px;
             font-weight: 700;
-            color: #1f2937;
-            line-height: 1.2;
+            letter-spacing: .5px;
         }
 
-        .stat-label {
-            font-size: 13px;
-            color: #6b7280;
+        /* score cell */
+        .cell-score { min-width: 110px; }
+        .score-top {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 5px;
         }
-
-        /* Empty state */
-        .myresults-empty {
-            text-align: center;
-            padding: 80px 50px;
+        .score-pct {
+            font-family: 'Sora', sans-serif;
+            font-size: 14px; font-weight: 700;
+        }
+        .score-pct.ok  { color: var(--success); }
+        .score-pct.bad { color: var(--danger); }
+        .score-bar {
+            height: 5px; background: var(--border);
+            border-radius: 10px; overflow: hidden;
             width: 100%;
         }
+        .score-fill {
+            height: 100%; border-radius: 10px;
+            transition: width .4s ease;
+        }
+        .score-fill.ok  { background: linear-gradient(90deg, #34d399, #10b981); }
+        .score-fill.bad { background: linear-gradient(90deg, #f87171, #ef4444); }
 
-        .empty-icon {
-            width: 80px;
-            height: 80px;
-            background: white;
+        /* status badge */
+        .status-pill {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px; font-weight: 600;
+            white-space: nowrap;
+        }
+        .status-pill i { font-size: 11px; }
+        .pill-accepted { background: var(--success-bg); color: #059669; }
+        .pill-rejected { background: var(--danger-bg);  color: #dc2626; }
+        .pill-pending  { background: var(--warning-bg); color: #d97706; }
+
+        /* action btn */
+        .btn-detail {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 7px 14px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-size: 12.5px; font-weight: 500;
+            text-decoration: none;
+            transition: all .2s;
+            font-family: 'DM Sans', sans-serif;
+            white-space: nowrap;
+        }
+        .btn-detail:hover {
+            background: var(--indigo);
+            border-color: var(--indigo);
+            color: #fff;
+            text-decoration: none;
+            box-shadow: 0 4px 14px rgba(79,70,229,.3);
+        }
+
+        /* ── Empty state ── */
+        .r-empty {
+            text-align: center;
+            padding: 80px 40px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+        }
+        .r-empty-icon {
+            width: 72px; height: 72px;
+            background: var(--bg);
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px;
         }
-
-        .empty-icon i {
-            font-size: 40px;
-            color: #94a3b8;
+        .r-empty-icon i { font-size: 30px; color: var(--text-secondary); }
+        .r-empty h3 {
+            font-family: 'Sora', sans-serif;
+            font-size: 18px; color: var(--text-primary); margin-bottom: 8px;
         }
-
-        .myresults-empty h3 {
-            font-size: 20px;
-            color: #1f2937;
-            margin-bottom: 10px;
-        }
-
-        .myresults-empty p {
-            color: #6b7280;
-            margin-bottom: 25px;
-        }
-
-        .btn-primary-custom {
-            display: inline-flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 28px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 12px;
+        .r-empty p { font-size: 13.5px; color: var(--text-secondary); margin-bottom: 24px; }
+        .btn-go-missions {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 11px 26px;
+            background: var(--indigo);
+            color: #fff;
+            border-radius: 50px;
+            font-size: 13.5px; font-weight: 600;
             text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s;
+            transition: background .2s, box-shadow .2s, transform .2s;
+            font-family: 'DM Sans', sans-serif;
+        }
+        .btn-go-missions:hover {
+            background: var(--indigo-dark);
+            box-shadow: 0 6px 20px rgba(79,70,229,.35);
+            transform: scale(1.03);
+            color: #fff; text-decoration: none;
         }
 
-        .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-            text-decoration: none;
-            color: white;
+        /* no-results row */
+        .r-no-results {
+            display: none;
+            padding: 40px;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 14px;
         }
 
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .myresults-stats {
-                grid-template-columns: repeat(2, 1fr);
-                padding: 0 30px 30px 30px;
-            }
-
-            .myresults-table-container {
-                padding: 20px 30px;
-            }
-
-            .myresults-header {
-                padding: 30px 30px;
-            }
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .r-header { padding: 26px 28px; }
+            .r-body   { padding: 24px 28px 40px; }
         }
-
-        @media (max-width: 768px) {
-            .myresults-header {
-                padding: 25px 20px;
-            }
-
-            .myresults-header-content h1 {
-                font-size: 24px;
-            }
-
-            .myresults-table-container {
-                padding: 15px 20px;
-                overflow-x: auto;
-            }
-
-            .myresults-table thead th,
-            .myresults-table tbody td {
-                padding: 10px 12px;
-                font-size: 12px;
-            }
-
-            .myresults-stats {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 15px;
-                padding: 0 20px 30px 20px;
-            }
-
-            .stat-card {
-                padding: 15px;
-            }
-
-            .stat-number {
-                font-size: 22px;
-            }
-
-            .stat-icon {
-                width: 45px;
-                height: 45px;
-            }
-
-            .stat-icon i {
-                font-size: 20px;
-            }
-
-            .myresults-empty {
-                padding: 50px 20px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .myresults-stats {
-                grid-template-columns: 1fr;
-            }
-
-            .mission-name strong {
-                font-size: 14px;
-            }
-
-            .btn-view-result {
-                padding: 4px 10px;
-                font-size: 11px;
-            }
-
-            .status-badge {
-                padding: 3px 8px;
-                font-size: 10px;
-            }
+        @media (max-width: 640px) {
+            .r-header { flex-direction: column; align-items: flex-start; padding: 22px 20px; }
+            .r-body   { padding: 20px 16px 36px; }
+            .r-kpi-row { width: 100%; }
+            .r-kpi { flex: 1; min-width: 80px; }
+            .r-table thead th:nth-child(2),
+            .r-table tbody td:nth-child(2) { display: none; } /* hide date on small screens */
         }
     </style>
+
+    <div class="r-page">
+
+        {# ── Header ── #}
+        <div class="r-header">
+            <div class="r-header-left">
+                <h1>
+                    <span class="h-icon"><i class="fas fa-chart-line"></i></span>
+                    Mes résultats
+                </h1>
+                <p>Retrouvez ici toutes vos soumissions et leurs statuts</p>
+            </div>
+
+            {% if soumissions|length > 0 %}
+                <div class="r-kpi-row">
+                    <div class="r-kpi">
+                        <div class="r-kpi-num clr-indigo">{{ soumissions|length }}</div>
+                        <div class="r-kpi-label">Total</div>
+                    </div>
+                    <div class="r-kpi">
+                        <div class="r-kpi-num clr-success">{{ soumissions|filter(s => s.statut == 'accepte')|length }}</div>
+                        <div class="r-kpi-label">Acceptées</div>
+                    </div>
+                    <div class="r-kpi">
+                        <div class="r-kpi-num clr-danger">{{ soumissions|filter(s => s.statut == 'refuse')|length }}</div>
+                        <div class="r-kpi-label">Refusées</div>
+                    </div>
+                    <div class="r-kpi">
+                        <div class="r-kpi-num clr-warning">{{ soumissions|filter(s => s.statut == 'en_attente')|length }}</div>
+                        <div class="r-kpi-label">En attente</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        {# ── Body ── #}
+        <div class="r-body">
+
+            {% if soumissions|length > 0 %}
+
+                {# Toolbar #}
+                <div class="r-toolbar">
+                    <div class="r-search">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="r-search-input" placeholder="Rechercher une mission...">
+                    </div>
+                    <div class="r-filter-chips">
+                        <button class="r-chip active" data-filter="all">
+                            <i class="fas fa-th-large"></i> Toutes
+                        </button>
+                        <button class="r-chip" data-filter="accepte">
+                            <i class="fas fa-check-circle"></i> Acceptées
+                        </button>
+                        <button class="r-chip" data-filter="refuse">
+                            <i class="fas fa-times-circle"></i> Refusées
+                        </button>
+                        <button class="r-chip" data-filter="en_attente">
+                            <i class="fas fa-hourglass-half"></i> En attente
+                        </button>
+                    </div>
+                </div>
+
+                <div class="r-count-row">
+                    <div class="r-count-label"><strong id="r-visible-count">{{ soumissions|length }}</strong> soumission(s) affichée(s)</div>
+                </div>
+
+                {# Table #}
+                <div class="r-table-card">
+                    <div class="table-responsive">
+                        <table class="r-table" id="r-table">
+                            <thead>
+                            <tr>
+                                <th>Mission</th>
+                                <th>Date</th>
+                                <th>Langage</th>
+                                <th>Score</th>
+                                <th>Statut</th>
+                                <th>Action</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for soumission in soumissions %}
+                                {% set isOk = soumission.score >= soumission.mission.scoreMin %}
+                                <tr class="r-row"
+                                    data-statut="{{ soumission.statut }}"
+                                    data-mission="{{ soumission.mission.type|lower }}">
+
+                                    <td>
+                                        <div class="cell-mission">
+                                            <strong>{{ soumission.mission.type }}</strong>
+                                            <span>#{{ soumission.mission.id }}</span>
+                                        </div>
+                                    </td>
+
+                                    <td class="cell-date">
+                                        {{ soumission.dateRendu|date('d/m/Y') }}<br>
+                                        <span style="font-size:11px;color:var(--text-secondary);">{{ soumission.dateRendu|date('H:i') }}</span>
+                                    </td>
+
+                                    <td>
+                                        <span class="lang-pill">{{ soumission.langue|upper }}</span>
+                                    </td>
+
+                                    <td>
+                                        <div class="cell-score">
+                                            <div class="score-top">
+                                                <span class="score-pct {{ isOk ? 'ok' : 'bad' }}">
+                                                    {{ soumission.score|default(0)|round }}%
+                                                </span>
+                                            </div>
+                                            <div class="score-bar">
+                                                <div class="score-fill {{ isOk ? 'ok' : 'bad' }}"
+                                                     style="width: {{ soumission.score|default(0)|round }}%"></div>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        {% if soumission.statut == 'accepte' %}
+                                            <span class="status-pill pill-accepted">
+                                                <i class="fas fa-check-circle"></i> Acceptée
+                                            </span>
+                                        {% elseif soumission.statut == 'refuse' %}
+                                            <span class="status-pill pill-rejected">
+                                                <i class="fas fa-times-circle"></i> Refusée
+                                            </span>
+                                        {% else %}
+                                            <span class="status-pill pill-pending">
+                                                <i class="fas fa-hourglass-half"></i> En attente
+                                            </span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <a href="{{ path('app_candidate_rendu_status', {'id': soumission.id}) }}"
+                                           class="btn-detail">
+                                            <i class="fas fa-eye"></i> Détails
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            <tr id="r-no-results" style="display:none;">
+                                <td colspan="6" class="r-no-results">
+                                    <i class="fas fa-search" style="font-size:22px;display:block;margin-bottom:8px;color:#94a3b8;"></i>
+                                    Aucune soumission ne correspond à votre recherche.
+                                </td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            {% else %}
+
+                <div class="r-empty">
+                    <div class="r-empty-icon"><i class="fas fa-inbox"></i></div>
+                    <h3>Aucune soumission</h3>
+                    <p>Vous n'avez pas encore soumis de mission.</p>
+                    <a href="{{ path('app_candidate_mission') }}" class="btn-go-missions">
+                        <i class="fas fa-briefcase"></i> Découvrir les missions
+                    </a>
+                </div>
+
+            {% endif %}
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput  = document.getElementById('r-search-input');
+            const chips        = document.querySelectorAll('.r-chip');
+            const rows         = document.querySelectorAll('.r-row');
+            const countEl      = document.getElementById('r-visible-count');
+            const noResultsRow = document.getElementById('r-no-results');
+
+            let currentFilter = 'all';
+            let currentSearch = '';
+
+            function applyFilters() {
+                let visible = 0;
+                rows.forEach(row => {
+                    const statut  = row.dataset.statut || '';
+                    const mission = row.dataset.mission || '';
+                    const filterMatch = currentFilter === 'all' || statut === currentFilter;
+                    const searchMatch = currentSearch === '' || mission.includes(currentSearch);
+                    if (filterMatch && searchMatch) {
+                        row.style.display = '';
+                        visible++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+                if (countEl) countEl.textContent = visible;
+                if (noResultsRow) noResultsRow.style.display = visible === 0 ? '' : 'none';
+            }
+
+            if (searchInput) {
+                let timer;
+                searchInput.addEventListener('input', function () {
+                    clearTimeout(timer);
+                    currentSearch = this.value.trim().toLowerCase();
+                    timer = setTimeout(applyFilters, 260);
+                });
+            }
+
+            chips.forEach(chip => {
+                chip.addEventListener('click', function () {
+                    chips.forEach(c => c.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.filter;
+                    applyFilters();
+                });
+            });
+        });
+    </script>
+
 {% endblock %}
