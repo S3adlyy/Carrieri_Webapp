@@ -1,0 +1,54 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Nouvelle réclamation{% endblock %}
+
+{% block candidate_page_heading %}Nouvelle réclamation sur un cours{% endblock %}
+
+{% block candidate_breadcrumb %} / Réclamations / Nouvelle{% endblock %}
+
+{% block candidate_content %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0"><i class="fas fa-exclamation-triangle"></i> Formulaire de réclamation</h5>
+        </div>
+        <div class="card-body">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+            
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-12">
+                        {{ form_label(form.objet) }}
+                        {{ form_widget(form.objet) }}
+                        {{ form_errors(form.objet) }}
+                    </div>
+                    <div class="col-12 mt-3">
+                        {{ form_label(form.description) }}
+                        {{ form_widget(form.description) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+                    <div class="col-12 mt-3">
+                        {{ form_label(form.cours) }}
+                        {{ form_widget(form.cours) }}
+                        {{ form_errors(form.cours) }}
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> 
+                    Votre réclamation sera traitée par l'administrateur dans les plus brefs délais.
+                </div>
+                
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-warning">
+                        <i class="fas fa-paper-plane"></i> Envoyer ma réclamation
+                    </button>
+                    <a href="{{ path('app_candidate_main') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,109 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Détail feedback #{{ feedback.id }}{% endblock %}
+
+{% block page_title %}Détail du feedback{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_feedback_rendus') }}">Rendus</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_feedback_index') }}">Mes feedbacks</a></li>
+    <li class="breadcrumb-item active">Détail #{{ feedback.id }}</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Informations du feedback</h3>
+            <div class="card-tools">
+                <a href="{{ path('app_dashboard_feedback_edit', {'id': feedback.id}) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i> Modifier
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 150px;">ID</th>
+                            <td>{{ feedback.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Commentaire</th>
+                            <td>{{ feedback.commentaire }}</td>
+                        </tr>
+                        <tr>
+                            <th>Note</th>
+                            <td>
+                                {% for i in 1..5 %}
+                                    {% if i <= feedback.note %}
+                                        <i class="fas fa-star text-warning"></i>
+                                    {% else %}
+                                        <i class="far fa-star text-muted"></i>
+                                    {% endif %}
+                                {% endfor %}
+                                ({{ feedback.note }}/5)
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Rendu mission</th>
+                            <td>Rendu #{{ feedback.renduMission ? feedback.renduMission.id : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Candidat</th>
+                            <td>
+                                {% set candidat = feedback.renduMission ? feedback.renduMission.user : null %}
+                                {{ candidat ? candidat.firstName ~ ' ' ~ candidat.lastName : '—' }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Date de création</th>
+                            <td>{{ feedback.createdAt ? feedback.createdAt|date('d/m/Y H:i:s') : '—' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <a href="{{ path('app_dashboard_feedback_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+                <a href="{{ path('app_dashboard_feedback_rendus') }}" class="btn btn-info">
+                    <i class="fas fa-tasks"></i> Voir les rendus
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mt-3">
+        <div class="card-header bg-info text-white">
+            <h3 class="card-title">Détail du rendu associé</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width: 150px;">Mission</th>
+                    <td>Mission #{{ feedback.renduMission.mission ? feedback.renduMission.mission.id : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Date de rendu</th>
+                    <td>{{ feedback.renduMission.dateRendu ? feedback.renduMission.dateRendu|date('d/m/Y H:i') : '—' }}</td>
+                </tr>
+                {% if feedback.renduMission.fichier %}
+                <tr>
+                    <th>Fichier</th>
+                    <td>
+                        <a href="{{ asset('uploads/rendus/' ~ feedback.renduMission.fichier) }}" target="_blank" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-download"></i> Télécharger le fichier
+                        </a>
+                    </td>
+                </tr>
+                {% endif %}
+            </table>
+        </div>
+    </div>
+{% endblock %}

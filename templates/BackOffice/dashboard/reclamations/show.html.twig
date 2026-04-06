@@ -1,0 +1,98 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Détail réclamation #{{ reclamation.id }}{% endblock %}
+
+{% block page_title %}Détail réclamation{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_reclamation_index') }}">Réclamations</a></li>
+    <li class="breadcrumb-item active">Détail #{{ reclamation.id }}</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Informations détaillées</h3>
+            <div class="card-tools">
+                <a href="{{ path('app_dashboard_reclamation_edit', {'id': reclamation.id}) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i> Modifier
+                </a>
+                <a href="{{ path('app_dashboard_reclamation_index') }}" class="btn btn-secondary btn-sm">
+                    <i class="fas fa-list"></i> Retour
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 200px;">ID</th>
+                            <td>{{ reclamation.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Objet</th>
+                            <td>{{ reclamation.objet }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ reclamation.description }}</td>
+                        </tr>
+                        <tr>
+                            <th>Catégorie</th>
+                            <td>{{ reclamation.categorie }}</td>
+                        </tr>
+                        <tr>
+                            <th>Statut</th>
+                            <td>
+                                {% if reclamation.statut == 'En attente' %}
+                                    <span class="badge badge-warning">En attente</span>
+                                {% elseif reclamation.statut == 'Traité' %}
+                                    <span class="badge badge-success">Traité</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ reclamation.statut }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 200px;">Priorité</th>
+                            <td>
+                                {% if reclamation.priorite == 'Haute' %}
+                                    <span class="badge badge-danger">Haute</span>
+                                {% elseif reclamation.priorite == 'Moyenne' %}
+                                    <span class="badge badge-info">Moyenne</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Basse</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ reclamation.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date de création</th>
+                            <td>{{ reclamation.dateCreation ? reclamation.dateCreation|date('d/m/Y H:i:s') : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Utilisateur</th>
+                            <td>
+                                {% set u = reclamation.user %}
+                                {% if u %}
+                                    <strong>{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}</strong><br>
+                                    <small class="text-muted">Type: {{ u.type|default('—') }}</small>
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

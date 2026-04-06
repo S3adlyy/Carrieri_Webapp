@@ -1,0 +1,89 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Nouveau feedback{% endblock %}
+
+{% block candidate_page_heading %}Nouveau feedback{% endblock %}
+
+{% block candidate_breadcrumb %} / Feedbacks / Nouveau{% endblock %}
+
+{% block candidate_content %}
+    <div class="card shadow-sm">
+        <div class="card-body">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="fas fa-check-circle"></i> {{ message }}
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+            {% endfor %}
+            
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-12">
+                        {{ form_row(form.commentaire) }}
+                    </div>
+                    <div class="col-12">
+                        {{ form_row(form.note) }}
+                    </div>
+                    <div class="col-12">
+                        {{ form_row(form.renduMission) }}
+                    </div>
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Votre feedback nous aide à améliorer nos services.
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Envoyer mon feedback
+                    </button>
+                    <a href="{{ path('app_candidate_main') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Nouveau feedback{% endblock %}
+
+{% block candidate_page_heading %}Nouveau feedback sur une mission{% endblock %}
+
+{% block candidate_breadcrumb %} / Feedbacks / Nouveau{% endblock %}
+
+{% block candidate_content %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="fas fa-star"></i> Formulaire de feedback</h5>
+        </div>
+        <div class="card-body">
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success">{{ message }}</div>
+            {% endfor %}
+            
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-12">
+                        {{ form_row(form.commentaire) }}
+                    </div>
+                    <div class="col-12">
+                        {{ form_row(form.note) }}
+                    </div>
+                    <div class="col-12">
+                        {{ form_row(form.renduMission) }}
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-paper-plane"></i> Envoyer mon feedback
+                    </button>
+                    <a href="{{ path('app_candidate_main') }}" class="btn btn-secondary">Annuler</a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

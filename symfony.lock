@@ -108,7 +108,7 @@
             "repo": "github.com/symfony/recipes",
             "branch": "main",
             "version": "6.4",
-            "ref": "08c492c28925bf921d98bc26fd815ae8a38b33d9"
+            "ref": "32126346f25e1cee607cc4aa6783d46034920554"
         },
         "files": [
             "./config/packages/cache.yaml",
@@ -288,6 +288,22 @@
         },
         "files": [
             "./config/packages/messenger.yaml"
+        ]
+    },
+    "symfony/webpack-encore-bundle": {
+        "version": "2.4",
+        "recipe": {
+            "repo": "github.com/symfony/recipes",
+            "branch": "main",
+            "version": "2.1",
+            "ref": "b346dae458e64a1921ded2125993d94bd719a8dd"
+        },
+        "files": [
+            "./assets/app.js",
+            "./assets/styles/app.css",
+            "./config/packages/webpack_encore.yaml",
+            "./package.json",
+            "./webpack.config.js"
         ]
     },
     "twig/extra-bundle": {

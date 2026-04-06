@@ -1,0 +1,88 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Détail traitement #{{ traitement.id }}{% endblock %}
+
+{% block page_title %}Détail du traitement{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_traitement_reclamations') }}">Réclamations</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_traitement_index') }}">Mes traitements</a></li>
+    <li class="breadcrumb-item active">Détail #{{ traitement.id }}</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Informations du traitement</h3>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 150px;">ID traitement</th>
+                            <td>{{ traitement.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Réclamation #</th>
+                            <td>{{ traitement.reclamation ? traitement.reclamation.id : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Objet réclamation</th>
+                            <td>{{ traitement.reclamation ? traitement.reclamation.objet : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ traitement.reclamation ? traitement.reclamation.description : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cours</th>
+                            <td>{{ traitement.reclamation and traitement.reclamation.cours ? traitement.reclamation.cours.titre : '—' }}Jet
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Réponse</th>
+                            <td>{{ traitement.reponseAdmin }}</td>
+                        </tr>
+                        <tr>
+                            <th>Statut final</th>
+                            <td>
+                                {% if traitement.statutFinal == 'Résolu' %}
+                                    <span class="badge badge-success">{{ traitement.statutFinal }}</span>
+                                {% elseif traitement.statutFinal == 'Non résolu' %}
+                                    <span class="badge badge-danger">{{ traitement.statutFinal }}</span>
+                                {% else %}
+                                    <span class="badge badge-warning">{{ traitement.statutFinal }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Candidat</th>
+                            <td>{{ traitement.reclamation and traitement.reclamation.user ? traitement.reclamation.user.firstName ~ ' ' ~ traitement.reclamation.user.lastName : '—' }}@
+                        </tr>
+                        <tr>
+                            <th>Email candidat</th>
+                            <td>{{ traitement.reclamation ? traitement.reclamation.email : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date traitement</th>
+                            <td>{{ traitement.dateTraitement ? traitement.dateTraitement|date('d/m/Y H:i:s') : '—' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <a href="{{ path('app_dashboard_traitement_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+                <a href="{{ path('app_dashboard_traitement_reclamations') }}" class="btn btn-primary">
+                    <i class="fas fa-inbox"></i> Voir les réclamations en attente
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

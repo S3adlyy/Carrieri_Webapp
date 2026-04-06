@@ -1,0 +1,31 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Nouvelle réclamation{% endblock %}
+
+{% block page_title %}Nouvelle réclamation{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_reclamation_index') }}">Réclamations</a></li>
+    <li class="breadcrumb-item active">Nouvelle</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Créer une réclamation</h3>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+                {{ form_widget(form) }}
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Créer
+                    </button>
+                    <a href="{{ path('app_dashboard_reclamation_index') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

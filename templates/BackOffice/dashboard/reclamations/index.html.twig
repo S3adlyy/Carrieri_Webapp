@@ -1,0 +1,91 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des réclamations{% endblock %}
+
+{% block page_title %}Réclamations{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Réclamations</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des réclamations</h3>
+            <div class="card-tools">
+                <a href="{{ path('app_dashboard_reclamation_new') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-plus"></i> Nouvelle réclamation
+                </a>
+                <span class="badge badge-info ml-2">{{ reclamations|length }} réclamation(s)</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Objet</th>
+                            <th>Catégorie</th>
+                            <th>Statut</th>
+                            <th>Priorité</th>
+                            <th>Date</th>
+                            <th>Utilisateur</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for r in reclamations %}
+                        <tr>
+                            <td>{{ r.id }}</td>
+                            <td>{{ r.objet|slice(0, 50) }}</td>
+                            <td>{{ r.categorie }}</td>
+                            <td>
+                                {% if r.statut == 'En attente' %}
+                                    <span class="badge badge-warning">En attente</span>
+                                {% elseif r.statut == 'Traité' %}
+                                    <span class="badge badge-success">Traité</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ r.statut }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.priorite == 'Haute' %}
+                                    <span class="badge badge-danger">Haute</span>
+                                {% elseif r.priorite == 'Moyenne' %}
+                                    <span class="badge badge-info">Moyenne</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Basse</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ r.dateCreation ? r.dateCreation|date('d/m/Y') : '—' }}</td>
+                            <td>
+                                {% set u = r.user %}
+                                {% if u %}{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}{% else %}—{% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ path('app_dashboard_reclamation_show', {'id': r.id}) }}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('app_dashboard_reclamation_edit', {'id': r.id}) }}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <form method="post" action="{{ path('app_dashboard_reclamation_delete', {'id': r.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette réclamation ?')">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ r.id) }}">
+                                    <button class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">Aucune réclamation.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
