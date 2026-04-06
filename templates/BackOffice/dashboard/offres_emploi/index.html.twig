@@ -1,0 +1,60 @@
+{# templates/BackOffice/dashboard/offres_emploi/index.html.twig.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des offres d'emploi{% endblock %}
+
+{% block page_title %}Offres d'emploi{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Offres d'emploi</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des offres d'emploi</h3>
+            <span class="badge badge-info">{{ offres|length }} offre(s)</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Titre</th>
+                        <th>Entreprise</th>
+                        <th>Localisation</th>
+                        <th>Contrat</th>
+                        <th>Publiée le</th>
+                        {% if is_admin_view|default(false) %}
+                            <th>Recruteur</th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for o in offres %}
+                        <tr>
+                            <td>{{ o.id }}</td>
+                            <td>{{ o.titre|default('—') }}</td>
+                            <td>{{ o.entreprise|default('—') }}</td>
+                            <td>{{ o.localisation|default('—') }}</td>
+                            <td>{{ o.typeContrat|default('—') }}</td>
+                            <td>{% if o.datePublication %}{{ o.datePublication|date('d/m/Y') }}{% else %}—{% endif %}</td>
+                            {% if is_admin_view|default(false) %}
+                                <td>
+                                    {% set u = o.user %}
+                                    {% if u %}{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}{% else %}—{% endif %}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ is_admin_view|default(false) ? 7 : 6 }}" class="text-center text-muted">Aucune offre.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

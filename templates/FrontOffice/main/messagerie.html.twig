@@ -1,0 +1,844 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Messagerie{% endblock %}
+
+{% block candidate_page_heading %}Messagerie{% endblock %}
+
+{% block candidate_breadcrumb %}Messagerie{% endblock %}
+
+{% block candidate_content %}
+    <div class="messaging-area">
+        <div class="messaging-container">
+            <!-- Sidebar conversations -->
+            <div class="messaging-sidebar">
+                <div class="sidebar-header">
+                    <h4 class="sidebar-title">
+                        <i class="fas fa-comments me-2"></i>Conversations
+                    </h4>
+                    <div class="sidebar-search">
+                        <input type="text" class="form-control" id="searchConversation" placeholder="Rechercher...">
+                    </div>
+                    <button class="btn-new-chat" data-bs-toggle="modal" data-bs-target="#newConversationModal">
+                        <i class="fas fa-plus me-2"></i>Nouvelle conversation
+                    </button>
+                </div>
+                <div class="conversations-list" id="conversationsList">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-spinner fa-spin"></i> Chargement...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat panel -->
+            <div class="messaging-chat">
+                <div class="chat-header" id="chatHeader" style="display: none;">
+                    <div class="chat-user-info">
+                        <div class="chat-user-avatar" id="chatAvatar"></div>
+                        <div>
+                            <h5 class="chat-user-name" id="chatName"></h5>
+                            <span class="chat-user-status">
+                                <i class="fas fa-circle me-1"></i> En ligne
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="empty-chat" id="emptyChat">
+                        <i class="fas fa-comment-dots"></i>
+                        <p>Sélectionnez une conversation<br>pour commencer à discuter</p>
+                    </div>
+                </div>
+                <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                    <div class="chat-input-wrapper">
+                        <textarea class="form-control" id="messageInput" rows="2" placeholder="Écrivez votre message..."></textarea>
+                        <button class="btn-send" id="sendMessageBtn">
+                            <i class="fas fa-paper-plane me-1"></i> Envoyer
+                        </button>
+                    </div>
+                    <small class="text-muted d-block mt-2">
+                        <i class="fas fa-info-circle"></i> Appuyez sur Entrée pour envoyer • Shift+Entrée pour nouvelle ligne
+                    </small>
+                    <div class="invalid-feedback d-none mt-2" id="messageError"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Nouvelle conversation -->
+    <div class="modal fade" id="newConversationModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus-circle me-2"></i>Nouvelle conversation
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Choisir un recruteur</label>
+                        <select class="form-select" id="recruiterSelect">
+                            <option value="">-- Sélectionnez --</option>
+                            {% for recruiter in recruiters %}
+                                <option value="{{ recruiter.id }}">{{ recruiter.firstName }} {{ recruiter.lastName }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-control" id="newMessageContent" rows="4" placeholder="Bonjour, je souhaiterais..."></textarea>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-info-circle"></i> Le message doit commencer par une majuscule
+                        </small>
+                        <div class="invalid-feedback" id="newMessageError"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="sendNewMessageBtn">Envoyer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'édition de message -->
+    <div class="modal fade" id="editMessageModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-edit me-2"></i>Modifier le message
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea class="form-control" id="editMessageContent" rows="4"></textarea>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-info-circle"></i> Le message doit commencer par une majuscule
+                    </small>
+                    <div class="invalid-feedback mt-2" id="editMessageError"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="saveEditMessageBtn">Enregistrer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .messaging-area {
+            width: 100%;
+        }
+
+        .messaging-container {
+            display: flex;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.05);
+            overflow: hidden;
+            min-height: 600px;
+        }
+
+        .messaging-sidebar {
+            width: 350px;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .sidebar-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 15px;
+        }
+
+        .sidebar-search {
+            margin-bottom: 15px;
+        }
+
+        .sidebar-search .form-control {
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
+        .btn-new-chat {
+            width: 100%;
+            background: linear-gradient(135deg, #5E548E, #9F86C0);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-new-chat:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(94,84,142,0.3);
+        }
+
+        .conversations-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .conv-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .conv-item:hover {
+            background: #f1f5f9;
+        }
+
+        .conv-item.active {
+            background: #e0e7ff;
+            border-left: 3px solid #5E548E;
+        }
+
+        .conv-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5E548E, #9F86C0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        .messaging-chat {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: white;
+        }
+
+        .messages-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.sent {
+            align-items: flex-end;
+            text-align: right;
+        }
+
+        .message.received {
+            align-items: flex-start;
+            text-align: left;
+        }
+        .chat-header {
+            padding: 20px;
+            border-bottom: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chat-user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #5E548E, #9F86C0);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .chat-user-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 2px;
+        }
+
+        .chat-user-status {
+            font-size: 12px;
+            color: #10b981;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8fafc;
+            min-height: 400px;
+            max-height: 500px;
+        }
+
+        .message {
+            max-width: 65%;
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .message.sent {
+            align-self: flex-end;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .bubble {
+            padding: 10px 16px;
+            border-radius: 18px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .sent .bubble {
+            background: linear-gradient(135deg, #5E548E, #9F86C0);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .received .bubble {
+            background: white;
+            color: #1e293b;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .message-time {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 4px;
+            padding: 0 5px;
+        }
+
+        .sent .message-time {
+            text-align: right;
+        }
+
+        .message-actions {
+            position: absolute;
+            top: -8px;
+            right: -30px;
+            display: none;
+            gap: 5px;
+        }
+
+        .message.sent:hover .message-actions {
+            display: flex;
+        }
+
+        .edit-btn, .delete-btn {
+            background: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .edit-btn:hover { background: #5E548E; color: white; }
+        .delete-btn:hover { background: #ef4444; color: white; }
+
+        .edited-badge {
+            font-size: 9px;
+            opacity: 0.6;
+            margin-left: 5px;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input-wrapper .form-control {
+            flex: 1;
+            border-radius: 25px;
+            border: 1px solid #e2e8f0;
+            resize: none;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #5E548E, #9F86C0);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 0 25px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-send:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(94,84,142,0.3);
+        }
+
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #94a3b8;
+            text-align: center;
+        }
+
+        .empty-chat i {
+            font-size: 60px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .invalid-feedback {
+            display: none;
+            font-size: 12px;
+            color: #ef4444;
+        }
+
+        .invalid-feedback.d-none {
+            display: none;
+        }
+
+        .invalid-feedback:not(.d-none) {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .messaging-container {
+                flex-direction: column;
+            }
+
+            .messaging-sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+            }
+
+            .chat-messages {
+                min-height: 300px;
+                max-height: 400px;
+            }
+
+            .message {
+                max-width: 85%;
+            }
+        }
+    </style>
+
+    <script>
+        let currentConversationId = null;
+        let refreshInterval = null;
+        let currentEditMessageId = null;
+
+        function getInitials(name) {
+            if (!name) return '?';
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chatMessages');
+            if (container) container.scrollTop = container.scrollHeight;
+        }
+
+        function loadConversations() {
+            console.log('Chargement des conversations...');
+            fetch('/messagerie/conversations')
+                .then(response => response.json())
+                .then(conversations => {
+                    const container = document.getElementById('conversationsList');
+                    if (!container) return;
+
+                    if (conversations.length === 0) {
+                        container.innerHTML = '<div class="text-center text-muted p-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucune conversation</div>';
+                        return;
+                    }
+
+                    let html = '';
+                    for (const conv of conversations) {
+                        const activeClass = currentConversationId == conv.id ? 'active' : '';
+                        html += `
+                    <div class="conv-item ${activeClass}" data-id="${conv.id}" data-name="${escapeHtml(conv.other_user_name)}">
+                        <div class="d-flex gap-3">
+                            <div class="conv-avatar">${getInitials(conv.other_user_name)}</div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-semibold">${escapeHtml(conv.other_user_name)}</span>
+                                    <span class="small text-muted">${conv.date || ''}</span>
+                                </div>
+                                <div class="small text-muted text-truncate">${escapeHtml(conv.last_message ? conv.last_message.substring(0, 50) : 'Aucun message')}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                    }
+                    container.innerHTML = html;
+
+                    // Ajouter les événements de clic
+                    document.querySelectorAll('.conv-item').forEach(item => {
+                        item.addEventListener('click', function() {
+                            const id = parseInt(this.dataset.id);
+                            const name = this.dataset.name;
+                            console.log('Clic sur conversation:', id, name);
+                            selectConversation(id, name);
+                        });
+                    });
+                })
+                .catch(error => console.error('Error loading conversations:', error));
+        }
+
+        function selectConversation(id, name) {
+            console.log('selectConversation appelé avec id:', id, 'name:', name);
+            currentConversationId = id;
+
+            // Mettre à jour la classe active
+            document.querySelectorAll('.conv-item').forEach(item => {
+                item.classList.remove('active');
+                if (parseInt(item.dataset.id) === id) {
+                    item.classList.add('active');
+                }
+            });
+
+            // Afficher le header du chat
+            const chatHeader = document.getElementById('chatHeader');
+            const chatInputArea = document.getElementById('chatInputArea');
+            const emptyChat = document.getElementById('emptyChat');
+            const chatName = document.getElementById('chatName');
+            const chatAvatar = document.getElementById('chatAvatar');
+
+            if (chatHeader) chatHeader.style.display = 'block';
+            if (chatInputArea) chatInputArea.style.display = 'block';
+            if (emptyChat) emptyChat.style.display = 'none';
+            if (chatName) chatName.innerHTML = escapeHtml(name);
+            if (chatAvatar) chatAvatar.innerHTML = getInitials(name);
+
+            // Charger les messages
+            loadMessages(id);
+        }
+
+        function loadMessages(conversationId) {
+            console.log('Chargement des messages pour conversation:', conversationId);
+            fetch(`/messagerie/conversation/${conversationId}/messages`)
+                .then(response => response.json())
+                .then(messages => {
+                    const container = document.getElementById('chatMessages');
+                    if (!container) return;
+
+                    if (!messages || messages.length === 0) {
+                        container.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-comment-dots fa-2x mb-2"></i><p>Aucun message</p><p class="small">Envoyez votre premier message !</p></div>';
+                        return;
+                    }
+
+                    let html = '';
+                    for (const msg of messages) {
+                        const msgClass = msg.est_moi ? 'sent' : 'received';
+                        const editedBadge = msg.statut === 'edited' ? '<span class="edited-badge">(modifié)</span>' : '';
+
+                        html += `
+                    <div class="message ${msgClass}" data-message-id="${msg.id}">
+                        <div class="bubble">
+                            ${escapeHtml(msg.contenu)}${editedBadge}
+                        </div>
+                        <div class="message-time">${msg.date_envoi}</div>
+                        ${msg.est_moi ? `
+                            <div class="message-actions">
+                                <button class="edit-btn" onclick="openEditModal(${msg.id}, '${escapeHtml(msg.contenu).replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                                <button class="delete-btn" onclick="deleteMessage(${msg.id})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                    }
+
+                    container.innerHTML = html;
+                    scrollToBottom();
+                })
+                .catch(error => console.error('Error loading messages:', error));
+        }
+
+        function sendMessage() {
+            console.log('sendMessage appelé, currentConversationId:', currentConversationId);
+
+            if (!currentConversationId) {
+                console.error('No conversation selected');
+                const errorDiv = document.getElementById('messageError');
+                if (errorDiv) {
+                    errorDiv.textContent = 'Veuillez sélectionner une conversation d\'abord';
+                    errorDiv.classList.remove('d-none');
+                }
+                return;
+            }
+
+            const messageInput = document.getElementById('messageInput');
+            const errorDiv = document.getElementById('messageError');
+
+            if (!messageInput) return;
+            const content = messageInput.value;
+            console.log('Contenu:', content);
+
+            if (!content.trim()) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Le message ne peut pas être vide';
+                    errorDiv.classList.remove('d-none');
+                }
+                return;
+            }
+
+            if (!/^[A-Z]/.test(content.trim())) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Le message doit commencer par une majuscule';
+                    errorDiv.classList.remove('d-none');
+                }
+                return;
+            }
+
+            if (errorDiv) errorDiv.classList.add('d-none');
+
+            fetch('/messagerie/send-message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `conversation_id=${currentConversationId}&content=${encodeURIComponent(content)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Réponse sendMessage:', data);
+                    if (data.success) {
+                        messageInput.value = '';
+                        loadMessages(currentConversationId);
+                        loadConversations();
+                        scrollToBottom();
+                    } else {
+                        if (errorDiv) {
+                            errorDiv.textContent = data.error;
+                            errorDiv.classList.remove('d-none');
+                        }
+                    }
+                })
+                .catch(error => console.error('Error sending message:', error));
+        }
+
+        // Initialisation des event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM chargé');
+
+            const sendBtn = document.getElementById('sendMessageBtn');
+            if (sendBtn) {
+                sendBtn.addEventListener('click', sendMessage);
+                console.log('Bouton sendMessageBtn connecté');
+            }
+
+            const messageInput = document.getElementById('messageInput');
+            if (messageInput) {
+                messageInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        sendMessage();
+                    }
+                });
+            }
+
+            const sendNewBtn = document.getElementById('sendNewMessageBtn');
+            if (sendNewBtn) {
+                sendNewBtn.addEventListener('click', function() {
+                    const recruiterSelect = document.getElementById('recruiterSelect');
+                    const newMessageContent = document.getElementById('newMessageContent');
+                    const errorDiv = document.getElementById('newMessageError');
+
+                    if (!recruiterSelect || !newMessageContent) return;
+
+                    const recruiterId = recruiterSelect.value;
+                    const content = newMessageContent.value;
+
+                    if (!recruiterId) {
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Veuillez sélectionner un recruteur';
+                            errorDiv.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    if (!content.trim()) {
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Veuillez écrire un message';
+                            errorDiv.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    if (!/^[A-Z]/.test(content.trim())) {
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Le message doit commencer par une majuscule';
+                            errorDiv.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    if (errorDiv) errorDiv.classList.add('d-none');
+
+                    fetch('/messagerie/new-conversation', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `recruiter_id=${recruiterId}&content=${encodeURIComponent(content)}`
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('newConversationModal'));
+                                if (modal) modal.hide();
+                                loadConversations();
+                                setTimeout(() => {
+                                    selectConversation(data.conversation_id, '');
+                                }, 500);
+                                newMessageContent.value = '';
+                            } else {
+                                if (errorDiv) {
+                                    errorDiv.textContent = data.error;
+                                    errorDiv.classList.remove('d-none');
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error creating conversation:', error));
+                });
+            }
+        });
+
+        window.openEditModal = function(messageId, content) {
+            currentEditMessageId = messageId;
+            const editContent = document.getElementById('editMessageContent');
+            const errorDiv = document.getElementById('editMessageError');
+
+            if (editContent) editContent.value = content;
+            if (errorDiv) errorDiv.classList.add('d-none');
+
+            const modal = new bootstrap.Modal(document.getElementById('editMessageModal'));
+            if (modal) modal.show();
+        }
+
+        window.deleteMessage = function(messageId) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
+                fetch(`/messagerie/delete-message/${messageId}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            loadMessages(currentConversationId);
+                            loadConversations();
+                        } else {
+                            alert(data.error);
+                        }
+                    })
+                    .catch(error => console.error('Error deleting message:', error));
+            }
+        }
+
+        const saveEditBtn = document.getElementById('saveEditMessageBtn');
+        if (saveEditBtn) {
+            saveEditBtn.addEventListener('click', function() {
+                const editContent = document.getElementById('editMessageContent');
+                const errorDiv = document.getElementById('editMessageError');
+
+                if (!editContent) return;
+                const newContent = editContent.value;
+
+                if (!newContent.trim()) {
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Le message ne peut pas être vide';
+                        errorDiv.classList.remove('d-none');
+                    }
+                    return;
+                }
+
+                if (!/^[A-Z]/.test(newContent.trim())) {
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Le message doit commencer par une majuscule';
+                        errorDiv.classList.remove('d-none');
+                    }
+                    return;
+                }
+
+                fetch(`/messagerie/edit-message/${currentEditMessageId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `content=${encodeURIComponent(newContent)}`
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('editMessageModal'));
+                            if (modal) modal.hide();
+                            loadMessages(currentConversationId);
+                            loadConversations();
+                        } else {
+                            if (errorDiv) {
+                                errorDiv.textContent = data.error;
+                                errorDiv.classList.remove('d-none');
+                            }
+                        }
+                    });
+            });
+        }
+
+        const searchInput = document.getElementById('searchConversation');
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const search = this.value.toLowerCase();
+                document.querySelectorAll('.conv-item').forEach(item => {
+                    const text = item.innerText.toLowerCase();
+                    item.style.display = text.includes(search) ? 'flex' : 'none';
+                });
+            });
+        }
+
+        // Initialisation
+        loadConversations();
+        refreshInterval = setInterval(() => {
+            if (currentConversationId) {
+                loadMessages(currentConversationId);
+                loadConversations();
+            }
+        }, 5000);
+    </script>
+{% endblock %}
