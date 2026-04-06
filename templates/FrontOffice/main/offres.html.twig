@@ -19,6 +19,29 @@
         </div>
     {% endfor %}
 
+    <div class="fo-stats-row">
+        <div class="fo-stat-card">
+            <div class="fo-stat-icon" style="background:rgba(59,130,246,0.12);color:#2563eb"><i class="fas fa-briefcase"></i></div>
+            <div><span class="fo-stat-value">{{ stats.total }}</span><span class="fo-stat-label">Offres actives</span></div>
+        </div>
+        <div class="fo-stat-card">
+            <div class="fo-stat-icon" style="background:rgba(16,185,129,0.12);color:#059669"><i class="fas fa-file-contract"></i></div>
+            <div><span class="fo-stat-value">{{ stats.CDI }}</span><span class="fo-stat-label">CDI</span></div>
+        </div>
+        <div class="fo-stat-card">
+            <div class="fo-stat-icon" style="background:rgba(245,158,11,0.12);color:#d97706"><i class="fas fa-clock"></i></div>
+            <div><span class="fo-stat-value">{{ stats.CDD }}</span><span class="fo-stat-label">CDD</span></div>
+        </div>
+        <div class="fo-stat-card">
+            <div class="fo-stat-icon" style="background:rgba(139,92,246,0.12);color:#7c3aed"><i class="fas fa-graduation-cap"></i></div>
+            <div><span class="fo-stat-value">{{ stats.Stage }}</span><span class="fo-stat-label">Stage</span></div>
+        </div>
+        <div class="fo-stat-card">
+            <div class="fo-stat-icon" style="background:rgba(236,72,153,0.12);color:#db2777"><i class="fas fa-laptop-code"></i></div>
+            <div><span class="fo-stat-value">{{ stats.Freelance }}</span><span class="fo-stat-label">Freelance</span></div>
+        </div>
+    </div>
+
     <form method="get" class="fo-filter-bar">
         <input
             type="text"
@@ -426,6 +449,48 @@
             .fo-offre-card__meta {
                 grid-template-columns: 1fr;
             }
+        }
+
+        .fo-stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .fo-stat-card {
+            flex: 1;
+            min-width: 140px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(255,255,255,0.92);
+            border-radius: 18px;
+            padding: 18px 20px;
+            box-shadow: 0 8px 24px rgba(31,55,120,0.08);
+        }
+        .fo-stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .fo-stat-value {
+            display: block;
+            font-size: 28px;
+            font-weight: 800;
+            color: #1f3470;
+            line-height: 1;
+        }
+        .fo-stat-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-top: 4px;
         }
     </style>
 

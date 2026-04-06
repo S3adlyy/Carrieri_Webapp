@@ -25,7 +25,6 @@ class CandidateMainController extends AbstractController
 {
     private $logger;
 
-    // Inject the logger service via constructor
     public function __construct(LoggerInterface $logger)
     {
         $this->logger = $logger;
@@ -58,8 +57,19 @@ class CandidateMainController extends AbstractController
             $salaireMin ? (float) $salaireMin : null
         );
 
+        $allOffres = $offreEmploiRepository->findActiveOffers();
+
+        $stats = [
+            'total' => count($allOffres),
+            'CDI' => count(array_filter($allOffres, fn($o) => $o->getTypeContrat() === 'CDI')),
+            'CDD' => count(array_filter($allOffres, fn($o) => $o->getTypeContrat() === 'CDD')),
+            'Stage' => count(array_filter($allOffres, fn($o) => $o->getTypeContrat() === 'Stage')),
+            'Freelance' => count(array_filter($allOffres, fn($o) => $o->getTypeContrat() === 'Freelance')),
+        ];
+
         return $this->render('FrontOffice/main/offres.html.twig', [
             'offres' => $offres,
+            'stats' => $stats,
         ]);
     }
 
@@ -69,54 +79,45 @@ class CandidateMainController extends AbstractController
         MissionRepository $missionRepository,
         PostulationRepository $postulationRepository
     ): Response {
-        // Ensure that the offer is not expired
         if ($offre->getDateExpiration() && $offre->getDateExpiration() < new \DateTime()) {
-            throw $this->createNotFoundException('Cette offre n’est plus disponible.');
+            throw $this->createNotFoundException('Cette offre n\'est plus disponible.');
         }
 
-        // Retrieve missions linked to the offer's recruiter
         $missions = [];
         if ($offre->getRecruteurId() !== null) {
             $missions = $missionRepository->findByCreatedById($offre->getRecruteurId());
         }
 
-        // Set up postulation status
         $alreadyApplied = false;
         $postulationStatus = null;
 
         $user = $this->getUser();
         if ($user instanceof User) {
-            // Check if the user has applied to this offer
             $alreadyApplied = $postulationRepository->hasUserAppliedToOffer($user, $offre);
 
             if ($alreadyApplied) {
-                // Get the postulation status for the user and this offer
                 $postulation = $postulationRepository->findOneBy([
                     'user' => $user,
                     'offreEmploi' => $offre,
                 ]);
-
-                // Ensure the correct status is fetched
                 $postulationStatus = $postulation ? $postulation->getStatut() : null;
             }
         }
 
-        // Calculate the remaining days until expiration
         $joursRestants = null;
         if ($offre->getDateExpiration()) {
             $today = new \DateTime();
             $interval = $today->diff($offre->getDateExpiration());
-            $joursRestants = max(0, (int) $interval->format('%r%a')); // Get positive days left
+            $joursRestants = max(0, (int) $interval->format('%r%a'));
         }
 
-        // Render the page with the necessary data passed to Twig
         return $this->render('FrontOffice/main/offre_show.html.twig', [
-            'offre' => $offre,                      // Offer details
-            'missions' => $missions,                // Associated missions
-            'alreadyApplied' => $alreadyApplied,    // Whether the user has applied
-            'postulationStatus' => $postulationStatus,  // The postulation status (Acceptée, Refusée, En attente)
-            'joursRestants' => $joursRestants,      // Remaining days
-            'missionsCount' => count($missions),    // Number of associated missions
+            'offre' => $offre,
+            'missions' => $missions,
+            'alreadyApplied' => $alreadyApplied,
+            'postulationStatus' => $postulationStatus,
+            'joursRestants' => $joursRestants,
+            'missionsCount' => count($missions),
         ]);
     }
 
@@ -146,7 +147,7 @@ class CandidateMainController extends AbstractController
         PostulationRepository $postulationRepository
     ): Response {
         if ($offre->getDateExpiration() && $offre->getDateExpiration() < new \DateTime()) {
-            throw $this->createNotFoundException('Cette offre n’est plus disponible.');
+            throw $this->createNotFoundException('Cette offre n\'est plus disponible.');
         }
 
         $user = $this->getUser();
@@ -156,7 +157,6 @@ class CandidateMainController extends AbstractController
 
         if ($postulationRepository->hasUserAppliedToOffer($user, $offre)) {
             $this->addFlash('error', 'Vous avez déjà postulé à cette offre.');
-
             return $this->redirectToRoute('app_candidate_offres');
         }
 
@@ -167,7 +167,6 @@ class CandidateMainController extends AbstractController
             $motivation = trim((string) $request->request->get('motivation', ''));
             $cvFile = $request->files->get('cv');
 
-            // Contrôle de saisie motivation
             if ($motivation === '') {
                 $errors[] = 'La motivation est obligatoire.';
             } elseif (mb_strlen($motivation) < 20) {
@@ -176,7 +175,6 @@ class CandidateMainController extends AbstractController
                 $errors[] = 'La motivation ne doit pas dépasser 2000 caractères.';
             }
 
-            // Contrôle de saisie CV
             if (!$cvFile) {
                 $errors[] = 'Le CV est obligatoire.';
             } else {
@@ -188,7 +186,6 @@ class CandidateMainController extends AbstractController
                     $errors[] = 'Le CV doit être au format PDF, DOC ou DOCX.';
                 }
 
-                // 2 MB max
                 if ($cvFile->getSize() > 2 * 1024 * 1024) {
                     $errors[] = 'Le CV ne doit pas dépasser 2 Mo.';
                 }
@@ -206,7 +203,7 @@ class CandidateMainController extends AbstractController
                 try {
                     $cvFile->move($uploadDir, $safeFilename);
                 } catch (FileException $e) {
-                    $errors[] = 'Erreur lors de l’envoi du CV.';
+                    $errors[] = 'Erreur lors de l\'envoi du CV.';
                 }
 
                 if ($errors === []) {
@@ -224,7 +221,6 @@ class CandidateMainController extends AbstractController
                     $entityManager->flush();
 
                     $this->addFlash('success', 'Votre candidature a été envoyée avec succès.');
-
                     return $this->redirectToRoute('app_candidate_offres');
                 }
             }

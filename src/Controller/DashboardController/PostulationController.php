@@ -13,25 +13,17 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 
 #[Route('/admin/postulations')]
 class PostulationController extends AbstractController
 {
-    // Declare properties at the class level
-    private EntityManagerInterface $entityManager;
-    private PostulationRepository $postulationRepository;
-    private OffreEmploiRepository $offreEmploiRepository;
-
-    // Constructor injection of services
     public function __construct(
-        EntityManagerInterface $entityManager,
-        PostulationRepository $postulationRepository,
-        OffreEmploiRepository $offreEmploiRepository
+        private EntityManagerInterface $entityManager,
+        private PostulationRepository $postulationRepository,
+        private OffreEmploiRepository $offreEmploiRepository,
     ) {
-        // Initialize properties
-        $this->entityManager = $entityManager;
-        $this->postulationRepository = $postulationRepository;
-        $this->offreEmploiRepository = $offreEmploiRepository;
     }
 
     #[Route('/', name: 'app_admin_postulations_list')]
@@ -43,7 +35,6 @@ class PostulationController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Fetch all postulations for the recruiter
         $postulations = $this->postulationRepository->findByRecruiter($user);
         $stats = $this->getStats($user);
 
@@ -129,7 +120,6 @@ class PostulationController extends AbstractController
         $accepted = 0;
         $refused = 0;
         $pending = 0;
-        $users = [];
 
         foreach ($postulations as $p) {
             match ($p->getStatut()) {
@@ -137,18 +127,6 @@ class PostulationController extends AbstractController
                 'Refusée' => $refused++,
                 default => $pending++,
             };
-
-            $user = $p->getUser();
-            if ($user) {
-                // Access user name directly from firstName and lastName
-                $fullName = $user->getFirstName() . ' ' . $user->getLastName();
-
-                // Add users and their postulation status to the array
-                $users[] = [
-                    'name' => $fullName,
-                    'status' => $p->getStatut(),
-                ];
-            }
         }
 
         return [
@@ -156,7 +134,47 @@ class PostulationController extends AbstractController
             'accepted' => $accepted,
             'refused' => $refused,
             'pending' => $pending,
-            'users' => $users,  // Return the users array with names
         ];
     }
+
+    #[Route('/offre/{id}/export-pdf', name: 'app_admin_postulations_export_pdf')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function exportPdf(int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $offre = $this->offreEmploiRepository->find($id);
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+            $this->addFlash('error', 'Offre non trouvée ou accès non autorisé.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        $postulations = $this->postulationRepository->findByOffreAndRecruiter($id, $user);
+
+        $html = $this->renderView('BackOffice/dashboard/postulations/export_pdf.html.twig', [
+            'postulations' => $postulations,
+            'offre' => $offre,
+            'export_date' => date('d/m/Y H:i:s'),
+        ]);
+
+        $options = new Options();
+        $options->set('defaultFont', 'Arial');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        $fileName = 'postulations_' . $offre->getId() . '_' . date('Y-m-d') . '.pdf';
+
+        return new Response($dompdf->output(), 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . $fileName . '"',
+        ]);
+    }
+    
 }
