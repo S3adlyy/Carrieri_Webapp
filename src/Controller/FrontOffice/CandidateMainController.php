@@ -237,15 +237,24 @@ class CandidateMainController extends AbstractController
     }
 
     #[Route('/mes-postulations', name: 'app_candidate_postulations')]
-    public function myApplications(PostulationRepository $postulationRepository): Response
+    public function myApplications(Request $request, PostulationRepository $postulationRepository): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
+        $filters = [
+            'keyword' => $request->query->get('keyword'),
+            'statut'  => $request->query->get('statut'),
+            'offre'   => $request->query->get('offre'),   // matches the input name="offre"
+        ];
+
+        $postulations = $postulationRepository->searchPostulationsForCandidate($user, $filters);
+
         return $this->render('FrontOffice/main/postulations.html.twig', [
-            'postulations' => $postulationRepository->findByCandidate($user),
+            'postulations' => $postulations,
         ]);
     }
+    
 }

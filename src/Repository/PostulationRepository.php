@@ -1,4 +1,5 @@
 <?php
+
 // src/Repository/PostulationRepository.php
 
 namespace App\Repository;
@@ -83,8 +84,10 @@ class PostulationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    // Nouvelle méthode pour la recherche avancée des postulations
-    public function searchPostulationsWithFilters(User $recruiter, array $filters = []): array
+    /**
+     * Advanced search for Recruiter Dashboard (kept as-is)
+     */
+    public function searchPostulationsWithFiltersForRecruiter(User $recruiter, array $filters = []): array
     {
         $isAdmin = in_array('ROLE_ADMIN', $recruiter->getRoles());
         
@@ -100,7 +103,7 @@ class PostulationRepository extends ServiceEntityRepository
                ->setParameter('recruiter', $recruiter);
         }
 
-        // Filtre par mot-clé (recherche sur candidat, offre, entreprise)
+        // Filtre par mot-clé
         if (!empty($filters['keyword'])) {
             $qb->andWhere('
                 c.firstName LIKE :keyword 
@@ -125,7 +128,7 @@ class PostulationRepository extends ServiceEntityRepository
                ->setParameter('offreId', $filters['offreId']);
         }
 
-        // Filtre par type de contrat de l'offre
+        // Filtre par type de contrat
         if (!empty($filters['typeContrat'])) {
             $qb->andWhere('o.typeContrat = :typeContrat')
                ->setParameter('typeContrat', $filters['typeContrat']);
@@ -146,7 +149,47 @@ class PostulationRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    // Statistiques détaillées pour le dashboard recruteur
+    /**
+     * Search & Filter for Candidate "Mes Postulations" page
+     * Simple and optimized for the candidate side
+     */
+    public function searchPostulationsForCandidate(User $user, array $filters = []): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.offreEmploi', 'o')
+            ->addSelect('o')
+            ->andWhere('p.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('p.datePostulation', 'DESC');
+
+        // Filtre par mot-clé (titre de l'offre, entreprise, motivation)
+        if (!empty($filters['keyword'])) {
+            $qb->andWhere('
+                o.titre LIKE :keyword 
+                OR o.entreprise LIKE :keyword 
+                OR p.motivationCandidature LIKE :keyword
+            ')
+            ->setParameter('keyword', '%' . trim($filters['keyword']) . '%');
+        }
+
+        // Filtre par statut
+        if (!empty($filters['statut'])) {
+            $qb->andWhere('p.statut = :statut')
+               ->setParameter('statut', $filters['statut']);
+        }
+
+        // Filtre par nom de l'offre (if you want a separate "offre" field)
+        if (!empty($filters['offre'])) {
+            $qb->andWhere('o.titre LIKE :offre')
+               ->setParameter('offre', '%' . trim($filters['offre']) . '%');
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * Statistiques détaillées pour le dashboard recruteur
+     */
     public function getDetailedStatsForRecruiter(User $recruiter): array
     {
         $isAdmin = in_array('ROLE_ADMIN', $recruiter->getRoles());
@@ -194,7 +237,9 @@ class PostulationRepository extends ServiceEntityRepository
         ];
     }
 
-    // Évolution des candidatures par mois
+    /**
+     * Évolution des candidatures par mois
+     */
     public function getPostulationsEvolution(User $recruiter, int $months = 6): array
     {
         $isAdmin = in_array('ROLE_ADMIN', $recruiter->getRoles());
