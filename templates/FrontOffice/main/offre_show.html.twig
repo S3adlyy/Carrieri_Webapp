@@ -272,41 +272,38 @@
         color: #6d28d9;
     }
 
-    .fo-stat-applied {
+    /* FIXED STATUS COLORS */
+    .fo-stat-accepted {
         background: linear-gradient(135deg, #d1fae5 0%, #bbf7d0 100%);
         border-color: #86efac;
     }
-
-    .fo-stat-applied .fo-stat-label,
-    .fo-stat-applied .fo-stat-value {
-        color: #15803d;
-    }
-
-    .fo-stat-pending {
-        background: linear-gradient(135deg, #fff7ed 0%, #feebc8 100%);
-        border-color: #fef08a;
-    }
-
-    .fo-stat-pending .fo-stat-label,
-    .fo-stat-pending .fo-stat-value {
-        color: #f59e0b;
+    .fo-stat-accepted .fo-stat-label,
+    .fo-stat-accepted .fo-stat-value {
+        color: #15803d;   /* Strong green */
     }
 
     .fo-stat-refused {
         background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
         border-color: #fca5a5;
     }
-
     .fo-stat-refused .fo-stat-label,
     .fo-stat-refused .fo-stat-value {
         color: #b91c1c;
+    }
+
+    .fo-stat-pending {
+        background: linear-gradient(135deg, #fff7ed 0%, #feebc8 100%);
+        border-color: #fef08a;
+    }
+    .fo-stat-pending .fo-stat-label,
+    .fo-stat-pending .fo-stat-value {
+        color: #f59e0b;
     }
 
     .fo-stat-not-applied {
         background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
         border-color: #fca5a5;
     }
-
     .fo-stat-not-applied .fo-stat-label,
     .fo-stat-not-applied .fo-stat-value {
         color: #b91c1c;
@@ -456,17 +453,17 @@
     }
 
     .fo-btn-primary {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-            color: white;
-            border: none;
-            border-radius: 999px;
-            padding: 12px 24px;
-            font-weight: 700;
-            text-decoration: none;
-        }
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+        border: none;
+        border-radius: 999px;
+        padding: 12px 24px;
+        font-weight: 700;
+        text-decoration: none;
+    }
 
     .fo-btn-secondary {
         background: #e5e7eb;

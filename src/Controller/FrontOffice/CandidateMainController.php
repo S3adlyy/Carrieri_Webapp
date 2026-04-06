@@ -115,7 +115,7 @@ class CandidateMainController extends AbstractController
             'offre' => $offre,
             'missions' => $missions,
             'alreadyApplied' => $alreadyApplied,
-            'postulationStatus' => $postulationStatus,
+            'postulationStatus' => $postulationStatus,   // This must be the real status from DB
             'joursRestants' => $joursRestants,
             'missionsCount' => count($missions),
         ]);
