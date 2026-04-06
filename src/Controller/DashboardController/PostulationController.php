@@ -45,8 +45,8 @@ class PostulationController extends AbstractController
             'dateFin' => $request->query->get('dateFin', ''),
         ];
 
-        // Utiliser la nouvelle méthode de recherche avancée
-        $postulations = $this->postulationRepository->searchPostulationsWithFilters($user, $filters);
+        // Utiliser la nouvelle méthode de recherche avancée - CORRECTED METHOD NAME
+        $postulations = $this->postulationRepository->searchPostulationsWithFiltersForRecruiter($user, $filters);
         $stats = $this->getStats($user);
 
         // Liste des offres pour le filtre
@@ -85,7 +85,7 @@ class PostulationController extends AbstractController
             'offreId' => $id,
         ];
 
-        $postulations = $this->postulationRepository->searchPostulationsWithFilters($user, $filters);
+        $postulations = $this->postulationRepository->searchPostulationsWithFiltersForRecruiter($user, $filters);
 
         return $this->render('BackOffice/dashboard/postulations/by_offre.html.twig', [
             'postulations' => $postulations,
