@@ -1,125 +1,179 @@
-{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+{% extends 'BackOffice/base.html.twig' %}
 
-{% block title %}Messagerie{% endblock %}
+{% block title %}Messagerie - Recruteur{% endblock %}
 
-{% block candidate_page_heading %}Messagerie{% endblock %}
+{% block page_title %}Messagerie{% endblock %}
 
-{% block candidate_breadcrumb %}Messagerie{% endblock %}
+{% block page_subtitle %}Gérez vos conversations avec les candidats{% endblock %}
 
-{% block candidate_content %}
-    <div class="messaging-area">
-        <div class="messaging-container">
-            <!-- Sidebar conversations -->
-            <div class="messaging-sidebar">
-                <div class="sidebar-header">
-                    <h4 class="sidebar-title">
-                        <i class="fas fa-comments me-2"></i>Conversations
-                    </h4>
-                    <div class="sidebar-search">
-                        <input type="text" class="form-control" id="searchConversation" placeholder="Rechercher...">
-                    </div>
-                    <button class="btn-new-chat" data-bs-toggle="modal" data-bs-target="#newConversationModal">
-                        <i class="fas fa-plus me-2"></i>Nouvelle conversation
-                    </button>
+{% block body %}
+
+    <!-- Statistiques en haut de la page -->
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3 id="totalCandidats">0</h3>
+                    <p>Total Candidats</p>
                 </div>
-                <div class="conversations-list" id="conversationsList">
-                    <div class="text-center text-muted py-4">
-                        <i class="fas fa-spinner fa-spin"></i> Chargement...
-                    </div>
+                <div class="icon">
+                    <i class="fas fa-users"></i>
                 </div>
             </div>
-
-            <!-- Chat panel -->
-            <div class="messaging-chat">
-                <div class="chat-header" id="chatHeader" style="display: none;">
-                    <div class="chat-user-info">
-                        <div class="chat-user-avatar" id="chatAvatar"></div>
-                        <div>
-                            <h5 class="chat-user-name" id="chatName"></h5>
-                            <span class="chat-user-status">
-                                <i class="fas fa-circle me-1"></i> En ligne
-                            </span>
-                        </div>
-                    </div>
+        </div>
+        <div class="col-md-4">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3 id="candidatsEnLigne">0</h3>
+                    <p>Candidats en ligne</p>
                 </div>
-                <div class="chat-messages" id="chatMessages">
-                    <div class="empty-chat" id="emptyChat">
-                        <i class="fas fa-comment-dots"></i>
-                        <p>Sélectionnez une conversation<br>pour commencer à discuter</p>
-                    </div>
+                <div class="icon">
+                    <i class="fas fa-circle" style="color: white;"></i>
                 </div>
-                <div class="chat-input-area" id="chatInputArea" style="display: none;">
-                    <div class="chat-input-wrapper">
-                        <textarea class="form-control" id="messageInput" rows="2" placeholder="Écrivez votre message..."></textarea>
-                        <button class="btn-send" id="sendMessageBtn">
-                            <i class="fas fa-paper-plane me-1"></i> Envoyer
-                        </button>
-                    </div>
-                    <small class="text-muted d-block mt-2">
-                        <i class="fas fa-info-circle"></i> Appuyez sur Entrée pour envoyer • Shift+Entrée pour nouvelle ligne
-                    </small>
-                    <div class="invalid-feedback d-none mt-2" id="messageError"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3 id="messagesNonLus">0</h3>
+                    <p>Messages non lus</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-envelope"></i>
                 </div>
             </div>
         </div>
     </div>
 
+
+
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-comments mr-2"></i>Conversations
+                        </h3>
+                        <div class="card-tools">
+                            <button class="btn btn-primary btn-sm" data-toggle="modal" data-target="#newConversationModal">
+                                <i class="fas fa-plus"></i> Nouvelle conversation
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="row m-0">
+                            <!-- Liste des conversations -->
+                            <div class="col-md-4 p-0 border-right">
+                                <div class="p-3 border-bottom">
+                                    <input type="text" class="form-control" id="searchConversation" placeholder="Rechercher un candidat...">
+                                </div>
+                                <div class="conversations-list" id="conversationsList" style="height: 500px; overflow-y: auto;">
+                                    <div class="text-center text-muted py-4">
+                                        <i class="fas fa-spinner fa-spin"></i> Chargement...
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Zone de chat -->
+                            <div class="col-md-8 p-0">
+                                <div class="chat-header p-3 border-bottom" id="chatHeader" style="display: none;">
+                                    <div class="d-flex align-items-center">
+                                        <div class="chat-user-avatar rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" id="chatAvatar" style="width: 40px; height: 40px;"></div>
+                                        <div class="ml-3">
+                                            <h5 class="mb-0" id="chatName"></h5>
+                                            <small class="text-success"><i class="fas fa-circle"></i> En ligne</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="chat-messages p-3" id="chatMessages" style="height: 400px; overflow-y: auto; background: #f8f9fa;">
+                                    <div class="empty-chat text-center py-5" id="emptyChat">
+                                        <i class="fas fa-comment-dots fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">Sélectionnez une conversation<br>pour commencer à discuter</p>
+                                    </div>
+                                </div>
+                                <div class="chat-input-area p-3 border-top" id="chatInputArea" style="display: none;">
+                                    <div class="input-group">
+                                        <textarea class="form-control" id="messageInput" rows="2" placeholder="Écrivez votre message..."></textarea>
+                                        <div class="input-group-append">
+                                            <button class="btn btn-primary" id="sendMessageBtn">
+                                                <i class="fas fa-paper-plane"></i> Envoyer
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted d-block mt-2">
+                                        <i class="fas fa-info-circle"></i> Appuyez sur Entrée pour envoyer
+                                    </small>
+                                    <div class="invalid-feedback d-none mt-2" id="messageError"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
     <!-- Modal Nouvelle conversation -->
     <div class="modal fade" id="newConversationModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="fas fa-plus-circle me-2"></i>Nouvelle conversation
+                        <i class="fas fa-plus-circle"></i> Nouvelle conversation
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label">Choisir un recruteur</label>
-                        <select class="form-select" id="recruiterSelect">
+                    <div class="form-group">
+                        <label>Choisir un candidat</label>
+                        <select class="form-control" id="candidatSelect">
                             <option value="">-- Sélectionnez --</option>
-                            {% for recruiter in recruiters %}
-                                <option value="{{ recruiter.id }}">{{ recruiter.firstName }} {{ recruiter.lastName }}</option>
+                            {% for candidat in candidats %}
+                                <option value="{{ candidat.id }}">{{ candidat.firstName }} {{ candidat.lastName }} ({{ candidat.email }})</option>
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Message</label>
+                    <div class="form-group">
+                        <label>Message</label>
                         <textarea class="form-control" id="newMessageContent" rows="4" placeholder="Bonjour, je souhaiterais..."></textarea>
-                        <small class="text-muted d-block mt-1">
+                        <small class="text-muted">
                             <i class="fas fa-info-circle"></i> Le message doit commencer par une majuscule
                         </small>
                         <div class="invalid-feedback" id="newMessageError"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
                     <button type="button" class="btn btn-primary" id="sendNewMessageBtn">Envoyer</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal d'édition de message -->
+    <!-- Modal d'édition -->
     <div class="modal fade" id="editMessageModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">
-                        <i class="fas fa-edit me-2"></i>Modifier le message
+                        <i class="fas fa-edit"></i> Modifier le message
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <button type="button" class="close" data-dismiss="modal">
+                        <span>&times;</span>
+                    </button>
                 </div>
                 <div class="modal-body">
                     <textarea class="form-control" id="editMessageContent" rows="4"></textarea>
-                    <small class="text-muted mt-2 d-block">
-                        <i class="fas fa-info-circle"></i> Le message doit commencer par une majuscule
-                    </small>
                     <div class="invalid-feedback mt-2" id="editMessageError"></div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
                     <button type="button" class="btn btn-primary" id="saveEditMessageBtn">Enregistrer</button>
                 </div>
             </div>
@@ -450,6 +504,53 @@
             .message {
                 max-width: 85%;
             }
+
+            .small-box {
+                border-radius: 12px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                transition: transform 0.2s;
+                position: relative;
+                margin-bottom: 20px;
+            }
+
+            .small-box:hover {
+                transform: translateY(-3px);
+            }
+
+            .small-box .inner {
+                padding: 15px;
+            }
+
+            .small-box h3 {
+                font-size: 2rem;
+                font-weight: bold;
+                margin: 0 0 5px 0;
+            }
+
+            .small-box .icon {
+                position: absolute;
+                right: 15px;
+                top: 15px;
+                font-size: 3rem;
+                opacity: 0.5;
+            }
+
+            .bg-info {
+                background: linear-gradient(135deg, #17a2b8, #138496);
+                color: white;
+            }
+
+            .bg-success {
+                background: linear-gradient(135deg, #28a745, #1e7e34);
+                color: white;
+            }
+
+            .bg-warning {
+                background: linear-gradient(135deg, #ffc107, #d39e00);
+                color: white;
+            }
+
+
         }
     </style>
 
@@ -479,8 +580,7 @@
         }
 
         function loadConversations() {
-            console.log('Chargement des conversations...');
-            fetch('/messagerie/conversations')
+            fetch('/recruteur/messagerie/conversations')
                 .then(response => response.json())
                 .then(conversations => {
                     const container = document.getElementById('conversationsList');
@@ -494,29 +594,30 @@
                     let html = '';
                     for (const conv of conversations) {
                         const activeClass = currentConversationId == conv.id ? 'active' : '';
+                        const unreadBadge = conv.unread_count > 0 ? `<span class="badge badge-danger float-right">${conv.unread_count}</span>` : '';
                         html += `
                     <div class="conv-item ${activeClass}" data-id="${conv.id}" data-name="${escapeHtml(conv.other_user_name)}">
-                        <div class="d-flex gap-3">
-                            <div class="conv-avatar">${getInitials(conv.other_user_name)}</div>
+                        <div class="d-flex">
+                            <div class="conv-avatar mr-3">${getInitials(conv.other_user_name)}</div>
                             <div class="flex-grow-1">
                                 <div class="d-flex justify-content-between">
-                                    <span class="fw-semibold">${escapeHtml(conv.other_user_name)}</span>
-                                    <span class="small text-muted">${conv.date || ''}</span>
+                                    <strong>${escapeHtml(conv.other_user_name)}</strong>
+                                    <small class="text-muted">${conv.date || ''}</small>
                                 </div>
                                 <div class="small text-muted text-truncate">${escapeHtml(conv.last_message ? conv.last_message.substring(0, 50) : 'Aucun message')}</div>
                             </div>
+                            ${unreadBadge}
                         </div>
                     </div>
                 `;
                     }
                     container.innerHTML = html;
 
-                    // Ajouter les événements de clic
+                    // Attacher les événements click
                     document.querySelectorAll('.conv-item').forEach(item => {
-                        item.addEventListener('click', function() {
+                        item.addEventListener('click', function(e) {
                             const id = parseInt(this.dataset.id);
                             const name = this.dataset.name;
-                            console.log('Clic sur conversation:', id, name);
                             selectConversation(id, name);
                         });
                     });
@@ -525,10 +626,8 @@
         }
 
         function selectConversation(id, name) {
-            console.log('selectConversation appelé avec id:', id, 'name:', name);
             currentConversationId = id;
 
-            // Mettre à jour la classe active
             document.querySelectorAll('.conv-item').forEach(item => {
                 item.classList.remove('active');
                 if (parseInt(item.dataset.id) === id) {
@@ -536,7 +635,6 @@
                 }
             });
 
-            // Afficher le header du chat
             const chatHeader = document.getElementById('chatHeader');
             const chatInputArea = document.getElementById('chatInputArea');
             const emptyChat = document.getElementById('emptyChat');
@@ -549,20 +647,18 @@
             if (chatName) chatName.innerHTML = escapeHtml(name);
             if (chatAvatar) chatAvatar.innerHTML = getInitials(name);
 
-            // Charger les messages
             loadMessages(id);
         }
 
         function loadMessages(conversationId) {
-            console.log('Chargement des messages pour conversation:', conversationId);
-            fetch(`/messagerie/conversation/${conversationId}/messages`)
+            fetch(`/recruteur/messagerie/conversation/${conversationId}/messages`)
                 .then(response => response.json())
                 .then(messages => {
                     const container = document.getElementById('chatMessages');
                     if (!container) return;
 
                     if (!messages || messages.length === 0) {
-                        container.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-comment-dots fa-2x mb-2"></i><p>Aucun message</p><p class="small">Envoyez votre premier message !</p></div>';
+                        container.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-comment-dots fa-2x mb-2"></i><p>Aucun message</p></div>';
                         return;
                     }
 
@@ -572,7 +668,7 @@
                         const editedBadge = msg.statut === 'edited' ? '<span class="edited-badge">(modifié)</span>' : '';
 
                         html += `
-                    <div class="message ${msgClass}" data-message-id="${msg.id}">
+                    <div class="message ${msgClass}">
                         <div class="bubble">
                             ${escapeHtml(msg.contenu)}${editedBadge}
                         </div>
@@ -593,12 +689,98 @@
 
                     container.innerHTML = html;
                     scrollToBottom();
+                    // Ne pas rappeler loadConversations() ici pour éviter la boucle
                 })
                 .catch(error => console.error('Error loading messages:', error));
         }
+        document.getElementById('sendNewMessageBtn')?.addEventListener('click', function() {
+            console.log('Clic sur le bouton envoyer nouveau message');
+
+            const candidatSelect = document.getElementById('candidatSelect');
+            const newMessageContent = document.getElementById('newMessageContent');
+            const errorDiv = document.getElementById('newMessageError');
+
+            if (!candidatSelect || !newMessageContent) {
+                console.error('Elements non trouvés');
+                return;
+            }
+
+            const candidatId = candidatSelect.value;
+            const content = newMessageContent.value;
+
+            console.log('candidatId:', candidatId);
+            console.log('content:', content);
+
+            if (!candidatId) {
+                console.log('Pas de candidat sélectionné');
+                if (errorDiv) {
+                    errorDiv.textContent = 'Veuillez sélectionner un candidat';
+                    errorDiv.classList.remove('d-none');
+                }
+                return;
+            }
+
+            if (!content.trim()) {
+                console.log('Message vide');
+                if (errorDiv) {
+                    errorDiv.textContent = 'Veuillez écrire un message';
+                    errorDiv.classList.remove('d-none');
+                }
+                return;
+            }
+
+            if (!/^[A-Z]/.test(content.trim())) {
+                console.log('Pas de majuscule');
+                if (errorDiv) {
+                    errorDiv.textContent = 'Le message doit commencer par une majuscule';
+                    errorDiv.classList.remove('d-none');
+                }
+                return;
+            }
+
+            if (errorDiv) errorDiv.classList.add('d-none');
+
+            console.log('Envoi de la requête...');
+
+            fetch('/recruteur/messagerie/new-conversation', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `candidat_id=${candidatId}&content=${encodeURIComponent(content)}`
+            })
+                .then(response => {
+                    console.log('Réponse status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Données reçues:', data);
+                    if (data.success) {
+                        console.log('Conversation créée avec ID:', data.conversation_id);
+                        $('#newConversationModal').modal('hide');
+                        loadConversations();
+                        setTimeout(() => {
+                            selectConversation(data.conversation_id, '');
+                        }, 500);
+                        newMessageContent.value = '';
+                    } else {
+                        console.log('Erreur:', data.error);
+                        if (errorDiv) {
+                            errorDiv.textContent = data.error;
+                            errorDiv.classList.remove('d-none');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur fetch:', error);
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Erreur de connexion: ' + error.message;
+                        errorDiv.classList.remove('d-none');
+                    }
+                });
+        });
 
         function sendMessage() {
-            console.log('sendMessage appelé, currentConversationId:', currentConversationId);
+            console.log('sendMessage appelé');
+            console.log('currentConversationId:', currentConversationId);
 
             if (!currentConversationId) {
                 console.error('No conversation selected');
@@ -613,11 +795,16 @@
             const messageInput = document.getElementById('messageInput');
             const errorDiv = document.getElementById('messageError');
 
-            if (!messageInput) return;
+            if (!messageInput) {
+                console.error('messageInput non trouvé');
+                return;
+            }
+
             const content = messageInput.value;
-            console.log('Contenu:', content);
+            console.log('Contenu du message:', content);
 
             if (!content.trim()) {
+                console.log('Message vide');
                 if (errorDiv) {
                     errorDiv.textContent = 'Le message ne peut pas être vide';
                     errorDiv.classList.remove('d-none');
@@ -626,6 +813,7 @@
             }
 
             if (!/^[A-Z]/.test(content.trim())) {
+                console.log('Pas de majuscule');
                 if (errorDiv) {
                     errorDiv.textContent = 'Le message doit commencer par une majuscule';
                     errorDiv.classList.remove('d-none');
@@ -635,38 +823,46 @@
 
             if (errorDiv) errorDiv.classList.add('d-none');
 
-            fetch('/messagerie/send-message', {
+            console.log('Envoi de la requête...');
+
+            fetch('/recruteur/messagerie/send-message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `conversation_id=${currentConversationId}&content=${encodeURIComponent(content)}`
             })
-                .then(response => response.json())
+                .then(response => {
+                    console.log('Réponse reçue:', response.status);
+                    return response.json();
+                })
                 .then(data => {
-                    console.log('Réponse sendMessage:', data);
+                    console.log('Données reçues:', data);
                     if (data.success) {
+                        console.log('Message envoyé avec succès');
                         messageInput.value = '';
                         loadMessages(currentConversationId);
                         loadConversations();
                         scrollToBottom();
                     } else {
+                        console.log('Erreur:', data.error);
                         if (errorDiv) {
                             errorDiv.textContent = data.error;
                             errorDiv.classList.remove('d-none');
                         }
                     }
                 })
-                .catch(error => console.error('Error sending message:', error));
+                .catch(error => {
+                    console.error('Erreur fetch:', error);
+                    if (errorDiv) {
+                        errorDiv.textContent = 'Erreur de connexion: ' + error.message;
+                        errorDiv.classList.remove('d-none');
+                    }
+                });
         }
 
         // Initialisation des event listeners
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('DOM chargé');
-
             const sendBtn = document.getElementById('sendMessageBtn');
-            if (sendBtn) {
-                sendBtn.addEventListener('click', sendMessage);
-                console.log('Bouton sendMessageBtn connecté');
-            }
+            if (sendBtn) sendBtn.addEventListener('click', sendMessage);
 
             const messageInput = document.getElementById('messageInput');
             if (messageInput) {
@@ -681,18 +877,18 @@
             const sendNewBtn = document.getElementById('sendNewMessageBtn');
             if (sendNewBtn) {
                 sendNewBtn.addEventListener('click', function() {
-                    const recruiterSelect = document.getElementById('recruiterSelect');
+                    const candidatSelect = document.getElementById('candidatSelect');
                     const newMessageContent = document.getElementById('newMessageContent');
                     const errorDiv = document.getElementById('newMessageError');
 
-                    if (!recruiterSelect || !newMessageContent) return;
+                    if (!candidatSelect || !newMessageContent) return;
 
-                    const recruiterId = recruiterSelect.value;
+                    const candidatId = candidatSelect.value;
                     const content = newMessageContent.value;
 
-                    if (!recruiterId) {
+                    if (!candidatId) {
                         if (errorDiv) {
-                            errorDiv.textContent = 'Veuillez sélectionner un recruteur';
+                            errorDiv.textContent = 'Veuillez sélectionner un candidat';
                             errorDiv.classList.remove('d-none');
                         }
                         return;
@@ -716,16 +912,15 @@
 
                     if (errorDiv) errorDiv.classList.add('d-none');
 
-                    fetch('/messagerie/new-conversation', {
+                    fetch('/recruteur/messagerie/new-conversation', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `recruiter_id=${recruiterId}&content=${encodeURIComponent(content)}`
+                        body: `candidat_id=${candidatId}&content=${encodeURIComponent(content)}`
                     })
                         .then(response => response.json())
                         .then(data => {
                             if (data.success) {
-                                const modal = bootstrap.Modal.getInstance(document.getElementById('newConversationModal'));
-                                if (modal) modal.hide();
+                                $('#newConversationModal').modal('hide');
                                 loadConversations();
                                 setTimeout(() => {
                                     selectConversation(data.conversation_id, '');
@@ -741,6 +936,63 @@
                         .catch(error => console.error('Error creating conversation:', error));
                 });
             }
+
+            const saveEditBtn = document.getElementById('saveEditMessageBtn');
+            if (saveEditBtn) {
+                saveEditBtn.addEventListener('click', function() {
+                    const editContent = document.getElementById('editMessageContent');
+                    const errorDiv = document.getElementById('editMessageError');
+
+                    if (!editContent) return;
+                    const newContent = editContent.value;
+
+                    if (!newContent.trim()) {
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Le message ne peut pas être vide';
+                            errorDiv.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    if (!/^[A-Z]/.test(newContent.trim())) {
+                        if (errorDiv) {
+                            errorDiv.textContent = 'Le message doit commencer par une majuscule';
+                            errorDiv.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    fetch(`/recruteur/messagerie/edit-message/${currentEditMessageId}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `content=${encodeURIComponent(newContent)}`
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                $('#editMessageModal').modal('hide');
+                                loadMessages(currentConversationId);
+                                loadConversations();
+                            } else {
+                                if (errorDiv) {
+                                    errorDiv.textContent = data.error;
+                                    errorDiv.classList.remove('d-none');
+                                }
+                            }
+                        });
+                });
+            }
+
+            const searchInput = document.getElementById('searchConversation');
+            if (searchInput) {
+                searchInput.addEventListener('keyup', function() {
+                    const search = this.value.toLowerCase();
+                    document.querySelectorAll('.conv-item').forEach(item => {
+                        const text = item.innerText.toLowerCase();
+                        item.style.display = text.includes(search) ? 'block' : 'none';
+                    });
+                });
+            }
         });
 
         window.openEditModal = function(messageId, content) {
@@ -751,13 +1003,12 @@
             if (editContent) editContent.value = content;
             if (errorDiv) errorDiv.classList.add('d-none');
 
-            const modal = new bootstrap.Modal(document.getElementById('editMessageModal'));
-            if (modal) modal.show();
+            $('#editMessageModal').modal('show');
         }
 
         window.deleteMessage = function(messageId) {
             if (confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) {
-                fetch(`/messagerie/delete-message/${messageId}`, {
+                fetch(`/recruteur/messagerie/delete-message/${messageId}`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json' }
                 })
@@ -774,66 +1025,10 @@
             }
         }
 
-        const saveEditBtn = document.getElementById('saveEditMessageBtn');
-        if (saveEditBtn) {
-            saveEditBtn.addEventListener('click', function() {
-                const editContent = document.getElementById('editMessageContent');
-                const errorDiv = document.getElementById('editMessageError');
-
-                if (!editContent) return;
-                const newContent = editContent.value;
-
-                if (!newContent.trim()) {
-                    if (errorDiv) {
-                        errorDiv.textContent = 'Le message ne peut pas être vide';
-                        errorDiv.classList.remove('d-none');
-                    }
-                    return;
-                }
-
-                if (!/^[A-Z]/.test(newContent.trim())) {
-                    if (errorDiv) {
-                        errorDiv.textContent = 'Le message doit commencer par une majuscule';
-                        errorDiv.classList.remove('d-none');
-                    }
-                    return;
-                }
-
-                fetch(`/messagerie/edit-message/${currentEditMessageId}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `content=${encodeURIComponent(newContent)}`
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            const modal = bootstrap.Modal.getInstance(document.getElementById('editMessageModal'));
-                            if (modal) modal.hide();
-                            loadMessages(currentConversationId);
-                            loadConversations();
-                        } else {
-                            if (errorDiv) {
-                                errorDiv.textContent = data.error;
-                                errorDiv.classList.remove('d-none');
-                            }
-                        }
-                    });
-            });
-        }
-
-        const searchInput = document.getElementById('searchConversation');
-        if (searchInput) {
-            searchInput.addEventListener('keyup', function() {
-                const search = this.value.toLowerCase();
-                document.querySelectorAll('.conv-item').forEach(item => {
-                    const text = item.innerText.toLowerCase();
-                    item.style.display = text.includes(search) ? 'flex' : 'none';
-                });
-            });
-        }
-
-        // Initialisation
+        // Chargement initial
         loadConversations();
+
+        // Rafraîchissement périodique (toutes les 5 secondes)
         refreshInterval = setInterval(() => {
             if (currentConversationId) {
                 loadMessages(currentConversationId);

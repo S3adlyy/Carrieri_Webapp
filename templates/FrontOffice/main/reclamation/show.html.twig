@@ -1,0 +1,66 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Détail réclamation #{{ reclamation.id }}{% endblock %}
+
+{% block candidate_page_heading %}Détail de ma réclamation{% endblock %}
+
+{% block candidate_breadcrumb %} / Réclamations / Détail{% endblock %}
+
+{% block candidate_content %}
+    <div class="card shadow-sm">
+        <div class="card-header bg-warning text-white">
+            <h5 class="mb-0"><i class="fas fa-info-circle"></i> Réclamation #{{ reclamation.id }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 150px;">Objet</th>
+                            <td>{{ reclamation.objet }}</td>
+                        </tr>
+                        <tr>
+                            <th>Description</th>
+                            <td>{{ reclamation.description }}</td>
+                        </tr>
+                        <tr>
+                            <th>Cours concerné</th>
+                            <td>{{ reclamation.cours ? reclamation.cours.titre : '—' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th>Statut</th>
+                            <td>
+                                {% if reclamation.statut == 'En attente' %}
+                                    <span class="badge bg-warning">En attente</span>
+                                {% elseif reclamation.statut == 'En cours' %}
+                                    <span class="badge bg-info">En cours</span>
+                                {% else %}
+                                    <span class="badge bg-success">Traité</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Date de création</th>
+                            <td>{{ reclamation.dateCreation|date('d/m/Y H:i') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="mt-4">
+                <a href="{{ path('app_candidat_reclamation_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour à la liste
+                </a>
+                {% if reclamation.statut != 'Traité' %}
+                    <a href="{{ path('app_candidat_reclamation_edit', {'id': reclamation.id}) }}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Modifier
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

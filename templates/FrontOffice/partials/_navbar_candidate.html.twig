@@ -195,8 +195,8 @@
                         <li><a href="{{ path('app_candidate_offres') }}" class="{{ route == 'app_candidate_offres' ? 'active' : '' }}">Offre d'emploi</a></li>
                         <li><a href="{{ path('app_candidate_postulations') }}" class="{{ route == 'app_candidate_postulations' ? 'active' : '' }}">Mes postulations</a></li>
                         <li><a href="{{ path('app_candidate_mission') }}" class="{{ route == 'app_candidate_mission' ? 'active' : '' }}">Mission</a></li>
-                        <li><a href="{{ path('app_candidate_reclamation') }}" class="{{ route == 'app_candidate_reclamation' ? 'active' : '' }}">Réclamation</a></li>
-                        <li><a href="{{ path('app_candidate_messagerie') }}" class="{{ route == 'app_candidate_messagerie' ? 'active' : '' }}">Messagerie</a></li>
+                        <li><a href="{{ path('app_candidat_reclamation_index') }}" class="{{ route starts with 'app_candidat_reclamation' ? 'active' : '' }}">Mes réclamations</a></li>
+                        <li><a href="{{ path('app_candidate_messages') }}" class="{{ route == 'app_candidate_messages' ? 'active' : '' }}">Messagerie</a></li>
                         <li><a href="{{ path('app_candidate_my_results') }}" class="{{ route == 'app_candidate_my_results' ? 'active' : '' }}">Mes résultats</a></li>
                     </ul>
                 </nav>

@@ -24,8 +24,8 @@ class Reclamation
     #[ORM\Column]
     private ?string $categorie = null;
 
-    #[ORM\Column]
-    private ?\DateTimeInterface $dateCreation = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private ?\DateTimeImmutable $dateCreation = null;
 
     #[ORM\Column]
     private ?string $statut = null;
@@ -42,6 +42,11 @@ class Reclamation
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'utilisateur_id', referencedColumnName: 'id')]
     private ?User $user = null;
+
+    // ✅ NOUVELLE RELATION VERS COURS
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'cours_id', referencedColumnName: 'id', nullable: true)]
+    private ?Cours $cours = null;
 
     public function getId(): ?int
     {
@@ -87,12 +92,12 @@ class Reclamation
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTimeInterface
+    public function getDateCreation(): ?\DateTimeImmutable
     {
         return $this->dateCreation;
     }
 
-    public function setDateCreation(?\DateTimeInterface $dateCreation): self
+    public function setDateCreation(?\DateTimeImmutable $dateCreation): self
     {
         $this->dateCreation = $dateCreation;
         return $this;
@@ -150,6 +155,18 @@ class Reclamation
     public function setUser(?User $user): self
     {
         $this->user = $user;
+        return $this;
+    }
+
+    // ✅ GETTER ET SETTER POUR COURS
+    public function getCours(): ?Cours
+    {
+        return $this->cours;
+    }
+
+    public function setCours(?Cours $cours): self
+    {
+        $this->cours = $cours;
         return $this;
     }
 }

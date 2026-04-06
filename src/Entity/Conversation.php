@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Table(name: 'conversation')]
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: 'App\Repository\ConversationRepository')]
 class Conversation
 {
     #[ORM\Id]
@@ -15,38 +17,40 @@ class Conversation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'date_creation', type: 'datetime', nullable: true)]
     private ?\DateTimeInterface $dateCreation = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'dernier_message', type: 'string', length: 255, nullable: true)]
     private ?string $dernierMessage = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
     private ?string $statut = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'user1_id', type: 'integer', nullable: true)]
     private ?int $user1Id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'user2_id', type: 'integer', nullable: true)]
     private ?int $user2Id = null;
 
-    #[ORM\ManyToOne]
+    // Relations avec les utilisateurs - NOMS DIFFÉRENTS !
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user1_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    private ?User $user1 = null;  // ← Nom différent : user1
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user2_id', referencedColumnName: 'id')]
-    private ?User $user2 = null;
+    private ?User $user2 = null;  // ← Nom différent : user2
+
+    public function __construct()
+    {
+        $this->dateCreation = new \DateTime();
+        $this->statut = 'active';
+        $this->messages = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function setId(?int $id): self
-    {
-        $this->id = $id;
-        return $this;
     }
 
     public function getDateCreation(): ?\DateTimeInterface
@@ -86,7 +90,17 @@ class Conversation
     {
         return $this->user1Id;
     }
+// Ajoutez cette méthode à la fin de la classe
+    public function getMessages(): Collection
+    {
+        return $this->messages;
+    }
 
+    public function setMessages(Collection $messages): self
+    {
+        $this->messages = $messages;
+        return $this;
+    }
     public function setUser1Id(?int $user1Id): self
     {
         $this->user1Id = $user1Id;
@@ -104,25 +118,31 @@ class Conversation
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUser1(): ?User
     {
-        return $this->user;
+        return $this->user1;
     }
 
-    public function setUser(?User $user): self
+    public function setUser1(?User $user1): self
     {
-        $this->user = $user;
+        $this->user1 = $user1;
+        if ($user1) {
+            $this->user1Id = $user1->getId();
+        }
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getUser2(): ?User
     {
-        return $this->user;
+        return $this->user2;
     }
 
-    public function setUser(?User $user): self
+    public function setUser2(?User $user2): self
     {
-        $this->user = $user;
+        $this->user2 = $user2;
+        if ($user2) {
+            $this->user2Id = $user2->getId();
+        }
         return $this;
     }
 }

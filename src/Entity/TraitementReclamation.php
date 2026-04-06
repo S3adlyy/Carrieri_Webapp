@@ -15,10 +15,10 @@ class TraitementReclamation
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
-    private ?\DateTimeInterface $dateTraitement = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private ?\DateTimeImmutable $dateTraitement = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'text')]
     private ?string $reponseAdmin = null;
 
     #[ORM\Column]
@@ -49,12 +49,12 @@ class TraitementReclamation
         return $this;
     }
 
-    public function getDateTraitement(): ?\DateTimeInterface
+    public function getDateTraitement(): ?\DateTimeImmutable
     {
         return $this->dateTraitement;
     }
 
-    public function setDateTraitement(?\DateTimeInterface $dateTraitement): self
+    public function setDateTraitement(?\DateTimeImmutable $dateTraitement): self
     {
         $this->dateTraitement = $dateTraitement;
         return $this;

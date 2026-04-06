@@ -16,6 +16,18 @@ class ConversationRepository extends ServiceEntityRepository
         parent::__construct($registry, Conversation::class);
     }
 
+    // src/Repository/ConversationRepository.php
+
+    public function findByRecruteur(User $recruteur): array
+    {
+        return $this->createQueryBuilder('c')
+            ->where('c.recruteur = :recruteur')
+            ->setParameter('recruteur', $recruteur)
+            ->orderBy('c.dateCreation', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
     // Ajoutez vos méthodes personnalisées ici
     // public function findBySomething($value): array
     // {

@@ -152,6 +152,15 @@ class AdminController extends AbstractController
         ]);
     }
 
+    #[Route('/messages', name: 'app_admin_messages')]
+    public function messages(): Response
+    {
+        $user = $this->requireUser();
+        return $this->render('BackOffice/dashboard/messages/index.html.twig', [
+            'is_admin_view' => $this->dashboardData->isAdmin($user),
+        ]);
+    }
+
     private function requireUser(): User
     {
         $user = $this->getUser();

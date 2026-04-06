@@ -36,6 +36,15 @@
                         <p>Utilisateurs</p>
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_recruteur_messages') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_recruteur_messages' %}active{% endif %}">
+                        <i class="nav-icon fas fa-comment-dots"></i>
+                        <p>
+                            Messages
+                            <span id="unreadMessagesBadge" class="badge badge-danger right" style="display: none;">0</span>
+                        </p>
+                    </a>
+                </li>
                 <li class="nav-item has-treeview {% if 'app_admin_cours' in app.request.attributes.get('_route') or 'app_admin_modules' in app.request.attributes.get('_route') or 'app_admin_lecons' in app.request.attributes.get('_route') %}menu-open{% endif %}">
                     <a href="#" class="nav-link {% if 'app_admin_cours' in app.request.attributes.get('_route') or 'app_admin_modules' in app.request.attributes.get('_route') or 'app_admin_lecons' in app.request.attributes.get('_route') %}active{% endif %}">
                         <i class="nav-icon fas fa-graduation-cap"></i>
@@ -92,11 +101,28 @@
                         <p>Certifications</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="{{ path('app_admin_reclamations') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_reclamations' %}active{% endif %}">
+                <li class="nav-item has-treeview {% if app.request.attributes.get('_route') starts with 'app_dashboard_feedback' or app.request.attributes.get('_route') starts with 'app_dashboard_traitement' %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_dashboard_feedback' or app.request.attributes.get('_route') starts with 'app_dashboard_traitement' %}active{% endif %}">
                         <i class="nav-icon fas fa-exclamation-triangle"></i>
-                        <p>Réclamations</p>
+                        <p>
+                            Gestion des réclamations
+                            <i class="fas fa-angle-left right"></i>
+                        </p>
                     </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ path('app_dashboard_feedback_index') }}" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_dashboard_feedback' %}active{% endif %}">
+                                <i class="nav-icon fas fa-star"></i>
+                                <p>Feedbacks</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ path('app_dashboard_traitement_index') }}" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_dashboard_traitement' %}active{% endif %}">
+                                <i class="nav-icon fas fa-check-circle"></i>
+                                <p>Traitements</p>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </nav>

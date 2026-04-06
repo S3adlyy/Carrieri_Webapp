@@ -1,0 +1,82 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Mes feedbacks{% endblock %}
+
+{% block page_title %}Mes feedbacks donnés{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_feedback_rendus') }}">Rendus</a></li>
+    <li class="breadcrumb-item active">Mes feedbacks</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste de mes feedbacks</h3>
+            <div class="card-tools">
+                <a href="{{ path('app_dashboard_feedback_rendus') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-tasks"></i> Voir les rendus
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Commentaire</th>
+                            <th>Note</th>
+                            <th>Rendu #</th>
+                            <th>Candidat</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in feedbacks %}
+                            <tr>
+                                <td>{{ f.id }}</td>
+                                <td>{{ f.commentaire|slice(0, 80) }}...</td>
+                                <td>
+                                    {% for i in 1..5 %}
+                                        {% if i <= f.note %}
+                                            <i class="fas fa-star text-warning"></i>
+                                        {% else %}
+                                            <i class="far fa-star text-muted"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                    ({{ f.note }}/5)
+                                </td>
+                                <td>{{ f.renduMission ? f.renduMission.id : '—' }}</td>
+                                <td>
+                                    {% set candidat = f.renduMission ? f.renduMission.user : null %}
+                                    {{ candidat ? candidat.firstName ~ ' ' ~ candidat.lastName : '—' }}
+                                </td>
+                                <td>{{ f.createdAt ? f.createdAt|date('d/m/Y H:i') : '—' }}</td>
+                                <td>
+                                    <a href="{{ path('app_dashboard_feedback_show', {'id': f.id}) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_dashboard_feedback_edit', {'id': f.id}) }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="post" action="{{ path('app_dashboard_feedback_delete', {'id': f.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer ce feedback ?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ f.id) }}">
+                                        <button class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">Vous n'avez donné aucun feedback.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

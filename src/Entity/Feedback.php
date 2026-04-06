@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use App\Entity\User;
+
 
 #[ORM\Table(name: 'feedback')]
 #[ORM\Entity]
@@ -21,8 +23,15 @@ class Feedback
     #[ORM\Column]
     private ?int $note = null;
 
-    #[ORM\Column]
-    private ?\DateTimeInterface $createdAt = null;
+    #[ORM\Column(type: 'datetime_immutable')]
+    private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(nullable: true)]
+    private ?int $utilisateurId = null;
+
+    #[ORM\ManyToOne]
+    #[ORM\JoinColumn(name: 'utilisateur_id', referencedColumnName: 'id')]
+    private ?User $user = null;
 
     #[ORM\Column]
     private ?int $renduId = null;
@@ -64,14 +73,38 @@ class Feedback
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(?\DateTimeInterface $createdAt): self
+    public function setCreatedAt(?\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    // ========== GETTERS ET SETTERS POUR UTILISATEUR ==========
+
+    public function getUtilisateurId(): ?int
+    {
+        return $this->utilisateurId;
+    }
+
+    public function setUtilisateurId(?int $utilisateurId): self
+    {
+        $this->utilisateurId = $utilisateurId;
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
         return $this;
     }
 

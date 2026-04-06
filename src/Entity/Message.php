@@ -7,7 +7,7 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Table(name: 'message')]
-#[ORM\Entity]
+#[ORM\Entity(repositoryClass: 'App\Repository\MessageRepository')]
 class Message
 {
     #[ORM\Id]
@@ -15,66 +15,58 @@ class Message
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'text', nullable: true)]
     private ?string $contenu = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'image_data', type: 'text', nullable: true)]
     private ?string $imageData = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'file_data', type: 'text', nullable: true)]
     private ?string $fileData = null;
 
-    #[ORM\Column]
-    private ?\DateTimeInterface $dateEnvoi = null;
-
-    #[ORM\Column]
-    private ?\DateTimeInterface $dateModification = null;
-
-    #[ORM\Column]
-    private ?string $statut = null;
-
-    #[ORM\Column]
-    private ?string $type = null;
-
-    #[ORM\Column]
-    private ?int $conversationId = null;
-
-    #[ORM\Column]
-    private ?int $expediteurId = null;
-
-    #[ORM\Column]
-    private ?int $destinataireId = null;
-
-    #[ORM\Column]
+    #[ORM\Column(name: 'file_name', type: 'string', length: 255, nullable: true)]
     private ?string $fileName = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'file_size', type: 'bigint', nullable: true)]
     private ?int $fileSize = null;
 
-    #[ORM\Column]
+    #[ORM\Column(name: 'file_type', type: 'string', length: 50, nullable: true)]
     private ?string $fileType = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'expediteur_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    #[ORM\Column(name: 'date_envoi', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $dateEnvoi = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\Column(name: 'date_modification', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $dateModification = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $statut = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $type = null;
+
+    #[ORM\ManyToOne(targetEntity: Conversation::class)]
     #[ORM\JoinColumn(name: 'conversation_id', referencedColumnName: 'id')]
     private ?Conversation $conversation = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'expediteur_id', referencedColumnName: 'id')]
+    private ?User $expediteur = null;  // ← Nom différent : expediteur
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'destinataire_id', referencedColumnName: 'id')]
-    private ?User $user = null;
+    private ?User $destinataire = null;  // ← Nom différent : destinataire
+
+    public function __construct()
+    {
+        $this->dateEnvoi = new \DateTime();
+        $this->statut = 'sent';
+        $this->type = 'text';
+    }
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function setId(?int $id): self
-    {
-        $this->id = $id;
-        return $this;
     }
 
     public function getContenu(): ?string
@@ -107,6 +99,39 @@ class Message
     public function setFileData(?string $fileData): self
     {
         $this->fileData = $fileData;
+        return $this;
+    }
+
+    public function getFileName(): ?string
+    {
+        return $this->fileName;
+    }
+
+    public function setFileName(?string $fileName): self
+    {
+        $this->fileName = $fileName;
+        return $this;
+    }
+
+    public function getFileSize(): ?int
+    {
+        return $this->fileSize;
+    }
+
+    public function setFileSize(?int $fileSize): self
+    {
+        $this->fileSize = $fileSize;
+        return $this;
+    }
+
+    public function getFileType(): ?string
+    {
+        return $this->fileType;
+    }
+
+    public function setFileType(?string $fileType): self
+    {
+        $this->fileType = $fileType;
         return $this;
     }
 
@@ -154,83 +179,6 @@ class Message
         return $this;
     }
 
-    public function getConversationId(): ?int
-    {
-        return $this->conversationId;
-    }
-
-    public function setConversationId(?int $conversationId): self
-    {
-        $this->conversationId = $conversationId;
-        return $this;
-    }
-
-    public function getExpediteurId(): ?int
-    {
-        return $this->expediteurId;
-    }
-
-    public function setExpediteurId(?int $expediteurId): self
-    {
-        $this->expediteurId = $expediteurId;
-        return $this;
-    }
-
-    public function getDestinataireId(): ?int
-    {
-        return $this->destinataireId;
-    }
-
-    public function setDestinataireId(?int $destinataireId): self
-    {
-        $this->destinataireId = $destinataireId;
-        return $this;
-    }
-
-    public function getFileName(): ?string
-    {
-        return $this->fileName;
-    }
-
-    public function setFileName(?string $fileName): self
-    {
-        $this->fileName = $fileName;
-        return $this;
-    }
-
-    public function getFileSize(): ?int
-    {
-        return $this->fileSize;
-    }
-
-    public function setFileSize(?int $fileSize): self
-    {
-        $this->fileSize = $fileSize;
-        return $this;
-    }
-
-    public function getFileType(): ?string
-    {
-        return $this->fileType;
-    }
-
-    public function setFileType(?string $fileType): self
-    {
-        $this->fileType = $fileType;
-        return $this;
-    }
-
-    public function getUser(): ?User
-    {
-        return $this->user;
-    }
-
-    public function setUser(?User $user): self
-    {
-        $this->user = $user;
-        return $this;
-    }
-
     public function getConversation(): ?Conversation
     {
         return $this->conversation;
@@ -242,14 +190,25 @@ class Message
         return $this;
     }
 
-    public function getUser(): ?User
+    public function getExpediteur(): ?User
     {
-        return $this->user;
+        return $this->expediteur;
     }
 
-    public function setUser(?User $user): self
+    public function setExpediteur(?User $expediteur): self
     {
-        $this->user = $user;
+        $this->expediteur = $expediteur;
+        return $this;
+    }
+
+    public function getDestinataire(): ?User
+    {
+        return $this->destinataire;
+    }
+
+    public function setDestinataire(?User $destinataire): self
+    {
+        $this->destinataire = $destinataire;
         return $this;
     }
 }

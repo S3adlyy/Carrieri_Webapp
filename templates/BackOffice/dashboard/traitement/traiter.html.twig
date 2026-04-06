@@ -1,0 +1,85 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Traiter la réclamation{% endblock %}
+
+{% block page_title %}Traiter la réclamation #{{ reclamation.id }}{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_traitement_reclamations') }}">Réclamations</a></li>
+    <li class="breadcrumb-item active">Traiter</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h3 class="card-title">Détail de la réclamation</h3>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered">
+                <tr>
+                    <th style="width: 150px;">ID</th>
+                    <td>{{ reclamation.id }}</td>
+                </tr>
+                <tr>
+                    <th>Objet</th>
+                    <td>{{ reclamation.objet }}</td>
+                </tr>
+                <tr>
+                    <th>Description</th>
+                    <td>{{ reclamation.description }}</td>
+                </tr>
+                <tr>
+                    <th>Cours</th>
+                    <td>{{ reclamation.cours ? reclamation.cours.titre : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Candidat</th>
+                    <td>{{ reclamation.user ? reclamation.user.firstName ~ ' ' ~ reclamation.user.lastName : '—' }}</td>
+                </tr>
+                <tr>
+                    <th>Email</th>
+                    <td>{{ reclamation.email }}</td>
+                </tr>
+                <tr>
+                    <th>Date de création</th>
+                    <td>{{ reclamation.dateCreation ? reclamation.dateCreation|date('d/m/Y H:i') : '—' }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="card mt-3">
+        <div class="card-header bg-success text-white">
+            <h3 class="card-title">Formulaire de traitement</h3>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="row">
+                    <div class="col-12">
+                        {{ form_label(form.reponseAdmin) }}
+                        {{ form_widget(form.reponseAdmin) }}
+                        {{ form_errors(form.reponseAdmin) }}
+                        <small class="text-muted">Minimum 10 caractères</small>
+                    </div>
+                    <div class="col-12 mt-3">
+                        {{ form_label(form.statutFinal) }}
+                        {{ form_widget(form.statutFinal) }}
+                        {{ form_errors(form.statutFinal) }}
+                    </div>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="fas fa-info-circle"></i> 
+                    Une fois traitée, la réclamation sera marquée comme "Traité".
+                </div>
+                <div class="mt-3">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i> Traiter la réclamation
+                    </button>
+                    <a href="{{ path('app_dashboard_traitement_reclamations') }}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Annuler
+                    </a>
+                </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,78 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Mes traitements{% endblock %}
+
+{% block page_title %}Mes traitements effectués{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_dashboard_traitement_reclamations') }}">Réclamations</a></li>
+    <li class="breadcrumb-item active">Mes traitements</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des réclamations traitées</h3>
+            <div class="card-tools">
+                <a href="{{ path('app_dashboard_traitement_reclamations') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-inbox"></i> Voir les réclamations en attente
+                </a>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Réclamation #</th>
+                            <th>Objet</th>
+                            <th>Candidat</th>
+                            <th>Réponse</th>
+                            <th>Statut final</th>
+                            <th>Date traitement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for t in traitements %}
+                            <tr>
+                                <td>{{ t.id }}</td>
+                                <td>#{{ t.reclamation ? t.reclamation.id : '—' }}</td>
+                                <td>{{ t.reclamation ? t.reclamation.objet|slice(0, 50) : '—' }}...\n                                <td>{{ t.reclamation and t.reclamation.user ? t.reclamation.user.firstName ~ ' ' ~ t.reclamation.user.lastName : '—' }}</td>
+                                <td>{{ t.reponseAdmin|slice(0, 60) }}...\n                                <td>
+                                    {% if t.statutFinal == 'Résolu' %}
+                                        <span class="badge badge-success">{{ t.statutFinal }}</span>
+                                    {% elseif t.statutFinal == 'Non résolu' %}
+                                        <span class="badge badge-danger">{{ t.statutFinal }}</span>
+                                    {% else %}
+                                        <span class="badge badge-warning">{{ t.statutFinal }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ t.dateTraitement ? t.dateTraitement|date('d/m/Y H:i') : '—' }}</td>
+                                <td>
+                                    <a href="{{ path('app_dashboard_traitement_show', {'id': t.id}) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_dashboard_traitement_edit', {'id': t.id}) }}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="post" action="{{ path('app_dashboard_traitement_delete', {'id': t.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer ce traitement ? La réclamation redeviendra en attente.')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ t.id) }}">
+                                        <button class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">Aucun traitement effectué.</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}
