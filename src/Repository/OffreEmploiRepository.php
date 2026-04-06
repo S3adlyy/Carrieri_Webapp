@@ -1,4 +1,5 @@
 <?php
+// src/Repository/OffreEmploiRepository.php
 
 namespace App\Repository;
 
@@ -30,7 +31,7 @@ class OffreEmploiRepository extends ServiceEntityRepository
         }
 
         if ($search !== '') {
-            $qb->andWhere('o.titre LIKE :search OR o.entreprise LIKE :search OR o.localisation LIKE :search')
+            $qb->andWhere('o.titre LIKE :search OR o.entreprise LIKE :search OR o.localisation LIKE :search OR o.typeContrat LIKE :search')
                ->setParameter('search', '%' . $search . '%');
         }
 
@@ -89,4 +90,112 @@ class OffreEmploiRepository extends ServiceEntityRepository
                 ->getResult();
     }
 
+    // Nouvelle méthode pour la recherche avancée dans le back office
+    public function searchOffersWithFilters(User $user, array $filters = []): array
+    {
+        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles());
+        
+        $qb = $this->createQueryBuilder('o')
+            ->leftJoin('o.user', 'u')
+            ->addSelect('u')
+            ->orderBy('o.datePublication', 'DESC');
+
+        if (!$isAdmin) {
+            $qb->andWhere('o.user = :user')
+               ->setParameter('user', $user);
+        }
+
+        // Filtre par mot-clé
+        if (!empty($filters['keyword'])) {
+            $qb->andWhere('
+                o.titre LIKE :keyword 
+                OR o.entreprise LIKE :keyword 
+                OR o.localisation LIKE :keyword 
+                OR o.typeContrat LIKE :keyword
+                OR u.email LIKE :keyword
+                OR u.firstName LIKE :keyword
+                OR u.lastName LIKE :keyword
+            ')
+            ->setParameter('keyword', '%' . $filters['keyword'] . '%');
+        }
+
+        // Filtre par type de contrat
+        if (!empty($filters['typeContrat'])) {
+            $qb->andWhere('o.typeContrat = :type')
+               ->setParameter('type', $filters['typeContrat']);
+        }
+
+        // Filtre par statut (active/expirée)
+        if (!empty($filters['statut'])) {
+            $now = new \DateTime();
+            if ($filters['statut'] === 'active') {
+                $qb->andWhere('o.dateExpiration > :now')
+                   ->setParameter('now', $now);
+            } elseif ($filters['statut'] === 'expiree') {
+                $qb->andWhere('o.dateExpiration <= :now')
+                   ->setParameter('now', $now);
+            }
+        }
+
+        // Filtre par salaire min
+        if (!empty($filters['salaireMin'])) {
+            $qb->andWhere('o.salaire >= :salaireMin')
+               ->setParameter('salaireMin', (float) $filters['salaireMin']);
+        }
+
+        // Filtre par date de publication
+        if (!empty($filters['dateDebut'])) {
+            $qb->andWhere('o.datePublication >= :dateDebut')
+               ->setParameter('dateDebut', new \DateTime($filters['dateDebut']));
+        }
+
+        if (!empty($filters['dateFin'])) {
+            $qb->andWhere('o.datePublication <= :dateFin')
+               ->setParameter('dateFin', new \DateTime($filters['dateFin'] . ' 23:59:59'));
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    // Statistiques pour le dashboard recruteur
+    public function getStatsForUser(User $user): array
+    {
+        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles());
+        
+        $qb = $this->createQueryBuilder('o');
+        
+        if (!$isAdmin) {
+            $qb->where('o.user = :user')
+               ->setParameter('user', $user);
+        }
+        
+        $offres = $qb->getQuery()->getResult();
+        
+        $total = count($offres);
+        $actives = 0;
+        $expirees = 0;
+        $today = new \DateTime();
+        
+        $parContrat = ['CDI' => 0, 'CDD' => 0, 'Stage' => 0, 'Freelance' => 0];
+        
+        foreach ($offres as $offre) {
+            if ($offre->getDateExpiration() && $offre->getDateExpiration() > $today) {
+                $actives++;
+            } else {
+                $expirees++;
+            }
+            
+            $type = $offre->getTypeContrat();
+            if ($type && isset($parContrat[$type])) {
+                $parContrat[$type]++;
+            }
+        }
+        
+        return [
+            'total' => $total,
+            'actives' => $actives,
+            'expirees' => $expirees,
+            'par_contrat' => $parContrat,
+        ];
+    }
 }
