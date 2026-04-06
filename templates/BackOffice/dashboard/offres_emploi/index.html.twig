@@ -103,7 +103,7 @@
 
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0">
+                <table class="table table-hover table-striped mb-0" id="offresTable">
                     <thead>
                         <tr>
                             <th>Titre</th>
@@ -114,27 +114,50 @@
                             <th>Expiration</th>
                             <th>Statut</th>
                             <th>Actions</th>
-                        </tr>
+                    </tr>
                     </thead>
                     <tbody>
                     {% for o in offres %}
-                        <tr>
-                            <td><strong>{{ o.titre|default('—') }}</strong></td>
-                            <td>{{ o.entreprise|default('—') }}</td>
-                            <td><i class="fas fa-map-marker-alt text-muted"></i> {{ o.localisation|default('—') }}</td>
-                            <td>
-                                {% if o.typeContrat == 'CDI' %}
-                                    <span class="badge badge-success">CDI</span>
-                                {% elseif o.typeContrat == 'CDD' %}
-                                    <span class="badge badge-warning">CDD</span>
-                                {% elseif o.typeContrat == 'Stage' %}
-                                    <span class="badge badge-info">Stage</span>
-                                {% else %}
-                                    <span class="badge badge-secondary">{{ o.typeContrat|default('—') }}</span>
-                                {% endif %}
+                        <tr data-id="{{ o.id }}" class="offre-row">
+                            <td class="editable" data-field="titre" data-value="{{ o.titre|default('') }}">
+                                <span class="editable-value">{{ o.titre|default('—') }}</span>
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.titre|default('') }}">
                             </td>
-                            <td>{{ o.salaire ? o.salaire ~ ' DT' : '—' }}</td>
-                            <td>{{ o.dateExpiration ? o.dateExpiration|date('d/m/Y H:i') : '—' }}</td>
+                            <td class="editable" data-field="entreprise" data-value="{{ o.entreprise|default('') }}">
+                                <span class="editable-value">{{ o.entreprise|default('—') }}</span>
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.entreprise|default('') }}">
+                            </td>
+                            <td class="editable" data-field="localisation" data-value="{{ o.localisation|default('') }}">
+                                <span class="editable-value">{{ o.localisation|default('—') }}</span>
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.localisation|default('') }}">
+                            </td>
+                            <td class="editable" data-field="typeContrat" data-value="{{ o.typeContrat|default('') }}">
+                                <span class="editable-value">
+                                    {% if o.typeContrat == 'CDI' %}
+                                        <span class="badge badge-success">CDI</span>
+                                    {% elseif o.typeContrat == 'CDD' %}
+                                        <span class="badge badge-warning">CDD</span>
+                                    {% elseif o.typeContrat == 'Stage' %}
+                                        <span class="badge badge-info">Stage</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">{{ o.typeContrat|default('—') }}</span>
+                                    {% endif %}
+                                </span>
+                                <select class="form-control form-control-sm edit-input" style="display:none">
+                                    <option value="CDI" {{ o.typeContrat == 'CDI' ? 'selected' : '' }}>CDI</option>
+                                    <option value="CDD" {{ o.typeContrat == 'CDD' ? 'selected' : '' }}>CDD</option>
+                                    <option value="Stage" {{ o.typeContrat == 'Stage' ? 'selected' : '' }}>Stage</option>
+                                    <option value="Freelance" {{ o.typeContrat == 'Freelance' ? 'selected' : '' }}>Freelance</option>
+                                </select>
+                            </td>
+                            <td class="editable" data-field="salaire" data-value="{{ o.salaire|default('') }}">
+                                <span class="editable-value">{{ o.salaire ? o.salaire ~ ' DT' : '—' }}</span>
+                                <input type="number" step="0.01" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.salaire|default('') }}">
+                            </td>
+                            <td class="editable" data-field="dateExpiration" data-value="{{ o.dateExpiration ? o.dateExpiration|date('Y-m-d\\TH:i') : '' }}">
+                                <span class="editable-value">{{ o.dateExpiration ? o.dateExpiration|date('d/m/Y H:i') : '—' }}</span>
+                                <input type="datetime-local" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.dateExpiration ? o.dateExpiration|date('Y-m-d\\TH:i') : '' }}">
+                            </td>
                             <td>
                                 {% if o.dateExpiration and o.dateExpiration > date() %}
                                     <span class="badge badge-success">Active</span>
@@ -144,14 +167,16 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
-                                    <a href="{{ path('app_admin_offres_show', {'id': o.id}) }}"
-                                       class="btn btn-info" title="Voir">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
                                     <a href="{{ path('app_admin_offres_edit', {'id': o.id}) }}"
-                                       class="btn btn-warning" title="Modifier">
+                                       class="btn btn-warning" title="Modifier avec formulaire">
                                         <i class="fas fa-edit"></i>
                                     </a>
+                                    <button type="button" class="btn btn-primary save-btn" style="display:none" title="Sauvegarder">
+                                        <i class="fas fa-save"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-secondary cancel-btn" style="display:none" title="Annuler">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                     <button type="button" class="btn btn-danger"
                                             data-toggle="modal"
                                             data-target="#deleteModal{{ o.id }}"
@@ -199,4 +224,270 @@
             </div>
         </div>
     </div>
+
+    <style>
+        .editable {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .editable:hover {
+            background-color: #fff3cd !important;
+        }
+        .edit-input {
+            width: 100%;
+            min-width: 120px;
+        }
+        .btn-group-sm .btn {
+            margin: 0 1px;
+        }
+        .saving {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+        .edit-success {
+            background-color: #d4edda !important;
+            transition: background-color 0.3s;
+        }
+        .editing-mode {
+            background-color: #e8f0fe !important;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let currentlyEditingRow = null;
+
+            // Double-clic sur une cellule éditable pour activer le mode édition
+            document.querySelectorAll('.editable').forEach(cell => {
+                cell.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    const row = this.closest('tr');
+                    
+                    // Si une autre ligne est en édition, annuler d'abord
+                    if (currentlyEditingRow && currentlyEditingRow !== row) {
+                        cancelEdit(currentlyEditingRow);
+                    }
+                    
+                    enableEditMode(row);
+                });
+            });
+
+            // Gérer le clic sur le bouton Sauvegarder
+            document.querySelectorAll('.save-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    saveRow(row);
+                });
+            });
+
+            // Gérer le clic sur le bouton Annuler
+            document.querySelectorAll('.cancel-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    cancelEdit(row);
+                });
+            });
+
+            function enableEditMode(row) {
+                if (currentlyEditingRow === row) return;
+                
+                // Marquer la ligne comme en édition
+                currentlyEditingRow = row;
+                row.classList.add('editing-mode');
+                
+                // Cacher les valeurs affichées, montrer les inputs
+                row.querySelectorAll('.editable-value').forEach(el => {
+                    el.style.display = 'none';
+                });
+                row.querySelectorAll('.edit-input').forEach(el => {
+                    el.style.display = 'block';
+                });
+
+                // Changer les boutons
+                const editBtn = row.querySelector('.edit-btn');
+                const saveBtn = row.querySelector('.save-btn');
+                const cancelBtn = row.querySelector('.cancel-btn');
+                
+                if (editBtn) editBtn.style.display = 'none';
+                saveBtn.style.display = 'inline-block';
+                cancelBtn.style.display = 'inline-block';
+            }
+
+            function cancelEdit(row) {
+                // Restaurer les valeurs originales
+                const editableCells = row.querySelectorAll('.editable');
+                editableCells.forEach(cell => {
+                    const field = cell.dataset.field;
+                    const originalValue = cell.dataset.value;
+                    const displaySpan = cell.querySelector('.editable-value');
+                    const input = cell.querySelector('.edit-input');
+                    
+                    if (field === 'typeContrat') {
+                        let badgeHtml = '';
+                        if (originalValue === 'CDI') badgeHtml = '<span class="badge badge-success">CDI</span>';
+                        else if (originalValue === 'CDD') badgeHtml = '<span class="badge badge-warning">CDD</span>';
+                        else if (originalValue === 'Stage') badgeHtml = '<span class="badge badge-info">Stage</span>';
+                        else badgeHtml = '<span class="badge badge-secondary">' + (originalValue || '—') + '</span>';
+                        displaySpan.innerHTML = badgeHtml;
+                        
+                        if (input) input.value = originalValue || '';
+                    } else if (field === 'salaire') {
+                        displaySpan.textContent = originalValue ? originalValue + ' DT' : '—';
+                        if (input) input.value = originalValue || '';
+                    } else if (field === 'dateExpiration') {
+                        const date = originalValue ? new Date(originalValue) : null;
+                        displaySpan.textContent = date ? date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '—';
+                        if (input) input.value = originalValue || '';
+                    } else {
+                        displaySpan.textContent = originalValue || '—';
+                        if (input) input.value = originalValue || '';
+                    }
+                });
+
+                // Cacher les inputs, montrer les valeurs
+                row.querySelectorAll('.editable-value').forEach(el => {
+                    el.style.display = 'inline';
+                });
+                row.querySelectorAll('.edit-input').forEach(el => {
+                    el.style.display = 'none';
+                });
+
+                // Changer les boutons
+                const saveBtn = row.querySelector('.save-btn');
+                const cancelBtn = row.querySelector('.cancel-btn');
+                
+                saveBtn.style.display = 'none';
+                cancelBtn.style.display = 'none';
+
+                // Enlever les classes
+                row.classList.remove('editing-mode');
+                row.classList.remove('edit-success');
+                
+                currentlyEditingRow = null;
+            }
+
+            function saveRow(row) {
+                const offreId = row.dataset.id;
+                const updates = {};
+                
+                // Récupérer toutes les valeurs modifiées
+                const editableCells = row.querySelectorAll('.editable');
+                editableCells.forEach(cell => {
+                    const field = cell.dataset.field;
+                    const input = cell.querySelector('.edit-input');
+                    let newValue = '';
+                    
+                    if (input.tagName === 'SELECT') {
+                        newValue = input.options[input.selectedIndex].value;
+                    } else if (input.type === 'datetime-local') {
+                        newValue = input.value;
+                    } else {
+                        newValue = input.value;
+                    }
+                    
+                    const originalValue = cell.dataset.value;
+                    
+                    // Si la valeur a changé, l'ajouter aux updates
+                    if (newValue !== originalValue && newValue !== '') {
+                        updates[field] = newValue;
+                    }
+                });
+
+                // Si aucune modification, annuler l'édition
+                if (Object.keys(updates).length === 0) {
+                    cancelEdit(row);
+                    return;
+                }
+
+                // Afficher un indicateur de chargement
+                row.classList.add('saving');
+                
+                // Envoyer la requête AJAX
+                fetch('{{ path('app_admin_offres_inline_edit') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        id: offreId,
+                        updates: updates
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    row.classList.remove('saving');
+                    
+                    if (data.success) {
+                        // Mettre à jour les dataset et l'affichage
+                        for (const [field, newValue] of Object.entries(updates)) {
+                            const cell = row.querySelector(`.editable[data-field="${field}"]`);
+                            if (cell) {
+                                cell.dataset.value = newValue;
+                                const displaySpan = cell.querySelector('.editable-value');
+                                const input = cell.querySelector('.edit-input');
+                                
+                                if (field === 'typeContrat') {
+                                    let badgeHtml = '';
+                                    if (newValue === 'CDI') badgeHtml = '<span class="badge badge-success">CDI</span>';
+                                    else if (newValue === 'CDD') badgeHtml = '<span class="badge badge-warning">CDD</span>';
+                                    else if (newValue === 'Stage') badgeHtml = '<span class="badge badge-info">Stage</span>';
+                                    else badgeHtml = '<span class="badge badge-secondary">' + (newValue || '—') + '</span>';
+                                    displaySpan.innerHTML = badgeHtml;
+                                } else if (field === 'salaire') {
+                                    displaySpan.textContent = newValue ? newValue + ' DT' : '—';
+                                } else if (field === 'dateExpiration') {
+                                    const date = newValue ? new Date(newValue) : null;
+                                    displaySpan.textContent = date ? date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '—';
+                                } else {
+                                    displaySpan.textContent = newValue || '—';
+                                }
+                                
+                                if (input) input.value = newValue;
+                            }
+                        }
+                        
+                        // Afficher un message de succès temporaire
+                        row.classList.add('edit-success');
+                        setTimeout(() => {
+                            row.classList.remove('edit-success');
+                        }, 1000);
+                        
+                        // Quitter le mode édition
+                        cancelEdit(row);
+                        
+                        // Afficher un flash message
+                        showToast('Modification enregistrée avec succès', 'success');
+                    } else {
+                        showToast(data.error || 'Erreur lors de la modification', 'danger');
+                        cancelEdit(row);
+                    }
+                })
+                .catch(error => {
+                    row.classList.remove('saving');
+                    showToast('Erreur réseau', 'danger');
+                    cancelEdit(row);
+                });
+            }
+
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type} alert-dismissible fade show`;
+                toast.style.position = 'fixed';
+                toast.style.top = '20px';
+                toast.style.right = '20px';
+                toast.style.zIndex = '9999';
+                toast.style.minWidth = '300px';
+                toast.innerHTML = `
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                `;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+        });
+    </script>
 {% endblock %}

@@ -193,4 +193,56 @@ class OffreEmploiController extends AbstractController
             'par_contrat' => $parContrat,
         ];
     }
+
+    #[Route('/inline-edit', name: 'app_admin_offres_inline_edit', methods: ['POST'])]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function inlineEdit(Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        
+        if (!$data || !isset($data['id']) || !isset($data['updates'])) {
+            return $this->json(['success' => false, 'error' => 'Données invalides'], 400);
+        }
+
+        $offre = $this->offreEmploiRepository->find($data['id']);
+        
+        if (!$offre) {
+            return $this->json(['success' => false, 'error' => 'Offre non trouvée'], 404);
+        }
+
+        // Vérifier les droits
+        if ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles())) {
+            return $this->json(['success' => false, 'error' => 'Accès non autorisé'], 403);
+        }
+
+        // Appliquer les modifications
+        $allowedFields = ['titre', 'entreprise', 'localisation', 'typeContrat', 'salaire', 'dateExpiration'];
+        
+        foreach ($data['updates'] as $field => $value) {
+            if (!in_array($field, $allowedFields)) {
+                continue;
+            }
+            
+            $setter = 'set' . ucfirst($field);
+            if (method_exists($offre, $setter)) {
+                if ($field === 'dateExpiration' && $value) {
+                    $offre->$setter(new \DateTime($value));
+                } elseif ($field === 'salaire') {
+                    $offre->$setter((float) $value);
+                } else {
+                    $offre->$setter($value);
+                }
+            }
+        }
+
+        $this->entityManager->flush();
+
+        return $this->json(['success' => true]);
+    }
+
 }
