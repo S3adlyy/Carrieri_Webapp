@@ -1,0 +1,130 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Détail de l'offre{% endblock %}
+{% block page_title %}Détail de l'offre{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_offres_list') }}">Offres d'emploi</a></li>
+    <li class="breadcrumb-item active">{{ offre.titre }}</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-briefcase mr-2"></i>{{ offre.titre }}
+            </h3>
+            <div class="card-tools">
+                <a href="{{ path('app_admin_offres_edit', {'id': offre.id}) }}" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit"></i> Modifier
+                </a>
+                <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary btn-sm ml-1">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width:40%">Entreprise</th>
+                            <td><strong>{{ offre.entreprise|default('—') }}</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Localisation</th>
+                            <td><i class="fas fa-map-marker-alt text-muted"></i> {{ offre.localisation|default('—') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Type de contrat</th>
+                            <td>
+                                {% if offre.typeContrat == 'CDI' %}
+                                    <span class="badge badge-success">CDI</span>
+                                {% elseif offre.typeContrat == 'CDD' %}
+                                    <span class="badge badge-warning">CDD</span>
+                                {% elseif offre.typeContrat == 'Stage' %}
+                                    <span class="badge badge-info">Stage</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ offre.typeContrat|default('—') }}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Salaire</th>
+                            <td>{{ offre.salaire ? offre.salaire ~ ' DT' : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Secteur</th>
+                            <td>{{ offre.secteurActivite|default('—') }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width:40%">Niveau requis</th>
+                            <td>{{ offre.niveauQualification|default('—') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Expérience</th>
+                            <td>{{ offre.experienceRequise|default('—') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Contact</th>
+                            <td>{{ offre.contactRecruteur|default('—') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Publiée le</th>
+                            <td>{{ offre.datePublication ? offre.datePublication|date('d/m/Y') : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Expire le</th>
+                            <td>
+                                {{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}                                {% if offre.dateExpiration %}
+                                    {% if offre.dateExpiration > date() %}
+                                        <span class="badge badge-success ml-1">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-danger ml-1">Expirée</span>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card card-outline card-primary">
+                        <div class="card-header">
+                            <h4 class="card-title"><i class="fas fa-align-left mr-1"></i> Description</h4>
+                        </div>
+                        <div class="card-body">
+                            {{ offre.description|default('—')|nl2br }}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card card-outline card-info">
+                        <div class="card-header">
+                            <h4 class="card-title"><i class="fas fa-tools mr-1"></i> Compétences requises</h4>
+                        </div>
+                        <div class="card-body">
+                            {{ offre.competencesRequises|default('—')|nl2br }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="card-footer">
+            <a href="{{ path('app_admin_offres_edit', {'id': offre.id}) }}" class="btn btn-warning">
+                <i class="fas fa-edit"></i> Modifier
+            </a>
+            <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary ml-2">
+                <i class="fas fa-arrow-left"></i> Retour à la liste
+            </a>
+        </div>
+    </div>
+{% endblock %}

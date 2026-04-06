@@ -1,0 +1,104 @@
+{# templates/BackOffice/partials/_sidebar.html.twig #}
+{% set logged_user = app.user %}
+{% set display_name = logged_user ? ((logged_user.firstName|default('') ~ ' ' ~ logged_user.lastName|default(''))|trim) : '' %}
+{% if display_name is empty and logged_user %}
+    {% set display_name = logged_user.email|default('Utilisateur') %}
+{% endif %}
+{% set avatar_name = display_name|url_encode %}
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <a href="{{ path('app_admin_dashboard') }}" class="brand-link">
+        <span class="brand-text font-weight-light">Carrieri Admin</span>
+    </a>
+
+    <div class="sidebar">
+        <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div class="image">
+                <img src="https://ui-avatars.com/api/?name={{ avatar_name }}&background=007bff&color=fff&size=64" class="img-circle elevation-2" alt="">
+            </div>
+            <div class="info">
+                <a href="#" class="d-block">{{ display_name }}</a>
+                <small class="text-muted d-block">{{ logged_user.type|default('') }}</small>
+            </div>
+        </div>
+
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_dashboard') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_dashboard' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tachometer-alt"></i>
+                        <p>Dashboard</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_utilisateurs') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_utilisateurs' %}active{% endif %}">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>Utilisateurs</p>
+                    </a>
+                </li>
+                <li class="nav-item has-treeview {% if 'app_admin_cours' in app.request.attributes.get('_route') or 'app_admin_modules' in app.request.attributes.get('_route') or 'app_admin_lecons' in app.request.attributes.get('_route') %}menu-open{% endif %}">
+                    <a href="#" class="nav-link {% if 'app_admin_cours' in app.request.attributes.get('_route') or 'app_admin_modules' in app.request.attributes.get('_route') or 'app_admin_lecons' in app.request.attributes.get('_route') %}active{% endif %}">
+                        <i class="nav-icon fas fa-graduation-cap"></i>
+                        <p>Études <i class="right fas fa-angle-left"></i></p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ path('app_admin_cours_index') }}" class="nav-link {% if 'app_admin_cours' in app.request.attributes.get('_route') %}active{% endif %}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Cours</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ path('app_admin_modules_index') }}" class="nav-link {% if 'app_admin_modules' in app.request.attributes.get('_route') %}active{% endif %}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Modules</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ path('app_admin_lecons_index') }}" class="nav-link {% if 'app_admin_lecons' in app.request.attributes.get('_route') %}active{% endif %}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Leçons</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_missions_list') }}" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_admin_missions' %}active{% endif %}">
+                        <i class="nav-icon fas fa-tasks"></i>
+                        <p>Missions</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_calendar') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_calendar' %}active{% endif %}">
+                        <i class="nav-icon fas fa-calendar-alt"></i>
+                        <p>Calendrier</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_offres_emploi') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_offres_emploi' %}active{% endif %}">
+                        <i class="nav-icon fas fa-briefcase"></i>
+                        <p>Offres d'emploi</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_postulations_list') }}" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_admin_postulations' %}active{% endif %}">
+                        <i class="nav-icon fas fa-clipboard-list"></i>
+                        <p>Postulations</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_certifications') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_certifications' %}active{% endif %}">
+                        <i class="nav-icon fas fa-certificate"></i>
+                        <p>Certifications</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_admin_reclamations') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_reclamations' %}active{% endif %}">
+                        <i class="nav-icon fas fa-exclamation-triangle"></i>
+                        <p>Réclamations</p>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</aside>

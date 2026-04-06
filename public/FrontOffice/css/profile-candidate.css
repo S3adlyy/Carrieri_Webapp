@@ -1,0 +1,322 @@
+.prf-page-shell {
+    background: linear-gradient(to left, rgb(228, 242, 254), rgb(255, 238, 254));
+    min-height: calc(100vh - 80px);
+}
+
+.prf-hero-card,
+.prf-card,
+.prf-side-card {
+    background: rgba(255,255,255,.92);
+    border: 1px solid rgba(216, 201, 240, .55);
+    box-shadow: 0 14px 40px rgba(35,25,66,.09);
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.prf-card,
+.prf-side-card {
+    padding: 1.25rem;
+}
+
+.prf-cover {
+    height: 160px;
+    background: linear-gradient(135deg, #667eea 0%, #5e548e 100%);
+}
+
+.prf-hero-body {
+    padding: 1.5rem;
+    margin-top: -62px;
+}
+
+.prf-avatar-wrap {
+    flex: 0 0 auto;
+}
+
+.prf-avatar-img,
+.prf-avatar-fallback {
+    width: 96px;
+    height: 96px;
+    border-radius: 999px;
+    border: 5px solid #fff;
+    box-shadow: 0 10px 26px rgba(35,25,66,.16);
+}
+
+.prf-avatar-img {
+    object-fit: cover;
+    display: block;
+}
+
+.prf-avatar-fallback,
+.prf-person-avatar,
+.prf-edu-logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Lexend", system-ui, sans-serif;
+    font-weight: 700;
+}
+
+.prf-avatar-fallback {
+    background: linear-gradient(145deg, #2c7aff 0, #0b104a 100%);
+    color: #fff;
+    font-size: 1.45rem;
+}
+
+.prf-name,
+.prf-card-title,
+.prf-person-name,
+.prf-edu-title {
+    font-family: "Lexend", system-ui, sans-serif;
+    color: #231942;
+}
+
+.prf-name {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+}
+
+.prf-headline-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: .35rem .8rem;
+    border-radius: 999px;
+    background: #f4efff;
+    color: #5e548e;
+    font-size: .86rem;
+    font-weight: 700;
+}
+
+.prf-meta,
+.prf-muted-copy,
+.prf-person-sub,
+.prf-person-meta,
+.prf-edu-sub,
+.prf-link-value,
+.prf-paragraph,
+.prf-field-value {
+    color: #6b7280;
+}
+
+.prf-bio-preview,
+.prf-paragraph {
+    line-height: 1.65;
+    font-size: .95rem;
+}
+
+.prf-stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .75rem;
+}
+
+.prf-stat-pill,
+.prf-open-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .55rem .9rem;
+    border-radius: 999px;
+    background: #fff;
+    border: 1px solid rgba(94,84,142,.16);
+}
+
+.prf-stat-key {
+    font-size: .78rem;
+    color: #6b7280;
+    font-weight: 600;
+}
+
+.prf-stat-val,
+.prf-open-text {
+    font-weight: 800;
+    color: #231942;
+}
+
+.prf-open-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 4px rgba(16,185,129,.12);
+}
+
+.prf-hero-actions {
+    margin-left: auto;
+}
+
+.prf-card-header {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: 1rem;
+}
+
+.prf-card-title {
+    font-size: 1.02rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+.prf-act-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    border: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.prf-act-neutral {
+    background: #f5f3ff;
+    color: #5e548e;
+}
+
+.prf-field-label {
+    font-size: .82rem;
+    font-weight: 700;
+    color: #5e548e;
+    margin-bottom: .2rem;
+}
+
+.prf-field-value {
+    font-size: .96rem;
+    font-weight: 600;
+}
+
+.prf-edu-row,
+.prf-person-row {
+    display: flex;
+    gap: .85rem;
+    align-items: flex-start;
+}
+
+.prf-edu-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: #f3f4f6;
+    color: #5e548e;
+    font-size: .95rem;
+    flex: 0 0 auto;
+}
+
+.prf-edu-sub-strong {
+    color: #4b5563;
+    font-weight: 700;
+    margin-bottom: .15rem;
+}
+
+.prf-chip-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .6rem;
+}
+
+.prf-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: .44rem .8rem;
+    border-radius: 999px;
+    background: #f8faff;
+    border: 1px solid rgba(44,122,255,.18);
+    color: #0b104a;
+    font-size: .84rem;
+    font-weight: 700;
+}
+
+.prf-empty-inline {
+    color: #9ca3af;
+    font-weight: 600;
+}
+
+.prf-sep {
+    border: 0;
+    border-top: 1px solid rgba(94,84,142,.12);
+    margin: 1rem 0;
+}
+
+.prf-link-value a {
+    color: #2c7aff;
+    text-decoration: none;
+    word-break: break-word;
+}
+
+.prf-link-value a:hover {
+    text-decoration: underline;
+}
+
+.prf-people-list {
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+}
+
+.prf-person-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #e9e4ff 0%, #dbe7ff 100%);
+    color: #231942;
+    font-size: .82rem;
+    flex: 0 0 auto;
+}
+
+.prf-person-name {
+    font-size: .92rem;
+    font-weight: 800;
+}
+
+.prf-person-sub,
+.prf-person-meta {
+    font-size: .78rem;
+    line-height: 1.35;
+}
+
+.prf-connect-btn,
+.prf-side-footer-btn {
+    border: 0;
+    background: transparent;
+    color: #5e548e;
+    font-weight: 700;
+}
+
+.prf-connect-btn {
+    padding: .45rem .8rem;
+    border-radius: 999px;
+    background: #f3f0ff;
+}
+
+.prf-side-footer-btn {
+    padding: 0;
+}
+
+@media (max-width: 991.98px) {
+    .prf-hero-body {
+        margin-top: -48px;
+    }
+
+    .prf-name {
+        font-size: 1.55rem;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .prf-cover {
+        height: 120px;
+    }
+
+    .prf-avatar-img,
+    .prf-avatar-fallback {
+        width: 82px;
+        height: 82px;
+    }
+
+    .prf-card,
+    .prf-side-card {
+        padding: 1rem;
+        border-radius: 20px;
+    }
+}

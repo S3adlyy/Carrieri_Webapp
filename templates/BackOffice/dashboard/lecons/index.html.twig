@@ -1,0 +1,193 @@
+{# templates/BackOffice/dashboard/lecons/index.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des leçons{% endblock %}
+{% block page_title %}Leçons{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Leçons</li>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .bo-card { border: 0; border-radius: 16px; box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+        .bo-card .card-header { background: #fff; border-bottom: 1px solid #eef2f7; }
+        .bo-table thead th { border-top: 0; font-size: 12px; text-transform: uppercase; color: #6b7280; background: #f8fafc; letter-spacing: .03em; }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% set q = app.request.query.get('q')|default('')|trim %}
+    {% set q_lower = q|lower %}
+
+    {% for label, messages in app.flashes %}
+        {% for message in messages %}
+            <div class="alert alert-{{ label }} alert-dismissible fade show">
+                {{ message }}
+                <button type="button" class="close" data-dismiss="alert">×</button>
+            </div>
+        {% endfor %}
+    {% endfor %}
+
+    <div class="card bo-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3 class="card-title mb-0">Liste des leçons</h3>
+            {% if is_admin_view|default(false) %}
+                <a href="{{ path('app_admin_lecons_new') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus mr-1"></i> Nouvelle leçon
+                </a>
+            {% else %}
+                <div>
+                    {% if selected_module is defined and selected_module %}
+                        <a href="{{ path('app_admin_lecons_new', {module: selected_module.id}) }}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus mr-1"></i> Nouvelle leçon
+                        </a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="card-body border-bottom">
+            <form method="get" action="{{ path('app_admin_lecons_index') }}" class="row align-items-end">
+                {% if selected_module is defined and selected_module %}
+                    <input type="hidden" name="module" value="{{ selected_module.id }}">
+                {% endif %}
+                <div class="col-md-8 mb-2 mb-md-0">
+                    <label for="lecon-q" class="sr-only">Rechercher une leçon</label>
+                    <input id="lecon-q" type="text" name="q" class="form-control" placeholder="Rechercher une leçon" value="{{ q }}">
+                </div>
+                <div class="col-md-4 d-flex">
+                    <button type="submit" class="btn btn-primary mr-2">Filtrer</button>
+                    {% if selected_module is defined and selected_module %}
+                        <a href="{{ path('app_admin_lecons_index', {module: selected_module.id}) }}" class="btn btn-outline-secondary">Réinitialiser</a>
+                    {% else %}
+                        <a href="{{ path('app_admin_lecons_index') }}" class="btn btn-outline-secondary">Réinitialiser</a>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+        {% if not is_admin_view|default(false) and selected_module is defined and selected_module %}
+            <div class="card-body border-bottom py-2">
+                <span class="badge badge-info">Module sélectionné</span>
+                <strong class="ml-1">{{ selected_module.titre }}</strong>
+                <span class="text-muted ml-2">Glissez-déposez les lignes pour réordonner.</span>
+                <button type="button" class="btn btn-sm btn-outline-primary float-right" id="save-lecon-order" data-reorder-url="{{ path('app_admin_lecons_reorder') }}" data-module-id="{{ selected_module.id }}">
+                    <i class="fas fa-save mr-1"></i> Enregistrer l'ordre
+                </button>
+            </div>
+        {% endif %}
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 bo-table" id="lecons-order-table">
+                    <thead>
+                    <tr>
+                        {% if selected_module is defined and selected_module %}<th style="width:40px;"></th>{% endif %}
+                        <th>Titre</th>
+                        <th>Ordre</th>
+                        <th>Module</th>
+                        <th>Cours</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% set shown = 0 %}
+                    {% for l in lecons %}
+                        {% set haystack = (l.titre|default('') ~ ' ' ~ l.contenu|default('') ~ ' ' ~ (l.module ? l.module.titre : '') ~ ' ' ~ (l.module and l.module.cours ? l.module.cours.titre : ''))|lower %}
+                        {% set matches_query = q_lower == '' or q_lower in haystack %}
+                        {% if matches_query %}
+                            {% set shown = shown + 1 %}
+                            <tr {% if selected_module is defined and selected_module %}draggable="true" class="js-draggable-row" data-id="{{ l.id }}"{% endif %}>
+                                {% if selected_module is defined and selected_module %}
+                                    <td class="text-center text-muted drag-handle" style="cursor: move;"><i class="fas fa-grip-vertical"></i></td>
+                                {% endif %}
+                                <td><strong>{{ l.titre|default('—') }}</strong></td>
+                                <td><span class="badge badge-secondary">{{ l.ordre|default('—') }}</span></td>
+                                <td>
+                                    {% if l.module %}
+                                        <a href="{{ path('app_admin_modules_show', {id: l.module.id}) }}">{{ l.module.titre }}</a>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    {% if l.module and l.module.cours %}
+                                        <a href="{{ path('app_admin_cours_show', {id: l.module.cours.id}) }}">{{ l.module.cours.titre }}</a>
+                                    {% else %}—{% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ path('app_admin_lecons_edit', {id: l.id}) }}" class="btn btn-xs btn-warning" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="post" action="{{ path('app_admin_lecons_delete', {id: l.id}) }}" style="display:inline"
+                                          onsubmit="return confirm('Supprimer cette leçon ?')">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_lecon_' ~ l.id) }}">
+                                        <button class="btn btn-xs btn-danger" title="Supprimer"><i class="fas fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    {% if shown == 0 %}
+                        <tr>
+                            <td colspan="{{ selected_module is defined and selected_module ? 6 : 5 }}" class="text-center text-muted py-3">Aucune leçon trouvée.</td>
+                        </tr>
+                    {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-muted">Total : <strong>{{ shown }}</strong> leçons</div>
+    </div>
+
+    {% if selected_module is defined and selected_module %}
+        <script>
+            (function () {
+                const table = document.getElementById('lecons-order-table');
+                const saveBtn = document.getElementById('save-lecon-order');
+                if (!table || !saveBtn) return;
+
+                let draggedRow = null;
+                table.querySelectorAll('tbody tr.js-draggable-row').forEach((row) => {
+                    row.addEventListener('dragstart', () => {
+                        draggedRow = row;
+                        row.classList.add('table-warning');
+                    });
+                    row.addEventListener('dragend', () => {
+                        row.classList.remove('table-warning');
+                    });
+                    row.addEventListener('dragover', (e) => e.preventDefault());
+                    row.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        if (!draggedRow || draggedRow === row) return;
+                        const tbody = table.querySelector('tbody');
+                        const rows = Array.from(tbody.querySelectorAll('tr.js-draggable-row'));
+                        const draggedIndex = rows.indexOf(draggedRow);
+                        const targetIndex = rows.indexOf(row);
+                        if (draggedIndex < targetIndex) {
+                            row.after(draggedRow);
+                        } else {
+                            row.before(draggedRow);
+                        }
+                    });
+                });
+
+                saveBtn.addEventListener('click', async () => {
+                    const ids = Array.from(table.querySelectorAll('tbody tr.js-draggable-row')).map((row) => row.dataset.id);
+                    const formData = new FormData();
+                    formData.append('module_id', saveBtn.dataset.moduleId);
+                    ids.forEach((id) => formData.append('ids[]', id));
+
+                    const response = await fetch(saveBtn.dataset.reorderUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        window.location.reload();
+                    } else {
+                        alert(data.message || 'Erreur lors du réordonnancement.');
+                    }
+                });
+            })();
+        </script>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,240 @@
+{# templates/FrontOffice/partials/_navbar_candidate.html.twig #}
+{# Purdue-style navbar for authenticated candidates (same grid as _navbar_landing) #}
+{% set route = app.request.attributes.get('_route') %}
+{% set user = app.user %}
+{% set display = user ? ((user.firstName|default('') ~ ' ' ~ user.lastName|default(''))|trim) : '' %}
+{% if display is empty and user %}
+    {% set display = user.email|default('Candidat') %}
+{% endif %}
+{% set initials = '' %}
+{% if user %}
+    {% if user.firstName|default('')|length > 0 %}{% set initials = initials ~ user.firstName|slice(0, 1)|upper %}{% endif %}
+    {% if user.lastName|default('')|length > 0 %}{% set initials = initials ~ user.lastName|slice(0, 1)|upper %}{% endif %}
+    {% if initials|length == 0 and user.email|default('')|length > 0 %}
+        {% set initials = user.email|slice(0, 2)|upper %}
+    {% endif %}
+{% endif %}
+{% if initials|length == 0 %}
+    {% if display|length > 0 %}
+        {% set initials = display|slice(0, 2)|upper %}
+    {% else %}
+        {% set initials = '?' %}
+    {% endif %}
+{% endif %}
+
+<style>
+    /* Force navbar to stay in one line - No wrapping */
+    #navigation {
+        overflow: visible !important;
+    }
+
+    #navigation .container {
+        max-width: 100% !important;
+        padding: 0 20px !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+    }
+
+    #navigation .row {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        align-items: center !important;
+        width: 100% !important;
+        margin: 0 !important;
+    }
+
+    #navigation .col-20,
+    #navigation .col-60,
+    #navigation .col-30 {
+        flex: 0 0 auto !important;
+        display: flex !important;
+        align-items: center !important;
+    }
+
+    #navigation .col-20 {
+        width: auto !important;
+        min-width: 120px;
+        flex-shrink: 0 !important;
+    }
+
+    #navigation .col-60 {
+        flex: 1 !important;
+        justify-content: center !important;
+        overflow-x: visible !important;
+        min-width: 0 !important;
+    }
+
+    #navigation .col-30 {
+        width: auto !important;
+        min-width: 260px;
+        justify-content: flex-end !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Force main menu items in one line */
+    #main-menu {
+        width: 100%;
+    }
+
+    #main-menu ul {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        list-style: none !important;
+        justify-content: center !important;
+    }
+
+    #main-menu li {
+        display: inline-block !important;
+        white-space: nowrap !important;
+        margin: 0 3px !important;
+        flex-shrink: 0 !important;
+    }
+
+    #main-menu li a {
+        display: inline-block !important;
+        white-space: nowrap !important;
+        padding: 8px 12px !important;
+        font-size: 14px !important;
+    }
+
+    /* User pill and logout button in one line */
+    .d-flex.align-items-center.justify-content-end {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        white-space: nowrap !important;
+    }
+
+    .d-flex.align-items-center.justify-content-end > a {
+        flex-shrink: 0 !important;
+        text-decoration: none !important;
+    }
+
+    .fo-user-pill {
+        display: inline-flex !important;
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+        margin-right: 10px !important;
+    }
+
+    .call_to_action {
+        flex-shrink: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    .fo-candidate-logout {
+        white-space: nowrap !important;
+        display: inline-block !important;
+    }
+
+    /* Hide mobile menu on desktop */
+    .mobile_menu {
+        display: none !important;
+    }
+
+    /* Remove flex-wrap from the original class */
+    .flex-wrap {
+        flex-wrap: nowrap !important;
+    }
+
+    /* Responsive: allow horizontal scroll on smaller screens */
+    @media (max-width: 1300px) {
+        #navigation .container {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+
+        #navigation .row {
+            min-width: 1150px !important;
+        }
+    }
+
+    @media (max-width: 1200px) {
+        #navigation .col-30 {
+            display: flex !important;
+        }
+    }
+
+    /* Ensure site brand doesn't wrap */
+    .site-brand {
+        white-space: nowrap !important;
+    }
+
+    .site-brand__name {
+        white-space: nowrap !important;
+    }
+
+    /* Fix for any other potential wrapping issues */
+    #navigation * {
+        white-space: nowrap !important;
+    }
+
+    /* But allow text in dropdowns/menus to wrap if needed */
+    .mobile_menu * {
+        white-space: normal !important;
+    }
+</style>
+
+<div id="navigation" class="navbar-light bg-faded site-navigation">
+    <div class="container">
+        <div class="row">
+            <div class="col-20 align-self-center">
+                <a href="{{ path('app_candidate_main') }}" class="site-brand d-flex align-items-center flex-nowrap text-decoration-none">
+					<span class="site-logo">
+						<img src="{{ asset('FrontOffice/img/logo.png') }}" alt="" decoding="async">
+					</span>
+                    <span class="site-brand__name">Carrieri</span>
+                </a>
+            </div>
+            <div class="col-60 d-flex align-items-center">
+                <nav id="main-menu">
+                    <ul>
+                        <li><a href="{{ path('app_candidate_cours') }}" class="{{ route starts with 'app_candidate_cours' or route starts with 'app_candidate_lecon_show' ? 'active' : '' }}">Cours</a></li>
+                        <li><a href="{{ path('app_candidate_offres') }}" class="{{ route == 'app_candidate_offres' ? 'active' : '' }}">Offre d'emploi</a></li>
+                        <li><a href="{{ path('app_candidate_postulations') }}" class="{{ route == 'app_candidate_postulations' ? 'active' : '' }}">Mes postulations</a></li>
+                        <li><a href="{{ path('app_candidate_mission') }}" class="{{ route == 'app_candidate_mission' ? 'active' : '' }}">Mission</a></li>
+                        <li><a href="{{ path('app_candidate_reclamation') }}" class="{{ route == 'app_candidate_reclamation' ? 'active' : '' }}">Réclamation</a></li>
+                        <li><a href="{{ path('app_candidate_messagerie') }}" class="{{ route == 'app_candidate_messagerie' ? 'active' : '' }}">Messagerie</a></li>
+                        <li><a href="{{ path('app_candidate_my_results') }}" class="{{ route == 'app_candidate_my_results' ? 'active' : '' }}">Mes résultats</a></li>
+                    </ul>
+                </nav>
+            </div>
+            <div class="col-30 d-none d-xl-block text-end align-self-center">
+                <div class="d-flex align-items-center justify-content-end">
+                    <a href="{{ path('app_candidate_profile') }}" class="{{ route == 'app_candidate_profile' ? 'active' : '' }}">
+                        <div class="fo-user-pill me-2" title="{{ display }}">
+                            <span class="fo-user-pill__avatar" aria-hidden="true">{{ initials }}</span>
+                            <span class="fo-user-pill__meta">
+							<span class="fo-user-pill__name">{{ display }}</span>
+							<span class="fo-user-pill__role">Candidat</span>
+						</span>
+                        </div>
+                    </a>
+                    <div class="call_to_action">
+                        <a class="btn_two fo-candidate-logout" href="{{ path('app_logout') }}">Déconnexion</a>
+                    </div>
+                </div>
+            </div>
+            <ul class="mobile_menu">
+                <li class="fo-mobile-user-pill-wrap d-xl-none">
+					<span class="fo-user-pill fo-user-pill--mobile" title="{{ display }}">
+						<span class="fo-user-pill__avatar" aria-hidden="true">{{ initials }}</span>
+						<span class="fo-user-pill__meta">
+							<span class="fo-user-pill__name">{{ display }}</span>
+							<span class="fo-user-pill__role">Candidat</span>
+						</span>
+					</span>
+                </li>
+                <li><a href="{{ path('app_candidate_cours') }}">Cours</a></li>
+                <li><a href="{{ path('app_candidate_offres') }}">Offre d'emploi</a></li>
+                <li><a href="{{ path('app_candidate_mission') }}">Mission</a></li>
+                <li><a href="{{ path('app_candidate_reclamation') }}">Réclamation</a></li>
+                <li><a href="{{ path('app_candidate_messagerie') }}">Messagerie</a></li>
+                <li><a href="{{ path('app_candidate_my_results') }}">Mes résultats</a></li>
+                <li class="fo-mobile-logout"><a class="fo-candidate-logout" href="{{ path('app_logout') }}">Déconnexion</a></li>
+            </ul>
+        </div>
+    </div>
+</div>

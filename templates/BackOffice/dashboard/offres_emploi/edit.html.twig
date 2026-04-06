@@ -1,0 +1,397 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Modifier l'offre d'emploi{% endblock %}
+{% block page_title %}Modifier l'offre{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_offres_list') }}">Offres d'emploi</a></li>
+    <li class="breadcrumb-item active">Modifier</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Modifier : {{ offre.titre }}</h3>
+        </div>
+        <div class="card-body">
+
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    {{ message }}
+                </div>
+            {% endfor %}
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'offre-form', 'id': 'offreForm'}}) }}
+
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="form-group">
+                        {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.titre, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-minlength': '5',
+                            'data-maxlength': '100',
+                            'data-pattern': '^[a-zA-Z]',
+                            'data-unique': 'true',
+                            'data-id': offre.id,
+                            'data-field-name': 'Titre'
+                        }}) }}
+                        <small class="text-muted">Min 5 caractères, max 100. Ne peut pas commencer par un chiffre.</small>
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.typeContrat, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.typeContrat, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Type contrat'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.description, {'attr': {
+                    'class': 'form-control',
+                    'rows': 5,
+                    'data-required': 'true',
+                    'data-minlength': '10',
+                    'data-pattern': '^[a-zA-Z]',
+                    'data-field-name': 'Description'
+                }}) }}
+                <small class="text-muted">Min 10 caractères. Ne peut pas commencer par un chiffre.</small>
+                <div class="invalid-feedback" style="display: none;"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.entreprise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.entreprise, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Entreprise'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.localisation, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.localisation, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Localisation'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.salaire, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.salaire, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-type': 'number',
+                            'data-min': '0',
+                            'data-field-name': 'Salaire'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.niveauQualification, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.niveauQualification, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Niveau qualification'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.experienceRequise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.experienceRequise, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Expérience requise'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.competencesRequises, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.competencesRequises, {'attr': {
+                    'class': 'form-control',
+                    'rows': 3,
+                    'data-required': 'true',
+                    'data-minlength': '10',
+                    'data-field-name': 'Compétences requises'
+                }}) }}
+                <small class="text-muted">Min 10 caractères.</small>
+                <div class="invalid-feedback" style="display: none;"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.secteurActivite, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.secteurActivite, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Secteur activité'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        {{ form_label(form.contactRecruteur, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.contactRecruteur, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-type': 'email',
+                            'data-field-name': 'Contact recruteur'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.dateExpiration, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.dateExpiration, {'attr': {
+                    'class': 'form-control',
+                    'data-required': 'true',
+                    'data-future': 'true',
+                    'data-field-name': 'Date expiration'
+                }}) }}
+                <small class="text-muted"><i class="fas fa-info-circle"></i> La date doit être dans le futur</small>
+                <div class="invalid-feedback" style="display: none;"></div>
+            </div>
+
+            <div class="mt-4 pt-3" style="border-top: 1px solid #e2e8f0;">
+                <button type="submit" class="btn btn-warning" id="submitBtn">
+                    <i class="fas fa-save"></i> Enregistrer les modifications
+                </button>
+                <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary ml-2">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <style>
+        .form-control.is-invalid {
+            border-color: #dc2626 !important;
+            background-color: #fef2f2 !important;
+        }
+        .invalid-feedback {
+            display: block;
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 6px 12px;
+            background-color: #fef2f2;
+            border-radius: 6px;
+            border-left: 3px solid #dc2626;
+        }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('offreForm');
+            const fields = document.querySelectorAll('[data-required], [data-minlength], [data-maxlength], [data-pattern], [data-type], [data-unique], [data-future]');
+            const offreId = {{ offre.id|default('null') }};
+            
+            let hasBeenSubmitted = false;
+            
+            // Vérifier l'unicité du titre (AJAX)
+            async function checkUniqueTitre(titre, currentId) {
+                try {
+                    const response = await fetch('{{ path('app_admin_offres_check_unique_titre') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            titre: titre,
+                            id: currentId
+                        })
+                    });
+                    const data = await response.json();
+                    return data.valid;
+                } catch (error) {
+                    console.error('Erreur lors de la vérification du titre:', error);
+                    return true;
+                }
+            }
+            
+            // Validation d'un champ (retourne les erreurs)
+            async function getFieldErrors(field) {
+                const value = field.value.trim();
+                const fieldName = field.dataset.fieldName || field.name;
+                let errors = [];
+                
+                // Requis
+                if (field.dataset.required === 'true' && !value) {
+                    errors.push(`Le champ "${fieldName}" est obligatoire.`);
+                }
+                
+                if (value) {
+                    // Longueur minimale
+                    if (field.dataset.minlength && value.length < parseInt(field.dataset.minlength)) {
+                        errors.push(`Le champ "${fieldName}" doit contenir au moins ${field.dataset.minlength} caractères.`);
+                    }
+                    
+                    // Longueur maximale
+                    if (field.dataset.maxlength && value.length > parseInt(field.dataset.maxlength)) {
+                        errors.push(`Le champ "${fieldName}" ne doit pas dépasser ${field.dataset.maxlength} caractères.`);
+                    }
+                    
+                    // Pattern (ne pas commencer par un chiffre)
+                    if (field.dataset.pattern && !new RegExp(field.dataset.pattern).test(value)) {
+                        errors.push(`Le champ "${fieldName}" ne peut pas commencer par un chiffre.`);
+                    }
+                    
+                    // Type number
+                    if (field.dataset.type === 'number' && (isNaN(parseFloat(value)) || !isFinite(value))) {
+                        errors.push(`Le champ "${fieldName}" doit être un nombre valide.`);
+                    }
+                    
+                    // Min value
+                    if (field.dataset.min !== undefined && parseFloat(value) < parseFloat(field.dataset.min)) {
+                        errors.push(`Le champ "${fieldName}" doit être supérieur ou égal à ${field.dataset.min}.`);
+                    }
+                    
+                    // Email
+                    if (field.dataset.type === 'email' && !/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(value)) {
+                        errors.push(`Le champ "${fieldName}" doit être une adresse email valide.`);
+                    }
+                    
+                    // Unicité du titre
+                    if (field.dataset.unique === 'true' && value) {
+                        const currentId = field.dataset.id ? parseInt(field.dataset.id) : null;
+                        const isUnique = await checkUniqueTitre(value, currentId);
+                        if (!isUnique) {
+                            errors.push('Ce titre d\'offre existe déjà. Veuillez choisir un titre unique.');
+                        }
+                    }
+                    
+                    // Date dans le futur
+                    if (field.dataset.future === 'true' && value) {
+                        const selectedDate = new Date(value);
+                        const now = new Date();
+                        if (selectedDate <= now) {
+                            errors.push(`La ${fieldName} doit être dans le futur.`);
+                        }
+                    }
+                }
+                
+                return errors;
+            }
+            
+            // Mettre à jour l'affichage d'un champ
+            async function updateFieldDisplay(field) {
+                const errors = await getFieldErrors(field);
+                const feedbackDiv = field.closest('.form-group').querySelector('.invalid-feedback');
+                
+                if (errors.length > 0) {
+                    field.classList.add('is-invalid');
+                    if (feedbackDiv) {
+                        feedbackDiv.textContent = errors[0];
+                        feedbackDiv.style.display = 'block';
+                    }
+                    return false;
+                } else {
+                    field.classList.remove('is-invalid');
+                    if (feedbackDiv) {
+                        feedbackDiv.style.display = 'none';
+                        feedbackDiv.textContent = '';
+                    }
+                    return true;
+                }
+            }
+            
+            // Valider tous les champs et mettre à jour l'affichage
+            async function validateAndUpdateAll() {
+                let isValid = true;
+                for (const field of fields) {
+                    const isFieldValid = await updateFieldDisplay(field);
+                    if (!isFieldValid) isValid = false;
+                }
+                return isValid;
+            }
+            
+            // Écouter les événements input - réévalue et met à jour l'affichage SEULEMENT si déjà soumis
+            fields.forEach(field => {
+                field.addEventListener('input', async function() {
+                    if (hasBeenSubmitted) {
+                        await updateFieldDisplay(this);
+                    }
+                });
+                field.addEventListener('change', async function() {
+                    if (hasBeenSubmitted) {
+                        await updateFieldDisplay(this);
+                    }
+                });
+            });
+            
+            // Validation UNIQUEMENT à la soumission
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault(); // Temporairement empêcher la soumission pour validation
+                
+                hasBeenSubmitted = true;
+                const isValid = await validateAndUpdateAll();
+                
+                if (!isValid) {
+                    const firstInvalid = document.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
+                    
+                    // Afficher un toast d'erreur
+                    const toast = document.createElement('div');
+                    toast.className = 'alert alert-danger alert-dismissible fade show';
+                    toast.style.position = 'fixed';
+                    toast.style.top = '20px';
+                    toast.style.right = '20px';
+                    toast.style.zIndex = '9999';
+                    toast.style.minWidth = '300px';
+                    toast.innerHTML = `
+                        Veuillez corriger les erreurs avant de soumettre le formulaire
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    `;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                } else {
+                    // Si tout est valide, soumettre le formulaire
+                    form.submit();
+                }
+            });
+        });
+    </script>
+{% endblock %}

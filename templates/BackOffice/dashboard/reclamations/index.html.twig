@@ -1,0 +1,60 @@
+{# templates/BackOffice/dashboard/reclamations/index.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des réclamations{% endblock %}
+
+{% block page_title %}Réclamations{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Réclamations</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des réclamations</h3>
+            <span class="badge badge-info">{{ reclamations|length }} réclamation(s)</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Objet</th>
+                        <th>Catégorie</th>
+                        <th>Statut</th>
+                        <th>Priorité</th>
+                        <th>Date</th>
+                        {% if is_admin_view|default(false) %}
+                            <th>Utilisateur</th>
+                        {% endif %}
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for r in reclamations %}
+                        <tr>
+                            <td>{{ r.id }}</td>
+                            <td>{{ r.objet|default('—') }}</td>
+                            <td>{{ r.categorie|default('—') }}</td>
+                            <td>{{ r.statut|default('—') }}</td>
+                            <td>{{ r.priorite|default('—') }}</td>
+                            <td>{% if r.dateCreation %}{{ r.dateCreation|date('d/m/Y H:i') }}{% else %}—{% endif %}</td>
+                            {% if is_admin_view|default(false) %}
+                                <td>
+                                    {% set u = r.user %}
+                                    {% if u %}{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}{% else %}—{% endif %}
+                                </td>
+                            {% endif %}
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="{{ is_admin_view|default(false) ? 7 : 6 }}" class="text-center text-muted">Aucune réclamation.</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,733 @@
+{# templates/BackOffice/dashboard/missions/index.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des missions{% endblock %}
+
+{% block page_title %}Missions{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Missions</li>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+    <style>
+        /* Dashboard Stats */
+        .stats-dashboard {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--stat-color);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-card-title {
+            font-size: 13px;
+            color: #6c757d;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card-icon {
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .stat-card-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .stat-card-sub {
+            font-size: 12px;
+            color: #6c757d;
+        }
+
+        /* Charts Row */
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .chart-card h4 {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-card h4 i {
+            color: #667eea;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        /* Score distribution bars */
+        .score-distribution {
+            margin-top: 10px;
+        }
+
+        .score-tier {
+            margin-bottom: 15px;
+        }
+
+        .score-tier-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #4b5563;
+        }
+
+        .score-tier-bar {
+            background: #e2e8f0;
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .score-tier-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .fill-excellent { background: linear-gradient(90deg, #10b981, #059669); }
+        .fill-good { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+        .fill-average { background: linear-gradient(90deg, #f59e0b, #d97706); }
+        .fill-poor { background: linear-gradient(90deg, #ef4444, #dc2626); }
+        .fill-very-poor { background: linear-gradient(90deg, #8b5cf6, #7c3aed); }
+
+        .stat-note {
+            margin-top: 15px;
+            padding-top: 10px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 11px;
+            color: #9ca3af;
+            text-align: center;
+        }
+
+        /* Quick filters */
+        .quick-filters {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 10px 0;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #6c757d;
+        }
+
+        .filter-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 12px;
+            background: #f8f9fa;
+            color: #495057;
+            border-radius: 20px;
+            font-size: 12px;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .filter-badge:hover {
+            background: #e9ecef;
+            text-decoration: none;
+            color: #007bff;
+        }
+
+        .filter-badge.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .sortable {
+            cursor: pointer;
+        }
+
+        .sortable a:hover {
+            color: #007bff !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .table tbody tr {
+            animation: fadeIn 0.3s ease;
+        }
+
+        @media (max-width: 992px) {
+            .stats-dashboard {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-dashboard {
+                grid-template-columns: 1fr;
+            }
+            .quick-filters {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                padding-bottom: 10px;
+            }
+            .filter-badge {
+                white-space: nowrap;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <!-- Section des statistiques -->
+    <div class="stats-dashboard">
+        <!-- Carte 1: Missions totales -->
+        <div class="stat-card" style="--stat-color: linear-gradient(135deg, #667eea, #764ba2)">
+            <div class="stat-card-header">
+                <span class="stat-card-title">Missions</span>
+                <div class="stat-card-icon" style="background: rgba(102,126,234,0.1); color: #667eea;">
+                    <i class="fas fa-tasks"></i>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ stats.total_missions }}</div>
+            <div class="stat-card-sub">Missions créées</div>
+        </div>
+
+        <!-- Carte 2: Soumissions -->
+        <div class="stat-card" style="--stat-color: linear-gradient(135deg, #3b82f6, #1d4ed8)">
+            <div class="stat-card-header">
+                <span class="stat-card-title">Soumissions</span>
+                <div class="stat-card-icon" style="background: rgba(59,130,246,0.1); color: #3b82f6;">
+                    <i class="fas fa-paper-plane"></i>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ stats.total_submissions }}</div>
+            <div class="stat-card-sub">{{ stats.submission_rate }}% des missions ont reçu des soumissions</div>
+        </div>
+
+        <!-- Carte 3: Taux d'acceptation -->
+        <div class="stat-card" style="--stat-color: linear-gradient(135deg, #10b981, #059669)">
+            <div class="stat-card-header">
+                <span class="stat-card-title">Taux d'acceptation</span>
+                <div class="stat-card-icon" style="background: rgba(16,185,129,0.1); color: #10b981;">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ stats.acceptance_rate }}%</div>
+            <div class="stat-card-sub">{{ stats.total_accepted }} acceptées / {{ stats.total_rejected }} refusées</div>
+        </div>
+
+        <!-- Carte 4: Score moyen -->
+        <div class="stat-card" style="--stat-color: linear-gradient(135deg, #f59e0b, #d97706)">
+            <div class="stat-card-header">
+                <span class="stat-card-title">Score moyen</span>
+                <div class="stat-card-icon" style="background: rgba(245,158,11,0.1); color: #f59e0b;">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+            <div class="stat-card-value">{{ stats.average_score }}<span style="font-size: 16px;">/100</span></div>
+            <div class="stat-card-sub">Max: {{ stats.max_score }} | Min: {{ stats.min_score }}</div>
+        </div>
+    </div>
+
+    <!-- Graphiques -->
+    <div class="charts-row">
+        <!-- Graphique des statuts (Camembert) -->
+        <div class="chart-card">
+            <h4><i class="fas fa-chart-pie"></i> Répartition des statuts</h4>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+            <div class="stat-note">
+                <i class="fas fa-info-circle"></i>
+                {{ stats.total_accepted }} candidats acceptés, {{ stats.total_rejected }} refusés, {{ stats.total_pending }} en attente
+            </div>
+        </div>
+
+        <!-- Graphique de distribution des scores (Barres horizontales) -->
+        <div class="chart-card">
+            <h4><i class="fas fa-chart-bar"></i> Distribution des scores</h4>
+            <div class="score-distribution">
+                <div class="score-tier">
+                    <div class="score-tier-label">
+                        <span>🏆 Excellent (90-100)</span>
+                        <span><strong>{{ stats.score_distribution.excellent }}</strong> candidats</span>
+                    </div>
+                    <div class="score-tier-bar">
+                        <div class="score-tier-fill fill-excellent" style="width: {{ stats.total_submissions > 0 ? (stats.score_distribution.excellent / stats.total_submissions * 100)|round : 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="score-tier">
+                    <div class="score-tier-label">
+                        <span>👍 Très bien (75-89)</span>
+                        <span><strong>{{ stats.score_distribution.good }}</strong> candidats</span>
+                    </div>
+                    <div class="score-tier-bar">
+                        <div class="score-tier-fill fill-good" style="width: {{ stats.total_submissions > 0 ? (stats.score_distribution.good / stats.total_submissions * 100)|round : 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="score-tier">
+                    <div class="score-tier-label">
+                        <span>📊 Moyen (50-74)</span>
+                        <span><strong>{{ stats.score_distribution.average }}</strong> candidats</span>
+                    </div>
+                    <div class="score-tier-bar">
+                        <div class="score-tier-fill fill-average" style="width: {{ stats.total_submissions > 0 ? (stats.score_distribution.average / stats.total_submissions * 100)|round : 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="score-tier">
+                    <div class="score-tier-label">
+                        <span>⚠️ Faible (25-49)</span>
+                        <span><strong>{{ stats.score_distribution.poor }}</strong> candidats</span>
+                    </div>
+                    <div class="score-tier-bar">
+                        <div class="score-tier-fill fill-poor" style="width: {{ stats.total_submissions > 0 ? (stats.score_distribution.poor / stats.total_submissions * 100)|round : 0 }}%"></div>
+                    </div>
+                </div>
+                <div class="score-tier">
+                    <div class="score-tier-label">
+                        <span>❌ Très faible (0-24)</span>
+                        <span><strong>{{ stats.score_distribution.very_poor }}</strong> candidats</span>
+                    </div>
+                    <div class="score-tier-bar">
+                        <div class="score-tier-fill fill-very-poor" style="width: {{ stats.total_submissions > 0 ? (stats.score_distribution.very_poor / stats.total_submissions * 100)|round : 0 }}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-note">
+                <i class="fas fa-chart-line"></i>
+                Score moyen: {{ stats.average_score }} | Meilleur score: {{ stats.max_score }}
+            </div>
+        </div>
+    </div>
+
+    <!-- Tableau des missions -->
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des missions</h3>
+            <div class="card-tools">
+                <a href="{{ path('app_admin_missions_create') }}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus"></i> Nouvelle mission
+                </a>
+                <a href="{{ path('app_admin_candidats_acceptes') }}" class="btn btn-success btn-sm">
+                    <i class="fas fa-users"></i> Candidats acceptés
+                </a>
+                <span class="badge badge-info ml-2">{{ missions|length }} mission(s)</span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            <!-- Barre de recherche avancée -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <form method="get" action="{{ path('app_admin_missions_list') }}" id="searchForm">
+                        <div class="input-group">
+                            <input type="text"
+                                   name="search"
+                                   id="searchInput"
+                                   class="form-control"
+                                   placeholder="Rechercher par description, type..."
+                                   value="{{ search|default('') }}"
+                                   autocomplete="off">
+                            <input type="hidden" name="sort_by" id="sortBy" value="{{ sort_by|default('id') }}">
+                            <input type="hidden" name="sort_order" id="sortOrder" value="{{ sort_order|default('DESC') }}">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="submit">
+                                    <i class="fas fa-search"></i> Rechercher
+                                </button>
+                                {% if search|default('') %}
+                                    <a href="{{ path('app_admin_missions_list') }}" class="btn btn-secondary" id="resetSearch">
+                                        <i class="fas fa-times"></i> Réinitialiser
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-4 text-right">
+                    <div class="btn-group">
+                        <a href="{{ path('app_admin_missions_export_excel', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC')}) }}"
+                           class="btn btn-success btn-sm">
+                            <i class="fas fa-file-excel"></i> Excel
+                        </a>
+                        <a href="{{ path('app_admin_missions_export_pdf', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC')}) }}"
+                           class="btn btn-danger btn-sm">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filtres rapides -->
+            <div class="row mb-3">
+                <div class="col-12">
+                    <div class="quick-filters">
+                        <span class="filter-label">Filtres rapides :</span>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'all'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'all' or app.request.query.get('filter') is null %}active{% endif %}">
+                            Toutes
+                        </a>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'high'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'high' %}active{% endif %}">
+                            <i class="fas fa-chart-line"></i> Score élevé (≥80)
+                        </a>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'medium'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'medium' %}active{% endif %}">
+                            <i class="fas fa-chart-simple"></i> Score moyen (50-79)
+                        </a>
+                        <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': sort_by|default('id'), 'sort_order': sort_order|default('DESC'), 'filter': 'low'}) }}"
+                           class="filter-badge {% if app.request.query.get('filter') == 'low' %}active{% endif %}">
+                            <i class="fas fa-chart-line"></i> Score faible (&lt;50)
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if search|default('') %}
+                <div class="alert alert-info alert-dismissible">
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <i class="fas fa-search"></i> Résultats pour : <strong>{{ search }}</strong>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0" id="missionsTable">
+                    <thead>
+                    <tr>
+                        <th class="sortable" data-sort="description">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'description', 'sort_order': (sort_by|default('id') == 'description' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
+                               class="text-dark text-decoration-none">
+                                Description
+                                {% if sort_by|default('id') == 'description' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="sortable" data-sort="type">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'type', 'sort_order': (sort_by|default('id') == 'type' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
+                               class="text-dark text-decoration-none">
+                                Type
+                                {% if sort_by|default('id') == 'type' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="sortable" data-sort="scoreMin">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'scoreMin', 'sort_order': (sort_by|default('id') == 'scoreMin' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
+                               class="text-dark text-decoration-none">
+                                Score min
+                                {% if sort_by|default('id') == 'scoreMin' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th class="sortable" data-sort="createdAt">
+                            <a href="{{ path('app_admin_missions_list', {'search': search|default(''), 'sort_by': 'createdAt', 'sort_order': (sort_by|default('id') == 'createdAt' and sort_order|default('DESC') == 'ASC') ? 'DESC' : 'ASC', 'filter': app.request.query.get('filter')}) }}"
+                               class="text-dark text-decoration-none">
+                                Créée le
+                                {% if sort_by|default('id') == 'createdAt' %}
+                                    <i class="fas fa-sort-{{ sort_order|default('DESC') == 'ASC' ? 'up' : 'down' }}"></i>
+                                {% else %}
+                                    <i class="fas fa-sort text-muted"></i>
+                                {% endif %}
+                            </a>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for m in missions %}
+                        <tr>
+                            <td>{% set d = m.description|default('') %}{{ d|length > 120 ? d|slice(0, 117) ~ '…' : (d ?: '—') }}</td>
+                            <td>{{ m.type|default('—') }}</td>
+                            <td>
+                                {% if m.scoreMin >= 80 %}
+                                    <span class="badge badge-success">{{ m.scoreMin }}</span>
+                                {% elseif m.scoreMin >= 50 %}
+                                    <span class="badge badge-warning">{{ m.scoreMin }}</span>
+                                {% else %}
+                                    <span class="badge badge-danger">{{ m.scoreMin }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{% if m.createdAt %}{{ m.createdAt|date('d/m/Y H:i') }}{% else %}—{% endif %}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ path('app_admin_missions_show', {'id': m.id}) }}"
+                                       class="btn btn-info" title="Voir">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_admin_missions_edit', {'id': m.id}) }}"
+                                       class="btn btn-warning" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{{ path('app_admin_mission_submissions', {'id': m.id}) }}"
+                                       class="btn btn-primary" title="Voir les soumissions">
+                                        <i class="fas fa-users"></i>
+                                    </a>
+                                    <button type="button"
+                                            class="btn btn-danger"
+                                            data-toggle="modal"
+                                            data-target="#deleteModal{{ m.id }}"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Modal de confirmation de suppression -->
+                                <div class="modal fade" id="deleteModal{{ m.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                                <button type="button" class="close" data-dismiss="modal">
+                                                    <span>&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Êtes-vous sûr de vouloir supprimer cette mission ?</p>
+                                                <p class="text-muted"><strong>Description:</strong> {{ m.description|slice(0, 100) }}...</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                                <form method="post" action="{{ path('app_admin_missions_delete', {'id': m.id}) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ m.id) }}">
+                                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted">
+                                <div class="py-4">
+                                    <i class="fas fa-tasks fa-2x mb-2"></i>
+                                    <p>Aucune mission trouvée.</p>
+                                    <a href="{{ path('app_admin_missions_create') }}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Créer votre première mission
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <div class="row">
+                <div class="col-md-6">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Total : <strong id="totalCount">{{ missions|length }}</strong> mission(s) |
+                        Cliquez sur les en-têtes pour trier |
+                        Utilisez la barre de recherche pour filtrer
+                    </small>
+                </div>
+                <div class="col-md-6 text-right">
+                    <div class="btn-group btn-group-xs">
+                        <button type="button" class="btn btn-default btn-sm" id="refreshTable">
+                            <i class="fas fa-sync-alt"></i> Rafraîchir
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Graphique des statuts (Camembert)
+            const statusCtx = document.getElementById('statusChart')?.getContext('2d');
+            if (statusCtx) {
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Acceptées', 'Refusées', 'En attente'],
+                        datasets: [{
+                            data: [{{ stats.total_accepted }}, {{ stats.total_rejected }}, {{ stats.total_pending }}],
+                            backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
+                            borderWidth: 0,
+                            hoverOffset: 10
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    font: { size: 12 },
+                                    usePointStyle: true,
+                                    boxWidth: 10
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw || 0;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                                        return `${label}: ${value} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Recherche en temps réel
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        const form = document.getElementById('searchForm');
+                        if (form) form.submit();
+                    }, 500);
+                });
+            }
+
+            // Rafraîchir la page
+            const refreshBtn = document.getElementById('refreshTable');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', function() {
+                    window.location.href = "{{ path('app_admin_missions_list') }}";
+                });
+            }
+
+            // Survol des lignes du tableau
+            const rows = document.querySelectorAll('#missionsTable tbody tr');
+            rows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.backgroundColor = '#f8f9fa';
+                });
+                row.addEventListener('mouseleave', function() {
+                    this.style.backgroundColor = '';
+                });
+            });
+
+            // Filtrage côté client
+            const filterBadges = document.querySelectorAll('.filter-badge');
+            const tableRows = document.querySelectorAll('#missionsTable tbody tr');
+
+            function filterTableByScore(scoreRange) {
+                let visibleCount = 0;
+                tableRows.forEach(row => {
+                    const scoreCell = row.cells[2];
+                    if (scoreCell) {
+                        const scoreText = scoreCell.innerText;
+                        const score = parseInt(scoreText);
+                        let show = false;
+                        if (scoreRange === 'high') show = score >= 80;
+                        else if (scoreRange === 'medium') show = score >= 50 && score <= 79;
+                        else if (scoreRange === 'low') show = score < 50;
+                        else show = true;
+                        if (show) {
+                            row.style.display = '';
+                            visibleCount++;
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+                const totalCountSpan = document.getElementById('totalCount');
+                if (totalCountSpan) totalCountSpan.textContent = visibleCount;
+            }
+
+            filterBadges.forEach(badge => {
+                badge.addEventListener('click', function(e) {
+                    const filterValue = this.getAttribute('href')?.match(/filter=([^&]+)/);
+                    if (filterValue && filterValue[1] !== 'all') {
+                        e.preventDefault();
+                        filterTableByScore(filterValue[1]);
+                        filterBadges.forEach(b => b.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

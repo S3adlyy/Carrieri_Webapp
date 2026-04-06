@@ -1,0 +1,136 @@
+{# templates/BackOffice/dashboard/entretiens/candidats_acceptes.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Candidats acceptés{% endblock %}
+
+{% block page_title %}Candidats acceptés{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Candidats acceptés</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Liste des candidats dont la mission a été acceptée</h3>
+            <div class="card-tools">
+                <div class="btn-group mr-2">
+                    <a href="{{ path('app_admin_candidats_acceptes_export_excel') }}" class="btn btn-success btn-sm">
+                        <i class="fas fa-file-excel"></i> Excel
+                    </a>
+                    <a href="{{ path('app_admin_candidats_acceptes_export_pdf') }}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-file-pdf"></i> PDF
+                    </a>
+                </div>
+                <span class="badge badge-info">{{ candidats|length }} candidat(s)</span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>Candidat</th>
+                        <th>Email</th>
+                        <th>Mission</th>
+                        <th>Score</th>
+                        <th>Date de soumission</th>
+                        <th>Statut entretien</th>
+                        <th>Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for rendu in candidats %}
+                        <tr>
+                            <td>
+                                <strong>{{ rendu.user ? (rendu.user.firstName ~ ' ' ~ rendu.user.lastName)|trim : 'Candidat #' ~ rendu.candidatId }}</strong>
+                            </td>
+                            <td>{{ rendu.user ? rendu.user.email : '—' }}</td>
+                            <td>{{ rendu.mission.type }}</td>
+                            <td>
+                                <span class="badge badge-success">{{ rendu.score|round }}%</span>
+                            </td>
+                            <td>{{ rendu.dateRendu|date('d/m/Y H:i') }}</td>
+                            <td>
+                                {% set entretien = rendu.entretiens|first %}
+                                {% if entretien %}
+                                    {% if entretien.status == 'planifie' %}
+                                        <span class="badge badge-warning">Planifié</span>
+                                    {% elseif entretien.status == 'effectue' %}
+                                        <span class="badge badge-success">Effectué</span>
+                                    {% elseif entretien.status == 'annule' %}
+                                        <span class="badge badge-danger">Annulé</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge badge-secondary">Non planifié</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if rendu.entretiens|first %}
+                                        <a href="{{ path('app_admin_entretien_edit', {'id': rendu.entretiens|first.id}) }}"
+                                           class="btn btn-warning" title="Modifier l'entretien">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                data-toggle="modal"
+                                                data-target="#deleteModal{{ rendu.entretiens|first.id }}"
+                                                title="Supprimer l'entretien">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    {% else %}
+                                        <a href="{{ path('app_admin_entretien_create', {'renduId': rendu.id}) }}"
+                                           class="btn btn-primary" title="Planifier un entretien">
+                                            <i class="fas fa-calendar-plus"></i> Planifier
+                                        </a>
+                                    {% endif %}
+                                </div>
+
+                                {% if rendu.entretiens|first %}
+                                    <!-- Modal de suppression -->
+                                    <div class="modal fade" id="deleteModal{{ rendu.entretiens|first.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirmer la suppression</h5>
+                                                    <button type="button" class="close" data-dismiss="modal">
+                                                        <span>&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Êtes-vous sûr de vouloir supprimer cet entretien ?</p>
+                                                    <p class="text-muted">
+                                                        <strong>Candidat:</strong> {{ rendu.user ? (rendu.user.firstName ~ ' ' ~ rendu.user.lastName)|trim : '—' }}<br>
+                                                        <strong>Date:</strong> {{ rendu.entretiens|first.dateEntretien|date('d/m/Y H:i') }}
+                                                    </p>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                                    <form method="post" action="{{ path('app_admin_entretien_delete', {'id': rendu.entretiens|first.id}) }}">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ rendu.entretiens|first.id) }}">
+                                                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                <div class="py-4">
+                                    <i class="fas fa-users fa-2x mb-2"></i>
+                                    <p>Aucun candidat avec une mission acceptée.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

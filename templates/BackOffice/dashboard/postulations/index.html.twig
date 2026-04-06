@@ -1,0 +1,220 @@
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Gestion des postulations{% endblock %}
+{% block page_title %}Postulations{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Postulations</li>
+{% endblock %}
+
+{% block body %}
+    {# Stats #}
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="small-box bg-primary">
+                <div class="inner"><h3>{{ stats.total }}</h3><p>Total</p></div>
+                <div class="icon"><i class="fas fa-file-alt"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-warning">
+                <div class="inner"><h3>{{ stats.pending }}</h3><p>En attente</p></div>
+                <div class="icon"><i class="fas fa-clock"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-success">
+                <div class="inner"><h3>{{ stats.accepted }}</h3><p>Acceptées</p></div>
+                <div class="icon"><i class="fas fa-check-circle"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-danger">
+                <div class="inner"><h3>{{ stats.refused }}</h3><p>Refusées</p></div>
+                <div class="icon"><i class="fas fa-times-circle"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Toutes les candidatures reçues</h3>
+            <div class="card-tools">
+                <span class="badge badge-info">{{ postulations|length }} candidature(s)</span>
+            </div>
+        </div>
+
+        <div class="card-body">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ type }} alert-dismissible">
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            {# Formulaire de recherche avancée #}
+            <form method="get" action="{{ path('app_admin_postulations_list') }}" class="mb-3">
+                <div class="row">
+                    <div class="col-md-3">
+                        <input type="text" name="keyword" class="form-control"
+                               placeholder="Rechercher (candidat, offre, entreprise...)"
+                               value="{{ filters.keyword|default('') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="statut" class="form-control">
+                            <option value="">Tous les statuts</option>
+                            <option value="En attente" {{ filters.statut == 'En attente' ? 'selected' : '' }}>En attente</option>
+                            <option value="Acceptée" {{ filters.statut == 'Acceptée' ? 'selected' : '' }}>Acceptée</option>
+                            <option value="Refusée" {{ filters.statut == 'Refusée' ? 'selected' : '' }}>Refusée</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="offreId" class="form-control">
+                            <option value="">Toutes les offres</option>
+                            {% for offre in offres %}
+                                <option value="{{ offre.id }}" {{ filters.offreId == offre.id ? 'selected' : '' }}>
+                                    {{ offre.titre }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="typeContrat" class="form-control">
+                            <option value="">Type de contrat</option>
+                            <option value="CDI" {{ filters.typeContrat == 'CDI' ? 'selected' : '' }}>CDI</option>
+                            <option value="CDD" {{ filters.typeContrat == 'CDD' ? 'selected' : '' }}>CDD</option>
+                            <option value="Stage" {{ filters.typeContrat == 'Stage' ? 'selected' : '' }}>Stage</option>
+                            <option value="Freelance" {{ filters.typeContrat == 'Freelance' ? 'selected' : '' }}>Freelance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="btn-group w-100">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
+                            <a href="{{ path('app_admin_postulations_list') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Réinitialiser
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+            </form>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Candidat</th>
+                            <th>Offre</th>
+                            <th>Date postulation</th>
+                            <th>Statut</th>
+                            <th>CV</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for p in postulations %}
+                        <tr>
+                            <td>
+                                {% if p.user %}
+                                    <strong>{{ p.user.firstName|default('') }} {{ p.user.lastName|default('') }}</strong>
+                                    <br><small class="text-muted">{{ p.user.email|default('') }}</small>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.offreEmploi %}
+                                    <a href="{{ path('app_admin_postulations_by_offre', {'id': p.offreEmploi.id}) }}">
+                                        {{ p.offreEmploi.titre|default('—') }}
+                                    </a>
+                                    <br><small class="text-muted">{{ p.offreEmploi.entreprise|default('') }}</small>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ p.datePostulation ? p.datePostulation|date('d/m/Y H:i') : '—' }}</td>
+                            <td>
+                                {% if p.statut == 'Acceptée' %}
+                                    <span class="badge badge-success">Acceptée</span>
+                                {% elseif p.statut == 'Refusée' %}
+                                    <span class="badge badge-danger">Refusée</span>
+                                {% else %}
+                                    <span class="badge badge-warning">En attente</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if p.cvPath %}
+                                    <a href="/{{ p.cvPath }}" target="_blank" class="btn btn-xs btn-info">
+                                        <i class="fas fa-file-pdf"></i> Voir CV
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <form method="post" action="{{ path('app_admin_postulations_update_statut', {'id': p.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ p.id) }}">
+                                        <select name="statut" class="form-control form-control-sm d-inline" style="width:auto"
+                                                onchange="this.form.submit()">
+                                            <option value="En attente" {{ p.statut == 'En attente' ? 'selected' : '' }}>En attente</option>
+                                            <option value="Acceptée" {{ p.statut == 'Acceptée' ? 'selected' : '' }}>Acceptée</option>
+                                            <option value="Refusée" {{ p.statut == 'Refusée' ? 'selected' : '' }}>Refusée</option>
+                                        </select>
+                                    </form>
+                                    <button type="button" class="btn btn-danger btn-sm ml-1"
+                                            data-toggle="modal"
+                                            data-target="#deletePostulationModal{{ p.id }}"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                {# Modal de confirmation suppression #}
+                                <div class="modal fade" id="deletePostulationModal{{ p.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Êtes-vous sûr de vouloir supprimer cette candidature ?</p>
+                                                <p class="text-muted">
+                                                    <strong>Candidat :</strong> {{ p.user ? p.user.firstName ~ ' ' ~ p.user.lastName : '—' }}<br>
+                                                    <strong>Offre :</strong> {{ p.offreEmploi ? p.offreEmploi.titre : '—' }}
+                                                </p>
+                                                <p class="text-danger small">Cette action est irréversible et supprimera également le CV associé.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                                <form method="post" action="{{ path('app_admin_postulations_delete', {'id': p.id}) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_postulation_' ~ p.id) }}">
+                                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-file-alt fa-2x mb-2"></i>
+                                <p>Aucune candidature reçue pour le moment.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

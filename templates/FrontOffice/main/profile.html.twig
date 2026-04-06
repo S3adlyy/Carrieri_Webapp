@@ -1,0 +1,934 @@
+{# templates/FrontOffice/main/profile.html.twig #}
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block candidate_page_heading %}Mon Profil{% endblock %}
+
+{% block candidate_breadcrumb %} / Profil{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260405-1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Styles spécifiques au profil - intégration avec la charte FXML */
+        .fo-charte-ui .fo-profile-card {
+            background: #fff;
+            border-radius: 24px;
+            border: 1px solid rgba(216, 201, 240, 0.65);
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .fo-charte-ui .fo-profile-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 18px 40px rgba(94, 84, 142, 0.2);
+        }
+
+        .fo-charte-ui .fo-profile-cover {
+            height: 140px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+        }
+
+        .fo-charte-ui .fo-profile-avatar {
+            position: absolute;
+            bottom: -50px;
+            left: 30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid #fff;
+            background: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fo-charte-ui .fo-profile-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .fo-charte-ui .fo-profile-avatar-fallback {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .fo-charte-ui .fo-profile-header {
+            padding: 60px 30px 20px 30px;
+            background: #fff;
+        }
+
+        .fo-charte-ui .fo-profile-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #1f2937;
+            margin-bottom: 0.25rem;
+        }
+
+        .fo-charte-ui .fo-profile-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+            margin-left: 12px;
+        }
+
+        .fo-charte-ui .fo-profile-meta {
+            color: #6b7280;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .fo-charte-ui .fo-profile-stats {
+            display: flex;
+            gap: 30px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .fo-charte-ui .fo-stat-item {
+            text-align: center;
+        }
+
+        .fo-charte-ui .fo-stat-number {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: #5e548e;
+            display: block;
+        }
+
+        .fo-charte-ui .fo-stat-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .fo-charte-ui .fo-profile-section {
+            padding: 20px 30px;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .fo-charte-ui .fo-section-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: #1f2937;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .fo-charte-ui .fo-section-title i {
+            color: #5e548e;
+            margin-right: 8px;
+        }
+
+        .fo-charte-ui .fo-info-row {
+            display: flex;
+            margin-bottom: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f8fafc;
+        }
+
+        .fo-charte-ui .fo-info-label {
+            width: 130px;
+            font-weight: 600;
+            color: #4b5563;
+            font-size: 0.85rem;
+        }
+
+        .fo-charte-ui .fo-info-value {
+            flex: 1;
+            color: #6b7280;
+            font-size: 0.85rem;
+        }
+
+        .fo-charte-ui .fo-info-value a {
+            color: #5e548e;
+            text-decoration: none;
+        }
+
+        .fo-charte-ui .fo-info-value a:hover {
+            text-decoration: underline;
+        }
+
+        .fo-charte-ui .fo-chip {
+            display: inline-block;
+            background: #f3f4f6;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: #4b5563;
+            margin: 0 6px 8px 0;
+            transition: all 0.2s ease;
+        }
+
+        .fo-charte-ui .fo-chip:hover {
+            background: #e5e7eb;
+            transform: translateY(-1px);
+        }
+
+        .fo-charte-ui .fo-edit-btn {
+            background: none;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            padding: 6px;
+            border-radius: 8px;
+        }
+
+        .fo-charte-ui .fo-edit-btn:hover {
+            color: #5e548e;
+            background: #f3f4f6;
+        }
+
+        .fo-charte-ui .fo-side-card {
+            background: #fff;
+            border-radius: 20px;
+            border: 1px solid rgba(216, 201, 240, 0.65);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.25s ease;
+        }
+
+        .fo-charte-ui .fo-side-card:hover {
+            box-shadow: 0 8px 25px rgba(94, 84, 142, 0.1);
+        }
+
+        .fo-charte-ui .fo-person-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .fo-charte-ui .fo-person-row:last-child {
+            border-bottom: none;
+        }
+
+        .fo-charte-ui .fo-person-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 700;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .fo-charte-ui .fo-person-name {
+            font-weight: 700;
+            color: #1f2937;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .fo-charte-ui .fo-person-sub {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .fo-charte-ui .fo-connect-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: auto;
+        }
+
+        .fo-charte-ui .fo-connect-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+        }
+
+        .fo-charte-ui .fo-ranking {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .fo-charte-ui .fo-ranking-stars {
+            color: #fbbf24;
+            font-size: 1rem;
+        }
+
+        .fo-charte-ui .fo-ranking-score {
+            font-weight: 700;
+            color: #5e548e;
+        }
+
+        .fo-charte-ui .fo-action-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .fo-charte-ui .fo-btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .fo-charte-ui .fo-btn-secondary {
+            background: #f3f4f6;
+            color: #4b5563;
+            border: 1px solid #e5e7eb;
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .fo-charte-ui .fo-btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .fo-charte-ui .fo-open-pill {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .fo-charte-ui .fo-open-dot {
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes foSlideIn {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fo-charte-ui .fo-profile-item {
+            animation: foSlideIn 0.45s ease both;
+        }
+
+        .fo-charte-ui .fo-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.55);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 1050;
+        }
+
+        .fo-charte-ui .fo-modal-backdrop.is-open {
+            display: flex;
+        }
+
+        .fo-charte-ui .fo-modal-card {
+            width: 100%;
+            max-width: 720px;
+            max-height: 90vh;
+            overflow: auto;
+            background: #fff;
+            border-radius: 24px;
+            border: 1px solid rgba(216, 201, 240, 0.65);
+            box-shadow: 0 18px 45px rgba(31, 41, 55, 0.22);
+            padding: 24px;
+        }
+
+        .fo-charte-ui .fo-modal-title {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #1f2937;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .fo-charte-ui .fo-form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .fo-charte-ui .fo-form-group {
+            margin-bottom: 16px;
+        }
+
+        .fo-charte-ui .fo-form-group.fo-span-2 {
+            grid-column: span 2;
+        }
+
+        .fo-charte-ui .fo-form-label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #4b5563;
+            margin-bottom: 6px;
+        }
+
+        .fo-charte-ui .fo-form-control {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            color: #374151;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .fo-charte-ui .fo-form-control:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 0 4px rgba(118, 75, 162, 0.12);
+        }
+
+        .fo-charte-ui textarea.fo-form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .fo-charte-ui .fo-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .fo-charte-ui .fo-flash-wrap {
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 767.98px) {
+            .fo-charte-ui .fo-form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .fo-charte-ui .fo-form-group.fo-span-2 {
+                grid-column: span 1;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block candidate_content_container_class %}container-fluid px-3 px-md-4 px-lg-5{% endblock %}
+
+{% block candidate_content_row_class %}row{% endblock %}
+
+{% block candidate_content_col_class %}col-12{% endblock %}
+
+{% block candidate_content %}
+    {% set isOwner = app.user and user.id == app.user.id %}
+    {% set fullName = ((user.firstName|default('') ~ ' ' ~ user.lastName|default(''))|trim) %}
+    {% if fullName is empty %}
+        {% set fullName = user.email|default('Profile')|split('@')|first|default('User') %}
+    {% endif %}
+
+    {% set roleLabel = ('ROLE_RECRUITER' in user.roles|default([]) or user.type == 'RECRUITER') ? 'Recruiter' : 'Candidate' %}
+    {% set subtitle = roleLabel == 'Recruiter' ? (user.orgName|default('—')) : (user.headline|default('—')) %}
+    {% set metaParts = [roleLabel] %}
+    {% if user.location|default(false) %}
+        {% set metaParts = metaParts|merge([user.location]) %}
+    {% endif %}
+
+    {% set initials = ((user.firstName|default('')|slice(0,1)) ~ (user.lastName|default('')|slice(0,1)))|upper %}
+    {% if initials is empty %}
+        {% set initials = user.email|default('U')|slice(0,2)|upper %}
+    {% endif %}
+
+    {% set hardSkills = user.hardSkills|default(null) ? user.hardSkills|split(',') : [] %}
+    {% set softSkills = user.softSkills|default(null) ? user.softSkills|split(',') : [] %}
+    {% set currentEdit = edit_section|default(app.request.query.get('edit')) %}
+
+    <div class="w-100 text-start fo-charte-ui fo-fxml-catalog fo-shell-root position-relative">
+
+        <div class="fo-flash-wrap">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label == 'error' ? 'danger' : label }} mb-2">{{ message }}</div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        {# Orbes décoratifs #}
+        <div class="fo-bg-orb fo-bg-orb-1"></div>
+        <div class="fo-bg-orb fo-bg-orb-2"></div>
+        <div class="fo-bg-orb fo-bg-orb-3"></div>
+
+        <div class="row g-4">
+            <!-- Colonne principale -->
+            <div class="col-lg-8">
+                <div class="fo-profile-card fo-profile-item">
+                    <!-- Cover et Avatar -->
+                    <div class="fo-profile-cover">
+                        <div class="fo-profile-avatar">
+                            {% if user.profilePic %}
+                                <img src="{{ asset(user.profilePic) }}" alt="{{ fullName }}">
+                            {% else %}
+                                <div class="fo-profile-avatar-fallback">{{ initials }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- En-tête du profil -->
+                    <div class="fo-profile-header">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div>
+                                <h1 class="fo-profile-name">
+                                    {{ fullName }}
+                                    <span class="fo-profile-badge">{{ roleLabel }}</span>
+                                </h1>
+                                <div class="fo-profile-meta">{{ metaParts|join(' • ') }}</div>
+                            </div>
+                            {% if isOwner %}
+                                <div class="fo-action-buttons">
+                                    <button class="fo-btn-secondary" onclick="openEditModal('basic')">
+                                        <i class="fas fa-edit"></i> Modifier
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Subtitle -->
+                        {% if subtitle != '—' %}
+                            <div class="fo-profile-meta" style="font-size: 0.9rem; color: #5e548e; margin-top: 5px;">
+                                {{ subtitle }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Ranking et stats -->
+                        <div class="fo-ranking">
+                            <div class="fo-ranking-stars">
+                                {% set rating = user.scoreGlobal|default(0) %}
+                                {% for i in 1..5 %}
+                                    {% if i <= rating %}
+                                        <i class="fas fa-star"></i>
+                                    {% elseif i - 0.5 <= rating %}
+                                        <i class="fas fa-star-half-alt"></i>
+                                    {% else %}
+                                        <i class="far fa-star"></i>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <span class="fo-ranking-score">{{ rating }}/5 ★</span>
+                            <div class="fo-open-pill ms-auto">
+                                <span class="fo-open-dot"></span>
+                                <span>Open to work</span>
+                            </div>
+                        </div>
+
+                        <!-- Bio -->
+                        {% if user.bio|default(false) %}
+                            <p class="mt-3" style="color: #6b7280; line-height: 1.6;">{{ user.bio }}</p>
+                        {% endif %}
+
+                        <!-- Stats -->
+                        <div class="fo-profile-stats">
+                            <div class="fo-stat-item">
+                                <span class="fo-stat-number">—</span>
+                                <span class="fo-stat-label">Vues du profil</span>
+                            </div>
+                            <div class="fo-stat-item">
+                                <span class="fo-stat-number">—</span>
+                                <span class="fo-stat-label">Connexions</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information -->
+                    <div class="fo-profile-section">
+                        <div class="fo-section-title">
+                            <span><i class="fas fa-address-card"></i> Contact Information</span>
+                            {% if isOwner %}
+                                <button class="fo-edit-btn" onclick="openEditModal('basic')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label"><i class="fas fa-phone"></i> Phone:</div>
+                            <div class="fo-info-value">{{ user.phone|default('—') }}</div>
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label"><i class="fas fa-envelope"></i> Email:</div>
+                            <div class="fo-info-value">{{ user.email|default('—') }}</div>
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label"><i class="fas fa-map-marker-alt"></i> Location:</div>
+                            <div class="fo-info-value">{{ user.location|default('—') }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Information -->
+                    <div class="fo-profile-section">
+                        <div class="fo-section-title">
+                            <span><i class="fas fa-user"></i> Basic Information</span>
+                            {% if isOwner %}
+                                <button class="fo-edit-btn" onclick="openEditModal('basic')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label">First Name:</div>
+                            <div class="fo-info-value">{{ user.firstName|default('—') }}</div>
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label">Last Name:</div>
+                            <div class="fo-info-value">{{ user.lastName|default('—') }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Education -->
+                    <div class="fo-profile-section">
+                        <div class="fo-section-title">
+                            <span><i class="fas fa-graduation-cap"></i> Education</span>
+                            {% if isOwner %}
+                                <button class="fo-edit-btn" onclick="openEditModal('education')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label">School:</div>
+                            <div class="fo-info-value">{{ user.school|default('—') }}</div>
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label">Degree:</div>
+                            <div class="fo-info-value">{{ user.degree|default('—') }}</div>
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label">Field of Study:</div>
+                            <div class="fo-info-value">{{ user.fieldOfStudy|default('—') }}</div>
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label">Graduation Year:</div>
+                            <div class="fo-info-value">{{ user.graduationYear|default('—') }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Skills -->
+                    <div class="fo-profile-section">
+                        <div class="fo-section-title">
+                            <span><i class="fas fa-code"></i> Skills</span>
+                            {% if isOwner %}
+                                <button class="fo-edit-btn" onclick="openEditModal('skills')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+
+                        {% if softSkills is not empty %}
+                            <div class="mb-3">
+                                <div class="fo-info-label mb-2">Soft Skills:</div>
+                                <div>
+                                    {% for skill in softSkills %}
+                                        {% if skill|trim %}
+                                            <span class="fo-chip">{{ skill|trim }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if hardSkills is not empty %}
+                            <div>
+                                <div class="fo-info-label mb-2">Technical Skills:</div>
+                                <div>
+                                    {% for skill in hardSkills %}
+                                        {% if skill|trim %}
+                                            <span class="fo-chip">{{ skill|trim }}</span>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if softSkills is empty and hardSkills is empty %}
+                            <div class="fo-info-value">—</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Links -->
+                    <div class="fo-profile-section">
+                        <div class="fo-section-title">
+                            <span><i class="fas fa-link"></i> Links</span>
+                            {% if isOwner %}
+                                <button class="fo-edit-btn" onclick="openEditModal('links')">
+                                    <i class="fas fa-pencil-alt"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label"><i class="fab fa-github"></i> GitHub:</div>
+                            <div class="fo-info-value">
+                                {% if user.githubUrl|default(false) %}
+                                    <a href="{{ user.githubUrl }}" target="_blank" rel="noopener noreferrer">{{ user.githubUrl }}</a>
+                                {% else %}—{% endif %}
+                            </div>
+                        </div>
+                        <div class="fo-info-row">
+                            <div class="fo-info-label"><i class="fas fa-globe"></i> Portfolio:</div>
+                            <div class="fo-info-value">
+                                {% if user.portfolioUrl|default(false) %}
+                                    <a href="{{ user.portfolioUrl }}" target="_blank" rel="noopener noreferrer">{{ user.portfolioUrl }}</a>
+                                {% else %}—{% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Colonne latérale droite -->
+            <div class="col-lg-4">
+                <!-- Profile Language Card -->
+                <div class="fo-side-card">
+                    <div class="fo-section-title">
+                        <span><i class="fas fa-language"></i> Profile Language</span>
+                    </div>
+                    <div class="fo-info-value mb-3">English</div>
+                    <hr class="my-3" style="border-color: #f0f0f0;">
+                    <div class="fo-section-title pt-2">
+                        <span><i class="fas fa-globe"></i> Public Profile URL</span>
+                    </div>
+                    <div class="fo-info-value" style="font-size: 0.8rem; word-break: break-all;">
+                        <i class="fas fa-link"></i> carrieri.app/in/{{ fullName|lower|replace({' ':'-'}) }}
+                    </div>
+                </div>
+
+                <!-- People You May Know -->
+                <div class="fo-side-card">
+                    <div class="fo-section-title mb-3">
+                        <span><i class="fas fa-users"></i> People you may know</span>
+                    </div>
+                    {% if suggestions is defined and suggestions is not empty %}
+                        <div>
+                            {% for person in suggestions %}
+                                {% set personName = ((person.firstName|default('') ~ ' ' ~ person.lastName|default(''))|trim) %}
+                                {% set personInitials = ((person.firstName|default('')|slice(0,1)) ~ (person.lastName|default('')|slice(0,1)))|upper %}
+                                <div class="fo-person-row">
+                                    <div class="fo-person-avatar">{{ personInitials ?: 'U' }}</div>
+                                    <div class="flex-grow-1">
+                                        <div class="fo-person-name">{{ personName ?: 'User' }}</div>
+                                        <div class="fo-person-sub">{{ person.headline|default(person.orgName|default('Carrieri member')) }}</div>
+                                        <div class="fo-person-sub"><i class="fas fa-map-marker-alt"></i> {{ person.location|default('') }}</div>
+                                    </div>
+                                    <button class="fo-connect-btn" onclick="connectWithUser({{ person.id }})">Connect</button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="fo-info-value mb-0">No suggestions yet.</p>
+                    {% endif %}
+                    <hr class="my-3" style="border-color: #f0f0f0;">
+                    <button class="fo-btn-secondary w-100" onclick="showAllSuggestions()">
+                        Show all <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <!-- Workspace Card -->
+                <div class="fo-side-card">
+                    <div class="fo-section-title">
+                        <span><i class="fas fa-briefcase"></i> Workspace</span>
+                    </div>
+                    <p class="fo-info-value mb-0">
+                        Workspace section placeholder — we will connect this to your existing workspace entity and actions in the next step.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        {% if isOwner %}
+            <div id="fo-edit-modal-backdrop" class="fo-modal-backdrop {% if currentEdit %}is-open{% endif %}" onclick="closeEditModalOnBackdrop(event)">
+                <div class="fo-modal-card" role="dialog" aria-modal="true" aria-labelledby="fo-edit-modal-title">
+                    {% if currentEdit == 'basic' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-user-edit"></i> Edit Basic Information</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_basic_save') }}">
+                            <div class="fo-form-grid">
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">First Name</label>
+                                    <input class="fo-form-control" type="text" name="firstName" value="{{ user.firstName|default('') }}" required>
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Last Name</label>
+                                    <input class="fo-form-control" type="text" name="lastName" value="{{ user.lastName|default('') }}" required>
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Location</label>
+                                    <input class="fo-form-control" type="text" name="location" value="{{ user.location|default('') }}">
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Phone</label>
+                                    <input class="fo-form-control" type="text" name="phone" value="{{ user.phone|default('') }}">
+                                </div>
+                                <div class="fo-form-group fo-span-2">
+                                    <label class="fo-form-label">Headline</label>
+                                    <input class="fo-form-control" type="text" name="headline" value="{{ user.headline|default('') }}">
+                                </div>
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% elseif currentEdit == 'education' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-graduation-cap"></i> Edit Education</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_education_save') }}">
+                            <div class="fo-form-grid">
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">School</label>
+                                    <input class="fo-form-control" type="text" name="school" value="{{ user.school|default('') }}">
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Degree</label>
+                                    <input class="fo-form-control" type="text" name="degree" value="{{ user.degree|default('') }}">
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Field of Study</label>
+                                    <input class="fo-form-control" type="text" name="fieldOfStudy" value="{{ user.fieldOfStudy|default('') }}">
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Graduation Year</label>
+                                    <input class="fo-form-control" type="text" name="graduationYear" value="{{ user.graduationYear|default('') }}">
+                                </div>
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% elseif currentEdit == 'skills' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-code"></i> Edit Skills</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_skills_save') }}">
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Soft Skills</label>
+                                <textarea class="fo-form-control" name="softSkills">{{ user.softSkills|default('') }}</textarea>
+                            </div>
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Technical Skills</label>
+                                <textarea class="fo-form-control" name="hardSkills">{{ user.hardSkills|default('') }}</textarea>
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% elseif currentEdit == 'links' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-link"></i> Edit Links</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_links_save') }}">
+                            <div class="fo-form-grid">
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">GitHub</label>
+                                    <input class="fo-form-control" type="text" name="githubUrl" value="{{ user.githubUrl|default('') }}">
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Portfolio</label>
+                                    <input class="fo-form-control" type="text" name="portfolioUrl" value="{{ user.portfolioUrl|default('') }}">
+                                </div>
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        function openEditModal(section) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('edit', section);
+            window.location.href = url.toString();
+        }
+
+        function closeEditModal() {
+            const url = new URL(window.location.href);
+            url.searchParams.delete('edit');
+            window.location.href = url.toString();
+        }
+
+        function closeEditModalOnBackdrop(event) {
+            if (event.target.id === 'fo-edit-modal-backdrop') {
+                closeEditModal();
+            }
+        }
+
+        function connectWithUser(userId) {
+            console.log('Connect with user:', userId);
+            alert('Connection request sent!');
+        }
+
+        function showAllSuggestions() {
+            console.log('Show all suggestions');
+            alert('All suggestions feature coming soon!');
+        }
+    </script>
+{% endblock %}

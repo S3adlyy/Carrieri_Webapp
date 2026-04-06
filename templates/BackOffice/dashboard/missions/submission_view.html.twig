@@ -1,0 +1,189 @@
+{# templates/BackOffice/dashboard/missions/submission_view.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Détail de la soumission{% endblock %}
+
+{% block page_title %}Détail de la soumission{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_missions_list') }}">Missions</a></li>
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_mission_submissions', {'id': mission.id}) }}">Soumissions</a></li>
+    <li class="breadcrumb-item active">Détail</li>
+{% endblock %}
+
+{% block body %}
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Code soumis par le candidat</h3>
+                    <div class="card-tools">
+                        <span class="badge badge-info">{{ rendu.langue|upper }}</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <pre class="p-3 mb-0" style="background: #1e1e1e; color: #d4d4d4; font-family: 'Courier New', monospace; font-size: 13px; overflow-x: auto; max-height: 500px;"><code>{{ rendu.codeSolution|escape }}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Informations</h3>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <tr>
+                            <th>Candidat :</th>
+                            <td>
+                                {% set candidat = rendu.user %}
+                                {% if candidat %}
+                                    {{ (candidat.firstName ~ ' ' ~ candidat.lastName)|trim ?: candidat.email }}
+                                {% else %}
+                                    Candidat #{{ rendu.candidatId }}
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Email :</th>
+                            <td>{{ candidat ? candidat.email : '—' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Date de soumission :</th>
+                            <td>{{ rendu.dateRendu|date('d/m/Y H:i:s') }}</td>
+                        </tr>
+                        <tr>
+                            <th>Score :</th>
+                            <td>
+                            <span class="badge {% if rendu.score >= 70 %}badge-success{% elseif rendu.score >= 40 %}badge-warning{% else %}badge-danger{% endif %}">
+                                {{ rendu.score|default(0)|round }}%
+                            </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Statut :</th>
+                            <td>
+                                {% if rendu.statut == 'accepte' %}
+                                    <span class="badge badge-success">✓ Acceptée</span>
+                                {% elseif rendu.statut == 'refuse' %}
+                                    <span class="badge badge-danger">✗ Refusée</span>
+                                {% else %}
+                                    <span class="badge badge-warning">⏳ En attente</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Langage :</th>
+                            <td>{{ rendu.langue|upper }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Résultats des tests</h3>
+                </div>
+                <div class="card-body">
+                    {% if rendu.resultat %}
+                        {{ rendu.resultat|raw }}
+                    {% else %}
+                        <p class="text-muted">Aucun résultat disponible.</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if rendu.feedback %}
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h3 class="card-title">Feedback du recruteur</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ rendu.feedback|nl2br }}</p>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if rendu.statut == 'en_attente' %}
+                <div class="card">
+                    <div class="card-header bg-warning">
+                        <h3 class="card-title">Action</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group w-100">
+                            <button type="button" class="btn btn-success" data-toggle="modal" data-target="#acceptModal">
+                                <i class="fas fa-check"></i> Accepter
+                            </button>
+                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#rejectModal">
+                                <i class="fas fa-times"></i> Refuser
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal Accepter -->
+    <div class="modal fade" id="acceptModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="post" action="{{ path('app_admin_submission_review', {'id': rendu.id}) }}">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">Accepter la soumission</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Êtes-vous sûr de vouloir accepter cette soumission ?</p>
+                        <div class="form-group">
+                            <label for="feedback">Feedback :</label>
+                            <textarea name="feedback" id="feedback" class="form-control" rows="3" placeholder="Félicitations ! Votre solution a été acceptée..."></textarea>
+                        </div>
+                        <input type="hidden" name="action" value="accept">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-success">Accepter</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Refuser -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="post" action="{{ path('app_admin_submission_review', {'id': rendu.id}) }}">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title">Refuser la soumission</h5>
+                        <button type="button" class="close text-white" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Êtes-vous sûr de vouloir refuser cette soumission ?</p>
+                        <div class="form-group">
+                            <label for="feedback">Feedback :</label>
+                            <textarea name="feedback" id="feedback" class="form-control" rows="3" placeholder="Désolé, votre solution n'a pas été retenue..."></textarea>
+                        </div>
+                        <input type="hidden" name="action" value="reject">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                        <button type="submit" class="btn btn-danger">Refuser</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{{ path('app_admin_mission_submissions', {'id': mission.id}) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Retour aux soumissions
+        </a>
+    </div>
+{% endblock %}

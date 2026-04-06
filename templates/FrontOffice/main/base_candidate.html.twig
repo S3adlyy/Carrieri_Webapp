@@ -1,0 +1,35 @@
+{# Candidate pages — same shell as public Purdue pages (base + logo strip + navbar; no footer) #}
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block body %}
+	<div class="top_header_banner">
+		{% include 'FrontOffice/partials/_logo_contact.html.twig' %}
+		{% include 'FrontOffice/partials/_navbar_candidate.html.twig' %}
+
+		<section class="section-top">
+			<div class="container">
+				<div class="col-lg-10 offset-lg-1 text-center">
+					<div class="section-top-title wow fadeInRight" data-wow-duration="1s" data-wow-delay="0.3s" data-wow-offset="0">
+						<h1>{% block candidate_page_heading %}Espace candidat{% endblock %}</h1>
+						<ul>
+							<li><a href="{{ path('app_candidate_main') }}">Accueil</a></li>
+							<li>{% block candidate_breadcrumb %} / {% endblock %}</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</section>
+	</div>
+
+	<section class="login_register fo-candidate-content section-padding">
+		<div class="{% block candidate_content_container_class %}container{% endblock %}">
+			<div class="{% block candidate_content_row_class %}row justify-content-center{% endblock %}">
+				<div class="{% block candidate_content_col_class %}col-lg-8 col-md-10 text-center{% endblock %}">
+					{% block candidate_content %}
+						<p class="mb-0" style="color: #5c6478;">Contenu à venir.</p>
+					{% endblock %}
+				</div>
+			</div>
+		</div>
+	</section>
+{% endblock %}

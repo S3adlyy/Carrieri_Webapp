@@ -1,0 +1,279 @@
+{# templates/BackOffice/dashboard/entretiens/create.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Planifier un entretien{% endblock %}
+
+{% block page_title %}Planifier un entretien{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item"><a href="{{ path('app_admin_candidats_acceptes') }}">Candidats acceptés</a></li>
+    <li class="breadcrumb-item active">Planifier</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Planifier un entretien</h3>
+        </div>
+        <div class="card-body">
+            <div class="candidate-info alert alert-info">
+                <div class="d-flex align-items-center">
+                    <div class="candidate-avatar">
+                        <i class="fas fa-user-circle fa-3x"></i>
+                    </div>
+                    <div class="candidate-details">
+                        <h4 class="mb-1">{{ rendu.user ? (rendu.user.firstName ~ ' ' ~ rendu.user.lastName)|trim : rendu.user.email }}</h4>
+                        <p class="mb-0">
+                            <strong>Mission:</strong> {{ rendu.mission.type }} |
+                            <strong>Score:</strong> {{ rendu.score|round }}% (requis: {{ rendu.mission.scoreMin }}%)
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'entretien-form'}}) }}
+
+            <div class="form-group">
+                {{ form_label(form.dateEntretien, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.dateEntretien, {'attr': {
+                    'class': 'form-control datetime-picker' ~ (form.dateEntretien.vars.errors|length ? ' is-invalid' : '')
+                }}) }}
+                <div class="form-hint">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar-alt"></i>
+                        Choisissez une date et heure (doit être dans le futur)
+                    </small>
+                </div>
+                {{ form_errors(form.dateEntretien) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.type, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                <div class="type-buttons">
+                    <button type="button" class="type-btn" data-type="Technique">💻 Technique</button>
+                    <button type="button" class="type-btn" data-type="RH">👥 RH</button>
+                    <button type="button" class="type-btn" data-type="Managerial">📊 Managerial</button>
+                    <button type="button" class="type-btn" data-type="Final">🎯 Final</button>
+                </div>
+                {{ form_widget(form.type, {'attr': {
+                    'class': 'form-control' ~ (form.type.vars.errors|length ? ' is-invalid' : ''),
+                    'placeholder': 'Ou saisissez un type personnalisé...'
+                }}) }}
+                <div class="form-hint">
+                    <small class="text-muted">
+                        <i class="fas fa-briefcase"></i>
+                        Choisissez un type prédéfini ou saisissez le vôtre
+                    </small>
+                </div>
+                {{ form_errors(form.type) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.lien, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.lien, {'attr': {
+                    'class': 'form-control' ~ (form.lien.vars.errors|length ? ' is-invalid' : ''),
+                    'placeholder': 'https://meet.google.com/...'
+                }}) }}
+                <div class="form-hint">
+                    <small class="text-muted">
+                        <i class="fas fa-video"></i>
+                        Lien de visioconférence (optionnel)
+                    </small>
+                </div>
+                {{ form_errors(form.lien) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.notes, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.notes, {'attr': {
+                    'class': 'form-control' ~ (form.notes.vars.errors|length ? ' is-invalid' : ''),
+                    'rows': 4,
+                    'placeholder': 'Préparez-vous à discuter de...'
+                }}) }}
+                <div class="form-hint">
+                    <small class="text-muted">
+                        <i class="fas fa-sticky-note"></i>
+                        Notes supplémentaires pour le candidat (optionnel)
+                    </small>
+                </div>
+                {{ form_errors(form.notes) }}
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-calendar-check"></i> Planifier l'entretien
+                </button>
+                <a href="{{ path('app_admin_candidats_acceptes') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> Annuler
+                </a>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <style>
+        .candidate-info {
+            background: linear-gradient(135deg, #f3e8ff 0%, #e8f4ff 100%);
+            border: none;
+            border-radius: 12px;
+            padding: 15px 20px;
+        }
+
+        .candidate-avatar {
+            margin-right: 15px;
+            color: #667eea;
+        }
+
+        .candidate-details h4 {
+            margin: 0 0 5px 0;
+            color: #1f2937;
+        }
+
+        .candidate-details p {
+            color: #4b5563;
+        }
+
+        .entretien-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #2c3e50;
+            display: block;
+        }
+
+        .form-control {
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+            padding: 10px 12px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        .form-control.is-invalid {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
+
+        .invalid-feedback {
+            display: block;
+            color: #dc2626;
+            font-size: 12px;
+            margin-top: 5px;
+            padding: 6px 12px;
+            background-color: #fef2f2;
+            border-radius: 6px;
+            border-left: 3px solid #dc2626;
+        }
+
+        .form-hint {
+            margin-top: 5px;
+        }
+
+        /* Type buttons */
+        .type-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .type-btn {
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            color: #475569;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .type-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Actions */
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
+        }
+
+        /* DateTime picker styling */
+        input[type="datetime-local"] {
+            min-height: 42px;
+        }
+    </style>
+
+    <script>
+        // Pré-remplir le type avec les boutons
+        const typeButtons = document.querySelectorAll('.type-btn');
+        const typeField = document.getElementById('entretien_type');
+
+        typeButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const typeValue = this.dataset.type;
+                if (typeField) {
+                    typeField.value = typeValue;
+                    // Mettre en évidence le bouton sélectionné
+                    typeButtons.forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+
+                    // Déclencher l'événement input pour la validation
+                    const event = new Event('input', { bubbles: true });
+                    typeField.dispatchEvent(event);
+                }
+            });
+        });
+
+        // Validation de la date (doit être dans le futur)
+        const dateField = document.getElementById('entretien_dateEntretien');
+        if (dateField) {
+            const now = new Date();
+            const minDateTime = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+            const minDateStr = minDateTime.toISOString().slice(0, 16);
+            dateField.min = minDateStr;
+        }
+    </script>
+{% endblock %}

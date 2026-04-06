@@ -1,0 +1,304 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Détail de l'offre{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260406-1">
+{% endblock %}
+
+{% block candidate_page_heading %}Détail de l'offre{% endblock %}
+
+{% block candidate_breadcrumb %} / <a href="{{ path('app_candidate_offres') }}">Offres</a> / {{ offre.titre }}{% endblock %}
+
+{% block candidate_content_container_class %}container-fluid px-3 px-md-4 px-lg-5{% endblock %}
+
+{% block candidate_content_row_class %}row{% endblock %}
+
+{% block candidate_content_col_class %}col-12{% endblock %}
+
+{% block candidate_content %}
+    <div class="w-100 text-start fo-charte-ui">
+        <a href="{{ path('app_candidate_offres') }}" class="btn btn-outline-secondary btn-sm mb-3">
+            ← Retour aux offres
+        </a>
+
+        <div class="card shadow-sm fo-charte-card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap">
+                    <h3 class="mb-0">{{ offre.titre }}</h3>
+                    <span class="badge
+                    {% if offre.typeContrat == 'CDI' %}badge-success
+                    {% elseif offre.typeContrat == 'CDD' %}badge-warning
+                    {% elseif offre.typeContrat == 'Stage' %}badge-info
+                    {% else %}badge-danger{% endif %}">
+                    {{ offre.typeContrat }}
+                </span>
+                </div>
+
+                <p class="text-muted mb-4">
+                    <strong>{{ offre.entreprise }}</strong>
+                    &nbsp;|&nbsp;
+                    📍 {{ offre.localisation }}
+                    &nbsp;|&nbsp;
+                    💰 {{ offre.salaire }} DT
+                </p>
+
+                {# STATS GRID - conservé mais stylisé #}
+                <div class="row mb-4">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="fo-charte-card fo-stat-card p-3 text-center">
+                            <small>Salaire</small>
+                            <strong>{{ offre.salaire }} DT</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="fo-charte-card fo-stat-card p-3 text-center">
+                            <small>Jours restants</small>
+                            <strong>{{ joursRestants is not null ? joursRestants : '—' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="fo-charte-card fo-stat-card p-3 text-center">
+                            <small>Missions</small>
+                            <strong>{{ missionsCount }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="fo-charte-card fo-stat-card p-3 text-center
+                        {% if alreadyApplied %}
+                            {% if postulationStatus == 'Acceptée' %}border border-success bg-success-light
+                            {% elseif postulationStatus == 'Refusée' %}border border-danger bg-danger-light
+                            {% else %}border border-warning bg-warning-light{% endif %}
+                        {% endif %}">
+                            <small>Candidature</small>
+                            <strong>
+                                {% if alreadyApplied %}
+                                    {% if postulationStatus == 'Acceptée' %}
+                                        ✅ Acceptée
+                                    {% elseif postulationStatus == 'Refusée' %}
+                                        ❌ Refusée
+                                    {% else %}
+                                        ⏳ En attente
+                                    {% endif %}
+                                {% else %}
+                                    📝 Non postulé
+                                {% endif %}
+                            </strong>
+                        </div>
+                    </div>
+                </div>
+
+                {# META GRID - conservé mais stylisé #}
+                <div class="row mb-4">
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-light p-3 rounded">
+                            <small class="text-muted d-block">Localisation</small>
+                            <strong>{{ offre.localisation }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-light p-3 rounded">
+                            <small class="text-muted d-block">Qualification</small>
+                            <strong>{{ offre.niveauQualification }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-light p-3 rounded">
+                            <small class="text-muted d-block">Expérience</small>
+                            <strong>{{ offre.experienceRequise }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-light p-3 rounded">
+                            <small class="text-muted d-block">Expiration</small>
+                            <strong>{{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-light p-3 rounded">
+                            <small class="text-muted d-block">Contact</small>
+                            <strong>{{ offre.contactRecruteur }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="bg-light p-3 rounded">
+                            <small class="text-muted d-block">Secteur</small>
+                            <strong>{{ offre.secteurActivite }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <h5>Description</h5>
+                <p class="mb-4">{{ offre.description|nl2br }}</p>
+
+                {# MISSIONS SECTION - conservé avec toggle #}
+                <div class="fo-missions-section">
+                    <div class="fo-missions-header">
+                        <h5>Exemples de Missions associées à cette offre</h5>
+                        <button type="button" class="fo-toggle-btn" id="missionToggleBtn" onclick="toggleMissions()">
+                            ↓
+                        </button>
+                    </div>
+
+                    <div id="missionsBlock" class="fo-missions-list" style="display: none;">
+                        {% if missions is defined and missions|length > 0 %}
+                            {% for mission in missions %}
+                                <div class="fo-mission-card"
+                                     data-mission-id="{{ mission.id }}"
+                                     data-mission-type="{{ mission.type }}"
+                                     style="cursor: pointer; transition: all 0.2s ease;">
+                                    <div class="fo-mission-top">
+                                    <span class="fo-mission-type">
+                                        {{ mission.type ?: 'Mission' }}
+                                    </span>
+                                        <span class="fo-mission-score">
+                                        Score min : {{ mission.scoreMin ?: '—' }}
+                                    </span>
+                                    </div>
+                                    <div class="fo-mission-description">
+                                        {{ mission.description ?: 'Aucune description.' }}
+                                    </div>
+                                    <div class="fo-mission-date">
+                                        Créée le : {{ mission.createdAt ? mission.createdAt|date('d/m/Y H:i') : '—' }}
+                                    </div>
+                                    <div class="fo-mission-hint" style="margin-top: 10px; font-size: 11px; color: #667eea; text-align: right;">
+                                        <i class="fas fa-hand-pointer"></i> Double-cliquez pour accéder à la mission
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="fo-no-missions">
+                                Aucune mission liée à cette offre.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <hr>
+                <div class="d-flex justify-content-between flex-wrap">
+                    <a href="{{ path('app_candidate_offres') }}" class="btn btn-outline-secondary">
+                        Retour aux offres
+                    </a>
+                    {% if alreadyApplied %}
+                        <span class="btn btn-secondary disabled">Déjà postulé</span>
+                    {% else %}
+                        <a href="{{ path('app_candidate_offre_apply', {'id': offre.id}) }}" class="btn btn-primary">
+                            Postuler
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .bg-success-light { background-color: rgba(16, 185, 129, 0.1); }
+        .bg-danger-light { background-color: rgba(220, 38, 38, 0.1); }
+        .bg-warning-light { background-color: rgba(245, 158, 11, 0.1); }
+        .badge-info { background: #3b82f6; color: #fff; }
+
+        .fo-missions-section {
+            margin-top: 20px;
+            margin-bottom: 30px;
+            background: #f9fbff;
+            border: 1px solid #e6eefc;
+            border-radius: 18px;
+            padding: 22px;
+        }
+        .fo-missions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+        .fo-missions-header h5 { margin: 0; color: #223a7a; font-weight: 800; }
+        .fo-toggle-btn {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+        .fo-missions-list { margin-top: 15px; }
+        .fo-mission-card {
+            background: #fff;
+            border: 1px solid #e5edf9;
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 14px;
+            box-shadow: 0 6px 18px rgba(31, 55, 120, 0.06);
+            transition: all 0.2s ease;
+        }
+        .fo-mission-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(102, 126, 234, 0.15);
+            border-color: #667eea;
+        }
+        .fo-mission-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .fo-mission-type {
+            display: inline-block;
+            background: rgba(59, 130, 246, 0.12);
+            color: #2563eb;
+            border-radius: 999px;
+            padding: 7px 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .fo-mission-score { color: #1f3470; font-size: 14px; font-weight: 700; }
+        .fo-mission-description { color: #5f6780; line-height: 1.7; margin-bottom: 8px; }
+        .fo-mission-date { color: #6b7280; font-size: 13px; font-weight: 600; }
+        .fo-no-missions { color: #6b7280; font-weight: 600; padding: 10px 0; }
+    </style>
+
+    <script>
+        function toggleMissions() {
+            const block = document.getElementById('missionsBlock');
+            const btn = document.getElementById('missionToggleBtn');
+            if (block.style.display === 'none') {
+                block.style.display = 'block';
+                btn.style.transform = 'rotate(180deg)';
+            } else {
+                block.style.display = 'none';
+                btn.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const missionCards = document.querySelectorAll('.fo-mission-card');
+            missionCards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px)';
+                    this.style.boxShadow = '0 12px 24px rgba(102, 126, 234, 0.15)';
+                    this.style.borderColor = '#667eea';
+                });
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                    this.style.boxShadow = '0 6px 18px rgba(31, 55, 120, 0.06)';
+                    this.style.borderColor = '#e5edf9';
+                });
+                card.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    const missionId = this.dataset.missionId;
+                    if (missionId) {
+                        window.location.href = "{{ path('app_candidate_rendu_mission', {'id': 'MISSION_ID_PLACEHOLDER'}) }}".replace('MISSION_ID_PLACEHOLDER', missionId);
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}
