@@ -57,22 +57,47 @@
                 {% endfor %}
             {% endfor %}
 
+            {# Formulaire de recherche avancée #}
             <form method="get" action="{{ path('app_admin_offres_list') }}" class="mb-3">
-                <div class="input-group">
-                    <input type="text" name="search" class="form-control"
-                           placeholder="Rechercher par titre, entreprise, localisation..."
-                           value="{{ search|default('') }}">
-                    <div class="input-group-append">
-                        <button class="btn btn-primary" type="submit">
-                            <i class="fas fa-search"></i> Rechercher
-                        </button>
-                        {% if search|default('') %}
+                <div class="row">
+                    <div class="col-md-4">
+                        <input type="text" name="keyword" class="form-control"
+                               placeholder="Rechercher par titre, entreprise, localisation..."
+                               value="{{ filters.keyword|default('') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <select name="typeContrat" class="form-control">
+                            <option value="">Tous les contrats</option>
+                            <option value="CDI" {{ filters.typeContrat == 'CDI' ? 'selected' : '' }}>CDI</option>
+                            <option value="CDD" {{ filters.typeContrat == 'CDD' ? 'selected' : '' }}>CDD</option>
+                            <option value="Stage" {{ filters.typeContrat == 'Stage' ? 'selected' : '' }}>Stage</option>
+                            <option value="Freelance" {{ filters.typeContrat == 'Freelance' ? 'selected' : '' }}>Freelance</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <select name="statut" class="form-control">
+                            <option value="">Tous les statuts</option>
+                            <option value="active" {{ filters.statut == 'active' ? 'selected' : '' }}>Active</option>
+                            <option value="expiree" {{ filters.statut == 'expiree' ? 'selected' : '' }}>Expirée</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="number" name="salaireMin" class="form-control"
+                               placeholder="Salaire min (DT)"
+                               value="{{ filters.salaireMin|default('') }}">
+                    </div>
+                    <div class="col-md-2">
+                        <div class="btn-group w-100">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i> Filtrer
+                            </button>
                             <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary">
-                                <i class="fas fa-times"></i> Réinitialiser
+                                <i class="fas fa-times"></i>
                             </a>
-                        {% endif %}
+                        </div>
                     </div>
                 </div>
+                
             </form>
         </div>
 
@@ -80,16 +105,16 @@
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0">
                     <thead>
-                    <tr>
-                        <th>Titre</th>
-                        <th>Entreprise</th>
-                        <th>Localisation</th>
-                        <th>Contrat</th>
-                        <th>Salaire</th>
-                        <th>Expiration</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
-                    </tr>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Entreprise</th>
+                            <th>Localisation</th>
+                            <th>Contrat</th>
+                            <th>Salaire</th>
+                            <th>Expiration</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                     {% for o in offres %}
@@ -109,7 +134,8 @@
                                 {% endif %}
                             </td>
                             <td>{{ o.salaire ? o.salaire ~ ' DT' : '—' }}</td>
-                            <td>{{ o.dateExpiration ? o.dateExpiration|date('d/m/Y H:i') : '—' }}</td>                            <td>
+                            <td>{{ o.dateExpiration ? o.dateExpiration|date('d/m/Y H:i') : '—' }}</td>
+                            <td>
                                 {% if o.dateExpiration and o.dateExpiration > date() %}
                                     <span class="badge badge-success">Active</span>
                                 {% else %}

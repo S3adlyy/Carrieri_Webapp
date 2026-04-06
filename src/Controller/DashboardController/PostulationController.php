@@ -28,26 +28,42 @@ class PostulationController extends AbstractController
 
     #[Route('/', name: 'app_admin_postulations_list')]
     #[IsGranted('ROLE_RECRUITER')]
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        $postulations = $this->postulationRepository->findByRecruiter($user);
+        // Récupérer tous les filtres
+        $filters = [
+            'keyword' => $request->query->get('keyword', ''),
+            'statut' => $request->query->get('statut', ''),
+            'offreId' => $request->query->get('offreId', ''),
+            'typeContrat' => $request->query->get('typeContrat', ''),
+            'dateDebut' => $request->query->get('dateDebut', ''),
+            'dateFin' => $request->query->get('dateFin', ''),
+        ];
+
+        // Utiliser la nouvelle méthode de recherche avancée
+        $postulations = $this->postulationRepository->searchPostulationsWithFilters($user, $filters);
         $stats = $this->getStats($user);
+
+        // Liste des offres pour le filtre
+        $offres = $this->offreEmploiRepository->findByUserWithSearch($user, '');
 
         return $this->render('BackOffice/dashboard/postulations/index.html.twig', [
             'postulations' => $postulations,
             'stats' => $stats,
+            'filters' => $filters,
+            'offres' => $offres,
             'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
         ]);
     }
 
     #[Route('/offre/{id}', name: 'app_admin_postulations_by_offre')]
     #[IsGranted('ROLE_RECRUITER')]
-    public function byOffre(int $id): Response
+    public function byOffre(int $id, Request $request): Response
     {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -60,11 +76,21 @@ class PostulationController extends AbstractController
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
-        $postulations = $this->postulationRepository->findByOffreAndRecruiter($id, $user);
+        // Récupérer les filtres pour la page par offre
+        $filters = [
+            'keyword' => $request->query->get('keyword', ''),
+            'statut' => $request->query->get('statut', ''),
+            'dateDebut' => $request->query->get('dateDebut', ''),
+            'dateFin' => $request->query->get('dateFin', ''),
+            'offreId' => $id,
+        ];
+
+        $postulations = $this->postulationRepository->searchPostulationsWithFilters($user, $filters);
 
         return $this->render('BackOffice/dashboard/postulations/by_offre.html.twig', [
             'postulations' => $postulations,
             'offre' => $offre,
+            'filters' => $filters,
             'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
         ]);
     }
@@ -176,5 +202,4 @@ class PostulationController extends AbstractController
             'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
-    
 }

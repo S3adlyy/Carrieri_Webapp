@@ -33,15 +33,24 @@ class OffreEmploiController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $search = $request->query->get('search', '');
-        $offres = $this->offreEmploiRepository->findByUserWithSearch($user, $search);
+        // Récupérer tous les filtres
+        $filters = [
+            'keyword' => $request->query->get('keyword', ''),
+            'typeContrat' => $request->query->get('typeContrat', ''),
+            'statut' => $request->query->get('statut', ''),
+            'salaireMin' => $request->query->get('salaireMin', ''),
+            'dateDebut' => $request->query->get('dateDebut', ''),
+            'dateFin' => $request->query->get('dateFin', ''),
+        ];
 
+        // Utiliser la nouvelle méthode de recherche avancée
+        $offres = $this->offreEmploiRepository->searchOffersWithFilters($user, $filters);
         $stats = $this->getOffreStats($user);
 
         return $this->render('BackOffice/dashboard/offres_emploi/index.html.twig', [
             'offres' => $offres,
             'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
-            'search' => $search,
+            'filters' => $filters,
             'stats' => $stats,
         ]);
     }
