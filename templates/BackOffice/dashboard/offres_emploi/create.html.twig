@@ -216,20 +216,14 @@
         .form-label {
             margin-bottom: 0.5rem;
         }
-        .btn-primary:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
     </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('offreForm');
-            const submitBtn = document.getElementById('submitBtn');
             const fields = document.querySelectorAll('[data-required], [data-minlength], [data-maxlength], [data-pattern], [data-type], [data-unique], [data-future]');
             
-            // État de validation (false = pas encore validé, donc pas d'affichage d'erreur)
-            let validationTriggered = false;
+            let hasBeenSubmitted = false;
             
             // Vérifier l'unicité du titre (AJAX)
             async function checkUniqueTitre(titre, currentId = null) {
@@ -253,8 +247,8 @@
                 }
             }
             
-            // Validation d'un champ (retourne true/false sans afficher d'erreur si validationTriggered est false)
-            async function validateField(field, showErrors = false) {
+            // Validation d'un champ (retourne les erreurs)
+            async function getFieldErrors(field) {
                 const value = field.value.trim();
                 const fieldName = field.dataset.fieldName || field.name;
                 let errors = [];
@@ -313,15 +307,19 @@
                     }
                 }
                 
+                return errors;
+            }
+            
+            // Mettre à jour l'affichage d'un champ
+            async function updateFieldDisplay(field) {
+                const errors = await getFieldErrors(field);
                 const feedbackDiv = field.closest('.form-group').querySelector('.invalid-feedback');
                 
                 if (errors.length > 0) {
                     field.classList.add('is-invalid');
-                    if (feedbackDiv && showErrors) {
+                    if (feedbackDiv) {
                         feedbackDiv.textContent = errors[0];
                         feedbackDiv.style.display = 'block';
-                    } else if (feedbackDiv && !showErrors) {
-                        feedbackDiv.style.display = 'none';
                     }
                     return false;
                 } else {
@@ -334,74 +332,63 @@
                 }
             }
             
-            // Validation avec affichage des erreurs
-            async function validateFieldWithError(field) {
-                return await validateField(field, true);
+            // Valider tous les champs et mettre à jour l'affichage
+            async function validateAndUpdateAll() {
+                let isValid = true;
+                for (const field of fields) {
+                    const isFieldValid = await updateFieldDisplay(field);
+                    if (!isFieldValid) isValid = false;
+                }
+                return isValid;
             }
             
-            // Validation silencieuse (sans affichage)
-            async function validateFieldSilent(field) {
-                return await validateField(field, false);
-            }
-            
-            // Validation en temps réel (silencieuse, sans afficher d'erreur)
+            // Écouter les événements input - réévalue et met à jour l'affichage SEULEMENT si déjà soumis
             fields.forEach(field => {
                 field.addEventListener('input', async function() {
-                    await validateFieldSilent(this);
-                    await validateFormSilent();
+                    if (hasBeenSubmitted) {
+                        await updateFieldDisplay(this);
+                    }
+                });
+                field.addEventListener('change', async function() {
+                    if (hasBeenSubmitted) {
+                        await updateFieldDisplay(this);
+                    }
                 });
             });
             
-            // Valider tout le formulaire silencieusement
-            async function validateFormSilent() {
-                let isValid = true;
-                for (const field of fields) {
-                    const isFieldValid = await validateFieldSilent(field);
-                    if (!isFieldValid) isValid = false;
-                }
-                return isValid;
-            }
-            
-            // Valider tout le formulaire avec affichage des erreurs
-            async function validateFormWithErrors() {
-                let isValid = true;
-                for (const field of fields) {
-                    const isFieldValid = await validateFieldWithError(field);
-                    if (!isFieldValid) isValid = false;
-                }
-                submitBtn.disabled = !isValid;
-                return isValid;
-            }
-            
-            // Validation avant soumission (affiche les erreurs)
+            // Validation UNIQUEMENT à la soumission
             form.addEventListener('submit', async function(e) {
-                const isValid = await validateFormWithErrors();
+                e.preventDefault(); // Temporairement empêcher la soumission pour validation
+                
+                hasBeenSubmitted = true;
+                const isValid = await validateAndUpdateAll();
+                
                 if (!isValid) {
-                    e.preventDefault();
                     const firstInvalid = document.querySelector('.is-invalid');
                     if (firstInvalid) {
                         firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         firstInvalid.focus();
                     }
-                    showToast('Veuillez corriger les erreurs avant de soumettre le formulaire', 'danger');
+                    
+                    // Afficher un toast d'erreur
+                    const toast = document.createElement('div');
+                    toast.className = 'alert alert-danger alert-dismissible fade show';
+                    toast.style.position = 'fixed';
+                    toast.style.top = '20px';
+                    toast.style.right = '20px';
+                    toast.style.zIndex = '9999';
+                    toast.style.minWidth = '300px';
+                    toast.innerHTML = `
+                        Veuillez corriger les erreurs avant de soumettre le formulaire
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    `;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                } else {
+                    // Si tout est valide, soumettre le formulaire
+                    form.submit();
                 }
             });
-            
-            function showToast(message, type) {
-                const toast = document.createElement('div');
-                toast.className = `alert alert-${type} alert-dismissible fade show`;
-                toast.style.position = 'fixed';
-                toast.style.top = '20px';
-                toast.style.right = '20px';
-                toast.style.zIndex = '9999';
-                toast.style.minWidth = '300px';
-                toast.innerHTML = `
-                    ${message}
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
-            }
         });
     </script>
 {% endblock %}

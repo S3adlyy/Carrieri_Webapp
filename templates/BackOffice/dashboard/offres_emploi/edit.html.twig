@@ -29,7 +29,7 @@
                     <div class="form-group">
                         {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.titre, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-minlength': '5',
                             'data-maxlength': '100',
@@ -46,7 +46,7 @@
                     <div class="form-group">
                         {{ form_label(form.typeContrat, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.typeContrat, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-field-name': 'Type contrat'
                         }}) }}
@@ -58,7 +58,7 @@
             <div class="form-group">
                 {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                 {{ form_widget(form.description, {'attr': {
-                    'class': 'form-control validation-field',
+                    'class': 'form-control',
                     'rows': 5,
                     'data-required': 'true',
                     'data-minlength': '10',
@@ -74,7 +74,7 @@
                     <div class="form-group">
                         {{ form_label(form.entreprise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.entreprise, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-field-name': 'Entreprise'
                         }}) }}
@@ -85,7 +85,7 @@
                     <div class="form-group">
                         {{ form_label(form.localisation, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.localisation, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-field-name': 'Localisation'
                         }}) }}
@@ -99,7 +99,7 @@
                     <div class="form-group">
                         {{ form_label(form.salaire, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.salaire, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-type': 'number',
                             'data-min': '0',
@@ -112,7 +112,7 @@
                     <div class="form-group">
                         {{ form_label(form.niveauQualification, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.niveauQualification, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-field-name': 'Niveau qualification'
                         }}) }}
@@ -123,7 +123,7 @@
                     <div class="form-group">
                         {{ form_label(form.experienceRequise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.experienceRequise, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-field-name': 'Expérience requise'
                         }}) }}
@@ -135,7 +135,7 @@
             <div class="form-group">
                 {{ form_label(form.competencesRequises, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                 {{ form_widget(form.competencesRequises, {'attr': {
-                    'class': 'form-control validation-field',
+                    'class': 'form-control',
                     'rows': 3,
                     'data-required': 'true',
                     'data-minlength': '10',
@@ -150,7 +150,7 @@
                     <div class="form-group">
                         {{ form_label(form.secteurActivite, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.secteurActivite, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-field-name': 'Secteur activité'
                         }}) }}
@@ -161,7 +161,7 @@
                     <div class="form-group">
                         {{ form_label(form.contactRecruteur, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.contactRecruteur, {'attr': {
-                            'class': 'form-control validation-field',
+                            'class': 'form-control',
                             'data-required': 'true',
                             'data-type': 'email',
                             'data-field-name': 'Contact recruteur'
@@ -174,7 +174,7 @@
             <div class="form-group">
                 {{ form_label(form.dateExpiration, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                 {{ form_widget(form.dateExpiration, {'attr': {
-                    'class': 'form-control validation-field',
+                    'class': 'form-control',
                     'data-required': 'true',
                     'data-future': 'true',
                     'data-field-name': 'Date expiration'
@@ -217,18 +217,15 @@
         .form-label {
             margin-bottom: 0.5rem;
         }
-        .btn-warning:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
     </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('offreForm');
-            const submitBtn = document.getElementById('submitBtn');
-            const fields = document.querySelectorAll('.validation-field');
+            const fields = document.querySelectorAll('[data-required], [data-minlength], [data-maxlength], [data-pattern], [data-type], [data-unique], [data-future]');
             const offreId = {{ offre.id|default('null') }};
+            
+            let hasBeenSubmitted = false;
             
             // Vérifier l'unicité du titre (AJAX)
             async function checkUniqueTitre(titre, currentId) {
@@ -252,8 +249,8 @@
                 }
             }
             
-            // Validation des champs
-            async function validateField(field) {
+            // Validation d'un champ (retourne les erreurs)
+            async function getFieldErrors(field) {
                 const value = field.value.trim();
                 const fieldName = field.dataset.fieldName || field.name;
                 let errors = [];
@@ -313,7 +310,14 @@
                     }
                 }
                 
+                return errors;
+            }
+            
+            // Mettre à jour l'affichage d'un champ
+            async function updateFieldDisplay(field) {
+                const errors = await getFieldErrors(field);
                 const feedbackDiv = field.closest('.form-group').querySelector('.invalid-feedback');
+                
                 if (errors.length > 0) {
                     field.classList.add('is-invalid');
                     if (feedbackDiv) {
@@ -331,61 +335,63 @@
                 }
             }
             
-            // Validation en temps réel
-            fields.forEach(field => {
-                field.addEventListener('input', async function() {
-                    await validateField(this);
-                    validateForm();
-                });
-                field.addEventListener('blur', async function() {
-                    await validateField(this);
-                    validateForm();
-                });
-            });
-            
-            // Valider tout le formulaire
-            async function validateForm() {
+            // Valider tous les champs et mettre à jour l'affichage
+            async function validateAndUpdateAll() {
                 let isValid = true;
                 for (const field of fields) {
-                    const isFieldValid = await validateField(field);
+                    const isFieldValid = await updateFieldDisplay(field);
                     if (!isFieldValid) isValid = false;
                 }
-                submitBtn.disabled = !isValid;
                 return isValid;
             }
             
-            // Validation avant soumission
+            // Écouter les événements input - réévalue et met à jour l'affichage SEULEMENT si déjà soumis
+            fields.forEach(field => {
+                field.addEventListener('input', async function() {
+                    if (hasBeenSubmitted) {
+                        await updateFieldDisplay(this);
+                    }
+                });
+                field.addEventListener('change', async function() {
+                    if (hasBeenSubmitted) {
+                        await updateFieldDisplay(this);
+                    }
+                });
+            });
+            
+            // Validation UNIQUEMENT à la soumission
             form.addEventListener('submit', async function(e) {
-                const isValid = await validateForm();
+                e.preventDefault(); // Temporairement empêcher la soumission pour validation
+                
+                hasBeenSubmitted = true;
+                const isValid = await validateAndUpdateAll();
+                
                 if (!isValid) {
-                    e.preventDefault();
                     const firstInvalid = document.querySelector('.is-invalid');
                     if (firstInvalid) {
                         firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
                         firstInvalid.focus();
                     }
-                    showToast('Veuillez corriger les erreurs avant de soumettre le formulaire', 'danger');
+                    
+                    // Afficher un toast d'erreur
+                    const toast = document.createElement('div');
+                    toast.className = 'alert alert-danger alert-dismissible fade show';
+                    toast.style.position = 'fixed';
+                    toast.style.top = '20px';
+                    toast.style.right = '20px';
+                    toast.style.zIndex = '9999';
+                    toast.style.minWidth = '300px';
+                    toast.innerHTML = `
+                        Veuillez corriger les erreurs avant de soumettre le formulaire
+                        <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    `;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                } else {
+                    // Si tout est valide, soumettre le formulaire
+                    form.submit();
                 }
             });
-            
-            function showToast(message, type) {
-                const toast = document.createElement('div');
-                toast.className = `alert alert-${type} alert-dismissible fade show`;
-                toast.style.position = 'fixed';
-                toast.style.top = '20px';
-                toast.style.right = '20px';
-                toast.style.zIndex = '9999';
-                toast.style.minWidth = '300px';
-                toast.innerHTML = `
-                    ${message}
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
-                `;
-                document.body.appendChild(toast);
-                setTimeout(() => toast.remove(), 3000);
-            }
-            
-            // Validation initiale
-            validateForm();
         });
     </script>
 {% endblock %}
