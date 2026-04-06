@@ -1,4 +1,4 @@
-{% extends 'BackOffice/dashboard/index.html.twig' %}
+{% extends 'BackOffice/dashboard/base_dashboard.html.twig' %}
 
 {% block content %}
     <h2>Postulations pour l'offre {{ offre.titre }}</h2>
@@ -15,7 +15,7 @@
         <tbody>
             {% for postulation in postulations %}
                 <tr>
-                    <td>{{ postulation.user.fullName }}</td>
+                    <td>{{ postulation.user.firstName }} {{ postulation.user.lastName }}</td>
                     <td>{{ postulation.motivationCandidature }}</td>
                     <td>
                         <a href="{{ asset(postulation.cvPath) }}" target="_blank">Télécharger le CV</a>

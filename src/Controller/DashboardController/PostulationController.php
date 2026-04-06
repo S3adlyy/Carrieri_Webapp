@@ -17,11 +17,21 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/admin/postulations')]
 class PostulationController extends AbstractController
 {
+    // Declare properties at the class level
+    private EntityManagerInterface $entityManager;
+    private PostulationRepository $postulationRepository;
+    private OffreEmploiRepository $offreEmploiRepository;
+
+    // Constructor injection of services
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private PostulationRepository $postulationRepository,
-        private OffreEmploiRepository $offreEmploiRepository,
+        EntityManagerInterface $entityManager,
+        PostulationRepository $postulationRepository,
+        OffreEmploiRepository $offreEmploiRepository
     ) {
+        // Initialize properties
+        $this->entityManager = $entityManager;
+        $this->postulationRepository = $postulationRepository;
+        $this->offreEmploiRepository = $offreEmploiRepository;
     }
 
     #[Route('/', name: 'app_admin_postulations_list')]
@@ -130,14 +140,12 @@ class PostulationController extends AbstractController
 
             $user = $p->getUser();
             if ($user) {
-                // Ensure the proxy is loaded before calling getFullName
-                if ($user instanceof Proxy) {
-                    $user->__load();
-                }
+                // Access user name directly from firstName and lastName
+                $fullName = $user->getFirstName() . ' ' . $user->getLastName();
 
                 // Add users and their postulation status to the array
                 $users[] = [
-                    'name' => $user->getFullName(),
+                    'name' => $fullName,
                     'status' => $p->getStatut(),
                 ];
             }
@@ -148,8 +156,7 @@ class PostulationController extends AbstractController
             'accepted' => $accepted,
             'refused' => $refused,
             'pending' => $pending,
-            'users' => $users,  // Return the list of users
+            'users' => $users,  // Return the users array with names
         ];
     }
-
 }
