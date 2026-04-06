@@ -202,4 +202,55 @@ class PostulationController extends AbstractController
             'Content-Disposition' => 'inline; filename="' . $fileName . '"',
         ]);
     }
+
+    #[Route('/{id}/delete', name: 'app_admin_postulations_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function delete(Request $request, int $id): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $postulation = $this->postulationRepository->find($id);
+        if (!$postulation) {
+            $this->addFlash('error', 'Postulation non trouvée.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        // Vérifier que le recruteur possède l'offre associée
+        $offre = $postulation->getOffreEmploi();
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+            $this->addFlash('error', 'Accès non autorisé.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        // Vérifier le token CSRF
+        if (!$this->isCsrfTokenValid('delete_postulation_' . $postulation->getId(), $request->request->get('_token'))) {
+            $this->addFlash('error', 'Token CSRF invalide.');
+            return $this->redirectToRoute('app_admin_postulations_list');
+        }
+
+        // Supprimer le fichier CV s'il existe
+        $cvPath = $postulation->getCvPath();
+        if ($cvPath) {
+            $fullPath = $this->getParameter('kernel.project_dir') . '/public/' . $cvPath;
+            if (file_exists($fullPath)) {
+                unlink($fullPath);
+            }
+        }
+
+        $this->entityManager->remove($postulation);
+        $this->entityManager->flush();
+
+        $this->addFlash('success', 'La candidature a été supprimée avec succès.');
+
+        // Rediriger vers la page précédente si possible
+        $referer = $request->headers->get('referer');
+        if ($referer && strpos($referer, 'app_admin_postulations_by_offre') !== false) {
+            return $this->redirect($referer);
+        }
+
+        return $this->redirectToRoute('app_admin_postulations_list');
+    }
 }

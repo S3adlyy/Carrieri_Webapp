@@ -158,15 +158,50 @@
                                 {% endif %}
                             </td>
                             <td>
-                                <form method="post" action="{{ path('app_admin_postulations_update_statut', {'id': p.id}) }}" class="d-inline">
-                                    <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ p.id) }}">
-                                    <select name="statut" class="form-control form-control-sm d-inline" style="width:auto"
-                                            onchange="this.form.submit()">
-                                        <option value="En attente" {{ p.statut == 'En attente' ? 'selected' : '' }}>En attente</option>
-                                        <option value="Acceptée" {{ p.statut == 'Acceptée' ? 'selected' : '' }}>Acceptée</option>
-                                        <option value="Refusée" {{ p.statut == 'Refusée' ? 'selected' : '' }}>Refusée</option>
-                                    </select>
-                                </form>
+                                <div class="btn-group btn-group-sm">
+                                    <form method="post" action="{{ path('app_admin_postulations_update_statut', {'id': p.id}) }}" class="d-inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ p.id) }}">
+                                        <select name="statut" class="form-control form-control-sm d-inline" style="width:auto"
+                                                onchange="this.form.submit()">
+                                            <option value="En attente" {{ p.statut == 'En attente' ? 'selected' : '' }}>En attente</option>
+                                            <option value="Acceptée" {{ p.statut == 'Acceptée' ? 'selected' : '' }}>Acceptée</option>
+                                            <option value="Refusée" {{ p.statut == 'Refusée' ? 'selected' : '' }}>Refusée</option>
+                                        </select>
+                                    </form>
+                                    <button type="button" class="btn btn-danger btn-sm ml-1"
+                                            data-toggle="modal"
+                                            data-target="#deletePostulationModal{{ p.id }}"
+                                            title="Supprimer">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+
+                                {# Modal de confirmation suppression #}
+                                <div class="modal fade" id="deletePostulationModal{{ p.id }}" tabindex="-1" role="dialog">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Confirmer la suppression</h5>
+                                                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <p>Êtes-vous sûr de vouloir supprimer cette candidature ?</p>
+                                                <p class="text-muted">
+                                                    <strong>Candidat :</strong> {{ p.user ? p.user.firstName ~ ' ' ~ p.user.lastName : '—' }}<br>
+                                                    <strong>Offre :</strong> {{ p.offreEmploi ? p.offreEmploi.titre : '—' }}
+                                                </p>
+                                                <p class="text-danger small">Cette action est irréversible et supprimera également le CV associé.</p>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                                <form method="post" action="{{ path('app_admin_postulations_delete', {'id': p.id}) }}">
+                                                    <input type="hidden" name="_token" value="{{ csrf_token('delete_postulation_' ~ p.id) }}">
+                                                    <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </td>
                         </tr>
                     {% else %}
