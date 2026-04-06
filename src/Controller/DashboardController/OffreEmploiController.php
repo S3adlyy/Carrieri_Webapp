@@ -215,13 +215,16 @@ class OffreEmploiController extends AbstractController
             return $this->json(['success' => false, 'error' => 'Offre non trouvée'], 404);
         }
 
-        // Vérifier les droits
         if ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles())) {
             return $this->json(['success' => false, 'error' => 'Accès non autorisé'], 403);
         }
 
-        // Appliquer les modifications
-        $allowedFields = ['titre', 'entreprise', 'localisation', 'typeContrat', 'salaire', 'dateExpiration'];
+        // Tous les champs éditables
+        $allowedFields = [
+            'titre', 'entreprise', 'localisation', 'typeContrat', 'salaire', 
+            'niveauQualification', 'experienceRequise', 'competencesRequises', 
+            'secteurActivite', 'contactRecruteur', 'dateExpiration'
+        ];
         
         foreach ($data['updates'] as $field => $value) {
             if (!in_array($field, $allowedFields)) {
@@ -243,6 +246,28 @@ class OffreEmploiController extends AbstractController
         $this->entityManager->flush();
 
         return $this->json(['success' => true]);
+    }
+
+    #[Route('/check-unique-titre', name: 'app_admin_offres_check_unique_titre', methods: ['POST'])]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function checkUniqueTitre(Request $request): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        $titre = $data['titre'] ?? '';
+        $currentId = $data['id'] ?? null;
+        
+        $qb = $this->offreEmploiRepository->createQueryBuilder('o')
+            ->where('o.titre = :titre')
+            ->setParameter('titre', $titre);
+        
+        if ($currentId) {
+            $qb->andWhere('o.id != :currentId')
+               ->setParameter('currentId', $currentId);
+        }
+        
+        $existing = $qb->getQuery()->getOneOrNullResult();
+        
+        return $this->json(['valid' => $existing === null]);
     }
 
 }

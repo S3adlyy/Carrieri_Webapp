@@ -22,26 +22,34 @@
                 </div>
             {% endfor %}
 
-            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'offre-form'}}) }}
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'offre-form', 'id': 'offreForm'}}) }}
 
             <div class="row">
                 <div class="col-md-8">
                     <div class="form-group">
                         {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.titre, {'attr': {
-                            'class': 'form-control' ~ (form.titre.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': "Ex: Développeur Symfony Senior..."
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-minlength': '5',
+                            'data-maxlength': '100',
+                            'data-pattern': '^[a-zA-Z]',
+                            'data-unique': 'true',
+                            'data-field-name': 'Titre'
                         }}) }}
-                        {{ form_errors(form.titre) }}
+                        <small class="text-muted">Min 5 caractères, max 100. Ne peut pas commencer par un chiffre.</small>
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         {{ form_label(form.typeContrat, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.typeContrat, {'attr': {
-                            'class': 'form-control' ~ (form.typeContrat.vars.errors|length ? ' is-invalid' : '')
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Type contrat'
                         }}) }}
-                        {{ form_errors(form.typeContrat) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -49,11 +57,15 @@
             <div class="form-group">
                 {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                 {{ form_widget(form.description, {'attr': {
-                    'class': 'form-control' ~ (form.description.vars.errors|length ? ' is-invalid' : ''),
+                    'class': 'form-control',
                     'rows': 5,
-                    'placeholder': "Décrivez l'offre en détail..."
+                    'data-required': 'true',
+                    'data-minlength': '10',
+                    'data-pattern': '^[a-zA-Z]',
+                    'data-field-name': 'Description'
                 }}) }}
-                {{ form_errors(form.description) }}
+                <small class="text-muted">Min 10 caractères. Ne peut pas commencer par un chiffre.</small>
+                <div class="invalid-feedback" style="display: none;"></div>
             </div>
 
             <div class="row">
@@ -61,20 +73,22 @@
                     <div class="form-group">
                         {{ form_label(form.entreprise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.entreprise, {'attr': {
-                            'class': 'form-control' ~ (form.entreprise.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': "Nom de l'entreprise"
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Entreprise'
                         }}) }}
-                        {{ form_errors(form.entreprise) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         {{ form_label(form.localisation, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.localisation, {'attr': {
-                            'class': 'form-control' ~ (form.localisation.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': 'Ex: Tunis, Paris, Remote...'
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Localisation'
                         }}) }}
-                        {{ form_errors(form.localisation) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -84,30 +98,35 @@
                     <div class="form-group">
                         {{ form_label(form.salaire, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.salaire, {'attr': {
-                            'class': 'form-control' ~ (form.salaire.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': 'Ex: 2500'
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-type': 'number',
+                            'data-min': '0',
+                            'data-field-name': 'Salaire'
                         }}) }}
-                        {{ form_errors(form.salaire) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         {{ form_label(form.niveauQualification, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.niveauQualification, {'attr': {
-                            'class': 'form-control' ~ (form.niveauQualification.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': 'Ex: Bac+3, Master...'
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Niveau qualification'
                         }}) }}
-                        {{ form_errors(form.niveauQualification) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         {{ form_label(form.experienceRequise, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.experienceRequise, {'attr': {
-                            'class': 'form-control' ~ (form.experienceRequise.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': 'Ex: 2 ans, Débutant accepté...'
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Expérience requise'
                         }}) }}
-                        {{ form_errors(form.experienceRequise) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -115,11 +134,14 @@
             <div class="form-group">
                 {{ form_label(form.competencesRequises, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                 {{ form_widget(form.competencesRequises, {'attr': {
-                    'class': 'form-control' ~ (form.competencesRequises.vars.errors|length ? ' is-invalid' : ''),
+                    'class': 'form-control',
                     'rows': 3,
-                    'placeholder': 'Ex: PHP, Symfony, MySQL...'
+                    'data-required': 'true',
+                    'data-minlength': '10',
+                    'data-field-name': 'Compétences requises'
                 }}) }}
-                {{ form_errors(form.competencesRequises) }}
+                <small class="text-muted">Min 10 caractères.</small>
+                <div class="invalid-feedback" style="display: none;"></div>
             </div>
 
             <div class="row">
@@ -127,20 +149,23 @@
                     <div class="form-group">
                         {{ form_label(form.secteurActivite, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.secteurActivite, {'attr': {
-                            'class': 'form-control' ~ (form.secteurActivite.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': 'Ex: Informatique, Finance...'
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Secteur activité'
                         }}) }}
-                        {{ form_errors(form.secteurActivite) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
                         {{ form_label(form.contactRecruteur, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                         {{ form_widget(form.contactRecruteur, {'attr': {
-                            'class': 'form-control' ~ (form.contactRecruteur.vars.errors|length ? ' is-invalid' : ''),
-                            'placeholder': 'contact@entreprise.com'
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-type': 'email',
+                            'data-field-name': 'Contact recruteur'
                         }}) }}
-                        {{ form_errors(form.contactRecruteur) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
             </div>
@@ -148,14 +173,17 @@
             <div class="form-group">
                 {{ form_label(form.dateExpiration, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
                 {{ form_widget(form.dateExpiration, {'attr': {
-                    'class': 'form-control' ~ (form.dateExpiration.vars.errors|length ? ' is-invalid' : '')
+                    'class': 'form-control',
+                    'data-required': 'true',
+                    'data-future': 'true',
+                    'data-field-name': 'Date expiration'
                 }}) }}
                 <small class="text-muted"><i class="fas fa-info-circle"></i> La date doit être dans le futur</small>
-                {{ form_errors(form.dateExpiration) }}
+                <div class="invalid-feedback" style="display: none;"></div>
             </div>
 
             <div class="form-actions mt-4 pt-3" style="border-top: 1px solid #e2e8f0;">
-                <button type="submit" class="btn btn-primary">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
                     <i class="fas fa-save"></i> Créer l'offre
                 </button>
                 <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary ml-2">
@@ -169,8 +197,8 @@
 
     <style>
         .form-control.is-invalid {
-            border-color: #dc2626;
-            background-color: #fef2f2;
+            border-color: #dc2626 !important;
+            background-color: #fef2f2 !important;
         }
         .invalid-feedback {
             display: block;
@@ -182,5 +210,198 @@
             border-radius: 6px;
             border-left: 3px solid #dc2626;
         }
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        .form-label {
+            margin-bottom: 0.5rem;
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
     </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('offreForm');
+            const submitBtn = document.getElementById('submitBtn');
+            const fields = document.querySelectorAll('[data-required], [data-minlength], [data-maxlength], [data-pattern], [data-type], [data-unique], [data-future]');
+            
+            // État de validation (false = pas encore validé, donc pas d'affichage d'erreur)
+            let validationTriggered = false;
+            
+            // Vérifier l'unicité du titre (AJAX)
+            async function checkUniqueTitre(titre, currentId = null) {
+                try {
+                    const response = await fetch('{{ path('app_admin_offres_check_unique_titre') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            titre: titre,
+                            id: currentId
+                        })
+                    });
+                    const data = await response.json();
+                    return data.valid;
+                } catch (error) {
+                    console.error('Erreur lors de la vérification du titre:', error);
+                    return true;
+                }
+            }
+            
+            // Validation d'un champ (retourne true/false sans afficher d'erreur si validationTriggered est false)
+            async function validateField(field, showErrors = false) {
+                const value = field.value.trim();
+                const fieldName = field.dataset.fieldName || field.name;
+                let errors = [];
+                
+                // Requis
+                if (field.dataset.required === 'true' && !value) {
+                    errors.push(`Le champ "${fieldName}" est obligatoire.`);
+                }
+                
+                if (value) {
+                    // Longueur minimale
+                    if (field.dataset.minlength && value.length < parseInt(field.dataset.minlength)) {
+                        errors.push(`Le champ "${fieldName}" doit contenir au moins ${field.dataset.minlength} caractères.`);
+                    }
+                    
+                    // Longueur maximale
+                    if (field.dataset.maxlength && value.length > parseInt(field.dataset.maxlength)) {
+                        errors.push(`Le champ "${fieldName}" ne doit pas dépasser ${field.dataset.maxlength} caractères.`);
+                    }
+                    
+                    // Pattern (ne pas commencer par un chiffre)
+                    if (field.dataset.pattern && !new RegExp(field.dataset.pattern).test(value)) {
+                        errors.push(`Le champ "${fieldName}" ne peut pas commencer par un chiffre.`);
+                    }
+                    
+                    // Type number
+                    if (field.dataset.type === 'number' && (isNaN(parseFloat(value)) || !isFinite(value))) {
+                        errors.push(`Le champ "${fieldName}" doit être un nombre valide.`);
+                    }
+                    
+                    // Min value
+                    if (field.dataset.min !== undefined && parseFloat(value) < parseFloat(field.dataset.min)) {
+                        errors.push(`Le champ "${fieldName}" doit être supérieur ou égal à ${field.dataset.min}.`);
+                    }
+                    
+                    // Email
+                    if (field.dataset.type === 'email' && !/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(value)) {
+                        errors.push(`Le champ "${fieldName}" doit être une adresse email valide.`);
+                    }
+                    
+                    // Unicité du titre
+                    if (field.dataset.unique === 'true' && value) {
+                        const isUnique = await checkUniqueTitre(value, null);
+                        if (!isUnique) {
+                            errors.push('Ce titre d\'offre existe déjà. Veuillez choisir un titre unique.');
+                        }
+                    }
+                    
+                    // Date dans le futur
+                    if (field.dataset.future === 'true' && value) {
+                        const selectedDate = new Date(value);
+                        const now = new Date();
+                        if (selectedDate <= now) {
+                            errors.push(`La ${fieldName} doit être dans le futur.`);
+                        }
+                    }
+                }
+                
+                const feedbackDiv = field.closest('.form-group').querySelector('.invalid-feedback');
+                
+                if (errors.length > 0) {
+                    field.classList.add('is-invalid');
+                    if (feedbackDiv && showErrors) {
+                        feedbackDiv.textContent = errors[0];
+                        feedbackDiv.style.display = 'block';
+                    } else if (feedbackDiv && !showErrors) {
+                        feedbackDiv.style.display = 'none';
+                    }
+                    return false;
+                } else {
+                    field.classList.remove('is-invalid');
+                    if (feedbackDiv) {
+                        feedbackDiv.style.display = 'none';
+                        feedbackDiv.textContent = '';
+                    }
+                    return true;
+                }
+            }
+            
+            // Validation avec affichage des erreurs
+            async function validateFieldWithError(field) {
+                return await validateField(field, true);
+            }
+            
+            // Validation silencieuse (sans affichage)
+            async function validateFieldSilent(field) {
+                return await validateField(field, false);
+            }
+            
+            // Validation en temps réel (silencieuse, sans afficher d'erreur)
+            fields.forEach(field => {
+                field.addEventListener('input', async function() {
+                    await validateFieldSilent(this);
+                    await validateFormSilent();
+                });
+            });
+            
+            // Valider tout le formulaire silencieusement
+            async function validateFormSilent() {
+                let isValid = true;
+                for (const field of fields) {
+                    const isFieldValid = await validateFieldSilent(field);
+                    if (!isFieldValid) isValid = false;
+                }
+                return isValid;
+            }
+            
+            // Valider tout le formulaire avec affichage des erreurs
+            async function validateFormWithErrors() {
+                let isValid = true;
+                for (const field of fields) {
+                    const isFieldValid = await validateFieldWithError(field);
+                    if (!isFieldValid) isValid = false;
+                }
+                submitBtn.disabled = !isValid;
+                return isValid;
+            }
+            
+            // Validation avant soumission (affiche les erreurs)
+            form.addEventListener('submit', async function(e) {
+                const isValid = await validateFormWithErrors();
+                if (!isValid) {
+                    e.preventDefault();
+                    const firstInvalid = document.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
+                    showToast('Veuillez corriger les erreurs avant de soumettre le formulaire', 'danger');
+                }
+            });
+            
+            function showToast(message, type) {
+                const toast = document.createElement('div');
+                toast.className = `alert alert-${type} alert-dismissible fade show`;
+                toast.style.position = 'fixed';
+                toast.style.top = '20px';
+                toast.style.right = '20px';
+                toast.style.zIndex = '9999';
+                toast.style.minWidth = '300px';
+                toast.innerHTML = `
+                    ${message}
+                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                `;
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 3000);
+            }
+        });
+    </script>
 {% endblock %}

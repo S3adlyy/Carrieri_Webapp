@@ -97,7 +97,16 @@
                         </div>
                     </div>
                 </div>
-                
+                <div class="row mt-2">
+                    <div class="col-md-3">
+                        <input type="date" name="dateDebut" class="form-control"
+                               placeholder="Date début" value="{{ filters.dateDebut|default('') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <input type="date" name="dateFin" class="form-control"
+                               placeholder="Date fin" value="{{ filters.dateFin|default('') }}">
+                    </div>
+                </div>
             </form>
         </div>
 
@@ -111,7 +120,13 @@
                             <th>Localisation</th>
                             <th>Contrat</th>
                             <th>Salaire</th>
-                            <th>Expiration</th>
+                            <th>Niveau qualification</th>
+                            <th>Expérience requise</th>
+                            <th>Compétences</th>
+                            <th>Secteur activité</th>
+                            <th>Contact</th>
+                            <th>Date publication</th>
+                            <th>Date expiration</th>
                             <th>Statut</th>
                             <th>Actions</th>
                     </tr>
@@ -119,19 +134,22 @@
                     <tbody>
                     {% for o in offres %}
                         <tr data-id="{{ o.id }}" class="offre-row">
-                            <td class="editable" data-field="titre" data-value="{{ o.titre|default('') }}">
+                            <td class="editable" data-field="titre" data-value="{{ o.titre|default('') }}" data-required="true" data-minlength="5" data-maxlength="100">
                                 <span class="editable-value">{{ o.titre|default('—') }}</span>
-                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.titre|default('') }}">
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.titre|default('') }}" data-field-name="Titre">
+                                <small class="text-danger error-msg" style="display:none"></small>
                             </td>
-                            <td class="editable" data-field="entreprise" data-value="{{ o.entreprise|default('') }}">
+                            <td class="editable" data-field="entreprise" data-value="{{ o.entreprise|default('') }}" data-required="true">
                                 <span class="editable-value">{{ o.entreprise|default('—') }}</span>
-                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.entreprise|default('') }}">
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.entreprise|default('') }}" data-field-name="Entreprise">
+                                <small class="text-danger error-msg" style="display:none"></small>
                             </td>
-                            <td class="editable" data-field="localisation" data-value="{{ o.localisation|default('') }}">
+                            <td class="editable" data-field="localisation" data-value="{{ o.localisation|default('') }}" data-required="true">
                                 <span class="editable-value">{{ o.localisation|default('—') }}</span>
-                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.localisation|default('') }}">
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.localisation|default('') }}" data-field-name="Localisation">
+                                <small class="text-danger error-msg" style="display:none"></small>
                             </td>
-                            <td class="editable" data-field="typeContrat" data-value="{{ o.typeContrat|default('') }}">
+                            <td class="editable" data-field="typeContrat" data-value="{{ o.typeContrat|default('') }}" data-required="true">
                                 <span class="editable-value">
                                     {% if o.typeContrat == 'CDI' %}
                                         <span class="badge badge-success">CDI</span>
@@ -143,20 +161,51 @@
                                         <span class="badge badge-secondary">{{ o.typeContrat|default('—') }}</span>
                                     {% endif %}
                                 </span>
-                                <select class="form-control form-control-sm edit-input" style="display:none">
+                                <select class="form-control form-control-sm edit-input" style="display:none" data-field-name="Type contrat">
                                     <option value="CDI" {{ o.typeContrat == 'CDI' ? 'selected' : '' }}>CDI</option>
                                     <option value="CDD" {{ o.typeContrat == 'CDD' ? 'selected' : '' }}>CDD</option>
                                     <option value="Stage" {{ o.typeContrat == 'Stage' ? 'selected' : '' }}>Stage</option>
                                     <option value="Freelance" {{ o.typeContrat == 'Freelance' ? 'selected' : '' }}>Freelance</option>
                                 </select>
+                                <small class="text-danger error-msg" style="display:none"></small>
                             </td>
-                            <td class="editable" data-field="salaire" data-value="{{ o.salaire|default('') }}">
+                            <td class="editable" data-field="salaire" data-value="{{ o.salaire|default('') }}" data-required="true" data-type="number" data-min="0">
                                 <span class="editable-value">{{ o.salaire ? o.salaire ~ ' DT' : '—' }}</span>
-                                <input type="number" step="0.01" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.salaire|default('') }}">
+                                <input type="number" step="0.01" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.salaire|default('') }}" data-field-name="Salaire">
+                                <small class="text-danger error-msg" style="display:none"></small>
                             </td>
-                            <td class="editable" data-field="dateExpiration" data-value="{{ o.dateExpiration ? o.dateExpiration|date('Y-m-d\\TH:i') : '' }}">
+                            <td class="editable" data-field="niveauQualification" data-value="{{ o.niveauQualification|default('') }}" data-required="true">
+                                <span class="editable-value">{{ o.niveauQualification|default('—') }}</span>
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.niveauQualification|default('') }}" data-field-name="Niveau qualification">
+                                <small class="text-danger error-msg" style="display:none"></small>
+                            </td>
+                            <td class="editable" data-field="experienceRequise" data-value="{{ o.experienceRequise|default('') }}" data-required="true">
+                                <span class="editable-value">{{ o.experienceRequise|default('—') }}</span>
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.experienceRequise|default('') }}" data-field-name="Expérience requise">
+                                <small class="text-danger error-msg" style="display:none"></small>
+                            </td>
+                            <td class="editable" data-field="competencesRequises" data-value="{{ o.competencesRequises|default('') }}" data-required="true" data-minlength="10">
+                                <span class="editable-value">{{ o.competencesRequises|default('—')|slice(0, 50) }}{{ o.competencesRequises|length > 50 ? '...' : '' }}</span>
+                                <textarea class="form-control form-control-sm edit-input" style="display:none" rows="2" data-field-name="Compétences requises">{{ o.competencesRequises|default('') }}</textarea>
+                                <small class="text-danger error-msg" style="display:none"></small>
+                            </td>
+                            <td class="editable" data-field="secteurActivite" data-value="{{ o.secteurActivite|default('') }}" data-required="true">
+                                <span class="editable-value">{{ o.secteurActivite|default('—') }}</span>
+                                <input type="text" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.secteurActivite|default('') }}" data-field-name="Secteur activité">
+                                <small class="text-danger error-msg" style="display:none"></small>
+                            </td>
+                            <td class="editable" data-field="contactRecruteur" data-value="{{ o.contactRecruteur|default('') }}" data-required="true" data-type="email">
+                                <span class="editable-value">{{ o.contactRecruteur|default('—') }}</span>
+                                <input type="email" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.contactRecruteur|default('') }}" data-field-name="Contact recruteur">
+                                <small class="text-danger error-msg" style="display:none"></small>
+                            </td>
+                            <td>
+                                <span>{{ o.datePublication ? o.datePublication|date('d/m/Y H:i') : '—' }}</span>
+                            </td>
+                            <td class="editable" data-field="dateExpiration" data-value="{{ o.dateExpiration ? o.dateExpiration|date('Y-m-d\\TH:i') : '' }}" data-required="true" data-type="date" data-future="true">
                                 <span class="editable-value">{{ o.dateExpiration ? o.dateExpiration|date('d/m/Y H:i') : '—' }}</span>
-                                <input type="datetime-local" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.dateExpiration ? o.dateExpiration|date('Y-m-d\\TH:i') : '' }}">
+                                <input type="datetime-local" class="form-control form-control-sm edit-input" style="display:none" value="{{ o.dateExpiration ? o.dateExpiration|date('Y-m-d\\TH:i') : '' }}" data-field-name="Date expiration">
+                                <small class="text-danger error-msg" style="display:none"></small>
                             </td>
                             <td>
                                 {% if o.dateExpiration and o.dateExpiration > date() %}
@@ -210,7 +259,7 @@
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="8" class="text-center text-muted py-4">
+                            <td colspan="14" class="text-center text-muted py-4">
                                 <i class="fas fa-briefcase fa-2x mb-2"></i>
                                 <p>Aucune offre trouvée.</p>
                                 <a href="{{ path('app_admin_offres_create') }}" class="btn btn-primary btn-sm">
@@ -251,19 +300,147 @@
         .editing-mode {
             background-color: #e8f0fe !important;
         }
+        .table td {
+            vertical-align: middle;
+        }
+        .has-error {
+            background-color: #fee2e2 !important;
+        }
+        .error-msg {
+            font-size: 11px;
+            margin-top: 4px;
+            display: block;
+        }
+        .edit-input.is-invalid {
+            border-color: #dc2626;
+            background-color: #fef2f2;
+        }
     </style>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             let currentlyEditingRow = null;
 
-            // Double-clic sur une cellule éditable pour activer le mode édition
+            // Validation des champs
+            function validateField(fieldElement, inputElement, fieldName, value, rules) {
+                let errors = [];
+                
+                // Règle: requis
+                if (rules.required && (!value || value.trim() === '')) {
+                    errors.push(`Le champ "${fieldName}" est obligatoire.`);
+                }
+                
+                // Règle: longueur minimale
+                if (rules.minlength && value && value.length < rules.minlength) {
+                    errors.push(`Le champ "${fieldName}" doit contenir au moins ${rules.minlength} caractères.`);
+                }
+                
+                // Règle: longueur maximale
+                if (rules.maxlength && value && value.length > rules.maxlength) {
+                    errors.push(`Le champ "${fieldName}" ne doit pas dépasser ${rules.maxlength} caractères.`);
+                }
+                
+                // Règle: type number
+                if (rules.type === 'number' && value && (isNaN(parseFloat(value)) || !isFinite(value))) {
+                    errors.push(`Le champ "${fieldName}" doit être un nombre valide.`);
+                }
+                
+                // Règle: min value
+                if (rules.min !== undefined && value && parseFloat(value) < rules.min) {
+                    errors.push(`Le champ "${fieldName}" doit être supérieur ou égal à ${rules.min}.`);
+                }
+                
+                // Règle: email
+                if (rules.type === 'email' && value && !/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(value)) {
+                    errors.push(`Le champ "${fieldName}" doit être une adresse email valide.`);
+                }
+                
+                // Règle: date dans le futur
+                if (rules.future && value) {
+                    const selectedDate = new Date(value);
+                    const now = new Date();
+                    if (selectedDate <= now) {
+                        errors.push(`La ${fieldName} doit être dans le futur.`);
+                    }
+                }
+                
+                return errors;
+            }
+
+            function getValidationRules(cell) {
+                const rules = {};
+                if (cell.dataset.required === 'true') rules.required = true;
+                if (cell.dataset.minlength) rules.minlength = parseInt(cell.dataset.minlength);
+                if (cell.dataset.maxlength) rules.maxlength = parseInt(cell.dataset.maxlength);
+                if (cell.dataset.type) rules.type = cell.dataset.type;
+                if (cell.dataset.min !== undefined) rules.min = parseFloat(cell.dataset.min);
+                if (cell.dataset.future === 'true') rules.future = true;
+                return rules;
+            }
+
+            function validateRow(row) {
+                let isValid = true;
+                const editableCells = row.querySelectorAll('.editable');
+                
+                editableCells.forEach(cell => {
+                    const input = cell.querySelector('.edit-input');
+                    if (!input) return;
+                    
+                    let value = '';
+                    if (input.tagName === 'SELECT') {
+                        value = input.options[input.selectedIndex].value;
+                    } else if (input.tagName === 'TEXTAREA') {
+                        value = input.value;
+                    } else {
+                        value = input.value;
+                    }
+                    
+                    const fieldName = input.dataset.fieldName || cell.dataset.field;
+                    const rules = getValidationRules(cell);
+                    const errors = validateField(cell, input, fieldName, value, rules);
+                    
+                    const errorMsgSpan = cell.querySelector('.error-msg');
+                    if (errors.length > 0) {
+                        isValid = false;
+                        cell.classList.add('has-error');
+                        input.classList.add('is-invalid');
+                        if (errorMsgSpan) {
+                            errorMsgSpan.textContent = errors[0];
+                            errorMsgSpan.style.display = 'block';
+                        }
+                    } else {
+                        cell.classList.remove('has-error');
+                        input.classList.remove('is-invalid');
+                        if (errorMsgSpan) {
+                            errorMsgSpan.style.display = 'none';
+                            errorMsgSpan.textContent = '';
+                        }
+                    }
+                });
+                
+                return isValid;
+            }
+
+            function clearRowErrors(row) {
+                const editableCells = row.querySelectorAll('.editable');
+                editableCells.forEach(cell => {
+                    cell.classList.remove('has-error');
+                    const input = cell.querySelector('.edit-input');
+                    if (input) input.classList.remove('is-invalid');
+                    const errorMsgSpan = cell.querySelector('.error-msg');
+                    if (errorMsgSpan) {
+                        errorMsgSpan.style.display = 'none';
+                        errorMsgSpan.textContent = '';
+                    }
+                });
+            }
+
+            // Double-clic sur une cellule éditable
             document.querySelectorAll('.editable').forEach(cell => {
                 cell.addEventListener('dblclick', function(e) {
                     e.stopPropagation();
                     const row = this.closest('tr');
                     
-                    // Si une autre ligne est en édition, annuler d'abord
                     if (currentlyEditingRow && currentlyEditingRow !== row) {
                         cancelEdit(currentlyEditingRow);
                     }
@@ -272,15 +449,20 @@
                 });
             });
 
-            // Gérer le clic sur le bouton Sauvegarder
             document.querySelectorAll('.save-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const row = this.closest('tr');
+                    
+                    // Valider avant sauvegarde
+                    if (!validateRow(row)) {
+                        showToast('Veuillez corriger les erreurs avant de sauvegarder', 'danger');
+                        return;
+                    }
+                    
                     saveRow(row);
                 });
             });
 
-            // Gérer le clic sur le bouton Annuler
             document.querySelectorAll('.cancel-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const row = this.closest('tr');
@@ -288,14 +470,62 @@
                 });
             });
 
+            // Validation en temps réel sur les inputs
+            function attachRealTimeValidation(row) {
+                const editableCells = row.querySelectorAll('.editable');
+                editableCells.forEach(cell => {
+                    const input = cell.querySelector('.edit-input');
+                    if (input) {
+                        input.removeEventListener('input', validateInput);
+                        input.removeEventListener('change', validateInput);
+                        input.addEventListener('input', () => validateInput(cell));
+                        input.addEventListener('change', () => validateInput(cell));
+                    }
+                });
+            }
+            
+            function validateInput(cell) {
+                const input = cell.querySelector('.edit-input');
+                if (!input) return;
+                
+                let value = '';
+                if (input.tagName === 'SELECT') {
+                    value = input.options[input.selectedIndex].value;
+                } else if (input.tagName === 'TEXTAREA') {
+                    value = input.value;
+                } else {
+                    value = input.value;
+                }
+                
+                const fieldName = input.dataset.fieldName || cell.dataset.field;
+                const rules = getValidationRules(cell);
+                const errors = validateField(cell, input, fieldName, value, rules);
+                
+                const errorMsgSpan = cell.querySelector('.error-msg');
+                if (errors.length > 0) {
+                    cell.classList.add('has-error');
+                    input.classList.add('is-invalid');
+                    if (errorMsgSpan) {
+                        errorMsgSpan.textContent = errors[0];
+                        errorMsgSpan.style.display = 'block';
+                    }
+                } else {
+                    cell.classList.remove('has-error');
+                    input.classList.remove('is-invalid');
+                    if (errorMsgSpan) {
+                        errorMsgSpan.style.display = 'none';
+                        errorMsgSpan.textContent = '';
+                    }
+                }
+            }
+
             function enableEditMode(row) {
                 if (currentlyEditingRow === row) return;
                 
-                // Marquer la ligne comme en édition
                 currentlyEditingRow = row;
                 row.classList.add('editing-mode');
+                clearRowErrors(row);
                 
-                // Cacher les valeurs affichées, montrer les inputs
                 row.querySelectorAll('.editable-value').forEach(el => {
                     el.style.display = 'none';
                 });
@@ -303,18 +533,16 @@
                     el.style.display = 'block';
                 });
 
-                // Changer les boutons
-                const editBtn = row.querySelector('.edit-btn');
+                attachRealTimeValidation(row);
+
                 const saveBtn = row.querySelector('.save-btn');
                 const cancelBtn = row.querySelector('.cancel-btn');
                 
-                if (editBtn) editBtn.style.display = 'none';
                 saveBtn.style.display = 'inline-block';
                 cancelBtn.style.display = 'inline-block';
             }
 
             function cancelEdit(row) {
-                // Restaurer les valeurs originales
                 const editableCells = row.querySelectorAll('.editable');
                 editableCells.forEach(cell => {
                     const field = cell.dataset.field;
@@ -329,10 +557,13 @@
                         else if (originalValue === 'Stage') badgeHtml = '<span class="badge badge-info">Stage</span>';
                         else badgeHtml = '<span class="badge badge-secondary">' + (originalValue || '—') + '</span>';
                         displaySpan.innerHTML = badgeHtml;
-                        
                         if (input) input.value = originalValue || '';
                     } else if (field === 'salaire') {
                         displaySpan.textContent = originalValue ? originalValue + ' DT' : '—';
+                        if (input) input.value = originalValue || '';
+                    } else if (field === 'competencesRequises') {
+                        const text = originalValue || '—';
+                        displaySpan.textContent = text.length > 50 ? text.slice(0, 50) + '...' : text;
                         if (input) input.value = originalValue || '';
                     } else if (field === 'dateExpiration') {
                         const date = originalValue ? new Date(originalValue) : null;
@@ -344,7 +575,6 @@
                     }
                 });
 
-                // Cacher les inputs, montrer les valeurs
                 row.querySelectorAll('.editable-value').forEach(el => {
                     el.style.display = 'inline';
                 });
@@ -352,16 +582,15 @@
                     el.style.display = 'none';
                 });
 
-                // Changer les boutons
                 const saveBtn = row.querySelector('.save-btn');
                 const cancelBtn = row.querySelector('.cancel-btn');
                 
                 saveBtn.style.display = 'none';
                 cancelBtn.style.display = 'none';
 
-                // Enlever les classes
                 row.classList.remove('editing-mode');
                 row.classList.remove('edit-success');
+                clearRowErrors(row);
                 
                 currentlyEditingRow = null;
             }
@@ -370,7 +599,6 @@
                 const offreId = row.dataset.id;
                 const updates = {};
                 
-                // Récupérer toutes les valeurs modifiées
                 const editableCells = row.querySelectorAll('.editable');
                 editableCells.forEach(cell => {
                     const field = cell.dataset.field;
@@ -381,28 +609,26 @@
                         newValue = input.options[input.selectedIndex].value;
                     } else if (input.type === 'datetime-local') {
                         newValue = input.value;
+                    } else if (input.tagName === 'TEXTAREA') {
+                        newValue = input.value;
                     } else {
                         newValue = input.value;
                     }
                     
                     const originalValue = cell.dataset.value;
                     
-                    // Si la valeur a changé, l'ajouter aux updates
                     if (newValue !== originalValue && newValue !== '') {
                         updates[field] = newValue;
                     }
                 });
 
-                // Si aucune modification, annuler l'édition
                 if (Object.keys(updates).length === 0) {
                     cancelEdit(row);
                     return;
                 }
 
-                // Afficher un indicateur de chargement
                 row.classList.add('saving');
                 
-                // Envoyer la requête AJAX
                 fetch('{{ path('app_admin_offres_inline_edit') }}', {
                     method: 'POST',
                     headers: {
@@ -419,7 +645,6 @@
                     row.classList.remove('saving');
                     
                     if (data.success) {
-                        // Mettre à jour les dataset et l'affichage
                         for (const [field, newValue] of Object.entries(updates)) {
                             const cell = row.querySelector(`.editable[data-field="${field}"]`);
                             if (cell) {
@@ -436,6 +661,9 @@
                                     displaySpan.innerHTML = badgeHtml;
                                 } else if (field === 'salaire') {
                                     displaySpan.textContent = newValue ? newValue + ' DT' : '—';
+                                } else if (field === 'competencesRequises') {
+                                    const text = newValue || '—';
+                                    displaySpan.textContent = text.length > 50 ? text.slice(0, 50) + '...' : text;
                                 } else if (field === 'dateExpiration') {
                                     const date = newValue ? new Date(newValue) : null;
                                     displaySpan.textContent = date ? date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '—';
@@ -447,16 +675,12 @@
                             }
                         }
                         
-                        // Afficher un message de succès temporaire
                         row.classList.add('edit-success');
                         setTimeout(() => {
                             row.classList.remove('edit-success');
                         }, 1000);
                         
-                        // Quitter le mode édition
                         cancelEdit(row);
-                        
-                        // Afficher un flash message
                         showToast('Modification enregistrée avec succès', 'success');
                     } else {
                         showToast(data.error || 'Erreur lors de la modification', 'danger');
