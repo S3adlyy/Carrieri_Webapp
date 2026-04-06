@@ -110,6 +110,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $faceEnabled = null;
 
+
     public function getId(): ?int
     {
         return $this->id;

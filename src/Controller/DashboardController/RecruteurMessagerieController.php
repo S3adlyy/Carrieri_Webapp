@@ -49,6 +49,44 @@ class RecruteurMessagerieController extends AbstractController
         ]);
     }
 
+    #[Route('/stats', name: 'app_recruteur_stats', methods: ['GET'])]
+    public function getStats(EntityManagerInterface $em): JsonResponse
+    {
+        $recruteur = $this->getUser();
+
+        // Nombre total de candidats
+        $totalCandidats = $em->getRepository(User::class)
+            ->createQueryBuilder('u')
+            ->where('u.type IN (:types)')
+            ->setParameter('types', ['CANDIDATE', 'CANDIDAT'])
+            ->select('COUNT(u.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        // Candidats en ligne = candidats avec qui le recruteur a une conversation
+        $candidatsEnLigne = $em->getRepository(Conversation::class)
+            ->createQueryBuilder('c')
+            ->select('COUNT(DISTINCT CASE WHEN c.user1 = :recruteur THEN IDENTITY(c.user2) ELSE IDENTITY(c.user1) END)')
+            ->where('c.user1 = :recruteur OR c.user2 = :recruteur')
+            ->setParameter('recruteur', $recruteur)
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        // Messages non lus
+        $messagesNonLus = $em->getRepository(Message::class)
+            ->createQueryBuilder('m')
+            ->where('m.destinataire = :recruteur')
+            ->select('COUNT(m.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return $this->json([
+            'total_candidats' => (int)$totalCandidats,
+            'candidats_en_ligne' => (int)$candidatsEnLigne,
+            'messages_non_lus' => (int)$messagesNonLus,
+        ]);
+    }
+
     #[Route('/conversations', name: 'app_recruteur_get_conversations', methods: ['GET'])]
     public function getConversations(EntityManagerInterface $em): JsonResponse
     {

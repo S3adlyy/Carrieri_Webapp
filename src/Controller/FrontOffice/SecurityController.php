@@ -16,10 +16,13 @@ class SecurityController extends AbstractController
     #[Route('/login', name: 'app_login')]
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
+
+
         return $this->render('FrontOffice/security/login.html.twig', [
             'last_username' => $authenticationUtils->getLastUsername(),
             'error' => $authenticationUtils->getLastAuthenticationError(),
         ]);
+
     }
 
     #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
