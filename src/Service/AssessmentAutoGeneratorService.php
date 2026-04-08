@@ -43,7 +43,8 @@ final class AssessmentAutoGeneratorService
         }
 
         $count = $this->questionQuizRepository->countForModule($moduleId);
-        if ($count >= $expected) {
+        $existing = $this->questionQuizRepository->findByModuleOrdered($moduleId, 200);
+        if ($count >= $expected && $this->hasDiverseQuestionTypes(array_map(static fn (QuestionQuiz $q): string => (string) $q->getQuestionText(), $existing))) {
             return;
         }
 
@@ -95,6 +96,7 @@ final class AssessmentAutoGeneratorService
 
         if (
             $this->questionTestRepository->countForCours($coursId) >= $expected
+            && $this->hasDiverseQuestionTypes(array_map(static fn (QuestionTest $q): string => (string) $q->getQuestionText(), $testQuestions))
             && !$hasOverlap
         ) {
             return;
@@ -155,48 +157,237 @@ final class AssessmentAutoGeneratorService
      */
     private function buildQuestionsFromSentences(array $sentences, int $limit, array $excludedFingerprints): array
     {
+        $sentences = array_values(array_unique($sentences));
+        shuffle($sentences);
+
         $out = [];
         $used = array_fill_keys($excludedFingerprints, true);
         $wordPool = $this->buildWordPool($sentences);
+
+        $targets = [
+            'completion' => max(1, (int) ceil($limit * 0.4)),
+            'true_false' => max(1, (int) ceil($limit * 0.3)),
+            'statement_mcq' => max(1, $limit - (int) ceil($limit * 0.4) - (int) ceil($limit * 0.3)),
+        ];
+        $counts = ['completion' => 0, 'true_false' => 0, 'statement_mcq' => 0];
 
         foreach ($sentences as $sentence) {
             if (count($out) >= $limit) {
                 break;
             }
 
-            $tokens = $this->extractCandidateWords($sentence);
-            if ($tokens === []) {
-                continue;
-            }
+            foreach ($this->getGenerationOrder($targets, $counts) as $type) {
+                $questionData = match ($type) {
+                    'completion' => $this->createCompletionQuestion($sentence, $wordPool, $used),
+                    'true_false' => $this->createTrueFalseQuestion($sentence, $used),
+                    'statement_mcq' => $this->createStatementMcqQuestion($sentence, $sentences, $used),
+                    default => null,
+                };
 
-            $targetWord = $tokens[array_rand($tokens)];
-            $pattern = '/\b' . preg_quote($targetWord, '/') . '\b/ui';
-            $blanked = preg_replace($pattern, '______', $sentence, 1);
-            if ($blanked === null || $blanked === $sentence) {
-                continue;
+                if ($questionData !== null) {
+                    $out[] = $questionData;
+                    $counts[$type]++;
+                    break;
+                }
             }
-
-            $questionText = 'Completez la phrase : ' . trim($blanked);
-            $fingerprint = $this->normalizeText($questionText);
-            if (isset($used[$fingerprint])) {
-                continue;
-            }
-
-            $choices = $this->buildChoices($targetWord, $wordPool);
-            if (count($choices) < 2) {
-                continue;
-            }
-
-            $used[$fingerprint] = true;
-            $out[] = [
-                'question' => $questionText,
-                'correct' => $targetWord,
-                'choices' => $choices,
-                'points' => 1,
-            ];
         }
 
-        return $out;
+        return array_slice($out, 0, $limit);
+    }
+
+    /**
+     * @param array<string, int> $targets
+     * @param array<string, int> $counts
+     * @return string[]
+     */
+    private function getGenerationOrder(array $targets, array $counts): array
+    {
+        $types = array_keys($targets);
+        usort($types, static function (string $a, string $b) use ($targets, $counts): int {
+            $deficitA = $targets[$a] - $counts[$a];
+            $deficitB = $targets[$b] - $counts[$b];
+
+            return $deficitB <=> $deficitA;
+        });
+
+        return $types;
+    }
+
+    /**
+     * @param string[] $wordPool
+     * @param array<string, bool> $used
+     * @return array{question:string,correct:string,choices:string[],points:int}|null
+     */
+    private function createCompletionQuestion(string $sentence, array $wordPool, array &$used): ?array
+    {
+        $tokens = $this->extractCandidateWords($sentence);
+        if ($tokens === []) {
+            return null;
+        }
+
+        $targetWord = $tokens[array_rand($tokens)];
+        $pattern = '/\b' . preg_quote($targetWord, '/') . '\b/ui';
+        $blanked = preg_replace($pattern, '______', $sentence, 1);
+        if ($blanked === null || $blanked === $sentence) {
+            return null;
+        }
+
+        $questionText = 'Completez la phrase : ' . trim($blanked);
+        $fingerprint = $this->normalizeText($questionText);
+        if (isset($used[$fingerprint])) {
+            return null;
+        }
+
+        $choices = $this->buildChoices($targetWord, $wordPool);
+        if (count($choices) < 2) {
+            return null;
+        }
+
+        $used[$fingerprint] = true;
+
+        return [
+            'question' => $questionText,
+            'correct' => $targetWord,
+            'choices' => $choices,
+            'points' => 1,
+        ];
+    }
+
+    /**
+     * @param array<string, bool> $used
+     * @return array{question:string,correct:string,choices:string[],points:int}|null
+     */
+    private function createTrueFalseQuestion(string $sentence, array &$used): ?array
+    {
+        $isTrue = random_int(0, 1) === 1;
+        $statement = $isTrue ? trim($sentence) : $this->makeFalseSentence(trim($sentence));
+        if ($statement === '') {
+            return null;
+        }
+
+        $questionText = 'Vrai ou Faux : ' . $statement;
+        $fingerprint = $this->normalizeText($questionText);
+        if (isset($used[$fingerprint])) {
+            return null;
+        }
+
+        $used[$fingerprint] = true;
+
+        return [
+            'question' => $questionText,
+            'correct' => $isTrue ? 'Vrai' : 'Faux',
+            'choices' => ['Vrai', 'Faux'],
+            'points' => 1,
+        ];
+    }
+
+    /**
+     * @param string[] $allSentences
+     * @param array<string, bool> $used
+     * @return array{question:string,correct:string,choices:string[],points:int}|null
+     */
+    private function createStatementMcqQuestion(string $sentence, array $allSentences, array &$used): ?array
+    {
+        $base = trim($sentence);
+        if ($base === '') {
+            return null;
+        }
+
+        $questionText = 'Choisissez l\'affirmation correcte :';
+        $fingerprint = $this->normalizeText($questionText . ' ' . $base);
+        if (isset($used[$fingerprint])) {
+            return null;
+        }
+
+        $choices = [$base];
+
+        $false1 = $this->makeFalseSentence($base);
+        if ($false1 !== '' && $this->normalizeText($false1) !== $this->normalizeText($base)) {
+            $choices[] = $false1;
+        }
+
+        $false2 = $this->makeFalseSentence($false1 !== '' ? $false1 : $base);
+        if ($false2 !== '' && $this->normalizeText($false2) !== $this->normalizeText($base)) {
+            $choices[] = $false2;
+        }
+
+        foreach ($allSentences as $candidateSentence) {
+            if (count($choices) >= 4) {
+                break;
+            }
+
+            $candidate = trim($candidateSentence);
+            if ($candidate === '' || $this->normalizeText($candidate) === $this->normalizeText($base)) {
+                continue;
+            }
+
+            $choices[] = $candidate;
+        }
+
+        $choices = $this->normalizeChoiceSet($choices, $base);
+        if (count($choices) < 2) {
+            return null;
+        }
+
+        $used[$fingerprint] = true;
+
+        return [
+            'question' => $questionText,
+            'correct' => $base,
+            'choices' => $choices,
+            'points' => 1,
+        ];
+    }
+
+    private function makeFalseSentence(string $sentence): string
+    {
+        $replacements = [
+            '/\best\b/ui' => 'n\'est pas',
+            '/\bsont\b/ui' => 'ne sont pas',
+            '/\bpeut\b/ui' => 'ne peut pas',
+            '/\bpermet\b/ui' => 'n\'autorise pas',
+            '/\balways\b/ui' => 'never',
+            '/\btrue\b/ui' => 'false',
+        ];
+
+        foreach ($replacements as $pattern => $replace) {
+            $changed = preg_replace($pattern, $replace, $sentence, 1);
+            if ($changed !== null && $changed !== $sentence) {
+                return $changed;
+            }
+        }
+
+        if ($sentence !== '') {
+            return 'Il est faux que ' . lcfirst($sentence);
+        }
+
+        return '';
+    }
+
+    /**
+     * @param string[] $choices
+     * @return string[]
+     */
+    private function normalizeChoiceSet(array $choices, string $correct): array
+    {
+        $unique = [];
+        foreach ($choices as $choice) {
+            $key = $this->normalizeText($choice);
+            if ($key === '' || isset($unique[$key])) {
+                continue;
+            }
+            $unique[$key] = $choice;
+        }
+
+        if (!isset($unique[$this->normalizeText($correct)])) {
+            $unique[$this->normalizeText($correct)] = $correct;
+        }
+
+        $finalChoices = array_values($unique);
+        $finalChoices = array_slice($finalChoices, 0, 4);
+        shuffle($finalChoices);
+
+        return $finalChoices;
     }
 
     /**
@@ -398,6 +589,34 @@ final class AssessmentAutoGeneratorService
         $text = preg_replace('/\s+/', ' ', $text) ?? '';
 
         return preg_replace('/[^\p{L}\p{N}\s]/u', '', $text) ?? '';
+    }
+
+    /**
+     * @param string[] $questionTexts
+     */
+    private function hasDiverseQuestionTypes(array $questionTexts): bool
+    {
+        $hasCompletion = false;
+        $hasTrueFalse = false;
+        $hasStatementMcq = false;
+
+        foreach ($questionTexts as $text) {
+            $normalized = mb_strtolower(trim($text));
+            if (str_starts_with($normalized, 'completez la phrase')) {
+                $hasCompletion = true;
+            } elseif (str_starts_with($normalized, 'vrai ou faux')) {
+                $hasTrueFalse = true;
+            } elseif (str_starts_with($normalized, 'choisissez l\'affirmation correcte')) {
+                $hasStatementMcq = true;
+            }
+        }
+
+        $found = 0;
+        $found += $hasCompletion ? 1 : 0;
+        $found += $hasTrueFalse ? 1 : 0;
+        $found += $hasStatementMcq ? 1 : 0;
+
+        return $found >= 2;
     }
 }
 
