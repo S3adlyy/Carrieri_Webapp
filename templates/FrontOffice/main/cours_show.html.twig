@@ -2,6 +2,11 @@
 
 {% block title %}{{ cours.titre|default('Détail du cours') }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260409-1">
+{% endblock %}
+
 {% block candidate_page_heading %}Détail du cours{% endblock %}
 
 {% block candidate_breadcrumb %}
@@ -9,96 +14,113 @@
 {% endblock %}
 
 {% block candidate_content %}
-    <div class="w-100 text-start fo-charte-ui">
-        <a href="{{ path('app_candidate_cours') }}" class="btn btn-outline-secondary btn-sm mb-3">Retour aux cours</a>
-
-        <div class="card shadow-sm fo-charte-card">
-            {% if cours.imageCouverture %}
-                <img src="{{ path('app_candidate_cours_image', {id: cours.id}) }}" class="card-img-top" alt="{{ cours.titre|default('Cours') }}" style="max-height: 300px; object-fit: cover;">
+    {% set active_lesson = continue_lesson|default(null) %}
+    {% if active_lesson is null %}
+        {% for module in modules %}
+            {% set module_lessons = lessons_by_module[module.id]|default([]) %}
+            {% if active_lesson is null and module_lessons is not empty %}
+                {% set active_lesson = module_lessons|first %}
             {% endif %}
+        {% endfor %}
+    {% endif %}
 
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <h3 class="mb-0">{{ cours.titre|default('Cours') }}</h3>
-                    <span class="badge badge-{{ cours.niveau == 'Débutant' ? 'success' : (cours.niveau == 'Intermédiaire' ? 'warning' : 'danger') }}">{{ cours.niveau|default('—') }}</span>
-                </div>
-
-                <p class="text-muted mb-3">
-                    <strong>Durée:</strong> {{ cours.duree|default('—') }} h
-                    &nbsp;|&nbsp;
-                    <strong>Prix:</strong> {{ cours.prix is not null ? cours.prix ~ ' €' : 'Gratuit' }}
-                </p>
-
-                <h5>Description</h5>
-                <p>{{ cours.description|default('Aucune description') }}</p>
-
-                <h5>Compétences visées</h5>
-                <p class="mb-0">{{ cours.competencesVisees|default('—') }}</p>
-
-                <hr>
-                <div class="d-flex justify-content-between align-items-center flex-wrap">
-                    <div class="mb-2">
-                        <strong>Progression :</strong> {{ progress|default(0) }}%
-                    </div>
-                    {% if continue_lesson is defined and continue_lesson %}
-                        <a href="{{ path('app_candidate_lecon_show', {cours: cours.id, id: continue_lesson.id}) }}" class="btn btn-sm btn-primary mb-2">Continuer</a>
-                    {% endif %}
-                </div>
-                <div class="progress mb-2" style="height: 10px;">
-                    <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress|default(0) }}%;" aria-valuenow="{{ progress|default(0) }}" aria-valuemin="0" aria-valuemax="100"></div>
-                </div>
-            </div>
+    <div class="w-100 text-start fo-charte-ui">
+        <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
+            <a href="{{ path('app_candidate_cours') }}" class="btn btn-outline-secondary btn-sm mb-2">Retour aux cours</a>
+            <div class="text-muted mb-2">Progression globale : <strong>{{ progress|default(0) }}%</strong></div>
         </div>
 
-        <div class="card shadow-sm mt-4 fo-charte-card">
-            <div class="card-header fo-charte-header">
-                <h5 class="mb-0">Parcours du cours</h5>
+        <div class="row g-4 fo-player-layout">
+            <div class="col-lg-3 fo-player-layout__left">
+                {% include 'FrontOffice/main/partials/_course_sidebar.html.twig' with {
+                    cours: cours,
+                    modules: modules,
+                    lessons_by_module: lessons_by_module,
+                    viewed_lesson_ids: viewed_lesson_ids,
+                    active_lesson_id: active_lesson ? active_lesson.id : null
+                } only %}
             </div>
-            <div class="card-body">
-                {% if modules is empty %}
-                    <p class="text-muted mb-0">Aucun module n'a encore été ajouté à ce cours.</p>
-                {% else %}
-                    <div id="course-accordion">
-                        {% for module in modules %}
-                            {% set module_lessons = lessons_by_module[module.id]|default([]) %}
-                            <div class="card mb-2 fo-charte-card">
-                                <div class="card-header bg-white" id="heading-{{ module.id }}">
-                                    <button class="btn btn-link text-left p-0 w-100" data-toggle="collapse" data-target="#collapse-{{ module.id }}" aria-expanded="{{ loop.first ? 'true' : 'false' }}" aria-controls="collapse-{{ module.id }}">
-                                        <span class="d-flex justify-content-between align-items-center">
-                                            <span><strong>Module {{ module.ordre|default(loop.index) }}</strong> — {{ module.titre|default('Sans titre') }}</span>
-                                            <span class="badge badge-light">{{ module_lessons|length }} leçon(s)</span>
-                                        </span>
-                                    </button>
-                                </div>
-                                <div id="collapse-{{ module.id }}" class="collapse {{ loop.first ? 'show' : '' }}" aria-labelledby="heading-{{ module.id }}" data-parent="#course-accordion">
-                                    <div class="card-body">
-                                        <p class="text-muted mb-3">{{ module.description|default('') }}</p>
-                                        {% if module_lessons is empty %}
-                                            <small class="text-muted">Aucune leçon pour ce module.</small>
-                                        {% else %}
-                                            <div class="list-group">
-                                                {% for lesson in module_lessons %}
-                                                    <a href="{{ path('app_candidate_lecon_show', {cours: cours.id, id: lesson.id}) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
-                                                        <span>
-                                                            <strong>{{ lesson.titre|default('Leçon') }}</strong>
-                                                        </span>
-                                                        {% if viewed_lesson_ids[lesson.id]|default(false) %}
-                                                            <span class="badge badge-success">Vue</span>
-                                                        {% else %}
-                                                            <span class="badge badge-light">Non vue</span>
-                                                        {% endif %}
-                                                    </a>
-                                                {% endfor %}
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
+
+            <div class="col-lg-9">
+                <div class="card shadow-sm fo-charte-card mb-4">
+                    {% if cours.imageCouverture %}
+                        <img src="{{ path('app_candidate_cours_image', {id: cours.id}) }}" class="card-img-top" alt="{{ cours.titre|default('Cours') }}" style="max-height: 260px; object-fit: cover;">
+                    {% endif %}
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+                            <div>
+                                <h3 class="mb-1">{{ cours.titre|default('Cours') }}</h3>
+                                <p class="text-muted mb-0">{{ cours.description|default('Aucune description') }}</p>
                             </div>
-                        {% endfor %}
+                            <span class="badge badge-{{ cours.niveau == 'Débutant' ? 'success' : (cours.niveau == 'Intermédiaire' ? 'warning' : 'danger') }}">{{ cours.niveau|default('—') }}</span>
+                        </div>
+
+                        <div class="row text-center">
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="p-3 bg-light rounded"><small class="d-block text-muted">Durée</small><strong>{{ cours.duree|default('—') }} h</strong></div>
+                            </div>
+                            <div class="col-md-4 mb-3 mb-md-0">
+                                <div class="p-3 bg-light rounded"><small class="d-block text-muted">Quiz validés</small><strong>{{ quiz_passed_count|default(0) }}/{{ quiz_total_count|default(0) }}</strong></div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 bg-light rounded"><small class="d-block text-muted">Test final</small><strong>{{ final_test_unlocked|default(false) ? 'Débloqué' : 'Bloqué' }}</strong></div>
+                            </div>
+                        </div>
                     </div>
-                {% endif %}
+                </div>
+
+                <div class="card shadow-sm fo-charte-card mb-4">
+                    <div class="card-header fo-charte-header d-flex justify-content-between align-items-center flex-wrap">
+                        <strong>Leçon en cours</strong>
+                        {% if continue_lesson is defined and continue_lesson %}
+                            <small class="text-muted">Prochaine leçon: {{ continue_lesson.titre|default('—') }}</small>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if active_lesson %}
+                            <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
+                                <div>
+                                    <h4 class="mb-1">{{ active_lesson.titre|default('Leçon') }}</h4>
+                                    <small class="text-muted">{{ active_lesson.module ? active_lesson.module.titre : '—' }}</small>
+                                </div>
+                                {% if viewed_lesson_ids[active_lesson.id]|default(false) %}
+                                    <span class="badge badge-success">Vue</span>
+                                {% endif %}
+                            </div>
+
+                            {% if active_lesson.video %}
+                                <div class="mb-3">
+                                    <video controls class="w-100" style="max-height: 460px;">
+                                        <source src="{{ path('app_candidate_lecon_video', {cours: cours.id, id: active_lesson.id}) }}" type="video/mp4">
+                                        Votre navigateur ne supporte pas la lecture vidéo.
+                                    </video>
+                                </div>
+                            {% endif %}
+
+                            <div class="p-3 bg-light rounded">{{ active_lesson.contenu|default('—')|nl2br }}</div>
+                        {% else %}
+                            <div class="alert alert-light border mb-0">Aucune leçon à afficher pour le moment.</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="card shadow-sm fo-charte-card">
+                    <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
+                        <div class="mb-2 mb-md-0">
+                            <strong>Progression globale :</strong> {{ progress|default(0) }}%
+                            <div class="progress mt-2" style="height: 10px; min-width: 260px;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress|default(0) }}%;" aria-valuenow="{{ progress|default(0) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                        </div>
+
+                        {% if final_test_unlocked|default(false) %}
+                            <a href="{{ path('app_candidate_cours_test_final', {id: cours.id}) }}" class="btn btn-primary">Passer le test final (15 questions)</a>
+                        {% else %}
+                            <button type="button" class="btn btn-secondary" disabled>Test final bloqué</button>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 {% endblock %}
-

@@ -747,3 +747,100 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	}
 }
 
+/* Player layout (cours_show + lecon_show): FXML-inspired, cleaner sidebar */
+.fo-player-layout__left {
+	max-width: 300px;
+}
+
+.fo-player-sidebar {
+	top: 20px;
+	overflow: hidden;
+}
+
+.fo-player-sidebar__header {
+	padding: 0.8rem 1rem;
+}
+
+.fo-player-sidebar__header .font-weight-bold {
+	font-size: 0.9rem;
+}
+
+.fo-player-sidebar__header .badge {
+	font-size: 0.75rem;
+}
+
+.fo-player-sidebar__scroll {
+	max-height: calc(100vh - 230px);
+	overflow-y: auto;
+	background: #fff;
+}
+
+.fo-player-module {
+	padding: 0.8rem 0.85rem;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.fo-player-module__index {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #231942;
+	line-height: 1.2;
+}
+
+.fo-player-module__title {
+	font-size: 0.75rem;
+	line-height: 1.2;
+	color: #6b7280;
+	white-space: normal;
+	word-break: break-word;
+}
+
+.fo-player-module__count {
+	font-size: 0.68rem;
+}
+
+.fo-player-lesson-link {
+	text-decoration: none;
+	font-size: 0.76rem;
+	padding: 0.35rem 0.45rem;
+	border-radius: 8px;
+	margin-bottom: 3px;
+	background: #f8fafc;
+}
+
+.fo-player-lesson-link.is-active {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.fo-player-lesson-link__title {
+	white-space: normal;
+	word-break: break-word;
+	line-height: 1.2;
+	padding-right: 0.35rem;
+}
+
+.fo-player-lesson-link__check {
+	font-size: 0.68rem;
+	flex-shrink: 0;
+}
+
+.fo-player-module__quiz-btn {
+	font-size: 0.74rem;
+	padding: 0.3rem 0.4rem;
+	border-radius: 8px;
+}
+
+@media (max-width: 991px) {
+	.fo-player-layout__left {
+		max-width: 100%;
+	}
+
+	.fo-player-sidebar {
+		position: static !important;
+	}
+
+	.fo-player-sidebar__scroll {
+		max-height: none;
+	}
+}
+

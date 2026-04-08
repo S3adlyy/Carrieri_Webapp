@@ -9,6 +9,8 @@ use App\Entity\Lecon;
 use App\Repository\CoursRepository;
 use App\Repository\LeconRepository;
 use App\Repository\ModuleRepository;
+use App\Repository\ResultatQuizModuleRepository;
+use App\Repository\ResultatTestCoursRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -25,6 +27,8 @@ class CoursController extends AbstractController
         private CoursRepository $coursRepository,
         private ModuleRepository $moduleRepository,
         private LeconRepository $leconRepository,
+        private ResultatQuizModuleRepository $resultatQuizModuleRepository,
+        private ResultatTestCoursRepository $resultatTestCoursRepository,
     ) {
     }
 
@@ -35,11 +39,12 @@ class CoursController extends AbstractController
         $niveau = trim((string) $request->query->get('niveau', ''));
         $page = max(1, (int) $request->query->get('page', 1));
         $viewedLessonIds = $this->getViewedLessonIds($request);
+        $order = $request->query->get('order', 'recent'); // Ajoutez cette ligne
 
         $total = $this->coursRepository->countForCandidateFilters($query, $niveau);
         $totalPages = max(1, (int) ceil($total / self::COURSES_PER_PAGE));
         $page = min($page, $totalPages);
-        $courses = $this->coursRepository->searchForCandidate($query, $niveau, $page, self::COURSES_PER_PAGE);
+        $courses = $this->coursRepository->searchForCandidate($query, $niveau, $order, $page, self::COURSES_PER_PAGE);
 
         $courseStates = [];
         foreach ($courses as $course) {
@@ -57,7 +62,10 @@ class CoursController extends AbstractController
             'filters' => [
                 'q' => $query,
                 'niveau' => $niveau,
+                'order' => $order,
+
             ],
+
             'pagination' => [
                 'page' => $page,
                 'limit' => self::COURSES_PER_PAGE,
@@ -72,6 +80,7 @@ class CoursController extends AbstractController
     public function show(Request $request, Cours $cours): Response
     {
         $outline = $this->buildCourseOutline($cours, $this->getViewedLessonIds($request));
+        $gate = $this->computeFinalTestGate($cours);
 
         return $this->render('FrontOffice/main/cours_show.html.twig', [
             'cours' => $cours,
@@ -80,6 +89,9 @@ class CoursController extends AbstractController
             'progress' => $outline['progress'],
             'continue_lesson' => $outline['continue_lesson'],
             'viewed_lesson_ids' => $outline['viewed_lesson_ids'],
+            'final_test_unlocked' => $gate['unlocked'],
+            'quiz_total_count' => $gate['total'],
+            'quiz_passed_count' => $gate['passed'],
         ]);
     }
 
@@ -141,13 +153,59 @@ class CoursController extends AbstractController
             }
         }
 
+        $progress = $this->computeCompositeProgress($cours, $modules, $totalLessons, $viewedCount, count($viewedLookup));
+
         return [
             'modules' => $modules,
             'lessons_by_module' => $lessonsByModule,
             'viewed_lesson_ids' => $viewedLookup,
-            'progress' => $totalLessons > 0 ? (int) round(($viewedCount / $totalLessons) * 100) : 0,
+            'progress' => $progress,
             'continue_lesson' => $continueLesson,
         ];
+    }
+
+    /**
+     * @param array<int, \App\Entity\Module> $modules
+     */
+    private function computeCompositeProgress(Cours $cours, array $modules, int $totalLessons, int $viewedCount, int $viewedLessonCount): int
+    {
+        $moduleCount = count($modules);
+        $completedModuleQuizzes = 0;
+        $passedFinalTest = 0;
+
+        $user = $this->getUser();
+        if ($user instanceof \App\Entity\User && $user->getId() !== null) {
+            foreach ($modules as $module) {
+                $moduleId = $module->getId();
+                if ($moduleId === null) {
+                    continue;
+                }
+
+                $latestQuiz = $this->resultatQuizModuleRepository->findLatestForCandidateAndModule((int) $user->getId(), $moduleId);
+                if ($latestQuiz !== null && (int) $latestQuiz->getReussite() === 1) {
+                    $completedModuleQuizzes++;
+                }
+            }
+
+            $coursId = $cours->getId();
+            if ($coursId !== null) {
+                $latestTest = $this->resultatTestCoursRepository->findLatestForCandidateAndCours((int) $user->getId(), $coursId);
+                $passedFinalTest = $latestTest !== null && (int) $latestTest->getReussite() === 1 ? 1 : 0;
+            } else {
+                $passedFinalTest = 0;
+            }
+        } else {
+            $passedFinalTest = 0;
+        }
+
+        if ($moduleCount === 0) {
+            return $totalLessons > 0 ? (int) round(($viewedCount / $totalLessons) * 100) : 0;
+        }
+
+        $requiredItems = max(1, $totalLessons + $moduleCount + 1);
+        $completedItems = $viewedCount + $completedModuleQuizzes + $passedFinalTest;
+
+        return (int) round(($completedItems / $requiredItems) * 100);
     }
 
     private function readBlobContent(mixed $blob): ?string
@@ -194,5 +252,41 @@ class CoursController extends AbstractController
 
         return $default;
     }
-}
 
+    /**
+     * @return array{unlocked: bool, total: int, passed: int}
+     */
+    private function computeFinalTestGate(Cours $cours): array
+    {
+        $modules = $this->moduleRepository->findByCours($cours);
+        if ($modules === []) {
+            return ['unlocked' => false, 'total' => 0, 'passed' => 0];
+        }
+
+        $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User || $user->getId() === null) {
+            return ['unlocked' => false, 'total' => count($modules), 'passed' => 0];
+        }
+
+        $passed = 0;
+        foreach ($modules as $module) {
+            $moduleId = $module->getId();
+            if ($moduleId === null) {
+                continue;
+            }
+
+            $latest = $this->resultatQuizModuleRepository->findLatestForCandidateAndModule((int) $user->getId(), $moduleId);
+            if ($latest !== null && (int) $latest->getReussite() === 1) {
+                $passed++;
+            }
+        }
+
+        $total = count($modules);
+
+        return [
+            'unlocked' => $total > 0 && $passed >= $total,
+            'total' => $total,
+            'passed' => $passed,
+        ];
+    }
+}

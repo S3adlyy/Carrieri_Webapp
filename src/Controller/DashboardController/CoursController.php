@@ -68,7 +68,7 @@ class CoursController extends AbstractController
                 $cours->setCompetencesVisees('');
             }
 
-            // Handle file upload for image
+
             $imageFile = $form->get('imageCouverture')->getData();
             if ($imageFile) {
                 $fileContent = file_get_contents($imageFile->getPathname());

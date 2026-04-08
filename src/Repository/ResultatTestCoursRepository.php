@@ -16,16 +16,17 @@ class ResultatTestCoursRepository extends ServiceEntityRepository
         parent::__construct($registry, ResultatTestCours::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    public function findLatestForCandidateAndCours(int $candidatId, int $coursId): ?ResultatTestCours
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.candidatId = :candidatId')
+            ->andWhere('r.coursId = :coursId')
+            ->setParameter('candidatId', $candidatId)
+            ->setParameter('coursId', $coursId)
+            ->orderBy('r.dateCompletion', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

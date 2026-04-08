@@ -20,10 +20,23 @@ class CoursRepository extends ServiceEntityRepository
     /**
      * @return Cours[]
      */
-    public function searchForCandidate(?string $query, ?string $niveau, int $page, int $limit = 6): array
+    public function searchForCandidate(?string $query, ?string $niveau, string $order = 'recent', int $page, int $limit = 6): array
     {
-        $items = $this->findBy([], ['id' => 'DESC']);
+        // Récupération avec tri initial
+        switch ($order) {
+            case 'price_asc':
+                $items = $this->findBy([], ['prix' => 'ASC']);
+                break;
+            case 'price_desc':
+                $items = $this->findBy([], ['prix' => 'DESC']);
+                break;
+            case 'recent':
+            default:
+                $items = $this->findBy([], ['id' => 'DESC']);
+                break;
+        }
 
+        // Filtrage (inchangé)
         $items = array_values(array_filter($items, static function (Cours $cours) use ($query, $niveau): bool {
             if ($niveau !== null && $niveau !== '' && $cours->getNiveau() !== $niveau) {
                 return false;
@@ -39,6 +52,7 @@ class CoursRepository extends ServiceEntityRepository
             return str_contains($haystack, $needle);
         }));
 
+        // Pagination (inchangée)
         return array_slice($items, max(0, ($page - 1) * $limit), $limit);
     }
 
@@ -79,11 +93,36 @@ class CoursRepository extends ServiceEntityRepository
     /**
      * @return Cours[]
      */
-    public function searchForBackOffice(?User $user, bool $isAdmin, ?string $query, ?string $niveau): array
+    public function searchForBackOffice(?User $user, bool $isAdmin, ?string $query, ?string $niveau, string $order = 'recent'): array
     {
-        $items = $isAdmin || $user === null
-            ? $this->findBy([], ['id' => 'DESC'])
-            : $this->findBy(['user' => $user], ['id' => 'DESC']);
+        // Récupération avec tri initial
+        if ($isAdmin || $user === null) {
+            switch ($order) {
+                case 'price_asc':
+                    $items = $this->findBy([], ['prix' => 'ASC']);
+                    break;
+                case 'price_desc':
+                    $items = $this->findBy([], ['prix' => 'DESC']);
+                    break;
+                case 'recent':
+                default:
+                    $items = $this->findBy([], ['id' => 'DESC']);
+                    break;
+            }
+        } else {
+            switch ($order) {
+                case 'price_asc':
+                    $items = $this->findBy(['user' => $user], ['prix' => 'ASC']);
+                    break;
+                case 'price_desc':
+                    $items = $this->findBy(['user' => $user], ['prix' => 'DESC']);
+                    break;
+                case 'recent':
+                default:
+                    $items = $this->findBy(['user' => $user], ['id' => 'DESC']);
+                    break;
+            }
+        }
 
         return array_values(array_filter($items, static function (Cours $cours) use ($query, $niveau): bool {
             if ($niveau !== null && $niveau !== '' && $cours->getNiveau() !== $niveau) {
