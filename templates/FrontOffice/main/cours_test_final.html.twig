@@ -11,7 +11,7 @@
 {% endblock %}
 
 {% block candidate_content %}
-    <div class="w-100 text-start fo-charte-ui">
+    <div class="w-100 text-start fo-charte-ui fo-anti-copy-page" id="final-test-page">
         <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}" class="btn btn-outline-secondary btn-sm mb-3">Retour au cours</a>
 
         <div class="card shadow-sm fo-charte-card mb-4">
@@ -41,7 +41,7 @@
         {% elseif questions is empty %}
             <div class="alert alert-light border">Aucune question de test final n'est disponible pour ce cours.</div>
         {% else %}
-            <form method="post" class="card shadow-sm fo-charte-card" id="final-test-form">
+            <form method="post" class="card shadow-sm fo-charte-card fo-anti-copy" id="final-test-form">
                 <div class="card-body">
                     {% for q in questions %}
                         <div class="mb-4 test-question-block {{ loop.first ? '' : 'd-none' }}" data-question-index="{{ loop.index0 }}">
@@ -90,6 +90,7 @@
     {{ parent() }}
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const page = document.getElementById('final-test-page');
             const blocks = Array.from(document.querySelectorAll('.test-question-block'));
             if (!blocks.length) {
                 return;
@@ -100,6 +101,41 @@
             const nextBtn = document.getElementById('test-next');
             const progressLabel = document.getElementById('test-progress');
             const form = document.getElementById('final-test-form');
+
+            const blockCopy = function (event) {
+                if (page && page.contains(event.target)) {
+                    event.preventDefault();
+                }
+            };
+
+            document.addEventListener('keydown', function (event) {
+                if (!page || !page.contains(event.target)) {
+                    return;
+                }
+
+                const key = (event.key || '').toLowerCase();
+                if ((event.ctrlKey || event.metaKey) && ['a', 'c', 'x', 'v', 'u', 's', 'p'].includes(key)) {
+                    event.preventDefault();
+                }
+            });
+
+            document.addEventListener('copy', blockCopy);
+            document.addEventListener('cut', blockCopy);
+            document.addEventListener('paste', blockCopy);
+            document.addEventListener('contextmenu', blockCopy);
+            document.addEventListener('selectstart', blockCopy);
+            document.addEventListener('beforeinput', function (event) {
+                if (page && page.contains(event.target) && (event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop')) {
+                    event.preventDefault();
+                }
+            });
+            document.addEventListener('drop', blockCopy);
+
+            form?.addEventListener('copy', blockCopy);
+            form?.addEventListener('cut', blockCopy);
+            form?.addEventListener('paste', blockCopy);
+            form?.addEventListener('contextmenu', blockCopy);
+            form?.addEventListener('selectstart', blockCopy);
 
             const update = function () {
                 blocks.forEach(function (block, index) {

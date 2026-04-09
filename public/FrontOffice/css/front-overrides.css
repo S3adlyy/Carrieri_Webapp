@@ -830,6 +830,37 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	border-radius: 8px;
 }
 
+/* Anti-copy helper for quiz/test question blocks */
+.fo-anti-copy,
+.fo-anti-copy * {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+}
+
+.fo-anti-copy-page,
+.fo-anti-copy-page * {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+	-webkit-touch-callout: none;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.fo-anti-copy .form-check-input,
+.fo-anti-copy button,
+.fo-anti-copy a,
+.fo-anti-copy input,
+.fo-anti-copy label {
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	user-select: none;
+}
+
 @media (max-width: 991px) {
 	.fo-player-layout__left {
 		max-width: 100%;
