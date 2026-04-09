@@ -16,6 +16,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
 #[Route('/candidat/rendu-mission')]
 #[IsGranted('ROLE_CANDIDAT')]
@@ -28,13 +30,10 @@ class RenduMissionController extends AbstractController
         private AiCodeEvaluatorService $aiEvaluator,
     ) {}
 
-    // ── /mes-resultats must be declared BEFORE /{id} ────────────────────────
-
     #[Route('/mes-resultats', name: 'app_candidate_my_results')]
     public function myResults(): Response
     {
         $user = $this->requireUser();
-
         $soumissions = $this->renduMissionRepository->findBy(
             ['candidatId' => $user->getId()],
             ['dateRendu' => 'DESC']
@@ -49,7 +48,6 @@ class RenduMissionController extends AbstractController
     public function status(int $id): Response
     {
         $user = $this->requireUser();
-
         $rendu = $this->renduMissionRepository->find($id);
         if (!$rendu || $rendu->getUser() !== $user) {
             throw $this->createNotFoundException('Soumission non trouvée');
@@ -62,58 +60,278 @@ class RenduMissionController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_candidate_rendu_mission')]
-    public function index(int $id, Request $request): Response
+    public function index(int $id, Request $request, SessionInterface $session): Response
     {
-        $user    = $this->requireUser();
+        $user = $this->requireUser();
         $mission = $this->missionRepository->find($id)
             ?? throw $this->createNotFoundException('Mission non trouvée');
 
+        // Vérifier si déjà soumis
         $existingRendu = $this->renduMissionRepository->findExistingSubmission(
             $mission->getId(),
             $user->getId()
         );
 
-        if ($request->isMethod('POST')) {
-            $code   = (string) $request->request->get('code', '');
-            $langue = (string) $request->request->get('langue', 'javascript');
+        if ($existingRendu) {
+            $this->addFlash('warning', 'Vous avez déjà soumis cette mission.');
+            return $this->redirectToRoute('app_candidate_my_results');
+        }
 
-            // ── Call AI evaluation API ────────────────────────────────────
-            $evaluation = $this->aiEvaluator->evaluate(
-                code:               $code,
-                language:           $langue,
-                missionDescription: $mission->getDescription() ?? '',
-                missionTitle:       $mission->getType() ?? 'Mission #'.$mission->getId(),
-                scoreMin:           $mission->getScoreMin() ?? 60,
-            );
+        // Initialiser la session si ce n'est pas déjà fait
+        $sessionKey = "mission_{$id}_start_time";
+        $executionsKey = "mission_{$id}_executions";
 
+        if (!$session->has($sessionKey)) {
+            $session->set($sessionKey, time());
+            $session->set($executionsKey, 3);
+            $session->set("mission_{$id}_token", bin2hex(random_bytes(32)));
+        }
+
+        // Vérifier si le temps est écoulé (30 minutes)
+        $startTime = $session->get($sessionKey);
+        $timeRemaining = 1800 - (time() - $startTime);
+
+        if ($timeRemaining <= 0) {
+            // Auto-submission avec score 0
+            return $this->autoSubmitWithZero($mission, $user, $session, "Temps écoulé (30 minutes)");
+        }
+
+        return $this->render('FrontOffice/main/rendu_mission.html.twig', [
+            'mission' => $mission,
+            'existingRendu' => $existingRendu,
+            'remainingExecutions' => $session->get($executionsKey, 3),
+            'timeRemaining' => $timeRemaining,
+            'sessionToken' => $session->get("mission_{$id}_token")
+        ]);
+    }
+
+    #[Route('/execute/{id}', name: 'app_candidate_execute_code', methods: ['POST'])]
+    public function executeCode(int $id, Request $request, SessionInterface $session): JsonResponse
+    {
+        $user = $this->requireUser();
+        $mission = $this->missionRepository->find($id);
+
+        if (!$mission) {
+            return new JsonResponse(['success' => false, 'error' => 'Mission non trouvée'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $token = $data['token'] ?? null;
+        $sessionToken = $session->get("mission_{$id}_token");
+
+        if ($token !== $sessionToken) {
+            return new JsonResponse(['success' => false, 'error' => 'Session invalide'], 400);
+        }
+
+        // Vérifier les exécutions restantes
+        $executionsKey = "mission_{$id}_executions";
+        $remaining = $session->get($executionsKey, 0);
+
+        if ($remaining <= 0) {
+            return new JsonResponse([
+                'success' => false,
+                'error' => 'Vous avez atteint la limite de 3 exécutions',
+                'limitReached' => true
+            ], 403);
+        }
+
+        // Décrémenter le compteur
+        $session->set($executionsKey, $remaining - 1);
+
+        // Exécution du code (simulation)
+        $code = $data['code'] ?? '';
+        $language = $data['language'] ?? 'python';
+
+        // Appel à votre service d'exécution
+        $result = $this->executeUserCode($code, $language);
+
+        return new JsonResponse([
+            'success' => $result['success'],
+            'output' => $result['output'] ?? null,
+            'error' => $result['error'] ?? null,
+            'remainingExecutions' => $session->get($executionsKey)
+        ]);
+    }
+
+    #[Route('/auto-submit/{id}', name: 'app_candidate_auto_submit', methods: ['POST'])]
+    public function autoSubmit(int $id, Request $request, SessionInterface $session): JsonResponse
+    {
+        $user = $this->requireUser();
+        $mission = $this->missionRepository->find($id);
+
+        if (!$mission) {
+            return new JsonResponse(['success' => false, 'error' => 'Mission non trouvée'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $token = $data['token'] ?? null;
+        $reason = $data['reason'] ?? 'Page quittée';
+        $code = $data['code'] ?? '';
+        $language = $data['language'] ?? 'javascript';
+
+        $sessionToken = $session->get("mission_{$id}_token");
+
+        if ($token !== $sessionToken) {
+            return new JsonResponse(['success' => false, 'error' => 'Session invalide'], 400);
+        }
+
+        // Vérifier si déjà soumis
+        $existingRendu = $this->renduMissionRepository->findExistingSubmission(
+            $mission->getId(),
+            $user->getId()
+        );
+
+        if ($existingRendu) {
+            return new JsonResponse(['success' => false, 'error' => 'Déjà soumis'], 400);
+        }
+
+        // Créer la soumission avec score 0
+        $renduMission = new RenduMission();
+        $renduMission->setCodeSolution($code);
+        $renduMission->setLangue($language);
+        $renduMission->setDateRendu(new \DateTime());
+        $renduMission->setScore(0);
+        $renduMission->setResultat($this->generateZeroScoreHtml($reason));
+        $renduMission->setFeedback("Session interrompue : $reason. Score: 0/100");
+        $renduMission->setStatut('refuse');
+        $renduMission->setMission($mission);
+        $renduMission->setUser($user);
+
+        $this->entityManager->persist($renduMission);
+        $this->entityManager->flush();
+
+        // Nettoyer la session
+        $session->remove("mission_{$id}_start_time");
+        $session->remove("mission_{$id}_executions");
+        $session->remove("mission_{$id}_token");
+
+        return new JsonResponse(['success' => true, 'redirect' => $this->generateUrl('app_candidate_my_results')]);
+    }
+
+    #[Route('/submit/{id}', name: 'app_candidate_submit', methods: ['POST'])]
+    public function submit(int $id, Request $request, SessionInterface $session): JsonResponse
+    {
+        $user = $this->requireUser();
+        $mission = $this->missionRepository->find($id);
+
+        if (!$mission) {
+            return new JsonResponse(['success' => false, 'error' => 'Mission non trouvée'], 404);
+        }
+
+        $data = json_decode($request->getContent(), true);
+        $code = $data['code'] ?? '';
+        $langue = $data['language'] ?? 'javascript';
+        $token = $data['token'] ?? null;
+
+        $sessionToken = $session->get("mission_{$id}_token");
+
+        if ($token !== $sessionToken) {
+            return new JsonResponse(['success' => false, 'error' => 'Session invalide'], 400);
+        }
+
+        // Vérifier si déjà soumis
+        $existingRendu = $this->renduMissionRepository->findExistingSubmission(
+            $mission->getId(),
+            $user->getId()
+        );
+
+        if ($existingRendu) {
+            return new JsonResponse(['success' => false, 'error' => 'Déjà soumis'], 400);
+        }
+
+        // Appel à l'API d'évaluation IA
+        $evaluation = $this->aiEvaluator->evaluate(
+            code: $code,
+            language: $langue,
+            missionDescription: $mission->getDescription() ?? '',
+            missionTitle: $mission->getType() ?? 'Mission #' . $mission->getId(),
+            scoreMin: $mission->getScoreMin() ?? 60,
+        );
+
+        $renduMission = new RenduMission();
+        $renduMission->setCodeSolution($code);
+        $renduMission->setLangue($langue);
+        $renduMission->setDateRendu(new \DateTime());
+        $renduMission->setScore($evaluation['score']);
+        $renduMission->setResultat($evaluation['resultat_html']);
+        $renduMission->setFeedback($evaluation['feedback']);
+        $renduMission->setStatut($evaluation['statut']);
+        $renduMission->setMission($mission);
+        $renduMission->setUser($user);
+
+        $this->entityManager->persist($renduMission);
+        $this->entityManager->flush();
+
+        // Nettoyer la session
+        $session->remove("mission_{$id}_start_time");
+        $session->remove("mission_{$id}_executions");
+        $session->remove("mission_{$id}_token");
+
+        return new JsonResponse(['success' => true, 'redirect' => $this->generateUrl('app_candidate_rendu_status', ['id' => $renduMission->getId()])]);
+    }
+
+    private function autoSubmitWithZero($mission, $user, SessionInterface $session, string $reason): Response
+    {
+        $existingRendu = $this->renduMissionRepository->findExistingSubmission(
+            $mission->getId(),
+            $user->getId()
+        );
+
+        if (!$existingRendu) {
             $renduMission = new RenduMission();
-            $renduMission->setCodeSolution($code);
-            $renduMission->setLangue($langue);
+            $renduMission->setCodeSolution('');
+            $renduMission->setLangue('');
             $renduMission->setDateRendu(new \DateTime());
-            $renduMission->setScore($evaluation['score']);
-            $renduMission->setResultat($evaluation['resultat_html']);
-            $renduMission->setFeedback($evaluation['feedback']);
-            $renduMission->setStatut($evaluation['statut']);   // 'accepte' or 'refuse'
+            $renduMission->setScore(0);
+            $renduMission->setResultat($this->generateZeroScoreHtml($reason));
+            $renduMission->setFeedback("Session expirée : $reason. Score: 0/100");
+            $renduMission->setStatut('refuse');
             $renduMission->setMission($mission);
             $renduMission->setUser($user);
 
             $this->entityManager->persist($renduMission);
             $this->entityManager->flush();
 
-            $this->addFlash('success', 'Votre solution a été soumise et évaluée par l\'IA !');
-
-            return $this->redirectToRoute('app_candidate_rendu_status', [
-                'id' => $renduMission->getId(),
-            ]);
+            // Nettoyer la session
+            $missionId = $mission->getId();
+            $session->remove("mission_{$missionId}_start_time");
+            $session->remove("mission_{$missionId}_executions");
+            $session->remove("mission_{$missionId}_token");
         }
 
-        return $this->render('FrontOffice/main/rendu_mission.html.twig', [
-            'mission'       => $mission,
-            'existingRendu' => $existingRendu,
-        ]);
+        $this->addFlash('warning', "Session expirée : $reason. Score: 0/100");
+        return $this->redirectToRoute('app_candidate_my_results');
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    private function executeUserCode(string $code, string $language): array
+    {
+        // Implémentez votre logique d'exécution ici
+        // Exemple simple :
+        return [
+            'success' => true,
+            'output' => "Code exécuté avec succès en $language\nLongueur: " . strlen($code) . " caractères"
+        ];
+    }
+
+    private function generateZeroScoreHtml(string $reason): string
+    {
+        return '
+        <div class="ai-evaluation" style="font-family:sans-serif">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+                <div style="font-size:2rem;font-weight:bold;color:#dc3545">0%</div>
+                <div>
+                    <span style="background:#dc3545;color:#fff;padding:3px 10px;border-radius:12px">✗ REFUSÉ</span>
+                    <div style="font-size:.8rem;color:#666;margin-top:3px">0/5 critères validés</div>
+                </div>
+            </div>
+            <div style="background:#f8d7da;border:1px solid #f5c6cb;border-radius:8px;padding:15px;margin-top:10px">
+                <strong style="color:#721c24">⚠️ Session interrompue</strong>
+                <p style="margin-top:8px;color:#721c24">Raison : ' . htmlspecialchars($reason) . '</p>
+                <p style="margin-top:8px;font-size:.85rem;color:#721c24">Score automatique : 0/100</p>
+            </div>
+            <p style="font-size:.75rem;color:#888;margin-top:8px">⚡ Évalué par IA – Carrieri Platform</p>
+        </div>';
+    }
 
     private function requireUser(): User
     {

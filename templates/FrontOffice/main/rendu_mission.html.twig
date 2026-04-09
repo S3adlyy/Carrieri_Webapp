@@ -111,6 +111,130 @@
         .rm-badge-id   { background: rgba(255,255,255,.08); color: rgba(255,255,255,.55); }
         .rm-badge-score { background: rgba(79,70,229,.35); color: #a5b4fc; border: 1px solid rgba(99,102,241,.4); }
 
+        /* Timer display */
+        .timer-display {
+            font-family: 'DM Mono', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            background: rgba(0,0,0,0.3);
+            padding: 4px 12px;
+            border-radius: 20px;
+            color: #4f46e5;
+            border: 1px solid rgba(79,70,229,0.3);
+        }
+        .timer-display.warning {
+            color: #ef4444;
+            border-color: #ef4444;
+            animation: pulseWarning 1s infinite;
+        }
+        @keyframes pulseWarning {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; background: rgba(239,68,68,0.1); }
+        }
+
+        /* Execution counter */
+        .exec-counter {
+            font-family: 'DM Mono', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(99,102,241,0.2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            color: #a5b4fc;
+        }
+        .exec-counter.warning {
+            color: #f59e0b;
+        }
+        .exec-counter.danger {
+            color: #ef4444;
+        }
+
+        /* Modal de confirmation */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            color: white;
+            border: 2px solid #ef4444;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 25px;
+        }
+        .modal-btn {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .modal-btn-confirm {
+            background: #ef4444;
+            color: white;
+        }
+        .modal-btn-confirm:hover {
+            background: #dc2626;
+            transform: scale(1.05);
+        }
+        .modal-btn-cancel {
+            background: #334155;
+            color: white;
+        }
+        .modal-btn-cancel:hover {
+            background: #475569;
+            transform: scale(1.05);
+        }
+
+        /* Toast notification */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 10001;
+            animation: slideIn 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            font-weight: 500;
+        }
+        .toast-success { background: #10b981; color: white; }
+        .toast-error { background: #ef4444; color: white; }
+        .toast-warning { background: #f59e0b; color: white; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Disabled buttons */
+        .rm-btn-run:disabled, .rm-btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .rm-btn-run:disabled:hover {
+            background: transparent;
+            transform: none;
+        }
+
         /* ── Main split layout ── */
         .rm-layout {
             flex: 1; display: flex; min-height: 0; width: 100%;
@@ -357,7 +481,8 @@
             display: inline-flex; align-items: center; gap: 6px;
             padding: 8px 20px;
             background: var(--indigo);
-            border: none; border-radius: 6px;
+            border: none;
+            border-radius: 6px;
             color: #fff;
             font-size: 12.5px; font-weight: 700;
             cursor: pointer;
@@ -478,12 +603,32 @@
 {% block candidate_breadcrumb %} / Missions / {{ mission.type }}{% endblock %}
 
 {% block candidate_content %}
-    <div class="rendu-mission-root" id="rendumissionroot">
+    <div class="rendu-mission-root" id="rendumissionroot"
+         data-session-token="{{ sessionToken|default('') }}"
+         data-mission-id="{{ mission.id }}"
+         data-time-remaining="{{ timeRemaining|default(1800) }}"
+         data-remaining-executions="{{ remainingExecutions|default(3) }}">
+
+        {# Modal de confirmation de départ #}
+        <div id="leaveModal" class="modal">
+            <div class="modal-content">
+                <i class="fas fa-exclamation-triangle" style="font-size: 48px; color: #ef4444; margin-bottom: 20px;"></i>
+                <h2 style="margin-bottom: 15px;">⚠️ Attention !</h2>
+                <p style="margin-bottom: 20px; line-height: 1.6;">
+                    Êtes-vous sûr de vouloir quitter cette page ?<br>
+                    <strong style="color: #ef4444;">Vous recevrez un score de 0 et la mission sera automatiquement refusée.</strong>
+                </p>
+                <div class="modal-buttons">
+                    <button class="modal-btn modal-btn-cancel" id="stayOnPage">Rester sur la page</button>
+                    <button class="modal-btn modal-btn-confirm" id="confirmLeave">Quitter quand même</button>
+                </div>
+            </div>
+        </div>
 
         {# ── Top bar ── #}
         <div class="rm-topbar">
             <div class="rm-topbar-left">
-                <a href="{{ path('app_candidate_mission') }}" class="rm-back-link">
+                <a href="#" class="rm-back-link" id="backLink">
                     <i class="fas fa-arrow-left"></i> Missions
                 </a>
                 <div class="rm-breadcrumb">
@@ -492,6 +637,12 @@
                 </div>
             </div>
             <div class="rm-topbar-meta">
+                <span class="exec-counter" id="execCounter">
+                    <i class="fas fa-play-circle"></i> <span id="execCount">{{ remainingExecutions|default(3) }}</span>/3 exécutions
+                </span>
+                <span class="timer-display" id="timerDisplay">
+                    <i class="fas fa-clock"></i> <span id="timerText">30:00</span>
+                </span>
                 <span class="rm-badge rm-badge-id"><i class="fas fa-hashtag" style="font-size:9px"></i> {{ mission.id }}</span>
                 <span class="rm-badge rm-badge-score"><i class="fas fa-star" style="font-size:9px"></i> Score requis : {{ mission.scoreMin }}</span>
             </div>
@@ -508,12 +659,11 @@
                     </div>
                     <h1 class="rm-mission-title">{{ mission.type }}</h1>
                     <span class="rm-mission-score-pill">
-                    <i class="fas fa-star"></i> Score requis : {{ mission.scoreMin }} pts
-                </span>
+                        <i class="fas fa-star"></i> Score requis : {{ mission.scoreMin }} pts
+                    </span>
                 </div>
 
                 <div class="rm-desc-body">
-
                     {# Description #}
                     <div class="rm-section-title"><i class="fas fa-align-left"></i> Description</div>
                     <div class="rm-description">
@@ -578,7 +728,6 @@
                             </div>
                         </div>
                     {% endif %}
-
                 </div>
             </div>
 
@@ -610,7 +759,7 @@
                 {# CodeMirror editor form #}
                 <form method="post" id="codeForm" style="flex:1;display:flex;flex-direction:column;min-height:0">
                     <div class="rm-cm-shell">
-                    <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
+                        <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
 # Essayez votre code ici !
 
 def twoSum(nums, target):
@@ -638,15 +787,15 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     {# Footer actions #}
                     <div class="rm-editor-footer">
                         <div class="rm-footer-left">
-                        <span class="rm-footer-hint">
-                            <kbd>Ctrl</kbd>+<kbd>Enter</kbd> Exécuter
-                        </span>
+                            <span class="rm-footer-hint">
+                                <kbd>Ctrl</kbd>+<kbd>Enter</kbd> Exécuter
+                            </span>
                         </div>
                         <div class="rm-footer-right">
                             <button type="button" class="rm-btn-run" id="runCode">
                                 <i class="fas fa-play"></i> Exécuter
                             </button>
-                            <button type="submit" class="rm-btn-submit" id="submitCode">
+                            <button type="button" class="rm-btn-submit" id="submitCode">
                                 <i class="fas fa-paper-plane"></i> Soumettre
                             </button>
                         </div>
@@ -700,40 +849,375 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/clike/clike.min.js"></script>
         <script>
             document.addEventListener('DOMContentLoaded', function () {
-                const textarea      = document.getElementById('codeEditor');
+                // ========== RÉCUPÉRATION DES DONNÉES ==========
+                const root = document.getElementById('rendumissionroot');
+                const missionId = root.dataset.missionId;
+                const sessionToken = root.dataset.sessionToken;
+                let timeRemaining = parseInt(root.dataset.timeRemaining);
+                let remainingExecutions = parseInt(root.dataset.remainingExecutions);
+
+                // ========== RÉFÉRENCES DOM ==========
+                const textarea = document.getElementById('codeEditor');
                 const languageSelect = document.getElementById('language');
                 const selectedLangue = document.getElementById('selectedLangue');
-                const editorPanel   = document.getElementById('editorPanel');
+                const editorPanel = document.getElementById('editorPanel');
                 const fullscreenBtn = document.getElementById('fullscreenBtn');
-                const resultsPanel  = document.getElementById('resultsPanel');
+                const resultsPanel = document.getElementById('resultsPanel');
                 const resultsContent = document.getElementById('resultsContent');
-                let isFullscreen = false;
+                const runBtn = document.getElementById('runCode');
+                const submitBtn = document.getElementById('submitCode');
+                const execCountSpan = document.getElementById('execCount');
+                const timerTextSpan = document.getElementById('timerText');
+                const timerDisplay = document.getElementById('timerDisplay');
+                const execCounter = document.getElementById('execCounter');
 
-                // ── Init CodeMirror ──
+                let isFullscreen = false;
+                let timerInterval = null;
+                let isSubmitting = false;
+                let isLeaving = false;
+
+                // ========== 1. INITIALISATION CODEMIRROR ==========
                 let editor = CodeMirror.fromTextArea(textarea, {
-                    lineNumbers:   true,
-                    mode:          'python',
-                    theme:         'dracula',
+                    lineNumbers: true,
+                    mode: 'python',
+                    theme: 'dracula',
                     matchBrackets: true,
-                    indentUnit:    4,
-                    tabSize:       4,
-                    lineWrapping:  true,
-                    gutters:       ['CodeMirror-linenumbers']
+                    indentUnit: 4,
+                    tabSize: 4,
+                    lineWrapping: true,
+                    gutters: ['CodeMirror-linenumbers']
                 });
                 setTimeout(() => editor.refresh(), 100);
                 window.addEventListener('resize', () => editor.refresh());
 
-                // ── Default code templates ──
+                // ========== 2. BLOCK COPY-PASTE ==========
+                function blockCopyPaste() {
+                    // Bloquer Ctrl+C, Ctrl+V, Ctrl+X
+                    document.addEventListener('keydown', function(e) {
+                        if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
+                            e.preventDefault();
+                            showToast('⚠️ Copier/coller est désactivé pour cette mission', 'warning');
+                            return false;
+                        }
+                        // Bloquer Ctrl+S
+                        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                            e.preventDefault();
+                            showToast('⚠️ La sauvegarde manuelle est désactivée', 'warning');
+                            return false;
+                        }
+                    });
+
+                    // Bloquer le clic droit
+                    document.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        showToast('⚠️ Le clic droit est désactivé', 'warning');
+                        return false;
+                    });
+
+                    // Bloquer le drag & drop
+                    document.addEventListener('dragstart', function(e) {
+                        e.preventDefault();
+                        return false;
+                    });
+
+                    // Désactiver la sélection de texte
+                    document.body.style.userSelect = 'none';
+                    document.body.style.webkitUserSelect = 'none';
+                }
+
+                // ========== 3. TIMER COUNTDOWN ==========
+                function formatTime(seconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                }
+
+                function updateTimerDisplay() {
+                    timerTextSpan.textContent = formatTime(timeRemaining);
+                    if (timeRemaining <= 300) { // Moins de 5 minutes
+                        timerDisplay.classList.add('warning');
+                    }
+                    if (timeRemaining <= 60) {
+                        timerDisplay.style.animation = 'pulseWarning 0.5s infinite';
+                    }
+                }
+
+                function startTimer() {
+                    updateTimerDisplay();
+
+                    timerInterval = setInterval(async () => {
+                        if (timeRemaining <= 0) {
+                            clearInterval(timerInterval);
+                            await autoSubmit('Temps écoulé (30 minutes)');
+                            return;
+                        }
+                        timeRemaining--;
+                        updateTimerDisplay();
+                        sessionStorage.setItem('timeRemaining', timeRemaining);
+                    }, 1000);
+                }
+
+                // ========== 4. EXÉCUTION LIMITÉE ==========
+                function updateExecCounter() {
+                    execCountSpan.textContent = remainingExecutions;
+                    if (remainingExecutions === 1) {
+                        execCounter.classList.add('warning');
+                    } else if (remainingExecutions === 0) {
+                        execCounter.classList.add('danger');
+                        if (runBtn) runBtn.disabled = true;
+                    }
+                }
+
+                async function executeCode() {
+                    if (remainingExecutions <= 0) {
+                        showToast('❌ Vous avez atteint la limite de 3 exécutions', 'error');
+                        if (runBtn) runBtn.disabled = true;
+                        return;
+                    }
+
+                    const code = editor.getValue();
+                    const language = languageSelect.value;
+
+                    openTerminal();
+                    resultsContent.innerHTML = `
+                        <div class="test-results">
+                            <div class="test-summary">
+                                <h4><i class="fas fa-spinner fa-spin"></i> Exécution en cours...</h4>
+                                <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item">
+                                    <div class="test-message">Exécution du code ${language.toUpperCase()}... (${remainingExecutions - 1}/3 restants)</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    try {
+                        const response = await fetch(`/candidat/rendu-mission/execute/${missionId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code, language, token: sessionToken })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            remainingExecutions = result.remainingExecutions;
+                            updateExecCounter();
+                            showToast(`✅ Exécution réussie ! Plus que ${remainingExecutions} exécution(s)`, 'success');
+                            resultsContent.innerHTML = `
+                                <div class="test-results">
+                                    <div class="test-summary">
+                                        <h4 style="color:#6ee7b7"><i class="fas fa-check-circle"></i> Exécution réussie</h4>
+                                        <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+                                    </div>
+                                    <div class="test-details">
+                                        <div class="test-item test-success">
+                                            <div class="test-header">📤 Sortie</div>
+                                            <div class="test-message"><pre>${escapeHtml(result.output || 'Code exécuté avec succès')}</pre></div>
+                                        </div>
+                                        <div class="test-item">
+                                            <div class="test-header">⚡ Exécutions restantes</div>
+                                            <div class="test-message">${remainingExecutions}/3</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            showToast(result.error || 'Erreur lors de l\'exécution', 'error');
+                            resultsContent.innerHTML = `
+                                <div class="test-results">
+                                    <div class="test-summary">
+                                        <h4 style="color:#fca5a5"><i class="fas fa-exclamation-triangle"></i> Erreur</h4>
+                                    </div>
+                                    <div class="test-details">
+                                        <div class="test-item test-error">
+                                            <div class="test-header">❌ Erreur</div>
+                                            <div class="test-message"><pre>${escapeHtml(result.error)}</pre></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    } catch (err) {
+                        showToast('Erreur de connexion au serveur', 'error');
+                        resultsContent.innerHTML = `
+                            <div class="test-results">
+                                <div class="test-summary">
+                                    <h4 style="color:#fca5a5">✗ Erreur de connexion</h4>
+                                </div>
+                                <div class="test-details">
+                                    <div class="test-item test-error">
+                                        <div class="test-header">✗ Erreur</div>
+                                        <div class="test-message">${escapeHtml(err.message)}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
+
+                // ========== 5. AUTO-SUBMIT ==========
+                async function autoSubmit(reason) {
+                    if (isSubmitting || isLeaving) return;
+                    isLeaving = true;
+
+                    const code = editor.getValue();
+                    const language = languageSelect.value;
+
+                    try {
+                        const response = await fetch(`/candidat/rendu-mission/auto-submit/${missionId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                code,
+                                language,
+                                token: sessionToken,
+                                reason: reason
+                            })
+                        });
+
+                        const result = await response.json();
+                        if (result.success && result.redirect) {
+                            window.location.href = result.redirect;
+                        }
+                    } catch (err) {
+                        console.error('Auto-submit error:', err);
+                        window.location.href = `/candidat/rendu-mission/mes-resultats`;
+                    }
+                }
+
+                // ========== 6. SOUMISSION ==========
+                async function submitCode() {
+                    if (isSubmitting) return;
+                    isSubmitting = true;
+
+                    const code = editor.getValue();
+                    const language = languageSelect.value;
+
+                    if (submitBtn) {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Soumission...';
+                    }
+
+                    openTerminal();
+                    resultsContent.innerHTML = `
+                        <div class="test-results">
+                            <div class="test-summary">
+                                <h4><i class="fas fa-spinner fa-spin"></i> Évaluation en cours...</h4>
+                                <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+                            </div>
+                            <div class="test-details">
+                                <div class="test-item"><div class="test-message">Analyse du code par l'IA...</div></div>
+                            </div>
+                        </div>
+                    `;
+
+                    try {
+                        const response = await fetch(`/candidat/rendu-mission/submit/${missionId}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code, language, token: sessionToken })
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success && result.redirect) {
+                            if (timerInterval) clearInterval(timerInterval);
+                            window.location.href = result.redirect;
+                        } else {
+                            showToast(result.error || 'Erreur lors de la soumission', 'error');
+                            isSubmitting = false;
+                            if (submitBtn) {
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre';
+                            }
+                        }
+                    } catch (err) {
+                        showToast('Erreur de connexion', 'error');
+                        isSubmitting = false;
+                        if (submitBtn) {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Soumettre';
+                        }
+                    }
+                }
+
+                // ========== 7. GESTION DE DÉPART ==========
+                function showLeaveWarning() {
+                    const modal = document.getElementById('leaveModal');
+                    if (modal) modal.style.display = 'block';
+                }
+
+                // Détection de fermeture de page
+                window.addEventListener('beforeunload', function(e) {
+                    if (!isSubmitting && timeRemaining > 0 && remainingExecutions >= 0) {
+                        e.preventDefault();
+                        e.returnValue = '';
+                        autoSubmit('Page fermée');
+                        return '';
+                    }
+                });
+
+                // Lien de retour
+                const backLink = document.getElementById('backLink');
+                if (backLink) {
+                    backLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        showLeaveWarning();
+                    });
+                }
+
+                // Boutons du modal
+                const stayBtn = document.getElementById('stayOnPage');
+                const leaveBtn = document.getElementById('confirmLeave');
+
+                if (stayBtn) {
+                    stayBtn.addEventListener('click', function() {
+                        document.getElementById('leaveModal').style.display = 'none';
+                    });
+                }
+
+                if (leaveBtn) {
+                    leaveBtn.addEventListener('click', async function() {
+                        document.getElementById('leaveModal').style.display = 'none';
+                        await autoSubmit('Page quittée volontairement');
+                    });
+                }
+
+                // Bloquer F5 et Ctrl+R
+                window.addEventListener('keydown', function(e) {
+                    if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) {
+                        e.preventDefault();
+                        showLeaveWarning();
+                        return false;
+                    }
+                });
+
+                // ========== 8. UTILITAIRES ==========
+                function showToast(message, type = 'info') {
+                    const toast = document.createElement('div');
+                    toast.className = `toast-notification toast-${type}`;
+                    toast.textContent = message;
+                    document.body.appendChild(toast);
+                    setTimeout(() => toast.remove(), 3000);
+                }
+
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                function openTerminal() {
+                    resultsPanel.classList.add('open');
+                }
+
+                // ========== 9. TEMPLATES PAR DÉFAUT ==========
                 const defaultCodes = {
                     python: `# Solution Python pour Two Sum
-# Essayez votre code ici !
-
 def twoSum(nums, target):
-    """
-    :type nums: List[int]
-    :type target: int
-    :rtype: List[int]
-    """
     seen = {}
     for i, num in enumerate(nums):
         complement = target - num
@@ -742,16 +1226,10 @@ def twoSum(nums, target):
         seen[num] = i
     return []
 
-# Testez votre code avec print
-print("Bienvenue dans l'éditeur de code!")
-print("Exemple d'utilisation:")
-result = twoSum([2, 7, 11, 15], 9)
-print(f"twoSum([2, 7, 11, 15], 9) = {result}")`,
+# Test
+print(twoSum([2, 7, 11, 15], 9))`,
                     javascript: `/**
  * Solution JavaScript pour Two Sum
- * @param {number[]} nums
- * @param {number} target
- * @return {number[]}
  */
 var twoSum = function(nums, target) {
     const map = new Map();
@@ -765,13 +1243,8 @@ var twoSum = function(nums, target) {
     return [];
 };
 
-// Test
-console.log("Bienvenue dans l'éditeur de code!");
-console.log("twoSum([2, 7, 11, 15], 9) =", twoSum([2, 7, 11, 15], 9));`,
+console.log(twoSum([2, 7, 11, 15], 9));`,
                     php: `<?php
-/**
- * Solution PHP pour Two Sum
- */
 function twoSum($nums, $target) {
     $map = [];
     for ($i = 0; $i < count($nums); $i++) {
@@ -784,8 +1257,6 @@ function twoSum($nums, $target) {
     return [];
 }
 
-echo "Bienvenue dans l'éditeur de code!\\n";
-echo "twoSum([2, 7, 11, 15], 9) = ";
 print_r(twoSum([2, 7, 11, 15], 9));
 ?>`,
                     java: `import java.util.*;
@@ -801,12 +1272,6 @@ class Solution {
             map.put(nums[i], i);
         }
         return new int[] {};
-    }
-
-    public static void main(String[] args) {
-        Solution sol = new Solution();
-        int[] result = sol.twoSum(new int[]{2, 7, 11, 15}, 9);
-        System.out.println("twoSum([2, 7, 11, 15], 9) = " + Arrays.toString(result));
     }
 }`,
                     cpp: `#include <iostream>
@@ -827,29 +1292,19 @@ public:
         }
         return {};
     }
-};
-
-int main() {
-    Solution sol;
-    vector<int> nums = {2, 7, 11, 15};
-    int target = 9;
-    vector<int> result = sol.twoSum(nums, target);
-    cout << "twoSum([2, 7, 11, 15], 9) = [" << result[0] << "," << result[1] << "]" << endl;
-    return 0;
-}`
+};`
                 };
 
-                // ── Fullscreen ──
+                // ========== 10. ÉVÉNEMENTS UI ==========
+                // Fullscreen
                 function toggleFullscreen() {
                     if (!isFullscreen) {
                         editorPanel.classList.add('fullscreen-mode');
                         fullscreenBtn.innerHTML = '<i class="fas fa-compress"></i>';
-                        fullscreenBtn.title = "Quitter le plein écran";
                         setTimeout(() => editor.refresh(), 300);
                     } else {
                         editorPanel.classList.remove('fullscreen-mode');
                         fullscreenBtn.innerHTML = '<i class="fas fa-expand"></i>';
-                        fullscreenBtn.title = "Plein écran";
                         setTimeout(() => editor.refresh(), 300);
                     }
                     isFullscreen = !isFullscreen;
@@ -857,15 +1312,15 @@ int main() {
                 fullscreenBtn.addEventListener('click', toggleFullscreen);
                 document.addEventListener('keydown', e => { if (e.key === 'Escape' && isFullscreen) toggleFullscreen(); });
 
-                // Ctrl+Enter shortcut to run
+                // Ctrl+Enter
                 document.addEventListener('keydown', e => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                         e.preventDefault();
-                        document.getElementById('runCode').click();
+                        if (runBtn && !runBtn.disabled) runBtn.click();
                     }
                 });
 
-                // ── Language change ──
+                // Changement de langue
                 languageSelect.addEventListener('change', function () {
                     const lang = this.value;
                     selectedLangue.value = lang;
@@ -874,161 +1329,45 @@ int main() {
                     if (defaultCodes[lang]) editor.setValue(defaultCodes[lang]);
                 });
 
-                // ── Reset ──
+                // Reset
                 document.getElementById('resetCode').addEventListener('click', () => {
                     const lang = languageSelect.value;
                     editor.setValue(defaultCodes[lang] || defaultCodes.python);
+                    showToast('Code réinitialisé', 'success');
                 });
 
-                // ── Helper ──
-                function escapeHtml(text) {
-                    const div = document.createElement('div');
-                    div.textContent = text;
-                    return div.innerHTML;
-                }
-
-                function openTerminal() {
-                    resultsPanel.classList.add('open');
-                }
-
-                // ── Run code ──
-                document.getElementById('runCode').addEventListener('click', async function () {
-                    const code = editor.getValue();
-                    const language = languageSelect.value;
-                    openTerminal();
-                    resultsContent.innerHTML = `
-                    <div class="test-results">
-                        <div class="test-summary">
-                            <h4><i class="fas fa-spinner fa-spin"></i> Exécution en cours...</h4>
-                            <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
-                        </div>
-                        <div class="test-details">
-                            <div class="test-item"><div class="test-message">Compilation et exécution du code ${language.toUpperCase()}...</div></div>
-                        </div>
-                    </div>`;
-
-                    try {
-                        let mode = 'free';
-                        if (language === 'python') {
-                            const hasTwoSum = code.includes('def twoSum');
-                            const hasPrint  = code.includes('print(');
-                            if (hasTwoSum && !hasPrint && !code.includes('print')) mode = 'test';
-                        } else if (language === 'javascript') {
-                            const hasTwoSum     = code.includes('function twoSum') || code.includes('var twoSum') || code.includes('const twoSum');
-                            const hasConsoleLog = code.includes('console.log');
-                            if (hasTwoSum && !hasConsoleLog) mode = 'test';
-                        }
-
-                        const response = await fetch('/execute-code', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ code, language, mode })
-                        });
-                        const result = await response.json();
-
-                        if (mode === 'free') {
-                            if (result.success) {
-                                resultsContent.innerHTML = `
-                                <div class="test-results">
-                                    <div class="test-summary">
-                                        <h4 style="color:#6ee7b7"><i class="fas fa-check-circle"></i> Exécution réussie</h4>
-                                    </div>
-                                    <div class="test-details">
-                                        <div class="test-item test-success">
-                                            <div class="test-header">📤 Sortie</div>
-                                            <div class="test-message"><pre>${escapeHtml(result.output)}</pre></div>
-                                        </div>
-                                    </div>
-                                </div>`;
-                            } else {
-                                resultsContent.innerHTML = `
-                                <div class="test-results">
-                                    <div class="test-summary">
-                                        <h4 style="color:#fca5a5"><i class="fas fa-exclamation-triangle"></i> Erreur d'exécution</h4>
-                                    </div>
-                                    <div class="test-details">
-                                        <div class="test-item test-error">
-                                            <div class="test-header">❌ Erreur</div>
-                                            <div class="test-message"><pre style="color:#fca5a5">${escapeHtml(result.error)}</pre></div>
-                                        </div>
-                                    </div>
-                                </div>`;
-                            }
-                        } else {
-                            if (result.success) {
-                                const pct = (result.passedTests / result.totalTests) * 100;
-                                let testsHtml = '';
-                                result.results.forEach((test, i) => {
-                                    testsHtml += `
-                                    <div class="test-item ${test.passed ? 'test-success' : 'test-error'}">
-                                        <div class="test-header">${test.passed ? '✓' : '✗'} Test ${i + 1}</div>
-                                        <div class="test-message">${test.message}${!test.passed && test.expected ? `<br><small style="color:#fcd34d">Attendu : ${JSON.stringify(test.expected)}</small>` : ''}</div>
-                                    </div>`;
-                                });
-                                resultsContent.innerHTML = `
-                                <div class="test-results">
-                                    <div class="test-summary">
-                                        <h4 style="color:#6ee7b7">${result.passedTests === result.totalTests ? '✓' : '⚠'} ${result.passedTests}/${result.totalTests} tests passés${result.score ? ` · Score : ${result.score}/100` : ''}</h4>
-                                        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-                                    </div>
-                                    <div class="test-details">${testsHtml}</div>
-                                </div>`;
-                            } else {
-                                const pct = ((result.passedTests || 0) / (result.totalTests || 3)) * 100;
-                                const testsHtml = result.results
-                                    ? result.results.map((t, i) => `
-                                    <div class="test-item ${t.passed ? 'test-success' : 'test-error'}">
-                                        <div class="test-header">${t.passed ? '✓' : '✗'} Test ${i + 1}</div>
-                                        <div class="test-message">${t.message}</div>
-                                    </div>`).join('')
-                                    : `<div class="test-item test-error"><div class="test-header">✗ Erreur</div><div class="test-message">${result.message || "Une erreur s'est produite"}</div></div>`;
-                                resultsContent.innerHTML = `
-                                <div class="test-results">
-                                    <div class="test-summary">
-                                        <h4 style="color:#fca5a5">✗ ${result.passedTests || 0}/${result.totalTests || 3} tests passés</h4>
-                                        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:#ef4444"></div></div>
-                                    </div>
-                                    <div class="test-details">${testsHtml}</div>
-                                </div>`;
-                            }
-                        }
-                    } catch (err) {
-                        resultsContent.innerHTML = `
-                        <div class="test-results">
-                            <div class="test-summary">
-                                <h4 style="color:#fca5a5">✗ Erreur de connexion</h4>
-                                <div class="progress-bar"><div class="progress-fill" style="width:0%;background:#ef4444"></div></div>
-                            </div>
-                            <div class="test-details">
-                                <div class="test-item test-error">
-                                    <div class="test-header">✗ Erreur</div>
-                                    <div class="test-message">Impossible de contacter le serveur : ${err.message}</div>
-                                </div>
-                            </div>
-                        </div>`;
-                    }
-                });
-
-                // ── Close terminal ──
+                // Fermeture terminal
                 document.getElementById('closeResults').addEventListener('click', () => {
                     resultsPanel.classList.remove('open');
                 });
 
-                // ── Submit ──
-                document.getElementById('codeForm').addEventListener('submit', function () {
-                    editor.save();
-                    openTerminal();
-                    resultsContent.innerHTML = `
-                    <div class="test-results">
-                        <div class="test-summary">
-                            <h4><i class="fas fa-spinner fa-spin"></i> Soumission en cours...</h4>
-                            <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
-                        </div>
-                        <div class="test-details">
-                            <div class="test-item"><div class="test-message">Envoi du code au serveur pour évaluation...</div></div>
-                        </div>
-                    </div>`;
-                });
+                // Boutons
+                if (runBtn) runBtn.addEventListener('click', executeCode);
+                if (submitBtn) submitBtn.addEventListener('click', submitCode);
+
+                // ========== 11. INITIALISATION FINALE ==========
+                blockCopyPaste();
+                startTimer();
+                updateExecCounter();
+
+                // Restaurer le code sauvegardé
+                const savedCode = sessionStorage.getItem('code_backup');
+                if (savedCode && editor) {
+                    if (confirm('Voulez-vous restaurer votre code précédent ?')) {
+                        editor.setValue(savedCode);
+                    }
+                }
+
+                // Sauvegarde automatique
+                setInterval(() => {
+                    if (editor) {
+                        sessionStorage.setItem('code_backup', editor.getValue());
+                    }
+                }, 30000);
+
+                console.log('✅ Système de contrôle initialisé');
+                console.log(`⏱️ Temps restant: ${formatTime(timeRemaining)}`);
+                console.log(`⚡ Exécutions restantes: ${remainingExecutions}`);
             });
         </script>
     {% endblock %}
