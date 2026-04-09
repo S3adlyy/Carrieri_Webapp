@@ -250,6 +250,96 @@ def health():
         "model": MODEL_NAME
     }
 
+
+@app.get("/test-analyze")
+def test_analyze():
+    """Test endpoint for mission analysis"""
+    test_description = "sum of 2 values with python"
+
+    result = {
+        "examples": [
+            {
+                "input": "nums = [2, 7, 11, 15], target = 9",
+                "output": "[0, 1]",
+                "explanation": "nums[0] + nums[1] = 2 + 7 = 9"
+            },
+            {
+                "input": "nums = [3, 2, 4], target = 6",
+                "output": "[1, 2]",
+                "explanation": "nums[1] + nums[2] = 2 + 4 = 6"
+            },
+            {
+                "input": "nums = [3, 3], target = 6",
+                "output": "[0, 1]",
+                "explanation": "nums[0] + nums[1] = 3 + 3 = 6"
+            }
+        ],
+        "constraints": [
+            "2 ≤ nums.length ≤ 10⁴",
+            "-10⁹ ≤ nums[i] ≤ 10⁹",
+            "-10⁹ ≤ target ≤ 10⁹",
+            "Il existe exactement une solution"
+        ],
+        "function_name": "twoSum",
+        "parameters": ["nums", "target"],
+        "return_type": "List[int]"
+    }
+
+    return result
+
+@app.post("/analyze-mission")
+def analyze_mission(request: Request):
+    """Analyse la description de la mission et génère des exemples et contraintes"""
+    data = request.json
+    description = data.get('description', '')
+    title = data.get('title', '')
+
+    prompt = f"""Analyse la description de mission suivante et génère des exemples, contraintes et informations utiles.
+
+Description: {description}
+Titre: {title}
+
+Réponds UNIQUEMENT avec ce JSON:
+{{
+  "examples": [
+    {{"input": "exemple input", "output": "exemple output", "explanation": "explication"}}
+  ],
+  "constraints": ["contrainte 1", "contrainte 2"],
+  "function_name": "nom_fonction",
+  "parameters": ["param1", "param2"],
+  "return_type": "type_retour",
+  "test_cases": [
+    {{"input": [1,2,3], "expected": 6}}
+  ]
+}}"""
+
+    try:
+        response = client.messages.create(
+            model="claude-3-haiku-20240307",
+            max_tokens=1000,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = response.content[0].text
+        # Extraire le JSON
+        json_match = re.search(r'\{.*\}', raw, re.DOTALL)
+        if json_match:
+            return json.loads(json_match.group(0))
+    except:
+        pass
+
+    # Fallback
+    return {
+        "examples": [
+            {"input": "Exemple 1", "output": "Sortie 1", "explanation": "Explication 1"},
+            {"input": "Exemple 2", "output": "Sortie 2", "explanation": "Explication 2"}
+        ],
+        "constraints": ["Contrainte 1", "Contrainte 2"],
+        "function_name": "solution",
+        "parameters": ["params"],
+        "return_type": "mixed",
+        "test_cases": []
+    }
+
 @app.post("/evaluate", response_model=EvaluationResponse)
 def evaluate(req: EvaluationRequest):
     """

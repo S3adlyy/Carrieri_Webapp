@@ -25,5 +25,10 @@ services:
         arguments:
             $aiApiBaseUrl: '%env(AI_EVALUATOR_URL)%'
 
+    # Explicit configuration for MissionAnalyzerService
+    App\Service\MissionAnalyzerService:
+        arguments:
+            $aiApiBaseUrl: '%env(AI_EVALUATOR_URL)%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

@@ -596,6 +596,16 @@
         /* Spinner */
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .fa-spinner { animation: spin 1s linear infinite; }
+
+        /* Regenerate button */
+        .rm-regenerate-btn {
+            background: rgba(99,102,241,0.2);
+            border: 1px solid rgba(99,102,241,0.4);
+            margin-left: 10px;
+        }
+        .rm-regenerate-btn:hover {
+            background: rgba(99,102,241,0.4);
+        }
     </style>
 {% endblock %}
 
@@ -665,48 +675,77 @@
 
                 <div class="rm-desc-body">
                     {# Description #}
-                    <div class="rm-section-title"><i class="fas fa-align-left"></i> Description</div>
+                    <div class="rm-section-title">
+                        <i class="fas fa-align-left"></i> Description
+                    </div>
                     <div class="rm-description">
                         {{ mission.description|nl2br }}
                     </div>
 
                     {# Examples #}
-                    <div class="rm-section-title" style="margin-bottom:12px"><i class="fas fa-flask"></i> Exemples</div>
-
-                    <div class="rm-example">
-                        <div class="rm-example-label"><i class="fas fa-play-circle"></i> Exemple 1</div>
-                        <div class="rm-example-body">
-                            <div><strong>Input :</strong> nums = [2,7,11,15], target = 9</div>
-                            <div><strong>Output :</strong> [0,1]</div>
-                            <div><strong>Explication :</strong> nums[0] + nums[1] == 9 → [0, 1]</div>
-                        </div>
+                    <div class="rm-section-title" style="margin-bottom:12px">
+                        <i class="fas fa-flask"></i> Exemples
+                        <button class="rm-tool-btn rm-regenerate-btn" id="regenerateExamples" title="Régénérer les exemples avec l'IA">
+                            <i class="fas fa-sync-alt"></i> Régénérer
+                        </button>
                     </div>
 
-                    <div class="rm-example">
-                        <div class="rm-example-label"><i class="fas fa-play-circle"></i> Exemple 2</div>
-                        <div class="rm-example-body">
-                            <div><strong>Input :</strong> nums = [3,2,4], target = 6</div>
-                            <div><strong>Output :</strong> [1,2]</div>
+                    {% if missionData.examples is defined and missionData.examples|length > 0 %}
+                        {% for example in missionData.examples %}
+                            <div class="rm-example">
+                                <div class="rm-example-label">
+                                    <i class="fas fa-play-circle"></i> Exemple {{ loop.index }}
+                                </div>
+                                <div class="rm-example-body">
+                                    <div><strong>Input :</strong> {{ example.input }}</div>
+                                    <div><strong>Output :</strong> {{ example.output }}</div>
+                                    {% if example.explanation is defined %}
+                                        <div><strong>Explication :</strong> {{ example.explanation }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="rm-example">
+                            <div class="rm-example-body">
+                                <div>Aucun exemple disponible</div>
+                            </div>
                         </div>
-                    </div>
+                    {% endif %}
 
-                    <div class="rm-example">
-                        <div class="rm-example-label"><i class="fas fa-play-circle"></i> Exemple 3</div>
-                        <div class="rm-example-body">
-                            <div><strong>Input :</strong> nums = [3,3], target = 6</div>
-                            <div><strong>Output :</strong> [0,1]</div>
-                        </div>
-                    </div>
-
-                    {# Constraints #}
+                    {# Contraintes générées dynamiquement #}
                     <div class="rm-constraints">
-                        <div class="rm-section-title" style="margin-bottom:10px"><i class="fas fa-exclamation-triangle"></i> Contraintes</div>
-                        <ul>
-                            <li>2 ≤ nums.length ≤ 10⁴</li>
-                            <li>-10⁹ ≤ nums[i] ≤ 10⁹</li>
-                            <li>-10⁹ ≤ target ≤ 10⁹</li>
-                        </ul>
+                        <div class="rm-section-title" style="margin-bottom:10px">
+                            <i class="fas fa-exclamation-triangle"></i> Contraintes
+                        </div>
+                        {% if missionData.constraints is defined and missionData.constraints|length > 0 %}
+                            <ul>
+                                {% for constraint in missionData.constraints %}
+                                    <li>{{ constraint }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <ul>
+                                <li>Aucune contrainte spécifique</li>
+                            </ul>
+                        {% endif %}
                     </div>
+
+                    {# Informations sur la fonction #}
+                    {% if missionData.function_name is defined %}
+                        <div class="rm-constraints" style="margin-top: 15px;">
+                            <div class="rm-section-title" style="margin-bottom:10px">
+                                <i class="fas fa-code"></i> Signature de fonction
+                            </div>
+                            <div class="rm-example">
+                                <div class="rm-example-body">
+                                    <code>
+                                        def {{ missionData.function_name }}({% for param in missionData.parameters %}{{ param }}{% if not loop.last %}, {% endif %}{% endfor %}) -> {{ missionData.return_type }}:
+                                    </code>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
 
                     {# Previous submission #}
                     {% if existingRendu %}
@@ -759,28 +798,16 @@
                 {# CodeMirror editor form #}
                 <form method="post" id="codeForm" style="flex:1;display:flex;flex-direction:column;min-height:0">
                     <div class="rm-cm-shell">
-                        <textarea id="codeEditor" name="code"># Solution Python pour Two Sum
-# Essayez votre code ici !
+                        <textarea id="codeEditor" name="code"># Solution Python
+# Écrivez votre solution ici
 
-def twoSum(nums, target):
-    """
-    :type nums: List[int]
-    :type target: int
-    :rtype: List[int]
-    """
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            return [seen[complement], i]
-        seen[num] = i
-    return []
+def solution(params):
+    # Implémentez votre logique
+    pass
 
-# Testez votre code avec print
+# Test
 print("Bienvenue dans l'éditeur de code!")
-print("Exemple d'utilisation:")
-result = twoSum([2, 7, 11, 15], 9)
-print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
+print("Écrivez votre solution pour la mission: {{ mission.type }}")</textarea>
                     </div>
                     <input type="hidden" name="langue" id="selectedLangue" value="python">
 
@@ -870,6 +897,7 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                 const timerTextSpan = document.getElementById('timerText');
                 const timerDisplay = document.getElementById('timerDisplay');
                 const execCounter = document.getElementById('execCounter');
+                const regenerateBtn = document.getElementById('regenerateExamples');
 
                 let isFullscreen = false;
                 let timerInterval = null;
@@ -892,14 +920,12 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
 
                 // ========== 2. BLOCK COPY-PASTE ==========
                 function blockCopyPaste() {
-                    // Bloquer Ctrl+C, Ctrl+V, Ctrl+X
                     document.addEventListener('keydown', function(e) {
                         if ((e.ctrlKey || e.metaKey) && (e.key === 'c' || e.key === 'v' || e.key === 'x')) {
                             e.preventDefault();
                             showToast('⚠️ Copier/coller est désactivé pour cette mission', 'warning');
                             return false;
                         }
-                        // Bloquer Ctrl+S
                         if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                             e.preventDefault();
                             showToast('⚠️ La sauvegarde manuelle est désactivée', 'warning');
@@ -907,20 +933,17 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                         }
                     });
 
-                    // Bloquer le clic droit
                     document.addEventListener('contextmenu', function(e) {
                         e.preventDefault();
                         showToast('⚠️ Le clic droit est désactivé', 'warning');
                         return false;
                     });
 
-                    // Bloquer le drag & drop
                     document.addEventListener('dragstart', function(e) {
                         e.preventDefault();
                         return false;
                     });
 
-                    // Désactiver la sélection de texte
                     document.body.style.userSelect = 'none';
                     document.body.style.webkitUserSelect = 'none';
                 }
@@ -934,7 +957,7 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
 
                 function updateTimerDisplay() {
                     timerTextSpan.textContent = formatTime(timeRemaining);
-                    if (timeRemaining <= 300) { // Moins de 5 minutes
+                    if (timeRemaining <= 300) {
                         timerDisplay.classList.add('warning');
                     }
                     if (timeRemaining <= 60) {
@@ -1058,7 +1081,38 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     }
                 }
 
-                // ========== 5. AUTO-SUBMIT ==========
+                // ========== 5. RÉGÉNÉRATION DES EXEMPLES ==========
+                if (regenerateBtn) {
+                    regenerateBtn.addEventListener('click', async function() {
+                        showToast('🔄 Régénération des exemples en cours...', 'info');
+                        regenerateBtn.disabled = true;
+                        regenerateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Génération...';
+
+                        try {
+                            const response = await fetch(`/candidat/rendu-mission/regenerate-examples/${missionId}`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ token: sessionToken })
+                            });
+
+                            const result = await response.json();
+                            if (result.success) {
+                                showToast('✅ Exemples régénérés avec succès !', 'success');
+                                setTimeout(() => location.reload(), 1000);
+                            } else {
+                                showToast('❌ Erreur lors de la régénération', 'error');
+                                regenerateBtn.disabled = false;
+                                regenerateBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Régénérer';
+                            }
+                        } catch (err) {
+                            showToast('Erreur de connexion', 'error');
+                            regenerateBtn.disabled = false;
+                            regenerateBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Régénérer';
+                        }
+                    });
+                }
+
+                // ========== 6. AUTO-SUBMIT ==========
                 async function autoSubmit(reason) {
                     if (isSubmitting || isLeaving) return;
                     isLeaving = true;
@@ -1088,7 +1142,7 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     }
                 }
 
-                // ========== 6. SOUMISSION ==========
+                // ========== 7. SOUMISSION ==========
                 async function submitCode() {
                     if (isSubmitting) return;
                     isSubmitting = true;
@@ -1144,13 +1198,12 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     }
                 }
 
-                // ========== 7. GESTION DE DÉPART ==========
+                // ========== 8. GESTION DE DÉPART ==========
                 function showLeaveWarning() {
                     const modal = document.getElementById('leaveModal');
                     if (modal) modal.style.display = 'block';
                 }
 
-                // Détection de fermeture de page
                 window.addEventListener('beforeunload', function(e) {
                     if (!isSubmitting && timeRemaining > 0 && remainingExecutions >= 0) {
                         e.preventDefault();
@@ -1160,7 +1213,6 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     }
                 });
 
-                // Lien de retour
                 const backLink = document.getElementById('backLink');
                 if (backLink) {
                     backLink.addEventListener('click', function(e) {
@@ -1169,7 +1221,6 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     });
                 }
 
-                // Boutons du modal
                 const stayBtn = document.getElementById('stayOnPage');
                 const leaveBtn = document.getElementById('confirmLeave');
 
@@ -1186,7 +1237,6 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     });
                 }
 
-                // Bloquer F5 et Ctrl+R
                 window.addEventListener('keydown', function(e) {
                     if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) {
                         e.preventDefault();
@@ -1195,7 +1245,7 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     }
                 });
 
-                // ========== 8. UTILITAIRES ==========
+                // ========== 9. UTILITAIRES ==========
                 function showToast(message, type = 'info') {
                     const toast = document.createElement('div');
                     toast.className = `toast-notification toast-${type}`;
@@ -1214,89 +1264,74 @@ print(f"twoSum([2, 7, 11, 15], 9) = {result}")</textarea>
                     resultsPanel.classList.add('open');
                 }
 
-                // ========== 9. TEMPLATES PAR DÉFAUT ==========
+                // ========== 10. TEMPLATES PAR DÉFAUT ==========
                 const defaultCodes = {
-                    python: `# Solution Python pour Two Sum
-def twoSum(nums, target):
-    seen = {}
-    for i, num in enumerate(nums):
-        complement = target - num
-        if complement in seen:
-            return [seen[complement], i]
-        seen[num] = i
-    return []
+                    python: `# Solution Python
+# Écrivez votre solution ici
+
+def solution(params):
+    # Implémentez votre logique
+    pass
 
 # Test
-print(twoSum([2, 7, 11, 15], 9))`,
-                    javascript: `/**
- * Solution JavaScript pour Two Sum
- */
-var twoSum = function(nums, target) {
-    const map = new Map();
-    for (let i = 0; i < nums.length; i++) {
-        const complement = target - nums[i];
-        if (map.has(complement)) {
-            return [map.get(complement), i];
-        }
-        map.set(nums[i], i);
-    }
-    return [];
-};
+print("Bienvenue dans l'éditeur de code!")
+print("Écrivez votre solution pour la mission: {{ mission.type }}")`,
+                    javascript: `// Solution JavaScript
+// Écrivez votre solution ici
 
-console.log(twoSum([2, 7, 11, 15], 9));`,
-                    php: `<?php
-function twoSum($nums, $target) {
-    $map = [];
-    for ($i = 0; $i < count($nums); $i++) {
-        $complement = $target - $nums[$i];
-        if (isset($map[$complement])) {
-            return [$map[$complement], $i];
-        }
-        $map[$nums[$i]] = $i;
-    }
-    return [];
+function solution(params) {
+    // Implémentez votre logique
+    return result;
 }
 
-print_r(twoSum([2, 7, 11, 15], 9));
-?>`,
-                    java: `import java.util.*;
+// Test
+console.log("Bienvenue dans l'éditeur de code!");`,
+                    php: `<?php
+// Solution PHP
+// Écrivez votre solution ici
 
-class Solution {
-    public int[] twoSum(int[] nums, int target) {
-        Map<Integer, Integer> map = new HashMap<>();
-        for (int i = 0; i < nums.length; i++) {
-            int complement = target - nums[i];
-            if (map.containsKey(complement)) {
-                return new int[] { map.get(complement), i };
-            }
-            map.put(nums[i], i);
-        }
-        return new int[] {};
+function solution($params) {
+    // Implémentez votre logique
+    return $result;
+}
+
+// Test
+echo "Bienvenue dans l'éditeur de code!\\n";
+?>`,
+                    java: `// Solution Java
+// Écrivez votre solution ici
+
+public class Solution {
+    public static Object solution(Object params) {
+        // Implémentez votre logique
+        return result;
+    }
+
+    public static void main(String[] args) {
+        System.out.println("Bienvenue dans l'éditeur de code!");
     }
 }`,
-                    cpp: `#include <iostream>
-#include <vector>
-#include <unordered_map>
+                    cpp: `// Solution C++
+// Écrivez votre solution ici
+
+#include <iostream>
 using namespace std;
 
 class Solution {
 public:
-    vector<int> twoSum(vector<int>& nums, int target) {
-        unordered_map<int, int> map;
-        for (int i = 0; i < nums.size(); i++) {
-            int complement = target - nums[i];
-            if (map.find(complement) != map.end()) {
-                return {map[complement], i};
-            }
-            map[nums[i]] = i;
-        }
-        return {};
+    auto solution(auto params) {
+        // Implémentez votre logique
+        return result;
     }
-};`
+};
+
+int main() {
+    cout << "Bienvenue dans l'éditeur de code!" << endl;
+    return 0;
+}`
                 };
 
-                // ========== 10. ÉVÉNEMENTS UI ==========
-                // Fullscreen
+                // ========== 11. ÉVÉNEMENTS UI ==========
                 function toggleFullscreen() {
                     if (!isFullscreen) {
                         editorPanel.classList.add('fullscreen-mode');
@@ -1312,7 +1347,6 @@ public:
                 fullscreenBtn.addEventListener('click', toggleFullscreen);
                 document.addEventListener('keydown', e => { if (e.key === 'Escape' && isFullscreen) toggleFullscreen(); });
 
-                // Ctrl+Enter
                 document.addEventListener('keydown', e => {
                     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                         e.preventDefault();
@@ -1320,7 +1354,6 @@ public:
                     }
                 });
 
-                // Changement de langue
                 languageSelect.addEventListener('change', function () {
                     const lang = this.value;
                     selectedLangue.value = lang;
@@ -1329,28 +1362,24 @@ public:
                     if (defaultCodes[lang]) editor.setValue(defaultCodes[lang]);
                 });
 
-                // Reset
                 document.getElementById('resetCode').addEventListener('click', () => {
                     const lang = languageSelect.value;
                     editor.setValue(defaultCodes[lang] || defaultCodes.python);
                     showToast('Code réinitialisé', 'success');
                 });
 
-                // Fermeture terminal
                 document.getElementById('closeResults').addEventListener('click', () => {
                     resultsPanel.classList.remove('open');
                 });
 
-                // Boutons
                 if (runBtn) runBtn.addEventListener('click', executeCode);
                 if (submitBtn) submitBtn.addEventListener('click', submitCode);
 
-                // ========== 11. INITIALISATION FINALE ==========
+                // ========== 12. INITIALISATION FINALE ==========
                 blockCopyPaste();
                 startTimer();
                 updateExecCounter();
 
-                // Restaurer le code sauvegardé
                 const savedCode = sessionStorage.getItem('code_backup');
                 if (savedCode && editor) {
                     if (confirm('Voulez-vous restaurer votre code précédent ?')) {
@@ -1358,7 +1387,6 @@ public:
                     }
                 }
 
-                // Sauvegarde automatique
                 setInterval(() => {
                     if (editor) {
                         sessionStorage.setItem('code_backup', editor.getValue());

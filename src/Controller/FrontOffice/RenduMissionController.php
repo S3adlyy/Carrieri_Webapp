@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Repository\MissionRepository;
 use App\Repository\RenduMissionRepository;
 use App\Service\AiCodeEvaluatorService;
+use App\Service\MissionAnalyzerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,6 +29,7 @@ class RenduMissionController extends AbstractController
         private MissionRepository $missionRepository,
         private RenduMissionRepository $renduMissionRepository,
         private AiCodeEvaluatorService $aiEvaluator,
+        private MissionAnalyzerService $missionAnalyzer,
     ) {}
 
     #[Route('/mes-resultats', name: 'app_candidate_my_results')]
@@ -66,7 +68,6 @@ class RenduMissionController extends AbstractController
         $mission = $this->missionRepository->find($id)
             ?? throw $this->createNotFoundException('Mission non trouvée');
 
-        // Vérifier si déjà soumis
         $existingRendu = $this->renduMissionRepository->findExistingSubmission(
             $mission->getId(),
             $user->getId()
@@ -77,7 +78,20 @@ class RenduMissionController extends AbstractController
             return $this->redirectToRoute('app_candidate_my_results');
         }
 
-        // Initialiser la session si ce n'est pas déjà fait
+        // Vérifier si les données de mission sont déjà en cache
+        $cacheKey = "mission_data_{$id}";
+        if (!$session->has($cacheKey)) {
+            // Analyser la description de la mission
+            $missionData = $this->missionAnalyzer->analyzeMissionDescription(
+                $mission->getDescription() ?? '',
+                $mission->getType() ?? ''
+            );
+            $session->set($cacheKey, $missionData);
+        } else {
+            $missionData = $session->get($cacheKey);
+        }
+
+        // Initialiser la session
         $sessionKey = "mission_{$id}_start_time";
         $executionsKey = "mission_{$id}_executions";
 
@@ -87,12 +101,10 @@ class RenduMissionController extends AbstractController
             $session->set("mission_{$id}_token", bin2hex(random_bytes(32)));
         }
 
-        // Vérifier si le temps est écoulé (30 minutes)
         $startTime = $session->get($sessionKey);
         $timeRemaining = 1800 - (time() - $startTime);
 
         if ($timeRemaining <= 0) {
-            // Auto-submission avec score 0
             return $this->autoSubmitWithZero($mission, $user, $session, "Temps écoulé (30 minutes)");
         }
 
@@ -101,7 +113,8 @@ class RenduMissionController extends AbstractController
             'existingRendu' => $existingRendu,
             'remainingExecutions' => $session->get($executionsKey, 3),
             'timeRemaining' => $timeRemaining,
-            'sessionToken' => $session->get("mission_{$id}_token")
+            'sessionToken' => $session->get("mission_{$id}_token"),
+            'missionData' => $missionData // Ajoutez ceci
         ]);
     }
 
