@@ -4,6 +4,7 @@
 declare(strict_types=1);
 
 namespace App\Controller\DashboardController;
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Entity\Entretien;
@@ -11,6 +12,7 @@ use App\Entity\User;
 use App\Form\EntretienType;
 use App\Repository\RenduMissionRepository;
 use App\Repository\EntretienRepository;
+use App\Service\JitsiLinkGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +27,8 @@ class EntretienController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private RenduMissionRepository $renduMissionRepository,
-        private EntretienRepository $entretienRepository
+        private EntretienRepository $entretienRepository,
+        private JitsiLinkGenerator $jitsiLinkGenerator,
     ) {
     }
 
@@ -67,13 +70,25 @@ class EntretienController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Générer automatiquement le lien Jitsi
+            $jitsiLink = $this->jitsiLinkGenerator->generateMeetingLink(
+                $entretien->getId() ?? rand(1000, 9999),
+                $rendu->getUser()->getId(),
+                $user->getId()
+            );
+
+            $entretien->setLien($jitsiLink);
+
             $this->entityManager->persist($entretien);
             $this->entityManager->flush();
 
+            $candidateName = $rendu->getUser()->getFirstName() . ' ' . $rendu->getUser()->getLastName();
+
             $this->addFlash('success', sprintf(
-                'Entretien planifié pour %s le %s',
-                $rendu->getUser()->getEmail(),
-                $entretien->getDateEntretien()->format('d/m/Y à H:i')
+                '✅ Entretien planifié pour %s le %s\n🔗 Lien Jitsi généré automatiquement : %s',
+                $candidateName,
+                $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                $jitsiLink
             ));
 
             return $this->redirectToRoute('app_admin_candidats_acceptes');
@@ -138,6 +153,7 @@ class EntretienController extends AbstractController
 
         return $this->redirectToRoute('app_admin_candidats_acceptes');
     }
+
     #[Route('/candidats-acceptes/export/excel', name: 'app_admin_candidats_acceptes_export_excel')]
     #[IsGranted('ROLE_RECRUITER')]
     public function exportExcel(Request $request): Response
