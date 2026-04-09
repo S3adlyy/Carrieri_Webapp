@@ -15,7 +15,7 @@ class Certification
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeInterface $dateObtention = null;
 
     #[ORM\Column]

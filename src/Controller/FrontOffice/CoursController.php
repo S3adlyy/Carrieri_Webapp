@@ -11,6 +11,7 @@ use App\Repository\LeconRepository;
 use App\Repository\ModuleRepository;
 use App\Repository\ResultatQuizModuleRepository;
 use App\Repository\ResultatTestCoursRepository;
+use App\Service\CertificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -29,6 +30,7 @@ class CoursController extends AbstractController
         private LeconRepository $leconRepository,
         private ResultatQuizModuleRepository $resultatQuizModuleRepository,
         private ResultatTestCoursRepository $resultatTestCoursRepository,
+        private CertificationService $certificationService,
     ) {
     }
 
@@ -104,6 +106,13 @@ class CoursController extends AbstractController
     {
         $outline = $this->buildCourseOutline($cours, $this->getViewedLessonIds($request));
         $gate = $this->computeFinalTestGate($cours);
+
+        // Créer un certificat si le cours est complété
+        $user = $this->getUser();
+        if ($user instanceof \App\Entity\User) {
+            $progress = (int) ($outline['progress'] ?? 0);
+            $this->certificationService->createCertificateIfCompleted($user, $cours, $progress);
+        }
 
         return $this->render('FrontOffice/main/cours_show.html.twig', [
             'cours' => $cours,

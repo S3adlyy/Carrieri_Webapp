@@ -38,6 +38,7 @@
 						<li><a href="{{ path('app_candidate_cours') }}" class="{{ route starts with 'app_candidate_cours' or route starts with 'app_candidate_lecon_show' ? 'active' : '' }}">Cours</a></li>
 						<li><a href="{{ path('app_candidate_offres') }}" class="{{ route == 'app_candidate_offres' ? 'active' : '' }}">Offre d'emploi</a></li>
 						<li><a href="{{ path('app_candidate_mission') }}" class="{{ route == 'app_candidate_mission' ? 'active' : '' }}">Mission</a></li>
+						<li><a href="{{ path('app_candidate_certificates') }}" class="{{ route starts with 'app_candidate_certificate' ? 'active' : '' }}">Certificats</a></li>
 						<li><a href="{{ path('app_candidate_reclamation') }}" class="{{ route == 'app_candidate_reclamation' ? 'active' : '' }}">Réclamation</a></li>
 						<li><a href="{{ path('app_candidate_messagerie') }}" class="{{ route == 'app_candidate_messagerie' ? 'active' : '' }}">Messagerie</a></li>
 					</ul>
@@ -71,6 +72,7 @@
 				<li><a href="{{ path('app_candidate_mes_cours') }}">Mes cours</a></li>
 				<li><a href="{{ path('app_candidate_offres') }}">Offre d'emploi</a></li>
 				<li><a href="{{ path('app_candidate_mission') }}">Mission</a></li>
+				<li><a href="{{ path('app_candidate_certificates') }}">Certificats</a></li>
 				<li><a href="{{ path('app_candidate_reclamation') }}">Réclamation</a></li>
 				<li><a href="{{ path('app_candidate_messagerie') }}">Messagerie</a></li>
 				<li class="fo-mobile-logout"><a class="fo-candidate-logout" href="{{ path('app_logout') }}">Déconnexion</a></li>

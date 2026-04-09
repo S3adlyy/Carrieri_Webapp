@@ -705,8 +705,10 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 .fo-fxml-catalog .fo-course-description {
 	line-height: 1.45;
 	min-height: 58px;
-	max-height: 60px;
-	overflow: hidden;
+	white-space: normal;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	margin-bottom: 0;
 }
 
 .fo-fxml-catalog .fo-courses-grid {

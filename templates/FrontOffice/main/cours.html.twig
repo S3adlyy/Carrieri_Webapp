@@ -33,7 +33,7 @@
         <form method="get" class="mb-4 position-relative">
             <div class="fo-charte-card fo-glass-card p-3 p-md-4 mb-3">
                 <div class="row align-items-end">
-                    <div class="col-md-6 mb-3 mb-md-0">
+                    <div class="col-lg-3 col-md-6 mb-3 mb-lg-0">
                         <label for="course-level" class="d-block mb-2 font-weight-bold">Niveau</label>
                         <select id="course-level" name="niveau" class="form-control fo-filter-combo">
                             <option value="">Tous les niveaux</option>
@@ -42,30 +42,24 @@
                             {% endfor %}
                         </select>
                     </div>
-                    <div class="col-md-6 mb-3 mb-md-0">
-                        <div class="fo-langue-wrap">
-                            <label for="course-language" class="d-block mb-2 font-weight-bold">Langue</label>
-                            <select id="course-language" class="form-control fo-filter-combo fo-langue-combo" disabled>
-                                <option>Choisir une langue</option>
-                            </select>
-                        </div>
+                    <div class="col-lg-5 col-md-6 mb-3 mb-lg-0">
+                        <label for="course-search" class="d-block mb-2 font-weight-bold">Rechercher un cours</label>
+                        <input id="course-search" type="text" name="q" class="form-control fo-search-input" placeholder="Rechercher un cours par titre ou description..." value="{{ filters.q }}">
+                    </div>
+                    <div class="col-lg-2 col-md-6 mb-3 mb-md-0">
+                        <label for="course-order" class="d-block mb-2 font-weight-bold">Tri</label>
+                        <select id="course-order" name="order" class="form-control fo-filter-combo" onchange="this.form.submit()">
+                            <option value="recent" {{ filters.order == 'recent' ? 'selected' : '' }}>Plus récent</option>
+                            <option value="price_asc" {{ filters.order == 'price_asc' ? 'selected' : '' }}>Prix croissant</option>
+                            <option value="price_desc" {{ filters.order == 'price_desc' ? 'selected' : '' }}>Prix décroissant</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-2 col-md-6 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn fo-search-button flex-grow-1">Rechercher</button>
+                        <a href="{{ path('app_candidate_cours') }}" class="fo-reset-link align-self-center text-nowrap">Reset</a>
                     </div>
                 </div>
             </div>
-            <div class="fo-search-wrap mb-4">
-                <label for="course-search" class="sr-only">Rechercher un cours</label>
-                <input id="course-search" type="text" name="q" class="form-control fo-search-input" placeholder="Rechercher un cours par titre ou description..." value="{{ filters.q }}">
-                <div class="d-flex mt-2">
-                    <button type="submit" class="btn fo-search-button">Rechercher</button>
-                    <select name="order" class="form-control ml-2" style="width: auto;" onchange="this.form.submit()">
-                        <option value="recent" {{ filters.order == 'recent' ? 'selected' : '' }}>Plus récent</option>
-                        <option value="price_asc" {{ filters.order == 'price_asc' ? 'selected' : '' }}>Prix croissant (€)</option>
-                        <option value="price_desc" {{ filters.order == 'price_desc' ? 'selected' : '' }}>Prix décroissant (€)</option>
-                    </select>
-                </div>
-            </div>
-            <div class="text-right mb-1">
-                <a href="{{ path('app_candidate_cours') }}" class="fo-reset-link">Reset</a>            </div>
         </form>
 
         {% set en_cours = 0 %}
@@ -106,7 +100,7 @@
                                     <span class="badge fo-category-badge">{{ category }}</span>
                                 </div>
                                 <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours') }}</h5>
-                                <p class="card-text text-muted mb-3 fo-course-description">{{ c.description|default('Aucune description')|slice(0, 120) }}{% if c.description and c.description|length > 120 %}...{% endif %}</p>
+                                <p class="card-text text-muted mb-3 fo-course-description">{{ c.description|default('Aucune description')|e|nl2br }}</p>
                                 <div class="fo-meta-row mb-3">
                                     <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} heures</small></div>
                                     {% if c.estPayant and c.prix and c.prix > 0 %}

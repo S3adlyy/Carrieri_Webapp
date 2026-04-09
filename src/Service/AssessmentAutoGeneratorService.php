@@ -13,7 +13,6 @@ use App\Repository\LeconRepository;
 use App\Repository\ModuleRepository;
 use App\Repository\QuestionQuizRepository;
 use App\Repository\QuestionTestRepository;
-use App\Repository\ReponseRepository;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class AssessmentAutoGeneratorService
@@ -30,7 +29,6 @@ final class AssessmentAutoGeneratorService
         private ModuleRepository $moduleRepository,
         private QuestionQuizRepository $questionQuizRepository,
         private QuestionTestRepository $questionTestRepository,
-        private ReponseRepository $reponseRepository,
         private EntityManagerInterface $entityManager,
     ) {
     }
@@ -42,19 +40,19 @@ final class AssessmentAutoGeneratorService
             return;
         }
 
-        $count = $this->questionQuizRepository->countForModule($moduleId);
         $existing = $this->questionQuizRepository->findByModuleOrdered($moduleId, 200);
-        if ($count >= $expected && $this->hasDiverseQuestionTypes(array_map(static fn (QuestionQuiz $q): string => (string) $q->getQuestionText(), $existing))) {
+        $existingCount = count($existing);
+        if ($existingCount >= $expected) {
             return;
         }
 
-        $this->purgeModuleQuiz($moduleId);
-
         $lessons = $this->leconRepository->findBy(['moduleId' => $moduleId], ['ordre' => 'ASC', 'id' => 'ASC']);
         $sentences = $this->extractSentencesFromLessons($lessons);
-        $questions = $this->buildQuestionsFromSentences($sentences, $expected, []);
+        $questions = $this->buildQuestionsFromSentences($sentences, $expected - $existingCount, array_keys($this->collectQuestionFingerprints($existing)));
 
-        $this->saveQuizQuestions($module, $questions);
+        if ($questions !== []) {
+            $this->saveQuizQuestions($module, $questions);
+        }
     }
 
     public function ensureCoursFinalTestGenerated(Cours $cours, int $expected = 15): void
@@ -85,24 +83,10 @@ final class AssessmentAutoGeneratorService
         }
 
         $testQuestions = $this->questionTestRepository->findByCoursOrdered($coursId, 200);
-        $hasOverlap = false;
-        foreach ($testQuestions as $testQuestion) {
-            $fingerprint = $this->normalizeText((string) $testQuestion->getQuestionText());
-            if (isset($quizQuestionFingerprints[$fingerprint])) {
-                $hasOverlap = true;
-                break;
-            }
-        }
-
-        if (
-            $this->questionTestRepository->countForCours($coursId) >= $expected
-            && $this->hasDiverseQuestionTypes(array_map(static fn (QuestionTest $q): string => (string) $q->getQuestionText(), $testQuestions))
-            && !$hasOverlap
-        ) {
+        $existingCount = count($testQuestions);
+        if ($existingCount >= $expected) {
             return;
         }
-
-        $this->purgeCoursTest($coursId);
 
         $allSentences = [];
         foreach ($modules as $module) {
@@ -115,8 +99,38 @@ final class AssessmentAutoGeneratorService
             $allSentences = [...$allSentences, ...$this->extractSentencesFromLessons($lessons)];
         }
 
-        $questions = $this->buildQuestionsFromSentences($allSentences, $expected, array_keys($quizQuestionFingerprints));
-        $this->saveTestQuestions($cours, $questions);
+        $questions = $this->buildQuestionsFromSentences(
+            $allSentences,
+            $expected - $existingCount,
+            array_merge(
+                array_keys($this->collectQuestionFingerprints($testQuestions)),
+                array_keys($quizQuestionFingerprints),
+            )
+        );
+
+        if ($questions !== []) {
+            $this->saveTestQuestions($cours, $questions);
+        }
+    }
+
+    /**
+     * @param list<object> $questions
+     * @return array<string, bool>
+     */
+    private function collectQuestionFingerprints(array $questions): array
+    {
+        $fingerprints = [];
+
+        foreach ($questions as $question) {
+            $text = trim((string) ($question->getQuestionText() ?? ''));
+            if ($text === '') {
+                continue;
+            }
+
+            $fingerprints[$this->normalizeText($text)] = true;
+        }
+
+        return $fingerprints;
     }
 
     /**
@@ -162,6 +176,7 @@ final class AssessmentAutoGeneratorService
 
         $out = [];
         $used = array_fill_keys($excludedFingerprints, true);
+        $usedSentences = [];
         $wordPool = $this->buildWordPool($sentences);
 
         $targets = [
@@ -176,6 +191,11 @@ final class AssessmentAutoGeneratorService
                 break;
             }
 
+            $sentenceFingerprint = $this->normalizeText($sentence);
+            if (isset($usedSentences[$sentenceFingerprint])) {
+                continue;
+            }
+
             foreach ($this->getGenerationOrder($targets, $counts) as $type) {
                 $questionData = match ($type) {
                     'completion' => $this->createCompletionQuestion($sentence, $wordPool, $used),
@@ -187,6 +207,7 @@ final class AssessmentAutoGeneratorService
                 if ($questionData !== null) {
                     $out[] = $questionData;
                     $counts[$type]++;
+                    $usedSentences[$sentenceFingerprint] = true;
                     break;
                 }
             }
@@ -437,8 +458,11 @@ final class AssessmentAutoGeneratorService
      */
     private function buildChoices(string $correct, array $wordPool): array
     {
-        $choices = [$correct];
+        $choices = [];
+        $seen = [];
         $correctFingerprint = $this->normalizeText($correct);
+
+        $this->appendUniqueChoice($choices, $seen, $correct);
 
         foreach ($wordPool as $candidate) {
             if (count($choices) >= 4) {
@@ -449,16 +473,31 @@ final class AssessmentAutoGeneratorService
                 continue;
             }
 
-            $choices[] = $candidate;
+            $this->appendUniqueChoice($choices, $seen, $candidate);
         }
 
         while (count($choices) < 4) {
-            $choices[] = 'Option ' . count($choices);
+            $this->appendUniqueChoice($choices, $seen, 'Option ' . (count($choices) + 1));
         }
 
         shuffle($choices);
 
-        return array_values(array_unique($choices));
+        return array_values($choices);
+    }
+
+    /**
+     * @param string[] $choices
+     * @param array<string, bool> $seen
+     */
+    private function appendUniqueChoice(array &$choices, array &$seen, string $choice): void
+    {
+        $fingerprint = $this->normalizeText($choice);
+        if ($fingerprint === '' || isset($seen[$fingerprint])) {
+            return;
+        }
+
+        $seen[$fingerprint] = true;
+        $choices[] = $choice;
     }
 
     /**
@@ -547,76 +586,12 @@ final class AssessmentAutoGeneratorService
         }
     }
 
-    private function purgeModuleQuiz(int $moduleId): void
-    {
-        $questions = $this->questionQuizRepository->findBy(['moduleId' => $moduleId]);
-        foreach ($questions as $question) {
-            $questionId = $question->getId();
-            if ($questionId !== null) {
-                $answers = $this->reponseRepository->findByQuestionAndType($questionId, 'QUIZ');
-                foreach ($answers as $answer) {
-                    $this->entityManager->remove($answer);
-                }
-            }
-
-            $this->entityManager->remove($question);
-        }
-
-        $this->entityManager->flush();
-    }
-
-    private function purgeCoursTest(int $coursId): void
-    {
-        $questions = $this->questionTestRepository->findBy(['coursId' => $coursId]);
-        foreach ($questions as $question) {
-            $questionId = $question->getId();
-            if ($questionId !== null) {
-                $answers = $this->reponseRepository->findByQuestionAndType($questionId, 'TEST');
-                foreach ($answers as $answer) {
-                    $this->entityManager->remove($answer);
-                }
-            }
-
-            $this->entityManager->remove($question);
-        }
-
-        $this->entityManager->flush();
-    }
-
     private function normalizeText(string $text): string
     {
         $text = mb_strtolower(trim($text));
         $text = preg_replace('/\s+/', ' ', $text) ?? '';
 
         return preg_replace('/[^\p{L}\p{N}\s]/u', '', $text) ?? '';
-    }
-
-    /**
-     * @param string[] $questionTexts
-     */
-    private function hasDiverseQuestionTypes(array $questionTexts): bool
-    {
-        $hasCompletion = false;
-        $hasTrueFalse = false;
-        $hasStatementMcq = false;
-
-        foreach ($questionTexts as $text) {
-            $normalized = mb_strtolower(trim($text));
-            if (str_starts_with($normalized, 'completez la phrase')) {
-                $hasCompletion = true;
-            } elseif (str_starts_with($normalized, 'vrai ou faux')) {
-                $hasTrueFalse = true;
-            } elseif (str_starts_with($normalized, 'choisissez l\'affirmation correcte')) {
-                $hasStatementMcq = true;
-            }
-        }
-
-        $found = 0;
-        $found += $hasCompletion ? 1 : 0;
-        $found += $hasTrueFalse ? 1 : 0;
-        $found += $hasStatementMcq ? 1 : 0;
-
-        return $found >= 2;
     }
 }
 
