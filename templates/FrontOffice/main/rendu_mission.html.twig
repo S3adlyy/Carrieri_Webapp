@@ -606,6 +606,295 @@
         .rm-regenerate-btn:hover {
             background: rgba(99,102,241,0.4);
         }
+
+        /* ========== DRAGGABLE MUSIC PLAYER STYLES ========== */
+        .music-player {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10001;
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            border-radius: 16px;
+            padding: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            width: 280px;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+        }
+
+        .music-player:active {
+            cursor: grabbing;
+        }
+
+        .music-player.dragging {
+            opacity: 0.8;
+            transition: none;
+            cursor: grabbing;
+        }
+
+        .music-player.minimized {
+            width: 48px !important;
+            min-width: 48px !important;
+            max-width: 48px !important;
+            padding: 10px 8px !important;
+            cursor: grab;
+        }
+
+        .music-player.minimized .music-content {
+            display: none !important;
+        }
+
+        .music-player.minimized .music-title span {
+            display: none !important;
+        }
+
+        .music-player.minimized .music-title i {
+            font-size: 20px !important;
+            margin: 0 !important;
+        }
+
+        .music-player.minimized .minimize-btn,
+        .music-player.minimized .close-btn {
+            display: none !important;
+        }
+
+        /* Mode fermé - caché complètement */
+        .music-player.closed {
+            display: none !important;
+        }
+
+        /* Bouton flottant pour rouvrir (déplaçable aussi) */
+        .music-toggle-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+            z-index: 10000;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.4);
+            transition: all 0.3s ease;
+            animation: pulse 2s infinite;
+            user-select: none;
+        }
+
+        .music-toggle-btn:active {
+            cursor: grabbing;
+        }
+
+        .music-toggle-btn.dragging {
+            opacity: 0.8;
+            transition: none;
+            cursor: grabbing;
+        }
+
+        .music-toggle-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.6);
+        }
+
+        .music-toggle-btn i {
+            font-size: 24px;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(79, 70, 229, 0);
+            }
+        }
+
+        .music-player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .music-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #a5b4fc;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .music-title i {
+            font-size: 14px;
+            color: #4f46e5;
+        }
+
+        .minimize-btn, .close-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            border-radius: 6px;
+            padding: 2px 6px;
+            font-size: 10px;
+            transition: all 0.2s;
+        }
+
+        .minimize-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 0.6) !important;
+            color: white !important;
+        }
+
+        .music-info {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .current-track {
+            font-size: 13px;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 3px;
+        }
+
+        .current-artist {
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .playlist-select {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            border-radius: 8px;
+            padding: 6px 10px;
+            color: white;
+            font-size: 11px;
+            margin-bottom: 10px;
+            cursor: pointer;
+        }
+
+        .playlist-select option {
+            background: #1e1b4b;
+            color: white;
+        }
+
+        .music-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .music-controls button {
+            background: rgba(99, 102, 241, 0.2);
+            border: none;
+            color: white;
+            cursor: pointer;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .music-controls button:hover {
+            background: rgba(99, 102, 241, 0.5);
+            transform: scale(1.05);
+        }
+
+        .music-controls .play-pause {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            width: 40px;
+            height: 40px;
+        }
+
+        .music-controls .play-pause:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+        }
+
+        .progress-container {
+            margin-bottom: 10px;
+        }
+
+        .time-progress {
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 3px;
+            position: relative;
+        }
+
+        .time-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.4);
+            margin-top: 4px;
+        }
+
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .volume-control i {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .volume-slider {
+            flex: 1;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .volume-level {
+            width: 70%;
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 3px;
+        }
+
+        @keyframes musicPulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+        }
+
+        .music-player.playing {
+            animation: musicPulse 1.5s infinite;
+        }
     </style>
 {% endblock %}
 
@@ -866,6 +1155,74 @@ print("Écrivez votre solution pour la mission: {{ mission.type }}")</textarea>
             </div>{# end editor panel #}
         </div>{# end layout #}
     </div>{# end root #}
+
+    {# ── MUSIC PLAYER ── #}
+    <div class="music-player" id="musicPlayer">
+        <div class="music-player-header" id="togglePlayer">
+            <div class="music-title">
+                <i class="fas fa-headphones"></i>
+                <span>🎵 Focus Music</span>
+            </div>
+            <div style="display: flex; gap: 5px;">
+                <button class="minimize-btn" id="minimizePlayer" title="Minimiser">
+                    <i class="fas fa-minus"></i>
+                </button>
+                <button class="close-btn" id="closePlayer" title="Fermer">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="music-content" id="musicContent">
+            <div class="music-info">
+                <div class="current-track" id="currentTrack">Lo-fi Study Beat</div>
+                <div class="current-artist" id="currentArtist">Concentration Mix</div>
+            </div>
+
+            <select class="playlist-select" id="playlistSelect">
+                <option value="lofi">🎧 Lo-fi Study Beats</option>
+                <option value="classical">🎹 Classical Piano</option>
+                <option value="ambient">🌊 Ambient Focus</option>
+                <option value="jazz">🎷 Smooth Jazz</option>
+                <option value="nature">🌿 Nature Sounds</option>
+            </select>
+
+            <div class="music-controls">
+                <button id="prevTrack" title="Précédent">
+                    <i class="fas fa-backward"></i>
+                </button>
+                <button class="play-pause" id="playPauseBtn" title="Play/Pause">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button id="nextTrack" title="Suivant">
+                    <i class="fas fa-forward"></i>
+                </button>
+            </div>
+
+            <div class="progress-container">
+                <div class="time-progress" id="progressBar">
+                    <div class="progress-bar" id="progressFill"></div>
+                </div>
+                <div class="time-info">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <div class="volume-control">
+                <i class="fas fa-volume-down"></i>
+                <div class="volume-slider" id="volumeSlider">
+                    <div class="volume-level" id="volumeLevel"></div>
+                </div>
+                <i class="fas fa-volume-up"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bouton flottant pour rouvrir le lecteur (caché par défaut) -->
+    <div class="music-toggle-btn" id="musicToggleBtn" style="display: none;">
+        <i class="fas fa-music"></i>
+    </div>
 
     {% block javascripts %}
         {{ parent() }}
@@ -1397,6 +1754,378 @@ int main() {
                 console.log(`⏱️ Temps restant: ${formatTime(timeRemaining)}`);
                 console.log(`⚡ Exécutions restantes: ${remainingExecutions}`);
             });
+
+            // ========== DRAGGABLE MUSIC PLAYER ==========
+            (function() {
+                const playlists = {
+                    lofi: [
+                        { title: "Lo-fi Study Beat", artist: "Concentration Mix", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" },
+                        { title: "Chillhop Essentials", artist: "Study Session", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+                        { title: "Midnight Study", artist: "Lo-fi Girl", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" },
+                        { title: "Coffee Shop Vibes", artist: "Relaxation Station", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-4.mp3" }
+                    ],
+                    classical: [
+                        { title: "Clair de Lune", artist: "Debussy", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-5.mp3" },
+                        { title: "Moonlight Sonata", artist: "Beethoven", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-6.mp3" },
+                        { title: "Gymnopédie No.1", artist: "Satie", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-7.mp3" },
+                        { title: "Air on G String", artist: "Bach", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-8.mp3" }
+                    ],
+                    ambient: [
+                        { title: "Deep Focus", artist: "Ambient Study", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-9.mp3" },
+                        { title: "Calm Waters", artist: "Meditation Zone", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-10.mp3" },
+                        { title: "Space Odyssey", artist: "Ambient Mix", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-11.mp3" },
+                        { title: "Pulse of Life", artist: "Electronic Dreams", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-12.mp3" }
+                    ],
+                    jazz: [
+                        { title: "Smooth Jazz", artist: "Café Noir", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-13.mp3" },
+                        { title: "Night Session", artist: "Jazz Quartet", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-14.mp3" },
+                        { title: "Autumn Leaves", artist: "Jazz Standards", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-15.mp3" }
+                    ],
+                    nature: [
+                        { title: "Rainforest", artist: "Nature Sounds", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-16.mp3" },
+                        { title: "Ocean Waves", artist: "Calming Seas", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-17.mp3" },
+                        { title: "Forest Stream", artist: "Wilderness", url: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-18.mp3" }
+                    ]
+                };
+
+                let currentPlaylist = 'lofi';
+                let currentTrackIndex = 0;
+                let isPlaying = false;
+                let isMinimized = false;
+                let isClosed = false;
+
+                // Éléments DOM
+                const player = document.getElementById('musicPlayer');
+                const musicToggleBtn = document.getElementById('musicToggleBtn');
+                const audio = new Audio();
+                const playPauseBtn = document.getElementById('playPauseBtn');
+                const prevBtn = document.getElementById('prevTrack');
+                const nextBtn = document.getElementById('nextTrack');
+                const playlistSelect = document.getElementById('playlistSelect');
+                const currentTrackSpan = document.getElementById('currentTrack');
+                const currentArtistSpan = document.getElementById('currentArtist');
+                const progressFill = document.getElementById('progressFill');
+                const progressBar = document.getElementById('progressBar');
+                const currentTimeSpan = document.getElementById('currentTime');
+                const durationSpan = document.getElementById('duration');
+                const volumeSlider = document.getElementById('volumeSlider');
+                const volumeLevel = document.getElementById('volumeLevel');
+                const minimizeBtn = document.getElementById('minimizePlayer');
+                const closePlayerBtn = document.getElementById('closePlayer');
+                const togglePlayerHeader = document.getElementById('togglePlayer');
+
+                // Variables pour le drag & drop
+                let isDragging = false;
+                let dragStartX = 0;
+                let dragStartY = 0;
+                let elementStartX = 0;
+                let elementStartY = 0;
+
+                function showToastMessage(message, type) {
+                    if (typeof showToast === 'function') {
+                        showToast(message, type);
+                    } else {
+                        console.log(message);
+                    }
+                }
+
+                function loadTrack() {
+                    const track = playlists[currentPlaylist][currentTrackIndex];
+                    audio.src = track.url;
+                    currentTrackSpan.textContent = track.title;
+                    currentArtistSpan.textContent = track.artist;
+
+                    localStorage.setItem('music_last_playlist', currentPlaylist);
+                    localStorage.setItem('music_last_track', currentTrackIndex);
+
+                    if (isPlaying) {
+                        audio.play().catch(e => console.log('Lecture automatique bloquée', e));
+                    }
+                }
+
+                function playPause() {
+                    if (isPlaying) {
+                        audio.pause();
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        player.classList.remove('playing');
+                    } else {
+                        audio.play().catch(e => {
+                            console.log('Erreur lecture:', e);
+                            showToastMessage('🎵 Cliquez sur lecture pour démarrer la musique', 'info');
+                        });
+                        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                        player.classList.add('playing');
+                    }
+                    isPlaying = !isPlaying;
+                }
+
+                function nextTrack() {
+                    if (currentTrackIndex < playlists[currentPlaylist].length - 1) {
+                        currentTrackIndex++;
+                    } else {
+                        currentTrackIndex = 0;
+                    }
+                    loadTrack();
+                    if (isPlaying) {
+                        audio.play();
+                    }
+                }
+
+                function prevTrack() {
+                    if (currentTrackIndex > 0) {
+                        currentTrackIndex--;
+                    } else {
+                        currentTrackIndex = playlists[currentPlaylist].length - 1;
+                    }
+                    loadTrack();
+                    if (isPlaying) {
+                        audio.play();
+                    }
+                }
+
+                function updateProgress() {
+                    if (audio.duration) {
+                        const percent = (audio.currentTime / audio.duration) * 100;
+                        progressFill.style.width = percent + '%';
+                        currentTimeSpan.textContent = formatTimeAudio(audio.currentTime);
+                        durationSpan.textContent = formatTimeAudio(audio.duration);
+                    }
+                }
+
+                function formatTimeAudio(seconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = Math.floor(seconds % 60);
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                }
+
+                function setProgress(e) {
+                    const rect = progressBar.getBoundingClientRect();
+                    const percent = (e.clientX - rect.left) / rect.width;
+                    audio.currentTime = percent * audio.duration;
+                }
+
+                function setVolume(e) {
+                    const rect = volumeSlider.getBoundingClientRect();
+                    let percent = (e.clientX - rect.left) / rect.width;
+                    percent = Math.max(0, Math.min(1, percent));
+                    audio.volume = percent;
+                    volumeLevel.style.width = (percent * 100) + '%';
+                    localStorage.setItem('music_volume', percent);
+                }
+
+                function changePlaylist() {
+                    currentPlaylist = playlistSelect.value;
+                    currentTrackIndex = 0;
+                    loadTrack();
+                    if (isPlaying) {
+                        audio.play();
+                    }
+                }
+
+                // Fonction pour minimiser le lecteur
+                function minimizePlayer() {
+                    isMinimized = true;
+                    isClosed = false;
+                    player.classList.add('minimized');
+                    player.classList.remove('closed');
+                    musicToggleBtn.style.display = 'none';
+                    localStorage.setItem('music_minimized', 'true');
+                    localStorage.setItem('music_closed', 'false');
+                }
+
+                // Fonction pour fermer complètement le lecteur
+                function closePlayer() {
+                    if (isPlaying) {
+                        audio.pause();
+                        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+                        player.classList.remove('playing');
+                        isPlaying = false;
+                    }
+                    isMinimized = false;
+                    isClosed = true;
+                    player.classList.remove('minimized');
+                    player.classList.add('closed');
+                    musicToggleBtn.style.display = 'flex';
+                    localStorage.setItem('music_minimized', 'false');
+                    localStorage.setItem('music_closed', 'true');
+                }
+
+                // Fonction pour ouvrir/restaurer le lecteur
+                function openPlayer() {
+                    isMinimized = false;
+                    isClosed = false;
+                    player.classList.remove('minimized');
+                    player.classList.remove('closed');
+                    musicToggleBtn.style.display = 'none';
+                    localStorage.setItem('music_minimized', 'false');
+                    localStorage.setItem('music_closed', 'false');
+                }
+
+                // ========== DRAG & DROP FUNCTIONS ==========
+                function startDrag(e, element) {
+                    isDragging = true;
+                    const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
+
+                    dragStartX = clientX;
+                    dragStartY = clientY;
+
+                    const rect = element.getBoundingClientRect();
+                    elementStartX = rect.left;
+                    elementStartY = rect.top;
+
+                    element.classList.add('dragging');
+                    e.preventDefault();
+                }
+
+                function onDrag(e, element) {
+                    if (!isDragging) return;
+
+                    const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+
+                    const deltaX = clientX - dragStartX;
+                    const deltaY = clientY - dragStartY;
+
+                    let newLeft = elementStartX + deltaX;
+                    let newTop = elementStartY + deltaY;
+
+                    // Limiter les bords de l'écran
+                    const maxX = window.innerWidth - element.offsetWidth;
+                    const maxY = window.innerHeight - element.offsetHeight;
+                    newLeft = Math.max(0, Math.min(maxX, newLeft));
+                    newTop = Math.max(0, Math.min(maxY, newTop));
+
+                    element.style.left = newLeft + 'px';
+                    element.style.top = newTop + 'px';
+                    element.style.right = 'auto';
+                    element.style.bottom = 'auto';
+                }
+
+                function stopDrag(element) {
+                    if (!isDragging) return;
+                    isDragging = false;
+                    element.classList.remove('dragging');
+
+                    // Sauvegarder la position
+                    localStorage.setItem('music_player_left', element.style.left);
+                    localStorage.setItem('music_player_top', element.style.top);
+                }
+
+                // Appliquer le drag & drop au player et au bouton toggle
+                function makeDraggable(element) {
+                    const onMouseDown = (e) => {
+                        if (e.target.closest('.minimize-btn') || e.target.closest('.close-btn') ||
+                            e.target.closest('.play-pause') || e.target.closest('#prevTrack') ||
+                            e.target.closest('#nextTrack') || e.target.closest('.playlist-select') ||
+                            e.target.closest('.volume-slider') || e.target.closest('.time-progress')) {
+                            return;
+                        }
+                        startDrag(e, element);
+                    };
+
+                    const onMouseMove = (e) => onDrag(e, element);
+                    const onMouseUp = () => stopDrag(element);
+
+                    element.addEventListener('mousedown', onMouseDown);
+                    element.addEventListener('mousemove', onMouseMove);
+                    element.addEventListener('mouseup', onMouseUp);
+
+                    element.addEventListener('touchstart', (e) => {
+                        if (e.target.closest('.minimize-btn') || e.target.closest('.close-btn') ||
+                            e.target.closest('.play-pause') || e.target.closest('#prevTrack') ||
+                            e.target.closest('#nextTrack') || e.target.closest('.playlist-select') ||
+                            e.target.closest('.volume-slider') || e.target.closest('.time-progress')) {
+                            return;
+                        }
+                        startDrag(e, element);
+                    });
+                    element.addEventListener('touchmove', (e) => onDrag(e, element));
+                    element.addEventListener('touchend', () => stopDrag(element));
+                }
+
+                // Restaurer la position sauvegardée
+                const savedLeft = localStorage.getItem('music_player_left');
+                const savedTop = localStorage.getItem('music_player_top');
+                if (savedLeft && savedTop) {
+                    player.style.left = savedLeft;
+                    player.style.top = savedTop;
+                    player.style.right = 'auto';
+                    player.style.bottom = 'auto';
+                }
+
+                // Charger les préférences
+                const savedPlaylist = localStorage.getItem('music_last_playlist');
+                const savedTrack = localStorage.getItem('music_last_track');
+                const savedVolume = localStorage.getItem('music_volume');
+                const savedMinimized = localStorage.getItem('music_minimized');
+                const savedClosed = localStorage.getItem('music_closed');
+
+                if (savedPlaylist && playlists[savedPlaylist]) {
+                    currentPlaylist = savedPlaylist;
+                    playlistSelect.value = savedPlaylist;
+                }
+                if (savedTrack && playlists[currentPlaylist][parseInt(savedTrack)]) {
+                    currentTrackIndex = parseInt(savedTrack);
+                }
+                if (savedVolume) {
+                    audio.volume = parseFloat(savedVolume);
+                    volumeLevel.style.width = (parseFloat(savedVolume) * 100) + '%';
+                }
+
+                // Restaurer l'état
+                if (savedClosed === 'true') {
+                    isClosed = true;
+                    player.classList.add('closed');
+                    musicToggleBtn.style.display = 'flex';
+                } else if (savedMinimized === 'true') {
+                    isMinimized = true;
+                    player.classList.add('minimized');
+                    musicToggleBtn.style.display = 'none';
+                } else {
+                    player.classList.remove('minimized', 'closed');
+                    musicToggleBtn.style.display = 'none';
+                }
+
+                // Attacher les événements
+                playPauseBtn.addEventListener('click', playPause);
+                prevBtn.addEventListener('click', prevTrack);
+                nextBtn.addEventListener('click', nextTrack);
+                playlistSelect.addEventListener('change', changePlaylist);
+                audio.addEventListener('timeupdate', updateProgress);
+                audio.addEventListener('ended', nextTrack);
+                audio.addEventListener('loadedmetadata', updateProgress);
+                progressBar.addEventListener('click', setProgress);
+                volumeSlider.addEventListener('click', setVolume);
+                minimizeBtn.addEventListener('click', minimizePlayer);
+                closePlayerBtn.addEventListener('click', closePlayer);
+                musicToggleBtn.addEventListener('click', openPlayer);
+
+                // Drag & drop
+                makeDraggable(player);
+                makeDraggable(musicToggleBtn);
+
+                // Clic sur l'en-tête quand minimisé pour ouvrir
+                togglePlayerHeader.addEventListener('click', function(e) {
+                    if (e.target.closest('.minimize-btn') || e.target.closest('.close-btn')) {
+                        return;
+                    }
+                    if (isMinimized) {
+                        openPlayer();
+                    }
+                });
+
+                // Clic sur le player quand minimisé
+                player.addEventListener('click', function(e) {
+                    if (isMinimized && (e.target === player || e.target.closest('.music-title'))) {
+                        openPlayer();
+                    }
+                });
+
+                // Charger le premier morceau
+                loadTrack();
+                console.log('🎵 Music player initialized - Mode: ' + (isClosed ? 'closed' : (isMinimized ? 'minimized' : 'open')));
+            })();
         </script>
     {% endblock %}
 {% endblock %}
