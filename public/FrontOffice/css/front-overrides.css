@@ -580,6 +580,42 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	text-decoration: none;
 }
 
+.fo-fxml-catalog .fo-btn-state,
+.fo-fxml-catalog .fo-btn-state-active {
+	border-radius: 999px;
+	padding: 0.45rem 0.95rem;
+	font-size: 0.8rem;
+	font-weight: 700;
+	border: 0;
+}
+
+.fo-fxml-catalog .fo-btn-state {
+	background: #f3e8ff;
+	color: #5e548e;
+}
+
+.fo-fxml-catalog .fo-btn-state:hover,
+.fo-fxml-catalog .fo-btn-state:focus {
+	color: #fff;
+	background: #6d5ca8;
+}
+
+.fo-fxml-catalog .fo-btn-state-active {
+	background: #5e548e;
+	color: #fff;
+}
+
+.fo-fxml-catalog .fo-my-progress-wrap .fo-my-progress-bar {
+	height: 8px;
+	border-radius: 999px;
+	overflow: hidden;
+	background: #eee7fb;
+}
+
+.fo-fxml-catalog .fo-my-progress-wrap .progress-bar {
+	background: linear-gradient(135deg, #667eea 0%, #5e548e 100%) !important;
+}
+
 .fo-fxml-catalog .fo-stat-card {
 	padding: 25px;
 	min-height: 140px;

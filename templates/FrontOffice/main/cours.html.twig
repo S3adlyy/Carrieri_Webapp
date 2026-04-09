@@ -21,8 +21,13 @@
     <div class="w-100 text-start fo-charte-ui fo-fxml-catalog fo-shell-root position-relative">
 
         <div class="fo-catalog-header mb-4 position-relative">
-            <h3 class="mb-1">Catalogue de cours</h3>
-            <p class="mb-0">{{ pagination.total|default(cours_list|length) }} cours disponibles</p>
+            <div class="d-flex flex-wrap align-items-center justify-content-between">
+                <div>
+                    <h3 class="mb-1">Catalogue de cours</h3>
+                    <p class="mb-0">{{ pagination.total|default(cours_list|length) }} cours disponibles</p>
+                </div>
+                <a href="{{ path('app_candidate_mes_cours') }}" class="btn fo-search-button mt-2 mt-md-0">Mes cours</a>
+            </div>
         </div>
 
         <form method="get" class="mb-4 position-relative">
