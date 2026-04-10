@@ -2133,6 +2133,121 @@ int main() {
                 console.log('🎵 Music player initialized - Mode: ' + (isClosed ? 'closed' : (isMinimized ? 'minimized' : 'open')));
             })();
 
+            // ========== LIVE SESSION TRACKER ==========
+            (function() {
+                let socket = null;
+                let isConnected = false;
+                let heartbeatInterval = null;
+                let hasFocus = true;
+                let sessionStarted = false;
+
+                const WS_URL = 'http://localhost:3001';
+                const missionId = {{ mission.id }};
+                const candidatId = {{ app.user.id }};
+                const candidatName = '{{ app.user.firstName }} {{ app.user.lastName }}';
+                const missionTitle = '{{ mission.type }}';
+
+                function initSessionTracker() {
+                    try {
+                        socket = io(WS_URL, {
+                            transports: ['websocket', 'polling']
+                        });
+
+                        socket.on('connect', () => {
+                            console.log('📊 Session Tracker connecté');
+                            isConnected = true;
+
+                            if (!sessionStarted) {
+                                // Démarrer la session
+                                socket.emit('session:start', {
+                                    missionId: missionId,
+                                    candidatId: candidatId,
+                                    candidatName: candidatName,
+                                    missionTitle: missionTitle
+                                });
+                                sessionStarted = true;
+
+                                // Démarrer le heartbeat (toutes les 30 secondes)
+                                heartbeatInterval = setInterval(() => {
+                                    if (isConnected) {
+                                        socket.emit('session:heartbeat', {
+                                            missionId: missionId,
+                                            candidatId: candidatId
+                                        });
+                                    }
+                                }, 30000);
+                            }
+                        });
+
+                        socket.on('disconnect', () => {
+                            console.log('📊 Session Tracker déconnecté');
+                            isConnected = false;
+                            if (heartbeatInterval) {
+                                clearInterval(heartbeatInterval);
+                            }
+                        });
+
+                    } catch (err) {
+                        console.error('Session Tracker error:', err);
+                    }
+                }
+
+                // Détecter le focus de la page
+                window.addEventListener('focus', () => {
+                    hasFocus = true;
+                    if (socket && isConnected) {
+                        socket.emit('session:focus', {
+                            missionId: missionId,
+                            candidatId: candidatId,
+                            hasFocus: true
+                        });
+                    }
+                });
+
+                window.addEventListener('blur', () => {
+                    hasFocus = false;
+                    if (socket && isConnected) {
+                        socket.emit('session:focus', {
+                            missionId: missionId,
+                            candidatId: candidatId,
+                            hasFocus: false
+                        });
+                    }
+                });
+
+                // Détecter la fermeture de page
+                window.addEventListener('beforeunload', () => {
+                    if (socket && isConnected) {
+                        socket.emit('session:end', {
+                            missionId: missionId,
+                            candidatId: candidatId
+                        });
+                    }
+                });
+
+                // Override de la fonction d'exécution pour tracker
+                if (typeof executeCode === 'function') {
+                    const originalExecute = executeCode;
+                    window.executeCode = async function() {
+                        const result = await originalExecute();
+                        if (socket && isConnected && result) {
+                            socket.emit('session:execute', {
+                                missionId: missionId,
+                                candidatId: candidatId,
+                                success: result.success,
+                                error: result.error
+                            });
+                        }
+                        return result;
+                    };
+                }
+
+                // Démarrer
+                initSessionTracker();
+
+                console.log('📊 Session Tracker initialisé');
+            })();
+
         </script>
 
         <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>

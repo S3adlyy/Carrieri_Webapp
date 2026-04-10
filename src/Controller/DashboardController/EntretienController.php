@@ -295,4 +295,11 @@ class EntretienController extends AbstractController
         return $this->json(['count' => count($activeSessions)]);
     }
 
+    #[Route('/live-sessions', name: 'app_recruiter_live_sessions')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function liveSessions(): Response
+    {
+        return $this->render('BackOffice/dashboard/entretiens/live_sessions.html.twig');
+    }
+
 }
