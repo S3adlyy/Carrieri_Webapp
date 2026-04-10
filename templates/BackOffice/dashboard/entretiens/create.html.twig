@@ -84,8 +84,39 @@
                 {{ form_errors(form.type) }}
             </div>
 
-            {# Le champ lien est caché car il sera auto-généré #}
-            {{ form_widget(form.lien, {'attr': {'style': 'display: none;'}}) }}
+            {# Champs email et nom du candidat #}
+            <div class="form-group">
+                {{ form_label(form.candidatName, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.candidatName, {'attr': {
+                    'class': 'form-control' ~ (form.candidatName.vars.errors|length ? ' is-invalid' : ''),
+                    'placeholder': 'Nom complet du candidat'
+                }}) }}
+                <div class="form-hint">
+                    <small class="text-muted">
+                        <i class="fas fa-user"></i>
+                        Entrez le nom complet du candidat
+                    </small>
+                </div>
+                {{ form_errors(form.candidatName) }}
+            </div>
+
+            <div class="form-group">
+                {{ form_label(form.candidatEmail, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                {{ form_widget(form.candidatEmail, {'attr': {
+                    'class': 'form-control' ~ (form.candidatEmail.vars.errors|length ? ' is-invalid' : ''),
+                    'placeholder': 'exemple@email.com'
+                }}) }}
+                <div class="form-hint">
+                    <small class="text-muted">
+                        <i class="fas fa-envelope"></i>
+                        L'email de confirmation sera envoyé à cette adresse
+                    </small>
+                </div>
+                {{ form_errors(form.candidatEmail) }}
+            </div>
+
+            {# Le champ lien n'existe pas dans le formulaire, donc on ne l'affiche pas #}
+            {# Le lien Jitsi sera généré automatiquement par le contrôleur #}
 
             <div class="form-group">
                 {{ form_label(form.notes, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
@@ -183,7 +214,6 @@
             margin-top: 5px;
         }
 
-        /* Type buttons */
         .type-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -214,7 +244,6 @@
             border-color: #667eea;
         }
 
-        /* Actions */
         .form-actions {
             display: flex;
             gap: 10px;
@@ -250,12 +279,10 @@
             background-color: #e2e8f0;
         }
 
-        /* DateTime picker styling */
         input[type="datetime-local"] {
             min-height: 42px;
         }
 
-        /* Alert styling */
         .alert-info {
             background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
             border-left: 4px solid #0ea5e9;
@@ -264,7 +291,6 @@
     </style>
 
     <script>
-        // Pré-remplir le type avec les boutons
         const typeButtons = document.querySelectorAll('.type-btn');
         const typeField = document.getElementById('entretien_type');
 
@@ -273,18 +299,14 @@
                 const typeValue = this.dataset.type;
                 if (typeField) {
                     typeField.value = typeValue;
-                    // Mettre en évidence le bouton sélectionné
                     typeButtons.forEach(b => b.classList.remove('active'));
                     this.classList.add('active');
-
-                    // Déclencher l'événement input pour la validation
                     const event = new Event('input', { bubbles: true });
                     typeField.dispatchEvent(event);
                 }
             });
         });
 
-        // Validation de la date (doit être dans le futur)
         const dateField = document.getElementById('entretien_dateEntretien');
         if (dateField) {
             const now = new Date();

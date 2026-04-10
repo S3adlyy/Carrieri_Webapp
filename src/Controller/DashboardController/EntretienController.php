@@ -14,9 +14,10 @@ use App\Repository\MissionRepository;
 use App\Repository\RenduMissionRepository;
 use App\Repository\EntretienRepository;
 use App\Service\JitsiLinkGenerator;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpClient\HttpClient;  // ← AJOUTEZ CETTE LIGNE
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -33,6 +34,7 @@ class EntretienController extends AbstractController
         private RenduMissionRepository $renduMissionRepository,
         private EntretienRepository $entretienRepository,
         private JitsiLinkGenerator $jitsiLinkGenerator,
+        private EmailService $emailService,
     ) {
     }
 
@@ -73,6 +75,10 @@ class EntretienController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Récupérer les données du formulaire
+            $candidatEmail = $form->get('candidatEmail')->getData();
+            $candidatName = $form->get('candidatName')->getData();
+
             // Générer automatiquement le lien Jitsi
             $jitsiLink = $this->jitsiLinkGenerator->generateMeetingLink(
                 $entretien->getId() ?? rand(1000, 9999),
@@ -85,23 +91,52 @@ class EntretienController extends AbstractController
             $this->entityManager->persist($entretien);
             $this->entityManager->flush();
 
-            $candidateName = $rendu->getUser()->getFirstName() . ' ' . $rendu->getUser()->getLastName();
+            $recruiterName = $user->getFirstName() . ' ' . $user->getLastName();
 
-            // 🔔 ENVOYER LA NOTIFICATION D'ENTRETIEN
-            $this->sendInterviewNotification(
+            // 🔔 ENVOI DE L'EMAIL AU CANDIDAT
+            $emailSent = false;
+            try {
+                $emailSent = $this->emailService->sendInterviewNotification(
+                    toEmail: $candidatEmail,
+                    candidateName: $candidatName,
+                    missionTitle: $rendu->getMission()->getType(),
+                    score: $rendu->getScore(),
+                    interviewDate: $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                    jitsiLink: $jitsiLink,
+                    interviewType: $entretien->getType(),
+                    recruiterName: $recruiterName
+                );
+
+                if ($emailSent) {
+                    $this->addFlash('success', sprintf(
+                        '✅ Entretien planifié pour %s le %s<br>🔗 Lien Jitsi : %s<br>📧 Un email a été envoyé à %s',
+                        $candidatName,
+                        $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                        $jitsiLink,
+                        $candidatEmail
+                    ));
+                } else {
+                    $this->addFlash('warning', sprintf(
+                        '⚠️ Entretien planifié mais email non envoyé.<br>🔗 Lien Jitsi : %s',
+                        $jitsiLink
+                    ));
+                }
+            } catch (\Exception $e) {
+                $this->addFlash('warning', sprintf(
+                    '⚠️ Entretien planifié mais erreur email : %s<br>🔗 Lien Jitsi : %s',
+                    $e->getMessage(),
+                    $jitsiLink
+                ));
+            }
+
+            // Notification WebSocket (optionnelle)
+            $this->sendInterviewNotificationWebSocket(
                 $rendu->getUser()->getId(),
                 $entretien->getDateEntretien()->format('d/m/Y à H:i'),
                 $jitsiLink,
                 $entretien->getType(),
-                $user->getFirstName() . ' ' . $user->getLastName()
+                $recruiterName
             );
-
-            $this->addFlash('success', sprintf(
-                '✅ Entretien planifié pour %s le %s\n🔗 Lien Jitsi : %s\n📨 Notification envoyée au candidat',
-                $candidateName,
-                $entretien->getDateEntretien()->format('d/m/Y à H:i'),
-                $jitsiLink
-            ));
 
             return $this->redirectToRoute('app_admin_candidats_acceptes');
         }
@@ -112,8 +147,7 @@ class EntretienController extends AbstractController
         ]);
     }
 
-    // Ajoutez cette méthode pour envoyer la notification
-    private function sendInterviewNotification(int $candidatId, string $date, string $jitsiLink, string $type, string $recruiterName): void
+    private function sendInterviewNotificationWebSocket(int $candidatId, string $date, string $jitsiLink, string $type, string $recruiterName): void
     {
         try {
             $client = HttpClient::create();
@@ -128,8 +162,7 @@ class EntretienController extends AbstractController
                 'timeout' => 5
             ]);
         } catch (\Exception $e) {
-            // Ne pas bloquer si la notification échoue
-            error_log('Erreur envoi notification: ' . $e->getMessage());
+            error_log('Erreur envoi notification WebSocket: ' . $e->getMessage());
         }
     }
 
