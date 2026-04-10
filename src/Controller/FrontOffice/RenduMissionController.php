@@ -68,32 +68,50 @@ class RenduMissionController extends AbstractController
         $mission = $this->missionRepository->find($id)
             ?? throw $this->createNotFoundException('Mission non trouvée');
 
+        // Vérifier si une soumission existe déjà (terminée)
         $existingRendu = $this->renduMissionRepository->findExistingSubmission(
             $mission->getId(),
             $user->getId()
         );
 
-        if ($existingRendu) {
+        if ($existingRendu && $existingRendu->getStatut() !== 'en_attente') {
             $this->addFlash('warning', 'Vous avez déjà soumis cette mission.');
             return $this->redirectToRoute('app_candidate_my_results');
         }
 
-        // Vérifier si les données de mission sont déjà en cache
-        $cacheKey = "mission_data_{$id}";
-        if (!$session->has($cacheKey)) {
-            // Analyser la description de la mission
-            $missionData = $this->missionAnalyzer->analyzeMissionDescription(
-                $mission->getDescription() ?? '',
-                $mission->getType() ?? ''
-            );
-            $session->set($cacheKey, $missionData);
-        } else {
-            $missionData = $session->get($cacheKey);
-        }
-
-        // Initialiser la session
+        // CRÉER OU RÉCUPÉRER LA SESSION ACTIVE
         $sessionKey = "mission_{$id}_start_time";
         $executionsKey = "mission_{$id}_executions";
+        $renduIdKey = "mission_{$id}_rendu_id";
+
+        // Vérifier si une session active existe déjà en base
+        $activeRendu = null;
+        if ($session->has($renduIdKey)) {
+            $activeRendu = $this->renduMissionRepository->find($session->get($renduIdKey));
+        }
+
+        if (!$activeRendu && $existingRendu && $existingRendu->getStatut() === 'en_attente') {
+            $activeRendu = $existingRendu;
+        }
+
+        if (!$activeRendu) {
+            // Créer un nouvel enregistrement en "en_attente"
+            $activeRendu = new RenduMission();
+            $activeRendu->setCodeSolution(''); // Code vide au début
+            $activeRendu->setLangue('python');
+            $activeRendu->setDateRendu(new \DateTime());
+            $activeRendu->setScore(null);
+            $activeRendu->setResultat(null);
+            $activeRendu->setFeedback(null);
+            $activeRendu->setStatut('en_attente');
+            $activeRendu->setMission($mission);
+            $activeRendu->setUser($user);
+
+            $this->entityManager->persist($activeRendu);
+            $this->entityManager->flush();
+
+            $session->set($renduIdKey, $activeRendu->getId());
+        }
 
         if (!$session->has($sessionKey)) {
             $session->set($sessionKey, time());
@@ -108,13 +126,26 @@ class RenduMissionController extends AbstractController
             return $this->autoSubmitWithZero($mission, $user, $session, "Temps écoulé (30 minutes)");
         }
 
+        // Analyser la mission
+        $cacheKey = "mission_data_{$id}";
+        if (!$session->has($cacheKey)) {
+            $missionData = $this->missionAnalyzer->analyzeMissionDescription(
+                $mission->getDescription() ?? '',
+                $mission->getType() ?? ''
+            );
+            $session->set($cacheKey, $missionData);
+        } else {
+            $missionData = $session->get($cacheKey);
+        }
+
         return $this->render('FrontOffice/main/rendu_mission.html.twig', [
             'mission' => $mission,
             'existingRendu' => $existingRendu,
+            'activeRendu' => $activeRendu,
             'remainingExecutions' => $session->get($executionsKey, 3),
             'timeRemaining' => $timeRemaining,
             'sessionToken' => $session->get("mission_{$id}_token"),
-            'missionData' => $missionData // Ajoutez ceci
+            'missionData' => $missionData
         ]);
     }
 
@@ -242,14 +273,25 @@ class RenduMissionController extends AbstractController
             return new JsonResponse(['success' => false, 'error' => 'Session invalide'], 400);
         }
 
-        // Vérifier si déjà soumis
-        $existingRendu = $this->renduMissionRepository->findExistingSubmission(
-            $mission->getId(),
-            $user->getId()
-        );
+        // Récupérer le rendu actif
+        $renduIdKey = "mission_{$id}_rendu_id";
+        $activeRendu = null;
 
-        if ($existingRendu) {
-            return new JsonResponse(['success' => false, 'error' => 'Déjà soumis'], 400);
+        if ($session->has($renduIdKey)) {
+            $activeRendu = $this->renduMissionRepository->find($session->get($renduIdKey));
+        }
+
+        if (!$activeRendu) {
+            $activeRendu = $this->renduMissionRepository->findExistingSubmission(
+                $mission->getId(),
+                $user->getId()
+            );
+        }
+
+        if (!$activeRendu) {
+            $activeRendu = new RenduMission();
+            $activeRendu->setMission($mission);
+            $activeRendu->setUser($user);
         }
 
         // Appel à l'API d'évaluation IA
@@ -261,56 +303,67 @@ class RenduMissionController extends AbstractController
             scoreMin: $mission->getScoreMin() ?? 60,
         );
 
-        $renduMission = new RenduMission();
-        $renduMission->setCodeSolution($code);
-        $renduMission->setLangue($langue);
-        $renduMission->setDateRendu(new \DateTime());
-        $renduMission->setScore($evaluation['score']);
-        $renduMission->setResultat($evaluation['resultat_html']);
-        $renduMission->setFeedback($evaluation['feedback']);
-        $renduMission->setStatut($evaluation['statut']);
-        $renduMission->setMission($mission);
-        $renduMission->setUser($user);
+        // Mettre à jour le rendu
+        $activeRendu->setCodeSolution($code);
+        $activeRendu->setLangue($langue);
+        $activeRendu->setDateRendu(new \DateTime());
+        $activeRendu->setScore($evaluation['score']);
+        $activeRendu->setResultat($evaluation['resultat_html']);
+        $activeRendu->setFeedback($evaluation['feedback']);
+        $activeRendu->setStatut($evaluation['statut']);
 
-        $this->entityManager->persist($renduMission);
+        $this->entityManager->persist($activeRendu);
         $this->entityManager->flush();
 
         // Nettoyer la session
         $session->remove("mission_{$id}_start_time");
         $session->remove("mission_{$id}_executions");
         $session->remove("mission_{$id}_token");
+        $session->remove("mission_{$id}_rendu_id");
 
-        return new JsonResponse(['success' => true, 'redirect' => $this->generateUrl('app_candidate_rendu_status', ['id' => $renduMission->getId()])]);
+        return new JsonResponse(['success' => true, 'redirect' => $this->generateUrl('app_candidate_rendu_status', ['id' => $activeRendu->getId()])]);
     }
 
     private function autoSubmitWithZero($mission, $user, SessionInterface $session, string $reason): Response
     {
-        $existingRendu = $this->renduMissionRepository->findExistingSubmission(
-            $mission->getId(),
-            $user->getId()
-        );
+        // Récupérer le rendu actif
+        $renduIdKey = "mission_{$mission->getId()}_rendu_id";
+        $activeRendu = null;
 
-        if (!$existingRendu) {
-            $renduMission = new RenduMission();
-            $renduMission->setCodeSolution('');
-            $renduMission->setLangue('');
-            $renduMission->setDateRendu(new \DateTime());
-            $renduMission->setScore(0);
-            $renduMission->setResultat($this->generateZeroScoreHtml($reason));
-            $renduMission->setFeedback("Session expirée : $reason. Score: 0/100");
-            $renduMission->setStatut('refuse');
-            $renduMission->setMission($mission);
-            $renduMission->setUser($user);
-
-            $this->entityManager->persist($renduMission);
-            $this->entityManager->flush();
-
-            // Nettoyer la session
-            $missionId = $mission->getId();
-            $session->remove("mission_{$missionId}_start_time");
-            $session->remove("mission_{$missionId}_executions");
-            $session->remove("mission_{$missionId}_token");
+        if ($session->has($renduIdKey)) {
+            $activeRendu = $this->renduMissionRepository->find($session->get($renduIdKey));
         }
+
+        if (!$activeRendu) {
+            $activeRendu = $this->renduMissionRepository->findExistingSubmission(
+                $mission->getId(),
+                $user->getId()
+            );
+        }
+
+        if (!$activeRendu) {
+            $activeRendu = new RenduMission();
+            $activeRendu->setMission($mission);
+            $activeRendu->setUser($user);
+        }
+
+        $activeRendu->setCodeSolution('');
+        $activeRendu->setLangue('');
+        $activeRendu->setDateRendu(new \DateTime());
+        $activeRendu->setScore(0);
+        $activeRendu->setResultat($this->generateZeroScoreHtml($reason));
+        $activeRendu->setFeedback("Session expirée : $reason. Score: 0/100");
+        $activeRendu->setStatut('refuse');
+
+        $this->entityManager->persist($activeRendu);
+        $this->entityManager->flush();
+
+        // Nettoyer la session
+        $missionId = $mission->getId();
+        $session->remove("mission_{$missionId}_start_time");
+        $session->remove("mission_{$missionId}_executions");
+        $session->remove("mission_{$missionId}_token");
+        $session->remove("mission_{$missionId}_rendu_id");
 
         $this->addFlash('warning', "Session expirée : $reason. Score: 0/100");
         return $this->redirectToRoute('app_candidate_my_results');
@@ -344,6 +397,19 @@ class RenduMissionController extends AbstractController
             </div>
             <p style="font-size:.75rem;color:#888;margin-top:8px">⚡ Évalué par IA – Carrieri Platform</p>
         </div>';
+    }
+
+    #[Route('/live-sessions', name: 'app_candidate_live_sessions')]
+    public function liveSessions(): Response
+    {
+        $user = $this->requireUser();
+
+        // Récupérer les missions actives du candidat
+        $activeMissions = $this->renduMissionRepository->findActiveSessions($user->getId());
+
+        return $this->render('FrontOffice/main/live_sessions.html.twig', [
+            'missions' => $activeMissions,
+        ]);
     }
 
     private function requireUser(): User

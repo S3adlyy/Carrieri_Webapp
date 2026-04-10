@@ -147,6 +147,11 @@
       <path value="$PROJECT_DIR$/vendor/thecodingmachine/safe" />
       <path value="$PROJECT_DIR$/vendor/sabberworm/php-css-parser" />
       <path value="$PROJECT_DIR$/vendor/twilio/sdk" />
+      <path value="$PROJECT_DIR$/vendor/lcobucci/clock" />
+      <path value="$PROJECT_DIR$/vendor/lcobucci/jwt" />
+      <path value="$PROJECT_DIR$/vendor/stella-maris/clock" />
+      <path value="$PROJECT_DIR$/vendor/symfony/mercure-bundle" />
+      <path value="$PROJECT_DIR$/vendor/symfony/mercure" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.1">

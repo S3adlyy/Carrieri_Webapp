@@ -10,6 +10,7 @@ use Dompdf\Options;
 use App\Entity\Entretien;
 use App\Entity\User;
 use App\Form\EntretienType;
+use App\Repository\MissionRepository;
 use App\Repository\RenduMissionRepository;
 use App\Repository\EntretienRepository;
 use App\Service\JitsiLinkGenerator;
@@ -26,6 +27,7 @@ class EntretienController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
+        private MissionRepository $missionRepository,
         private RenduMissionRepository $renduMissionRepository,
         private EntretienRepository $entretienRepository,
         private JitsiLinkGenerator $jitsiLinkGenerator,
@@ -218,4 +220,79 @@ class EntretienController extends AbstractController
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
         ]);
     }
+
+    #[Route('/watch/{missionId}/{candidatId}', name: 'app_recruiter_watch_candidate')]
+    public function watchCandidate(int $missionId, int $candidatId): Response
+    {
+        $recruiter = $this->getUser();
+        if (!$recruiter instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $mission = $this->missionRepository->find($missionId);
+        if (!$mission || $mission->getUser() !== $recruiter) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à cette session');
+        }
+
+        $candidat = $this->entityManager->getRepository(User::class)->find($candidatId);
+        if (!$candidat) {
+            throw $this->createNotFoundException('Candidat non trouvé');
+        }
+
+        return $this->render('BackOffice/dashboard/entretiens/watch_candidate.html.twig', [
+            'mission' => $mission,
+            'candidat' => $candidat,
+            'missionId' => $missionId,
+            'candidatId' => $candidatId
+        ]);
+    }
+
+    #[Route('/sessions-actives', name: 'app_recruiter_active_sessions')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function activeSessions(RenduMissionRepository $renduMissionRepository): Response
+    {
+        $recruiter = $this->getUser();
+        if (!$recruiter instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        // Récupérer toutes les missions du recruteur
+        $missions = $this->missionRepository->findBy(['user' => $recruiter]);
+        $missionIds = array_map(fn($m) => $m->getId(), $missions);
+
+        // Récupérer les sessions actives pour les missions du recruteur
+        $activeSessions = $renduMissionRepository->findActiveSessionsByMissionIds($missionIds);
+
+        return $this->render('BackOffice/dashboard/entretiens/active_sessions.html.twig', [
+            'sessions' => $activeSessions,
+        ]);
+    }
+
+    #[Route('/active-sessions-count', name: 'app_recruiter_active_sessions_count')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function activeSessionsCount(): JsonResponse
+    {
+        $recruiter = $this->getUser();
+        if (!$recruiter instanceof User) {
+            return $this->json(['count' => 0]);
+        }
+
+        $missions = $this->missionRepository->findBy(['user' => $recruiter]);
+        $missionIds = array_map(fn($m) => $m->getId(), $missions);
+
+        $thirtyMinutesAgo = new \DateTime('-30 minutes');
+
+        $activeSessions = $this->renduMissionRepository->createQueryBuilder('r')
+            ->where('r.missionId IN (:missionIds)')
+            ->andWhere('r.statut = :statut')
+            ->andWhere('r.dateRendu >= :thirtyMinutesAgo')
+            ->setParameter('missionIds', $missionIds)
+            ->setParameter('statut', 'en_attente')
+            ->setParameter('thirtyMinutesAgo', $thirtyMinutesAgo)
+            ->getQuery()
+            ->getResult();
+
+        return $this->json(['count' => count($activeSessions)]);
+    }
+
 }

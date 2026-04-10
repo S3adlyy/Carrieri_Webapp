@@ -49,6 +49,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ path('app_recruiter_active_sessions') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_recruiter_active_sessions' %}active{% endif %}">
+                        <i class="nav-icon fas fa-eye"></i>
+                        <p>
+                            Sessions actives
+                            <span class="badge badge-danger navbar-badge" id="activeSessionsCount">0</span>
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ path('app_admin_calendar') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_calendar' %}active{% endif %}">
                         <i class="nav-icon fas fa-calendar-alt"></i>
                         <p>Calendrier</p>
