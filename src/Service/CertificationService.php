@@ -16,6 +16,8 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Twig\Environment;
 
 class CertificationService
 {
@@ -26,6 +28,8 @@ class CertificationService
         private EntityManagerInterface $entityManager,
         private MailerInterface $mailer,
         private LoggerInterface $logger,
+        private Environment $twig,
+        private UrlGeneratorInterface $urlGenerator,
         #[Autowire('%kernel.project_dir%/public/certificates')]
         private string $certificatesDir,
         #[Autowire('%env(SENDER_EMAIL)%')]
@@ -102,63 +106,23 @@ class CertificationService
         $courseTitle = (string) ($cours->getTitre() ?? 'votre cours');
 
         try {
-            $year = (new \DateTimeImmutable())->format('Y');
-            $safeName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
-            $safeCourse = htmlspecialchars($courseTitle, ENT_QUOTES, 'UTF-8');
+            $certificatesUrl = $this->urlGenerator->generate(
+                'app_candidate_certificates',
+                [],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
 
-            $html = <<<HTML
-<div style="margin:0;padding:24px 12px;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:14px;overflow:hidden;border:1px solid #e5e7eb;">
-    <tr>
-      <td style="padding:0;background:linear-gradient(120deg,#4f46e5,#7c3aed);">
-        <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
-          <tr>
-            <td style="padding:28px 28px 20px 28px;color:#ffffff;">
-              <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.9;">Carrieri</div>
-              <h1 style="margin:8px 0 0 0;font-size:24px;line-height:1.2;font-weight:700;">Felicitations, cours termine !</h1>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-
-    <tr>
-      <td style="padding:26px 28px 10px 28px;color:#111827;">
-        <p style="margin:0 0 14px 0;font-size:16px;line-height:1.6;">Bonjour <strong>{$safeName}</strong>,</p>
-        <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#374151;">
-          Bravo ! Vous avez termine avec succes le cours
-          <strong style="color:#4f46e5;">{$safeCourse}</strong>.
-        </p>
-        <p style="margin:0 0 18px 0;font-size:15px;line-height:1.7;color:#374151;">
-          Votre certificat est maintenant disponible dans votre espace candidat.
-        </p>
-      </td>
-    </tr>
-
-    <tr>
-      <td style="padding:0 28px 24px 28px;">
-        <a href="http://localhost:8000/candidat/certificats"
-           style="display:inline-block;background:#4f46e5;color:#ffffff;text-decoration:none;font-weight:600;padding:12px 18px;border-radius:8px;font-size:14px;">
-          Voir mes certificats
-        </a>
-      </td>
-    </tr>
-
-    <tr>
-      <td style="padding:16px 28px 22px 28px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;line-height:1.7;">
-        <div>Merci pour votre confiance.</div>
-        <div>L'equipe Carrieri</div>
-        <div style="margin-top:6px;">{$year} Carrieri. Tous droits reserves.</div>
-      </td>
-    </tr>
-  </table>
-</div>
-HTML;
+            $html = $this->twig->render('emails/certificate_completed.html.twig', [
+                'display_name' => $displayName,
+                'course_title' => $courseTitle,
+                'certificates_url' => $certificatesUrl,
+                'year' => (new \DateTimeImmutable())->format('Y'),
+            ]);
 
             $email = (new Email())
                 ->from($this->senderEmail)
                 ->to($recipient)
-                ->subject('Felicitations ! Cours termine avec succes')
+                ->subject('Felicitations ! Votre certificat est disponible')
                 ->html($html);
 
             $this->mailer->send($email);

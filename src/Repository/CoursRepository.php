@@ -20,7 +20,7 @@ class CoursRepository extends ServiceEntityRepository
     /**
      * @return Cours[]
      */
-    public function searchForCandidate(?string $query, ?string $niveau, string $order = 'recent', int $page, int $limit = 6): array
+    public function searchForCandidate(?string $query, ?string $niveau, int $page, int $limit = 6, string $order = 'recent'): array
     {
         // Récupération avec tri initial
         switch ($order) {

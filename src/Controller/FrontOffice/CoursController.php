@@ -51,7 +51,7 @@ class CoursController extends AbstractController
         $total = $this->coursRepository->countForCandidateFilters($query, $niveau);
         $totalPages = max(1, (int) ceil($total / self::COURSES_PER_PAGE));
         $page = min($page, $totalPages);
-        $courses = $this->coursRepository->searchForCandidate($query, $niveau, $order, $page, self::COURSES_PER_PAGE);
+        $courses = $this->coursRepository->searchForCandidate($query, $niveau, $page, self::COURSES_PER_PAGE, $order);
 
         $courseStates = [];
         foreach ($courses as $course) {

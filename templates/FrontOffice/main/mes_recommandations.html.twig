@@ -106,6 +106,16 @@
                                             <small class="text-muted">Score: {{ row.score|default(0) }}</small>
                                         </div>
                                         <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours') }}</h5>
+                                        {% if row.reasons is defined and row.reasons is not empty %}
+                                            <div class="mb-2">
+                                                <small class="d-block text-muted mb-1">Pourquoi ce cours ?</small>
+                                                <ul class="small text-muted mb-0 pl-3">
+                                                    {% for reason in row.reasons|slice(0, 2) %}
+                                                        <li>{{ reason }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
                                         <div class="fo-meta-row mb-3">
                                             <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} heures</small></div>
                                             <div class="fo-meta-item"><span class="badge fo-category-badge">{{ category }}</span></div>

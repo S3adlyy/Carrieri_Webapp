@@ -28,7 +28,7 @@ final class CandidateRecommendationService
      * @return array{
      *   inferred_level: string,
      *   followed_courses: list<Cours>,
-     *   recommendations: list<array{course:Cours,score:int}>,
+     *   recommendations: list<array{course:Cours,score:int,reasons:list<string>}>,
      *   stats: array{followed:int,completed:int,total:int,explored_percent:int,available:int},
      *   levels: string[],
      *   selected_level: string
@@ -69,11 +69,11 @@ final class CandidateRecommendationService
         $recommendationRows = [];
         foreach ($courses as $course) {
             $courseId = $course->getId();
-            if ($courseId === null || isset($followedLookup[$courseId])) {
+            if ($courseId === null || isset($followedLookup[$courseId]) || isset($completedLookup[$courseId])) {
                 continue;
             }
 
-            $score = $this->computeRecommendationScore($course, $skillProfile, $inferredLevel);
+            ['score' => $score, 'reasons' => $reasons] = $this->computeRecommendationScore($course, $skillProfile, $inferredLevel);
             if ($score <= 0 && $skillProfile !== []) {
                 continue;
             }
@@ -81,6 +81,7 @@ final class CandidateRecommendationService
             $recommendationRows[] = [
                 'course' => $course,
                 'score' => $score,
+                'reasons' => $reasons,
             ];
         }
 
@@ -254,10 +255,14 @@ final class CandidateRecommendationService
 
     /**
      * @param array<string, true> $skillProfile
+     * @return array{score:int,reasons:list<string>}
      */
-    private function computeRecommendationScore(Cours $course, array $skillProfile, string $inferredLevel): int
+    private function computeRecommendationScore(Cours $course, array $skillProfile, string $inferredLevel): array
     {
         $score = 0;
+        $reasons = [];
+        $exactMatches = 0;
+        $partialMatches = 0;
         $skillsList = (string) ($course->getCompetencesVisees() ?? '');
 
         if ($skillsList !== '' && $skillProfile !== []) {
@@ -270,21 +275,74 @@ final class CandidateRecommendationService
                 foreach (array_keys($skillProfile) as $candidateSkill) {
                     if ($courseSkill === $candidateSkill) {
                         $score += 10;
+                        $exactMatches++;
                         continue;
                     }
 
                     if (str_contains($courseSkill, $candidateSkill) || str_contains($candidateSkill, $courseSkill)) {
                         $score += 5;
+                        $partialMatches++;
                     }
                 }
             }
         }
 
-        if ($this->normalizeLevel((string) $course->getNiveau()) === $this->normalizeLevel($inferredLevel)) {
+        $courseLevel = $this->normalizeLevel((string) $course->getNiveau());
+        $candidateLevel = $this->normalizeLevel($inferredLevel);
+
+        if ($courseLevel === $candidateLevel) {
             $score += 3;
+            $reasons[] = 'Niveau adapte a votre profil actuel';
+        } elseif ($this->isNextLevel($candidateLevel, $courseLevel)) {
+            $score += 2;
+            $reasons[] = 'Bon prochain palier pour progresser';
         }
 
-        return $score;
+        if ($exactMatches > 0) {
+            $reasons[] = sprintf('Correspond a %d competence(s) deja validee(s)', $exactMatches);
+        }
+
+        if ($partialMatches > 0 && $exactMatches === 0) {
+            $reasons[] = 'Renforce des competences proches de votre parcours';
+        }
+
+        $duration = (int) ($course->getDuree() ?? 0);
+        if ($duration > 0 && $duration <= 8) {
+            $score += 1;
+            $reasons[] = 'Format court pour monter rapidement en competence';
+        }
+
+        if ($skillsList === '' && $score > 0) {
+            $reasons[] = 'Cours complementaire recommande dans votre parcours';
+        }
+
+        if ($score <= 0) {
+            return ['score' => 0, 'reasons' => []];
+        }
+
+        if ($reasons === []) {
+            $reasons[] = 'Recommande selon votre progression recente';
+        }
+
+        return [
+            'score' => $score,
+            'reasons' => array_values(array_unique($reasons)),
+        ];
+    }
+
+    private function isNextLevel(string $currentLevel, string $targetLevel): bool
+    {
+        $weights = [
+            'debutant' => 1,
+            'intermediaire' => 2,
+            'avance' => 3,
+            'expert' => 4,
+        ];
+
+        $currentWeight = $weights[$currentLevel] ?? 1;
+        $targetWeight = $weights[$targetLevel] ?? 1;
+
+        return $targetWeight === ($currentWeight + 1);
     }
 
     private function normalizeLevel(string $value): string
