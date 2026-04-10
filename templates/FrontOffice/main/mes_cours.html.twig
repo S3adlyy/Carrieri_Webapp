@@ -29,7 +29,10 @@
                     <h3 class="mb-1">Mes cours</h3>
                     <p class="mb-0">{{ my_courses_stats.total|default(0) }} cours suivis</p>
                 </div>
-                <a href="{{ path('app_candidate_cours') }}" class="btn fo-search-button mt-2 mt-md-0">Catalogue</a>
+                <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
+                    <a href="{{ path('app_candidate_cours') }}" class="btn fo-search-button">Catalogue</a>
+                    <a href="{{ path('app_candidate_mes_recommandations') }}" class="btn fo-search-button">Recommandations</a>
+                </div>
             </div>
         </div>
 

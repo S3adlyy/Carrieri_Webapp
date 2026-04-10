@@ -100,7 +100,6 @@
                                     <span class="badge fo-category-badge">{{ category }}</span>
                                 </div>
                                 <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours') }}</h5>
-                                <p class="card-text text-muted mb-3 fo-course-description">{{ c.description|default('Aucune description')|e|nl2br }}</p>
                                 <div class="fo-meta-row mb-3">
                                     <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} heures</small></div>
                                     {% if c.estPayant and c.prix and c.prix > 0 %}

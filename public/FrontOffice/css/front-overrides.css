@@ -656,16 +656,20 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 
 .fo-fxml-catalog .fo-course-cover {
 	height: 160px;
-	background: #5e548e;
+	background: #fff;
 	overflow: hidden;
 	border-top-left-radius: 20px;
 	border-top-right-radius: 20px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 .fo-fxml-catalog .fo-course-cover img {
 	width: 100%;
 	height: 100%;
-	object-fit: cover;
+	object-fit: fill;
+	object-position: center;
 }
 
 .fo-fxml-catalog .fo-card-badges .badge {
@@ -897,6 +901,34 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	-moz-user-select: none;
 	-ms-user-select: none;
 	user-select: none;
+}
+
+/* Recommendations page */
+.fo-reco-page .fo-reco-panel {
+	border-radius: 20px;
+}
+
+.fo-reco-page .fo-reco-followed-list {
+	list-style: none;
+	padding-left: 0;
+	margin: 0;
+	max-height: 260px;
+	overflow: auto;
+}
+
+.fo-reco-page .fo-reco-followed-list li {
+	font-size: 0.9rem;
+	padding: 0.38rem 0;
+	border-bottom: 1px solid #f3f4f6;
+	line-height: 1.3;
+}
+
+.fo-reco-page .fo-reco-followed-list li:last-child {
+	border-bottom: 0;
+}
+
+.fo-reco-page .fo-reco-card .fo-course-description {
+	min-height: 86px;
 }
 
 @media (max-width: 991px) {

@@ -29,4 +29,23 @@ class ResultatTestCoursRepository extends ServiceEntityRepository
             ->getQuery()
             ->getOneOrNullResult();
     }
+
+    /**
+     * @return int[]
+     */
+    public function findPassedCoursIdsForCandidate(int $candidatId): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('DISTINCT r.coursId AS cours_id')
+            ->andWhere('r.candidatId = :candidatId')
+            ->andWhere('r.reussite = 1')
+            ->setParameter('candidatId', $candidatId)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_values(array_filter(array_unique(array_map(
+            static fn (array $row): int => (int) ($row['cours_id'] ?? 0),
+            $rows
+        )), static fn (int $id): bool => $id > 0));
+    }
 }

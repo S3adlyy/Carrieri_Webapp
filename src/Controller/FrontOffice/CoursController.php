@@ -11,6 +11,7 @@ use App\Repository\LeconRepository;
 use App\Repository\ModuleRepository;
 use App\Repository\ResultatQuizModuleRepository;
 use App\Repository\ResultatTestCoursRepository;
+use App\Service\CandidateRecommendationService;
 use App\Service\CertificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -31,6 +32,7 @@ class CoursController extends AbstractController
         private ResultatQuizModuleRepository $resultatQuizModuleRepository,
         private ResultatTestCoursRepository $resultatTestCoursRepository,
         private CertificationService $certificationService,
+        private CandidateRecommendationService $candidateRecommendationService,
     ) {
     }
 
@@ -98,6 +100,26 @@ class CoursController extends AbstractController
                 'q' => $myQuery,
                 'state' => $myState,
             ],
+        ]);
+    }
+
+    #[Route('/mes-recommandations', name: 'app_candidate_mes_recommandations')]
+    public function recommendations(Request $request): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof \App\Entity\User || $user->getId() === null) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $selectedLevel = trim((string) $request->query->get('niveau', 'Tous'));
+        $data = $this->candidateRecommendationService->buildForCandidate(
+            $user,
+            $this->getViewedLessonIds($request),
+            $selectedLevel
+        );
+
+        return $this->render('FrontOffice/main/mes_recommandations.html.twig', [
+            'recommendation_data' => $data,
         ]);
     }
 
