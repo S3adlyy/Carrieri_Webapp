@@ -44,6 +44,7 @@ class CertificateController extends AbstractController
 
             $fullPath = $this->certificationService->ensureCertificateFile($cert);
             $course = $cert->getCours();
+            $verificationUrl = $this->certificationService->getPublicVerificationUrl($cert);
 
             $certificateData[] = [
                 'id' => $certId,
@@ -52,6 +53,8 @@ class CertificateController extends AbstractController
                 'date_obtained' => $cert->getDateObtention(),
                 'certificate_number' => 'CERT-' . $certId,
                 'has_file' => $fullPath !== null && file_exists($fullPath),
+                'verification_url' => $verificationUrl,
+                'verification_qr_url' => $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null,
             ];
         }
 
@@ -142,11 +145,19 @@ class CertificateController extends AbstractController
         }
 
         $course = $certificate->getCours();
+        $verificationUrl = $this->certificationService->getPublicVerificationUrl($certificate);
         
         return $this->render('FrontOffice/main/certificate_detail.html.twig', [
             'certificate' => $certificate,
             'course' => $course,
+            'verification_url' => $verificationUrl,
+            'verification_qr_url' => $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null,
         ]);
+    }
+
+    private function buildQrImageUrl(string $value): string
+    {
+        return 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . rawurlencode($value);
     }
 }
 

@@ -38,6 +38,7 @@ final class CertificationServiceTest extends TestCase
             $logger,
             $twig,
             $urlGenerator,
+            'test-secret',
             sys_get_temp_dir(),
             'noreply@example.com'
         );
@@ -73,6 +74,7 @@ final class CertificationServiceTest extends TestCase
             $logger,
             $twig,
             $urlGenerator,
+            'test-secret',
             sys_get_temp_dir(),
             'noreply@example.com'
         );

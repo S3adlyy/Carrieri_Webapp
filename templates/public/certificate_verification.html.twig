@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification certificat</title>
+</head>
+<body>
+<div style="min-height:100vh;background:#f3f4f6;padding:32px 12px;font-family:Arial,Helvetica,sans-serif;">
+    <div style="max-width:760px;margin:0 auto;background:#fff;border-radius:14px;border:1px solid #e5e7eb;overflow:hidden;">
+        <div style="padding:20px 24px;background:linear-gradient(120deg,#4f46e5,#7c3aed);color:#fff;">
+            <h1 style="margin:0;font-size:24px;">Verification de certificat</h1>
+            <p style="margin:8px 0 0 0;opacity:.95;">Carrieri - Controle d'authenticite</p>
+        </div>
+
+        <div style="padding:24px;">
+            {% if is_valid %}
+                <div style="padding:12px 14px;border-radius:10px;background:#ecfdf5;color:#065f46;border:1px solid #a7f3d0;margin-bottom:18px;">
+                    ✅ Certificat authentique
+                </div>
+            {% else %}
+                <div style="padding:12px 14px;border-radius:10px;background:#fef2f2;color:#991b1b;border:1px solid #fecaca;margin-bottom:18px;">
+                    ❌ Verification echouee - {{ reason|default('lien invalide') }}
+                </div>
+            {% endif %}
+
+            {% if certificate and course %}
+                <table style="width:100%;border-collapse:collapse;">
+                    <tr>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;font-weight:bold;width:220px;">Numero</td>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;">CERT-{{ certificate.id }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;font-weight:bold;">Cours</td>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;">{{ course.titre|default('Cours') }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;font-weight:bold;">Date d'obtention</td>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;">{{ certificate.dateObtention ? certificate.dateObtention.format('d/m/Y') : 'N/A' }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;font-weight:bold;">Candidat</td>
+                        <td style="padding:10px;border-bottom:1px solid #e5e7eb;">{{ certificate.user ? (certificate.user.firstName|default('') ~ ' ' ~ certificate.user.lastName|default(''))|trim : 'Non disponible' }}</td>
+                    </tr>
+                </table>
+            {% endif %}
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
+

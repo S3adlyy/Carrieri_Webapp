@@ -85,6 +85,21 @@
                                 </a>
                             </div>
                         </div>
+
+                        {% if verification_url %}
+                            <div class="mt-3 text-center">
+                                <a href="{{ verification_url }}" class="btn btn-outline-success" target="_blank" rel="noopener noreferrer">
+                                    <i class="fas fa-shield-check"></i> Verification publique
+                                </a>
+                            </div>
+                        {% endif %}
+
+                        {% if verification_qr_url %}
+                            <div class="mt-3 text-center">
+                                <img src="{{ verification_qr_url }}" alt="QR verification" style="width:140px;height:140px;border:1px solid #e5e7eb;border-radius:8px;">
+                                <div class="text-muted mt-1" style="font-size:12px;">QR verification publique</div>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
