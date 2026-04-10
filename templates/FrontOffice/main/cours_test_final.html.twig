@@ -103,37 +103,29 @@
             const form = document.getElementById('final-test-form');
 
             const blockCopy = function (event) {
-                if (page && page.contains(event.target)) {
+                if (page && event.target.closest('#final-test-page')) {
                     event.preventDefault();
                 }
             };
 
             document.addEventListener('keydown', function (event) {
-                if (!page || !page.contains(event.target)) {
+                if (!page || !event.target.closest('#final-test-page')) {
                     return;
                 }
 
                 const key = (event.key || '').toLowerCase();
-                if ((event.ctrlKey || event.metaKey) && ['a', 'c', 'x', 'v', 'u', 's', 'p'].includes(key)) {
+                if ((event.ctrlKey || event.metaKey) && ['a', 'c', 'x', 'u', 's', 'p'].includes(key)) {
                     event.preventDefault();
                 }
             });
 
             document.addEventListener('copy', blockCopy);
             document.addEventListener('cut', blockCopy);
-            document.addEventListener('paste', blockCopy);
             document.addEventListener('contextmenu', blockCopy);
             document.addEventListener('selectstart', blockCopy);
-            document.addEventListener('beforeinput', function (event) {
-                if (page && page.contains(event.target) && (event.inputType === 'insertFromPaste' || event.inputType === 'insertFromDrop')) {
-                    event.preventDefault();
-                }
-            });
-            document.addEventListener('drop', blockCopy);
 
             form?.addEventListener('copy', blockCopy);
             form?.addEventListener('cut', blockCopy);
-            form?.addEventListener('paste', blockCopy);
             form?.addEventListener('contextmenu', blockCopy);
             form?.addEventListener('selectstart', blockCopy);
 

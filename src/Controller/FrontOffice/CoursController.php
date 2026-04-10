@@ -19,6 +19,9 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 
+use Symfony\Component\Mime\Email;
+use Symfony\Component\Mailer\MailerInterface;
+
 #[Route('/candidat')]
 #[IsGranted('ROLE_CANDIDAT')]
 class CoursController extends AbstractController
@@ -415,5 +418,19 @@ class CoursController extends AbstractController
             'total' => $total,
             'passed' => $passed,
         ];
+    }
+
+    #[Route('/test-mail', name: 'test_mail')]
+    public function testMail(MailerInterface $mailer): Response
+    {
+        $email = (new Email())
+            ->from($_ENV['SENDER_EMAIL'])
+            ->to('bilaleter05@gmail.com')  // Remplace par ton vrai email
+            ->subject('Test depuis MA config')
+            ->html('<p>Ça fonctionne avec mon propre compte !</p>');
+
+        $mailer->send($email);
+
+        return new Response('Email envoyé avec ton compte ! Vérifie ta boîte de réception.');
     }
 }
