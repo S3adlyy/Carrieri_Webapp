@@ -13,6 +13,7 @@ use App\Repository\ResultatQuizModuleRepository;
 use App\Repository\ResultatTestCoursRepository;
 use App\Service\CandidateRecommendationService;
 use App\Service\CertificationService;
+use App\Service\PaiementService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -36,6 +37,7 @@ class CoursController extends AbstractController
         private ResultatTestCoursRepository $resultatTestCoursRepository,
         private CertificationService $certificationService,
         private CandidateRecommendationService $candidateRecommendationService,
+        private PaiementService $paiementService,
     ) {
     }
 
@@ -54,6 +56,13 @@ class CoursController extends AbstractController
         $courses = $this->coursRepository->searchForCandidate($query, $niveau, $page, self::COURSES_PER_PAGE, $order);
 
         $courseStates = [];
+        $purchasedCourseIds = [];
+
+        $user = $this->getUser();
+        if ($user instanceof \App\Entity\User && $user->getId() !== null) {
+            $purchasedCourseIds = $this->paiementService->getCoursAchetes((int) $user->getId());
+        }
+
         foreach ($courses as $course) {
             $courseId = $course->getId();
             if ($courseId === null) {
@@ -81,6 +90,7 @@ class CoursController extends AbstractController
                 'total_pages' => $totalPages,
             ],
             'course_states' => $courseStates,
+            'purchased_course_ids' => $purchasedCourseIds,
         ]);
     }
 

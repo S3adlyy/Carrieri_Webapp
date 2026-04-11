@@ -110,8 +110,11 @@
                                     {% endif %}
                                 </div>
                                 <div class="mt-auto">
-                                    {% if c.estPayant and c.prix and c.prix > 0 %}
-                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-warning btn-sm btn-block fo-action-buy">Acheter {{ c.prix|number_format(2, '.', ' ') }} TND</a>
+                                    {% set est_achete = c.id in (purchased_course_ids|default([])) %}
+                                    {% if c.estPayant and c.prix and c.prix > 0 and not est_achete %}
+                                        <a href="{{ path('paiement_cours', {id: c.id}) }}" class="btn btn-warning btn-sm btn-block fo-action-buy">Acheter {{ c.prix|number_format(2, '.', ' ') }} TND</a>
+                                    {% elseif c.estPayant and c.prix and c.prix > 0 and est_achete %}
+                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-success btn-sm btn-block fo-btn-commencer">Deja achete - Acceder au cours</a>
                                     {% elseif state.continue_lesson is defined and state.continue_lesson %}
                                         <a href="{{ path('app_candidate_lecon_show', {cours: c.id, id: state.continue_lesson.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">Accéder au cours</a>
                                     {% else %}

@@ -1,0 +1,255 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Erreur de paiement{% endblock %}
+
+{% block candidate_page_heading %}Paiement échoué{% endblock %}
+
+{% block candidate_breadcrumb %} / Paiement / Erreur{% endblock %}
+
+{% block candidate_content_col_class %}col-12{% endblock %}
+
+{% block candidate_content %}
+<div class="paiement-erreur-container">
+    <div class="erreur-card">
+        <div class="erreur-icon">❌</div>
+
+        <h1>Paiement échoué</h1>
+
+        <div class="erreur-details">
+            <p class="erreur-message">
+                Désolé, nous n'avons pas pu traiter votre paiement.
+            </p>
+            <p class="erreur-code">
+                Veuillez vérifier vos informations de paiement et réessayer.
+            </p>
+        </div>
+
+        <div class="raisons">
+            <h3>Raisons possibles:</h3>
+            <ul>
+                <li>Carte bancaire refusée par votre banque</li>
+                <li>Informations de paiement incorrectes</li>
+                <li>Solde insuffisant</li>
+                <li>Limite de transaction dépassée</li>
+                <li>Votre adresse n'a pas pu être vérifiée</li>
+            </ul>
+        </div>
+
+        <div class="actions-erreur">
+            <a href="javascript:history.back()" class="btn-reessayer">
+                🔄 Réessayer le paiement
+            </a>
+
+            <a href="{{ path('app_candidate_cours') }}" class="btn-retour">
+                🏠 Retour au catalogue
+            </a>
+        </div>
+
+        <div class="support-info">
+            <h3>Besoin d'aide?</h3>
+            <p>Si vous continuez à rencontrer des problèmes, veuillez contacter notre support.</p>
+            <p><span class="contact-link">✉️ Support: carrieritunisie@gmail.com</span></p>
+        </div>
+    </div>
+
+    <!-- Retour rapide -->
+    <div class="retour-rapide">
+        <a href="{{ path('app_candidate_cours') }}" class="btn-simple">
+            ← Retour à l'accueil
+        </a>
+    </div>
+</div>
+
+<style>
+.paiement-erreur-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.erreur-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    border-top: 4px solid #ff6b6b;
+}
+
+.erreur-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: shake 0.6s ease-in-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.erreur-card h1 {
+    color: #ff6b6b;
+    margin: 20px 0;
+    font-size: 32px;
+}
+
+.erreur-details {
+    background: #fef2f2;
+    border-left: 4px solid #ff6b6b;
+    padding: 20px;
+    margin: 30px 0;
+    border-radius: 10px;
+}
+
+.erreur-message {
+    color: #666;
+    margin: 0 0 10px 0;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.erreur-code {
+    color: #ff6b6b;
+    margin: 0;
+    font-size: 14px;
+}
+
+.raisons {
+    background: #f8f9fa;
+    padding: 20px;
+    margin: 30px 0;
+    border-radius: 10px;
+    text-align: left;
+}
+
+.raisons h3 {
+    color: #231942;
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.raisons ul {
+    margin: 15px 0;
+    padding-left: 20px;
+    color: #666;
+}
+
+.raisons li {
+    margin: 8px 0;
+    font-size: 14px;
+}
+
+.actions-erreur {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 30px 0;
+}
+
+.btn-reessayer {
+    display: block;
+    background: linear-gradient(135deg, #ff6b6b 0%, #f03e3e 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-reessayer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(255, 107, 107, 0.3);
+}
+
+.btn-retour {
+    display: block;
+    background: #f0f0f0;
+    color: #333;
+    padding: 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-retour:hover {
+    background: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.support-info {
+    background: #e7f5ff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 30px;
+    border-left: 4px solid #339af0;
+}
+
+.support-info h3 {
+    color: #1864ab;
+    margin-top: 0;
+    font-size: 16px;
+}
+
+.support-info p {
+    color: #666;
+    margin: 10px 0;
+    font-size: 14px;
+}
+
+.contact-link {
+    color: #1864ab;
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.contact-link:hover {
+    color: #0d47a1;
+    text-decoration: underline;
+}
+
+.retour-rapide {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.btn-simple {
+    display: inline-block;
+    color: #5E548E;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-simple:hover {
+    color: #231942;
+    transform: translateX(-5px);
+}
+
+@media (max-width: 600px) {
+    .erreur-card {
+        padding: 20px;
+    }
+
+    .erreur-icon {
+        font-size: 60px;
+    }
+
+    .erreur-card h1 {
+        font-size: 24px;
+    }
+
+    .actions-erreur {
+        gap: 10px;
+    }
+}
+</style>
+{% endblock %}
+
+
+
