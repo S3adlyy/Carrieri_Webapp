@@ -30,6 +30,9 @@
                         <th>Date obtention</th>
                         <th>Cours</th>
                         <th>Candidat</th>
+                        <th>Analyse anti-fraude</th>
+                        <th>Statut certificat</th>
+                        <th>Actions recruteur</th>
                         {% if is_admin_view|default(false) %}
                             <th>Fichier</th>
                         {% endif %}
@@ -37,6 +40,8 @@
                     </thead>
                     <tbody>
                     {% for c in certifications %}
+                        {% set state = certificate_states[c.id]|default({'status':'valid','reason':'','reviewed_by':'','reviewed_at':'','anomaly':{'is_suspect':false,'risk_level':'low','reason':'Aucune incoherence majeure detectee.','details':{}}}) %}
+                        {% set anomaly = state.anomaly|default({'is_suspect':false,'risk_level':'low','reason':'Aucune incoherence majeure detectee.','details':{}}) %}
                         <tr>
                             <td>{{ c.id }}</td>
                             <td>{% if c.dateObtention %}{{ c.dateObtention|date('d/m/Y') }}{% else %}—{% endif %}</td>
@@ -48,13 +53,41 @@
                                 {% set u = c.user %}
                                 {% if u %}{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: u.email }}{% else %}—{% endif %}
                             </td>
+                            <td>
+                                {% if anomaly.is_suspect %}
+                                    <span class="badge badge-danger">Risque eleve</span>
+                                {% else %}
+                                    <span class="badge badge-success">Normal</span>
+                                {% endif %}
+                                <div class="small text-muted mt-1">{{ anomaly.reason|default('') }}</div>
+                            </td>
+                            <td>
+                                {% if state.status == 'invalid' %}
+                                    <span class="badge badge-danger">Non valide</span>
+                                {% else %}
+                                    <span class="badge badge-success">Valide</span>
+                                {% endif %}
+                                {% if state.reviewed_at %}
+                                    <div class="small text-muted mt-1">{{ state.reviewed_at }}{% if state.reviewed_by %} · {{ state.reviewed_by }}{% endif %}</div>
+                                {% endif %}
+                                {% if state.reason %}
+                                    <div class="small text-muted">{{ state.reason }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <form method="post" action="{{ path('app_admin_certification_invalidate', {id: c.id}) }}" class="mb-2">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('invalidate_cert_' ~ c.id) }}">
+                                    <input type="text" name="reason" class="form-control form-control-sm mb-1" placeholder="Motif (optionnel)">
+                                    <button type="submit" class="btn btn-xs btn-danger btn-block">Marquer fraude</button>
+                                </form>
+                            </td>
                             {% if is_admin_view|default(false) %}
                                 <td>{{ c.fichierPdf|default(c.cheminFichier)|default('—') }}</td>
                             {% endif %}
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="{{ is_admin_view|default(false) ? 5 : 4 }}" class="text-center text-muted">Aucune certification.</td>
+                            <td colspan="{{ is_admin_view|default(false) ? 8 : 7 }}" class="text-center text-muted">Aucune certification.</td>
                         </tr>
                     {% endfor %}
                     </tbody>

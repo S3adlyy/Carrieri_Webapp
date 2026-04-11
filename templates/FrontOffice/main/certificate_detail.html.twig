@@ -71,28 +71,39 @@
 
                     <!-- Actions -->
                     <div class="card-footer bg-white p-4">
+                        {% if certificate_is_invalid|default(false) %}
+                            <div class="alert alert-danger text-center mb-3" role="alert">
+                                <strong>Certificat non valide</strong><br>
+                                {{ certificate_moderation_reason|default('Fraude signalee par recruteur.') }}
+                            </div>
+                        {% endif %}
                         <div class="row">
                             <div class="col-md-6">
-                                <a href="{{ path('app_candidate_certificate_view', { id: certificate.id }) }}"
-                                   class="btn btn-outline-primary w-100" target="_blank">
-                                    <i class="fas fa-eye"></i> Voir le PDF
-                                </a>
+                                {% if certificate_is_invalid|default(false) %}
+                                    <button class="btn btn-outline-secondary w-100" disabled>
+                                        <i class="fas fa-eye-slash"></i> Visualisation bloquee
+                                    </button>
+                                {% else %}
+                                    <a href="{{ path('app_candidate_certificate_view', { id: certificate.id }) }}"
+                                       class="btn btn-outline-primary w-100" target="_blank">
+                                        <i class="fas fa-eye"></i> Voir le PDF
+                                    </a>
+                                {% endif %}
                             </div>
                             <div class="col-md-6">
-                                <a href="{{ path('app_candidate_certificate_download', { id: certificate.id }) }}"
-                                   class="btn btn-primary w-100">
-                                    <i class="fas fa-download"></i> Télécharger
-                                </a>
+                                {% if certificate_is_invalid|default(false) %}
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        <i class="fas fa-ban"></i> Telechargement bloque
+                                    </button>
+                                {% else %}
+                                    <a href="{{ path('app_candidate_certificate_download', { id: certificate.id }) }}"
+                                       class="btn btn-primary w-100">
+                                        <i class="fas fa-download"></i> Télécharger
+                                    </a>
+                                {% endif %}
                             </div>
                         </div>
 
-                        {% if verification_url %}
-                            <div class="mt-3 text-center">
-                                <a href="{{ verification_url }}" class="btn btn-outline-success" target="_blank" rel="noopener noreferrer">
-                                    <i class="fas fa-shield-check"></i> Verification publique
-                                </a>
-                            </div>
-                        {% endif %}
 
                         {% if verification_qr_url %}
                             <div class="mt-3 text-center">

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Repository\CertificationRepository;
+use App\Service\CertificateModerationService;
 use App\Service\CertificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -19,6 +20,7 @@ class CertificateController extends AbstractController
 {
     public function __construct(
         private CertificationService $certificationService,
+        private CertificateModerationService $certificateModerationService,
         #[Autowire('%kernel.project_dir%/public/certificates')]
         private string $certificatesDir,
     ) {
@@ -45,6 +47,7 @@ class CertificateController extends AbstractController
             $fullPath = $this->certificationService->ensureCertificateFile($cert);
             $course = $cert->getCours();
             $verificationUrl = $this->certificationService->getPublicVerificationUrl($cert);
+            $state = $this->certificateModerationService->getCertificateState($cert);
 
             $certificateData[] = [
                 'id' => $certId,
@@ -55,6 +58,8 @@ class CertificateController extends AbstractController
                 'has_file' => $fullPath !== null && file_exists($fullPath),
                 'verification_url' => $verificationUrl,
                 'verification_qr_url' => $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null,
+                'is_invalid' => $state['status'] === 'invalid',
+                'moderation_reason' => (string) ($state['reason'] ?? ''),
             ];
         }
 
@@ -80,6 +85,10 @@ class CertificateController extends AbstractController
         // Vérifier que l'utilisateur est le propriétaire
         if ($certificate->getUser() !== $user) {
             throw $this->createAccessDeniedException('Accès refusé');
+        }
+
+        if ($this->certificateModerationService->isInvalid($certificate)) {
+            throw $this->createAccessDeniedException('Certificat non valide. Telechargement desactive.');
         }
 
         $fullPath = $this->certificationService->ensureCertificateFile($certificate);
@@ -115,6 +124,10 @@ class CertificateController extends AbstractController
             throw $this->createAccessDeniedException('Accès refusé');
         }
 
+        if ($this->certificateModerationService->isInvalid($certificate)) {
+            throw $this->createAccessDeniedException('Certificat non valide. Visualisation desactivee.');
+        }
+
         $fullPath = $this->certificationService->ensureCertificateFile($certificate);
         if (!$fullPath) {
             throw $this->createNotFoundException('Fichier du certificat non disponible');
@@ -146,12 +159,15 @@ class CertificateController extends AbstractController
 
         $course = $certificate->getCours();
         $verificationUrl = $this->certificationService->getPublicVerificationUrl($certificate);
+        $state = $this->certificateModerationService->getCertificateState($certificate);
         
         return $this->render('FrontOffice/main/certificate_detail.html.twig', [
             'certificate' => $certificate,
             'course' => $course,
             'verification_url' => $verificationUrl,
             'verification_qr_url' => $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null,
+            'certificate_is_invalid' => $state['status'] === 'invalid',
+            'certificate_moderation_reason' => (string) ($state['reason'] ?? ''),
         ]);
     }
 

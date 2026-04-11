@@ -50,7 +50,11 @@
 
                             <!-- Badge d'obtention -->
                             <div class="text-center mb-3">
-                                <span class="badge bg-success">🏆 OBTENU AVEC SUCCÈS</span>
+                                {% if cert.is_invalid|default(false) %}
+                                    <span class="badge bg-danger">⚠ CERTIFICAT NON VALIDE</span>
+                                {% else %}
+                                    <span class="badge bg-success">🏆 OBTENU AVEC SUCCÈS</span>
+                                {% endif %}
                             </div>
 
                             <!-- Numéro et année -->
@@ -69,7 +73,14 @@
 
                             <!-- Boutons d'action -->
                             <div class="d-grid gap-2">
-                                {% if cert.has_file %}
+                                {% if cert.is_invalid|default(false) %}
+                                    <button class="btn btn-sm btn-danger" disabled>
+                                        Certificat non valide
+                                    </button>
+                                    <div class="small text-muted text-center">
+                                        {{ cert.moderation_reason|default('Fraude signalee par recruteur.') }}
+                                    </div>
+                                {% elseif cert.has_file %}
                                     <a href="{{ path('app_candidate_certificate_view', { id: cert.id }) }}"
                                        class="btn btn-sm btn-outline-primary" target="_blank">
                                         <i class="fas fa-eye"></i> Voir le PDF
@@ -93,7 +104,7 @@
                             {% if cert.verification_qr_url %}
                                 <div class="text-center mt-3">
                                     <img src="{{ cert.verification_qr_url }}" alt="QR verification" style="width:110px;height:110px;border:1px solid #e5e7eb;border-radius:8px;">
-                                    <div class="text-muted mt-1" style="font-size:11px;">QR verification</div>
+                                    <div class="text-muted mt-1" style="font-size:11px;">QR verification{% if cert.is_invalid|default(false) %} (affichera non valide){% endif %}</div>
                                 </div>
                             {% endif %}
                         </div>
