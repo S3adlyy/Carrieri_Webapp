@@ -89,6 +89,7 @@ final class CertificateModerationService
 
         // Réinitialiser la progression du candidat dans ce cours
         $this->resetCourseProgress($certificate);
+
     }
 
     public function isInvalid(Certification $certificate): bool
@@ -192,6 +193,10 @@ final class CertificateModerationService
             'reason' => $reason,
             'reviewed_by' => trim(((string) $reviewer->getFirstName()) . ' ' . ((string) $reviewer->getLastName())) ?: ((string) $reviewer->getEmail()),
             'reviewed_at' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+            'candidat_id' => $certificate->getCandidatId(),
+            'cours_id' => $certificate->getCoursId(),
+            'cours_titre' => (string) ($certificate->getCours()?->getTitre() ?? ''),
+            'notified_candidates' => is_array($all[(string) $id]['notified_candidates'] ?? null) ? $all[(string) $id]['notified_candidates'] : [],
         ];
 
         $this->writeStorage($all);
@@ -223,6 +228,58 @@ final class CertificateModerationService
     {
         $this->filesystem->mkdir(dirname($this->storagePath), 0755);
         file_put_contents($this->storagePath, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    }
+
+    /**
+     * @return list<array{certificate_id:int,course_title:string,reason:string,reviewed_at:string}>
+     */
+    public function consumePendingFraudPopupsForCandidate(int $candidateId): array
+    {
+        if ($candidateId <= 0) {
+            return [];
+        }
+
+        $all = $this->readStorage();
+        $alerts = [];
+        $changed = false;
+        $candidateKey = (string) $candidateId;
+
+        foreach ($all as $certificateId => $state) {
+            if (!is_array($state)) {
+                continue;
+            }
+
+            if ((string) ($state['status'] ?? 'valid') !== 'invalid') {
+                continue;
+            }
+
+            if ((int) ($state['candidat_id'] ?? 0) !== $candidateId) {
+                continue;
+            }
+
+            $notified = is_array($state['notified_candidates'] ?? null) ? $state['notified_candidates'] : [];
+            if (isset($notified[$candidateKey])) {
+                continue;
+            }
+
+            $alerts[] = [
+                'certificate_id' => (int) $certificateId,
+                'course_title' => (string) ($state['cours_titre'] ?? 'Cours'),
+                'reason' => (string) ($state['reason'] ?? 'Fraude signalee par recruteur.'),
+                'reviewed_at' => (string) ($state['reviewed_at'] ?? ''),
+            ];
+
+            $notified[$candidateKey] = (new \DateTimeImmutable())->format('Y-m-d H:i:s');
+            $state['notified_candidates'] = $notified;
+            $all[(string) $certificateId] = $state;
+            $changed = true;
+        }
+
+        if ($changed) {
+            $this->writeStorage($all);
+        }
+
+        return $alerts;
     }
 
     /**

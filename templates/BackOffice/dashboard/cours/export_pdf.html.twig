@@ -4,101 +4,220 @@
     <meta charset="UTF-8">
     <title>Export cours - {{ cours.titre|default('Cours') }}</title>
     <style>
+        @page {
+            size: A4;
+            margin: 18mm 14mm;
+        }
+
         body {
             font-family: DejaVu Sans, Arial, sans-serif;
-            font-size: 12px;
-            color: #222;
-            line-height: 1.45;
-        }
-        h1, h2, h3 {
-            margin: 0 0 8px 0;
-        }
-        .meta {
-            margin-bottom: 12px;
             font-size: 11px;
-            color: #666;
+            color: #1f2937;
+            line-height: 1.5;
         }
+
+        .cover {
+            border: 1px solid #dbeafe;
+            border-radius: 10px;
+            padding: 18px;
+            margin-bottom: 14px;
+            background: #f8fbff;
+        }
+
+        .cover-title {
+            font-size: 26px;
+            font-weight: 700;
+            color: #1e3a8a;
+            margin-bottom: 6px;
+        }
+
+        .cover-subtitle {
+            font-size: 13px;
+            color: #475569;
+            margin-bottom: 12px;
+        }
+
+        .meta-grid {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .meta-grid td {
+            border: 1px solid #dbeafe;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        .meta-label {
+            font-size: 10px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .meta-value {
+            font-size: 13px;
+            color: #0f172a;
+            font-weight: 700;
+            margin-top: 2px;
+        }
+
         .section {
             margin-top: 14px;
-        }
-        .card {
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            padding: 10px;
-            margin-top: 8px;
-        }
-        .badge {
-            display: inline-block;
-            padding: 2px 6px;
-            border: 1px solid #aaa;
+            border: 1px solid #e2e8f0;
             border-radius: 10px;
+            padding: 12px;
+            background: #ffffff;
+        }
+
+        .section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 6px;
+        }
+
+        .module-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fcfdff;
+        }
+
+        .module-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e40af;
+            margin-bottom: 4px;
+        }
+
+        .module-desc {
+            font-size: 10.5px;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .lesson-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
+        }
+
+        .lesson-table th {
+            background: #eef2ff;
+            color: #3730a3;
+            text-align: left;
             font-size: 10px;
-            margin-right: 6px;
+            padding: 6px;
+            border: 1px solid #dbeafe;
         }
-        ul {
-            margin: 8px 0 0 18px;
-            padding: 0;
+
+        .lesson-table td {
+            border: 1px solid #e5e7eb;
+            padding: 6px;
+            vertical-align: top;
+            font-size: 10px;
         }
-        li {
-            margin-bottom: 5px;
-        }
+
         .muted {
-            color: #777;
+            color: #6b7280;
+        }
+
+        .footer {
+            margin-top: 14px;
+            font-size: 9px;
+            color: #64748b;
+            text-align: right;
         }
     </style>
 </head>
 <body>
-<h1>{{ cours.titre|default('Cours') }}</h1>
-<div class="meta">
-    Exporté le {{ generated_at|date('d/m/Y H:i') }}
-</div>
+{% set total_lessons = 0 %}
+{% for module in modules %}
+    {% set total_lessons = total_lessons + (lessons_by_module[module.id]|default([])|length) %}
+{% endfor %}
 
-<div class="section card">
-    <h2>Informations du cours</h2>
-    <p><strong>Niveau :</strong> {{ cours.niveau|default('Non défini') }}</p>
-    <p><strong>Durée :</strong> {{ cours.duree|default('0') }} h</p>
-    <p><strong>Prix :</strong> {{ cours.prix is not null ? cours.prix ~ ' EUR' : 'Gratuit' }}</p>
-    <p><strong>Obligatoire :</strong> {{ cours.estObligatoire ? 'Oui' : 'Non' }}</p>
-    <p><strong>Payant :</strong> {{ cours.estPayant ? 'Oui' : 'Non' }}</p>
-</div>
+<div class="cover">
+    <div class="cover-title">{{ cours.titre|default('Cours') }}</div>
+    <div class="cover-subtitle">Document pédagogique complet • Cours, modules et leçons</div>
+    <div class="muted">Exporté le {{ generated_at|date('d/m/Y H:i') }}</div>
 
-<div class="section card">
-    <h2>Description</h2>
-    <p>{{ cours.description|default('Aucune description') }}</p>
-</div>
-
-<div class="section card">
-    <h2>Compétences visées</h2>
-    <p>{{ cours.competencesVisees|default('Aucune compétence indiquée') }}</p>
+    <table class="meta-grid">
+        <tr>
+            <td>
+                <div class="meta-label">Niveau</div>
+                <div class="meta-value">{{ cours.niveau|default('Non défini') }}</div>
+            </td>
+            <td>
+                <div class="meta-label">Durée</div>
+                <div class="meta-value">{{ cours.duree|default('0') }} h</div>
+            </td>
+            <td>
+                <div class="meta-label">Prix</div>
+                <div class="meta-value">{{ cours.prix is not null and cours.prix > 0 ? cours.prix ~ ' TND' : 'Gratuit' }}</div>
+            </td>
+            <td>
+                <div class="meta-label">Structure</div>
+                <div class="meta-value">{{ modules|length }} modules / {{ total_lessons }} leçons</div>
+            </td>
+        </tr>
+    </table>
 </div>
 
 <div class="section">
-    <h2>Modules et leçons</h2>
+    <div class="section-title">Description du cours</div>
+    <div>{{ cours.description|default('Aucune description') }}</div>
+</div>
+
+<div class="section">
+    <div class="section-title">Compétences visées</div>
+    <div>{{ cours.competencesVisees|default('Aucune compétence indiquée') }}</div>
+</div>
+
+<div class="section">
+    <div class="section-title">Modules et leçons</div>
     {% if modules is empty %}
         <p class="muted">Aucun module pour ce cours.</p>
     {% else %}
         {% for module in modules %}
-            <div class="card">
-                <h3>Module {{ module.ordre|default(loop.index) }} - {{ module.titre|default('Sans titre') }}</h3>
-                <p>{{ module.description|default('') }}</p>
+            {% set module_lessons = lessons_by_module[module.id]|default([]) %}
+            <div class="module-card">
+                <div class="module-title">Module {{ module.ordre|default(loop.index) }} • {{ module.titre|default('Sans titre') }}</div>
+                <div class="module-desc">{{ module.description|default('Aucune description pour ce module.') }}</div>
 
-                {% set module_lessons = lessons_by_module[module.id]|default([]) %}
                 {% if module_lessons is empty %}
-                    <p class="muted">Aucune leçon dans ce module.</p>
+                    <div class="muted">Aucune leçon dans ce module.</div>
                 {% else %}
-                    <ul>
-                        {% for lesson in module_lessons %}
-                            <li>
-                                <strong>{{ lesson.ordre|default(loop.index) }}. {{ lesson.titre|default('Leçon') }}</strong><br>
-                                {% set plain_content = lesson.contenu|default('')|striptags %}
-                                <span>{{ plain_content|slice(0, 240) }}{% if plain_content|length > 240 %}...{% endif %}</span>
-                            </li>
-                        {% endfor %}
-                    </ul>
+                    <table class="lesson-table">
+                        <thead>
+                            <tr>
+                                <th style="width:50px;">Ordre</th>
+                                <th style="width:190px;">Leçon</th>
+                                <th>Résumé du contenu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for lesson in module_lessons %}
+                                {% set plain_content = lesson.contenu|default('')|striptags|trim %}
+                                <tr>
+                                    <td>{{ lesson.ordre|default(loop.index) }}</td>
+                                    <td><strong>{{ lesson.titre|default('Leçon') }}</strong></td>
+                                    <td>{{ plain_content|slice(0, 320) }}{% if plain_content|length > 320 %}...{% endif %}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 {% endif %}
             </div>
         {% endfor %}
     {% endif %}
+</div>
+
+<div class="footer">
+    Carrieri • Export recruteur / backoffice
 </div>
 </body>
 </html>

@@ -89,11 +89,9 @@
                                        class="btn btn-sm btn-primary">
                                         <i class="fas fa-download"></i> Télécharger
                                     </a>
-                                    {% if cert.verification_url %}
-                                        <a href="{{ cert.verification_url }}" class="btn btn-sm btn-outline-success" target="_blank" rel="noopener noreferrer">
-                                            <i class="fas fa-shield-check"></i> Verifier publiquement
-                                        </a>
-                                    {% endif %}
+                                    <div class="small text-muted text-center mt-1">
+                                        QR de vérification intégré au PDF
+                                    </div>
                                 {% else %}
                                     <button class="btn btn-sm btn-secondary" disabled>
                                         ❌ Fichier indisponible
@@ -104,7 +102,7 @@
                             {% if cert.verification_qr_url %}
                                 <div class="text-center mt-3">
                                     <img src="{{ cert.verification_qr_url }}" alt="QR verification" style="width:110px;height:110px;border:1px solid #e5e7eb;border-radius:8px;">
-                                    <div class="text-muted mt-1" style="font-size:11px;">QR verification{% if cert.is_invalid|default(false) %} (affichera non valide){% endif %}</div>
+                                        <div class="text-muted mt-1" style="font-size:11px;">QR de vérification{% if cert.is_invalid|default(false) %} (statut frauduleux){% endif %}</div>
                                 </div>
                             {% endif %}
                         </div>
