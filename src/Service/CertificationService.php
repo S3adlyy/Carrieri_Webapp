@@ -614,10 +614,32 @@ HTML;
 
         $signature = $this->buildVerificationSignature($certificate);
 
+        $path = $this->urlGenerator->generate('app_public_certificate_verify', [
+            'id' => $certificate->getId(),
+            'sig' => $signature,
+        ], UrlGeneratorInterface::ABSOLUTE_PATH);
+
+        $publicBaseUrl = $this->getPublicBaseUrl();
+        if ($publicBaseUrl !== null) {
+            return rtrim($publicBaseUrl, '/') . $path;
+        }
+
         return $this->urlGenerator->generate('app_public_certificate_verify', [
             'id' => $certificate->getId(),
             'sig' => $signature,
         ], UrlGeneratorInterface::ABSOLUTE_URL);
+    }
+
+    private function getPublicBaseUrl(): ?string
+    {
+        $fromServer = isset($_SERVER['APP_PUBLIC_URL']) ? trim((string) $_SERVER['APP_PUBLIC_URL']) : '';
+        if ($fromServer !== '') {
+            return $fromServer;
+        }
+
+        $fromEnv = isset($_ENV['APP_PUBLIC_URL']) ? trim((string) $_ENV['APP_PUBLIC_URL']) : '';
+
+        return $fromEnv !== '' ? $fromEnv : null;
     }
 
     public function isVerificationSignatureValid(Certification $certificate, ?string $providedSignature): bool
