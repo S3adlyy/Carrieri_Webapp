@@ -8,12 +8,13 @@ namespace App\Form;
 use App\Entity\Entretien;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
+use Symfony\Component\Form\Extension\Core\Type\EmailType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
-use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Email;
 use Symfony\Component\Validator\Constraints\GreaterThan;
 
 class EntretienType extends AbstractType
@@ -47,12 +48,29 @@ class EntretienType extends AbstractType
                     new NotBlank(['message' => 'Le type d\'entretien est obligatoire.'])
                 ]
             ])
-            ->add('lien', TextType::class, [
-                'label' => 'Lien de visioconférence (optionnel)',
-                'required' => false,
+            ->add('candidatEmail', EmailType::class, [
+                'label' => 'Email du candidat',
+                'mapped' => false,
+                'required' => true,
                 'attr' => [
                     'class' => 'form-control',
-                    'placeholder' => 'https://meet.google.com/...'
+                    'placeholder' => 'exemple@email.com'
+                ],
+                'constraints' => [
+                    new NotBlank(['message' => 'L\'email du candidat est obligatoire.']),
+                    new Email(['message' => 'Veuillez entrer une adresse email valide.'])
+                ]
+            ])
+            ->add('candidatName', TextType::class, [
+                'label' => 'Nom du candidat',
+                'mapped' => false,
+                'required' => true,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Nom complet du candidat'
+                ],
+                'constraints' => [
+                    new NotBlank(['message' => 'Le nom du candidat est obligatoire.'])
                 ]
             ])
             ->add('notes', TextareaType::class, [

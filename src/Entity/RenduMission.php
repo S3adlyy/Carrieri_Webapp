@@ -53,7 +53,7 @@ class RenduMission
     private ?User $user = null;
 
     #[ORM\ManyToOne(targetEntity: Mission::class)]
-    #[ORM\JoinColumn(name: 'mission_id', referencedColumnName: 'id')]
+    #[ORM\JoinColumn(name: 'mission_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private ?Mission $mission = null;
 
     /**

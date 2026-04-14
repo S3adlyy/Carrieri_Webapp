@@ -4,19 +4,25 @@
 declare(strict_types=1);
 
 namespace App\Controller\DashboardController;
+
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use App\Entity\Entretien;
 use App\Entity\User;
 use App\Form\EntretienType;
+use App\Repository\MissionRepository;
 use App\Repository\RenduMissionRepository;
 use App\Repository\EntretienRepository;
+use App\Service\JitsiLinkGenerator;
+use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/admin/entretiens')]
 #[IsGranted('ROLE_RECRUITER')]
@@ -24,8 +30,11 @@ class EntretienController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $entityManager,
+        private MissionRepository $missionRepository,
         private RenduMissionRepository $renduMissionRepository,
-        private EntretienRepository $entretienRepository
+        private EntretienRepository $entretienRepository,
+        private JitsiLinkGenerator $jitsiLinkGenerator,
+        private EmailService $emailService,
     ) {
     }
 
@@ -37,7 +46,6 @@ class EntretienController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Récupérer tous les rendus acceptés pour les missions du recruteur
         $candidatsAcceptes = $this->renduMissionRepository->findAcceptedSubmissionsByRecruiter($user->getId());
 
         return $this->render('BackOffice/dashboard/entretiens/candidats_acceptes.html.twig', [
@@ -67,14 +75,71 @@ class EntretienController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Récupérer les données du formulaire
+            $candidatEmail = $form->get('candidatEmail')->getData();
+            $candidatName = $form->get('candidatName')->getData();
+
+            // Persist entretien to get ID for Jitsi link
             $this->entityManager->persist($entretien);
             $this->entityManager->flush();
 
-            $this->addFlash('success', sprintf(
-                'Entretien planifié pour %s le %s',
-                $rendu->getUser()->getEmail(),
-                $entretien->getDateEntretien()->format('d/m/Y à H:i')
-            ));
+            // Générer automatiquement le lien Jitsi
+            $jitsiLink = $this->jitsiLinkGenerator->generateMeetingLink(
+                $entretien->getId(),
+                $rendu->getUser()->getId(),
+                $user->getId()
+            );
+
+            $entretien->setLien($jitsiLink);
+            $this->entityManager->flush();
+
+            $recruiterName = $user->getFirstName() . ' ' . $user->getLastName();
+
+            // 🔔 ENVOI DE L'EMAIL AU CANDIDAT
+            $emailSent = false;
+            try {
+                // Fixed method name: sendInterviewNotification (was sendInterviewNotificaion)
+                $emailSent = $this->emailService->sendInterviewNotification(
+                    toEmail: $candidatEmail,
+                    candidateName: $candidatName,
+                    missionTitle: $rendu->getMission()->getType(),
+                    score: $rendu->getScore() ?? 0.0, // Provide default value if null
+                    interviewDate: $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                    jitsiLink: $jitsiLink,
+                    interviewType: $entretien->getType(),
+                    recruiterName: $recruiterName
+                );
+
+                if ($emailSent) {
+                    $this->addFlash('success', sprintf(
+                        '✅ Entretien planifié pour %s le %s<br>🔗 Lien Jitsi : %s<br>📧 Un email a été envoyé à %s',
+                        $candidatName,
+                        $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                        $jitsiLink,
+                        $candidatEmail
+                    ));
+                } else {
+                    $this->addFlash('warning', sprintf(
+                        '⚠️ Entretien planifié mais email non envoyé.<br>🔗 Lien Jitsi : %s',
+                        $jitsiLink
+                    ));
+                }
+            } catch (\Exception $e) {
+                $this->addFlash('warning', sprintf(
+                    '⚠️ Entretien planifié mais erreur email : %s<br>🔗 Lien Jitsi : %s',
+                    $e->getMessage(),
+                    $jitsiLink
+                ));
+            }
+
+            // Notification WebSocket (optionnelle)
+            $this->sendInterviewNotificationWebSocket(
+                $rendu->getUser()->getId(),
+                $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                $jitsiLink,
+                $entretien->getType(),
+                $recruiterName
+            );
 
             return $this->redirectToRoute('app_admin_candidats_acceptes');
         }
@@ -83,6 +148,25 @@ class EntretienController extends AbstractController
             'form' => $form->createView(),
             'rendu' => $rendu,
         ]);
+    }
+
+    private function sendInterviewNotificationWebSocket(int $candidatId, string $date, string $jitsiLink, string $type, string $recruiterName): void
+    {
+        try {
+            $client = HttpClient::create();
+            $client->request('POST', 'http://localhost:3002/api/notify/interview-scheduled', [
+                'json' => [
+                    'candidatId' => $candidatId,
+                    'interviewDate' => $date,
+                    'jitsiLink' => $jitsiLink,
+                    'interviewType' => $type,
+                    'recruiterName' => $recruiterName
+                ],
+                'timeout' => 5
+            ]);
+        } catch (\Exception $e) {
+            error_log('Erreur envoi notification WebSocket: ' . $e->getMessage());
+        }
     }
 
     #[Route('/{id}/edit', name: 'app_admin_entretien_edit')]
@@ -138,6 +222,7 @@ class EntretienController extends AbstractController
 
         return $this->redirectToRoute('app_admin_candidats_acceptes');
     }
+
     #[Route('/candidats-acceptes/export/excel', name: 'app_admin_candidats_acceptes_export_excel')]
     #[IsGranted('ROLE_RECRUITER')]
     public function exportExcel(Request $request): Response
@@ -147,16 +232,13 @@ class EntretienController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Récupérer tous les rendus acceptés pour les missions du recruteur
         $candidats = $this->renduMissionRepository->findAcceptedSubmissionsByRecruiter($user->getId());
 
-        // Générer le HTML pour l'export Excel
         $html = $this->renderView('BackOffice/dashboard/entretiens/export_candidats_excel.html.twig', [
             'candidats' => $candidats,
             'export_date' => date('d/m/Y H:i:s'),
         ]);
 
-        // Headers pour forcer le téléchargement en tant que fichier Excel
         $fileName = 'candidats_acceptes_' . date('Y-m-d_H-i-s') . '.xls';
 
         return new Response($html, 200, [
@@ -175,16 +257,13 @@ class EntretienController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        // Récupérer tous les rendus acceptés pour les missions du recruteur
         $candidats = $this->renduMissionRepository->findAcceptedSubmissionsByRecruiter($user->getId());
 
-        // Générer le HTML pour le PDF
         $html = $this->renderView('BackOffice/dashboard/entretiens/export_candidats_pdf.html.twig', [
             'candidats' => $candidats,
             'export_date' => date('d/m/Y H:i:s'),
         ]);
 
-        // Configurer Dompdf
         $options = new Options();
         $options->set('defaultFont', 'Arial');
         $options->set('isHtml5ParserEnabled', true);
@@ -195,11 +274,89 @@ class EntretienController extends AbstractController
         $dompdf->setPaper('A4', 'landscape');
         $dompdf->render();
 
-        // Générer le PDF
         $fileName = 'candidats_acceptes_' . date('Y-m-d_H-i-s') . '.pdf';
         return new Response($dompdf->output(), 200, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'attachment; filename="' . $fileName . '"'
         ]);
+    }
+
+    #[Route('/watch/{missionId}/{candidatId}', name: 'app_recruiter_watch_candidate')]
+    public function watchCandidate(int $missionId, int $candidatId): Response
+    {
+        $recruiter = $this->getUser();
+        if (!$recruiter instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $mission = $this->missionRepository->find($missionId);
+        if (!$mission || $mission->getUser() !== $recruiter) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à cette session');
+        }
+
+        $candidat = $this->entityManager->getRepository(User::class)->find($candidatId);
+        if (!$candidat) {
+            throw $this->createNotFoundException('Candidat non trouvé');
+        }
+
+        return $this->render('BackOffice/dashboard/entretiens/watch_candidate.html.twig', [
+            'mission' => $mission,
+            'candidat' => $candidat,
+            'missionId' => $missionId,
+            'candidatId' => $candidatId
+        ]);
+    }
+
+    #[Route('/sessions-actives', name: 'app_recruiter_active_sessions')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function activeSessions(RenduMissionRepository $renduMissionRepository): Response
+    {
+        $recruiter = $this->getUser();
+        if (!$recruiter instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $missions = $this->missionRepository->findBy(['user' => $recruiter]);
+        $missionIds = array_map(fn($m) => $m->getId(), $missions);
+
+        $activeSessions = $renduMissionRepository->findActiveSessionsByMissionIds($missionIds);
+
+        return $this->render('BackOffice/dashboard/entretiens/active_sessions.html.twig', [
+            'sessions' => $activeSessions,
+        ]);
+    }
+
+    #[Route('/active-sessions-count', name: 'app_recruiter_active_sessions_count')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function activeSessionsCount(): JsonResponse
+    {
+        $recruiter = $this->getUser();
+        if (!$recruiter instanceof User) {
+            return $this->json(['count' => 0]);
+        }
+
+        $missions = $this->missionRepository->findBy(['user' => $recruiter]);
+        $missionIds = array_map(fn($m) => $m->getId(), $missions);
+
+        $thirtyMinutesAgo = new \DateTime('-30 minutes');
+
+        $activeSessions = $this->renduMissionRepository->createQueryBuilder('r')
+            ->where('r.missionId IN (:missionIds)')
+            ->andWhere('r.statut = :statut')
+            ->andWhere('r.dateRendu >= :thirtyMinutesAgo')
+            ->setParameter('missionIds', $missionIds)
+            ->setParameter('statut', 'en_attente')
+            ->setParameter('thirtyMinutesAgo', $thirtyMinutesAgo)
+            ->getQuery()
+            ->getResult();
+
+        return $this->json(['count' => count($activeSessions)]);
+    }
+
+    #[Route('/live-sessions', name: 'app_recruiter_live_sessions')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function liveSessions(): Response
+    {
+        return $this->render('BackOffice/dashboard/entretiens/live_sessions.html.twig');
     }
 }

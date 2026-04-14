@@ -2,44 +2,343 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-	<meta charset="utf-8">
-	<meta http-equiv="X-UA-Compatible" content="IE=edge">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="{% block meta_description %}Purdue - Education HTML Template{% endblock %}">
-	<meta name="keywords" content="{% block meta_keywords %}education, e-learning, cours{% endblock %}">
-	<meta name="author" content="{% block meta_author %}theme_ocean{% endblock %}">
-	<title>{% block title %}Accueil{% endblock %} | {% block site_name %}Carrieri{% endblock %}</title>
-	{% block meta_extra %}{% endblock %}
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/bootstrap/css/bootstrap.min.css') }}">
-	<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/webfonts/themify-icons.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/all.min.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/fontawesome.min.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/owlcarousel/css/owl.carousel.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/owlcarousel/css/owl.theme.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/magnific-popup.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/jquery-simple-mobilemenu.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/animate.css') }}">
-	<link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/style.css') }}">
-	<link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-	{% block stylesheets %}{% endblock %}
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="{% block meta_description %}Purdue - Education HTML Template{% endblock %}">
+    <meta name="keywords" content="{% block meta_keywords %}education, e-learning, cours{% endblock %}">
+    <meta name="author" content="{% block meta_author %}theme_ocean{% endblock %}">
+    <title>{% block title %}Accueil{% endblock %} | {% block site_name %}Carrieri{% endblock %}</title>
+    {% block meta_extra %}{% endblock %}
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/bootstrap/css/bootstrap.min.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/webfonts/themify-icons.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/all.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/fontawesome.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/owlcarousel/css/owl.carousel.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/owlcarousel/css/owl.theme.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/magnific-popup.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/jquery-simple-mobilemenu.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/animate.css') }}">
+    <link rel="stylesheet" href="{{ asset('themes/purdue/assets/css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}">
+    {% block stylesheets %}{% endblock %}
 </head>
 <body>
 {% block body %}{% endblock %}
-	<script src="{{ asset('themes/purdue/assets/js/jquery-1.12.4.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/bootstrap/js/bootstrap.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/owlcarousel/js/owl.carousel.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/jquery-simple-mobilemenu.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/jquery.magnific-popup.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/jquery.mixitup.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/gsap.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/ScrollTrigger.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/lenis.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/scrolltopcontrol.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/jquery.inview.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/wow.min.js') }}"></script>
-	<script src="{{ asset('themes/purdue/assets/js/scripts.js') }}"></script>
-	{% block javascripts %}{% endblock %}
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script>
+    // ========== SYSTÈME DE NOTIFICATIONS EN TEMPS RÉEL ==========
+    (function() {
+        let notificationSocket = null;
+        let notifications = [];
+        let unreadCount = 0;
+
+        // Vérifier si l'utilisateur est connecté
+        {% if app.user and app.user.id is defined %}
+        const WS_URL = 'http://localhost:3002';
+        const candidatId = {{ app.user.id }};
+        const candidatName = '{{ app.user.firstName|default('') }} {{ app.user.lastName|default('') }}';
+        {% else %}
+        // Utilisateur non connecté, pas de notifications
+        return;
+        {% endif %}
+
+        // Charger les notifications depuis localStorage
+        function loadNotifications() {
+            const saved = localStorage.getItem(`notifications_${candidatId}`);
+            if (saved) {
+                try {
+                    notifications = JSON.parse(saved);
+                    updateUnreadCount();
+                } catch(e) {}
+            }
+        }
+
+        // Sauvegarder les notifications
+        function saveNotifications() {
+            localStorage.setItem(`notifications_${candidatId}`, JSON.stringify(notifications));
+        }
+
+        // Mettre à jour le compteur
+        function updateUnreadCount() {
+            unreadCount = notifications.filter(n => !n.read).length;
+            const badge = document.getElementById('notificationBadge');
+            if (badge) {
+                if (unreadCount > 0) {
+                    badge.textContent = unreadCount;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            }
+        }
+
+        // Afficher une notification toast
+        function showToast(notification) {
+            let toastContainer = document.getElementById('toastContainer');
+            if (!toastContainer) {
+                const container = document.createElement('div');
+                container.id = 'toastContainer';
+                container.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 10002;';
+                document.body.appendChild(container);
+                toastContainer = container;
+            }
+
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast';
+            toast.innerHTML = `
+					<div class="toast-icon">${notification.type === 'mission_accepted' ? '🎉' : '📅'}</div>
+					<div class="toast-content">
+						<div class="toast-title">${escapeHtml(notification.title)}</div>
+						<div class="toast-message">${escapeHtml(notification.message)}</div>
+					</div>
+					<button class="toast-close" onclick="this.parentElement.remove()">×</button>
+				`;
+
+            toast.style.cssText = `
+					background: white;
+					border-radius: 12px;
+					padding: 12px 15px;
+					margin-bottom: 10px;
+					box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+					display: flex;
+					align-items: center;
+					gap: 12px;
+					min-width: 300px;
+					animation: slideInRight 0.3s ease;
+					border-left: 4px solid ${notification.type === 'mission_accepted' ? '#10b981' : '#3b82f6'};
+				`;
+
+            toastContainer.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'slideOutRight 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Ajouter une notification
+        function addNotification(notification) {
+            notification.read = false;
+            notifications.unshift(notification);
+            if (notifications.length > 50) notifications.pop();
+            saveNotifications();
+            updateUnreadCount();
+            renderNotifications();
+            showToast(notification);
+        }
+
+        // Rendre les notifications dans le dropdown
+        function renderNotifications() {
+            const list = document.getElementById('notificationList');
+            if (!list) return;
+
+            if (notifications.length === 0) {
+                list.innerHTML = `
+						<div class="notification-empty">
+							<i class="fas fa-bell-slash"></i>
+							<p>Aucune notification</p>
+						</div>
+					`;
+                return;
+            }
+
+            list.innerHTML = notifications.map(notif => `
+					<div class="notification-item ${!notif.read ? 'unread' : ''}" data-id="${notif.id}">
+						<div class="notification-title">
+							${escapeHtml(notif.title)}
+							${!notif.read ? '<span class="unread-dot"></span>' : ''}
+						</div>
+						<div class="notification-message">${escapeHtml(notif.message)}</div>
+						<div class="notification-time">${formatTime(notif.timestamp)}</div>
+						${notif.action ? `
+							<div class="notification-action">
+								<a href="${escapeHtml(notif.action.url)}" class="notification-btn" target="${notif.action.type === 'join_interview' ? '_blank' : '_self'}">
+									${escapeHtml(notif.action.buttonText || 'Voir')}
+								</a>
+							</div>
+						` : ''}
+					</div>
+				`).join('');
+
+            // Attacher les événements
+            document.querySelectorAll('.notification-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.tagName !== 'A') {
+                        const id = parseInt(item.dataset.id);
+                        markAsRead(id);
+                    }
+                });
+            });
+        }
+
+        // Marquer comme lu
+        function markAsRead(notificationId) {
+            const notif = notifications.find(n => n.id === notificationId);
+            if (notif && !notif.read) {
+                notif.read = true;
+                saveNotifications();
+                updateUnreadCount();
+                renderNotifications();
+
+                if (notificationSocket && notificationSocket.connected) {
+                    notificationSocket.emit('notification:mark-read', {
+                        candidatId: candidatId,
+                        notificationId: notificationId
+                    });
+                }
+            }
+        }
+
+        // Tout marquer comme lu
+        function markAllAsRead() {
+            notifications.forEach(n => n.read = true);
+            saveNotifications();
+            updateUnreadCount();
+            renderNotifications();
+        }
+
+        function formatTime(timestamp) {
+            const diff = Date.now() - timestamp;
+            const minutes = Math.floor(diff / 60000);
+            const hours = Math.floor(diff / 3600000);
+            const days = Math.floor(diff / 86400000);
+
+            if (minutes < 1) return 'À l\'instant';
+            if (minutes < 60) return `Il y a ${minutes} min`;
+            if (hours < 24) return `Il y a ${hours} h`;
+            return `Il y a ${days} j`;
+        }
+
+        function initWebSocket() {
+            try {
+                notificationSocket = io(WS_URL, {
+                    transports: ['websocket', 'polling']
+                });
+
+                notificationSocket.on('connect', () => {
+                    console.log('🔔 Connecté au serveur de notifications');
+                    notificationSocket.emit('candidate:register', {
+                        candidatId: candidatId,
+                        candidatName: candidatName
+                    });
+                });
+
+                notificationSocket.on('notification:new', (notification) => {
+                    console.log('📨 Nouvelle notification reçue:', notification);
+                    addNotification(notification);
+                });
+
+                notificationSocket.on('disconnect', () => {
+                    console.log('🔔 Déconnecté du serveur de notifications');
+                });
+
+            } catch (err) {
+                console.error('Notification error:', err);
+            }
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            loadNotifications();
+            initWebSocket();
+            renderNotifications();
+
+            // Toggle dropdown
+            const bell = document.getElementById('notificationBell');
+            const dropdown = document.getElementById('notificationDropdown');
+
+            if (bell && dropdown) {
+                bell.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isVisible = dropdown.style.display === 'block';
+                    dropdown.style.display = isVisible ? 'none' : 'block';
+                });
+
+                document.addEventListener('click', () => {
+                    if (dropdown) dropdown.style.display = 'none';
+                });
+
+                dropdown.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+            }
+
+            const markAllBtn = document.getElementById('markAllRead');
+            if (markAllBtn) {
+                markAllBtn.addEventListener('click', markAllAsRead);
+            }
+        });
+
+        // Styles additionnels
+        const style = document.createElement('style');
+        style.textContent = `
+				@keyframes slideInRight {
+					from { transform: translateX(100%); opacity: 0; }
+					to { transform: translateX(0); opacity: 1; }
+				}
+				@keyframes slideOutRight {
+					from { transform: translateX(0); opacity: 1; }
+					to { transform: translateX(100%); opacity: 0; }
+				}
+				.unread-dot {
+					display: inline-block;
+					width: 8px;
+					height: 8px;
+					background: #3b82f6;
+					border-radius: 50%;
+					margin-left: 8px;
+				}
+				.toast-close {
+					background: none;
+					border: none;
+					font-size: 20px;
+					cursor: pointer;
+					color: #94a3b8;
+					margin-left: auto;
+				}
+				.toast-close:hover {
+					color: #ef4444;
+				}
+				.toast-icon {
+					font-size: 24px;
+				}
+				.toast-title {
+					font-weight: 600;
+					color: #1e293b;
+					margin-bottom: 3px;
+				}
+				.toast-message {
+					font-size: 12px;
+					color: #64748b;
+				}
+			`;
+        document.head.appendChild(style);
+    })();
+</script>
+
+<script src="{{ asset('themes/purdue/assets/js/jquery-1.12.4.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/bootstrap/js/bootstrap.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/owlcarousel/js/owl.carousel.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/jquery-simple-mobilemenu.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/jquery.magnific-popup.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/jquery.mixitup.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/gsap.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/ScrollTrigger.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/lenis.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/scrolltopcontrol.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/jquery.inview.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/wow.min.js') }}"></script>
+<script src="{{ asset('themes/purdue/assets/js/scripts.js') }}"></script>
+{% block javascripts %}{% endblock %}
 </body>
 </html>

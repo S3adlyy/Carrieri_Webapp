@@ -182,6 +182,16 @@
             margin: 0 6px 8px 0;
             transition: all 0.2s ease;
         }
+        .fo-charte-ui .fo-form-control.is-invalid {
+            border-color: #dc3545;
+        }
+
+        .fo-charte-ui .form-error {
+            color: #dc3545;
+            font-size: 0.75rem;
+            margin-top: 5px;
+            display: block;
+        }
 
         .fo-charte-ui .fo-chip:hover {
             background: #e5e7eb;
@@ -447,6 +457,13 @@
 
         .fo-charte-ui .fo-flash-wrap {
             margin-bottom: 1rem;
+        }
+
+        .fo-charte-ui .form-error {
+            color: #dc3545;
+            font-size: 0.75rem;
+            margin-top: 5px;
+            display: block;
         }
 
         @media (max-width: 767.98px) {
@@ -791,101 +808,59 @@
         {% if isOwner %}
             <div id="fo-edit-modal-backdrop" class="fo-modal-backdrop {% if currentEdit %}is-open{% endif %}" onclick="closeEditModalOnBackdrop(event)">
                 <div class="fo-modal-card" role="dialog" aria-modal="true" aria-labelledby="fo-edit-modal-title">
+
+                    {# BASIC FORM #}
                     {% if currentEdit == 'basic' %}
                         <div class="fo-modal-title" id="fo-edit-modal-title">
                             <span><i class="fas fa-user-edit"></i> Edit Basic Information</span>
                             <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
                         </div>
-                        <form method="post" action="{{ path('app_profile_basic_save') }}">
+                        <form method="post" action="{{ path('app_profile_basic_save') }}" id="basic-form">
                             <div class="fo-form-grid">
                                 <div class="fo-form-group">
                                     <label class="fo-form-label">First Name</label>
-                                    <input class="fo-form-control" type="text" name="firstName" value="{{ user.firstName|default('') }}" required>
+                                    <input class="fo-form-control {% if form_errors.firstName is defined %}is-invalid{% endif %}"
+                                           type="text" name="firstName"
+                                           value="{{ old_input.firstName|default(user.firstName|default('')) }}">
+                                    {% if form_errors.firstName is defined %}
+                                        <div class="form-error">{{ form_errors.firstName }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="fo-form-group">
                                     <label class="fo-form-label">Last Name</label>
-                                    <input class="fo-form-control" type="text" name="lastName" value="{{ user.lastName|default('') }}" required>
+                                    <input class="fo-form-control {% if form_errors.lastName is defined %}is-invalid{% endif %}"
+                                           type="text" name="lastName"
+                                           value="{{ old_input.lastName|default(user.lastName|default('')) }}">
+                                    {% if form_errors.lastName is defined %}
+                                        <div class="form-error">{{ form_errors.lastName }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="fo-form-group">
                                     <label class="fo-form-label">Location</label>
-                                    <input class="fo-form-control" type="text" name="location" value="{{ user.location|default('') }}">
+                                    <input class="fo-form-control {% if form_errors.location is defined %}is-invalid{% endif %}"
+                                           type="text" name="location"
+                                           value="{{ old_input.location|default(user.location|default('')) }}">
+                                    {% if form_errors.location is defined %}
+                                        <div class="form-error">{{ form_errors.location }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="fo-form-group">
                                     <label class="fo-form-label">Phone</label>
-                                    <input class="fo-form-control" type="text" name="phone" value="{{ user.phone|default('') }}">
+                                    <input class="fo-form-control {% if form_errors.phone is defined %}is-invalid{% endif %}"
+                                           type="text" name="phone"
+                                           value="{{ old_input.phone|default(user.phone|default('')) }}">
+                                    {% if form_errors.phone is defined %}
+                                        <div class="form-error">{{ form_errors.phone }}</div>
+                                    {% endif %}
                                 </div>
                                 <div class="fo-form-group fo-span-2">
                                     <label class="fo-form-label">Headline</label>
-                                    <input class="fo-form-control" type="text" name="headline" value="{{ user.headline|default('') }}">
-                                </div>
-                            </div>
-                            <div class="fo-modal-actions">
-                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                                <button type="submit" class="fo-btn-primary">Save</button>
-                            </div>
-                        </form>
-                    {% elseif currentEdit == 'education' %}
-                        <div class="fo-modal-title" id="fo-edit-modal-title">
-                            <span><i class="fas fa-graduation-cap"></i> Edit Education</span>
-                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
-                        </div>
-                        <form method="post" action="{{ path('app_profile_education_save') }}">
-                            <div class="fo-form-grid">
-                                <div class="fo-form-group">
-                                    <label class="fo-form-label">School</label>
-                                    <input class="fo-form-control" type="text" name="school" value="{{ user.school|default('') }}">
-                                </div>
-                                <div class="fo-form-group">
-                                    <label class="fo-form-label">Degree</label>
-                                    <input class="fo-form-control" type="text" name="degree" value="{{ user.degree|default('') }}">
-                                </div>
-                                <div class="fo-form-group">
-                                    <label class="fo-form-label">Field of Study</label>
-                                    <input class="fo-form-control" type="text" name="fieldOfStudy" value="{{ user.fieldOfStudy|default('') }}">
-                                </div>
-                                <div class="fo-form-group">
-                                    <label class="fo-form-label">Graduation Year</label>
-                                    <input class="fo-form-control" type="text" name="graduationYear" value="{{ user.graduationYear|default('') }}">
-                                </div>
-                            </div>
-                            <div class="fo-modal-actions">
-                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                                <button type="submit" class="fo-btn-primary">Save</button>
-                            </div>
-                        </form>
-                    {% elseif currentEdit == 'skills' %}
-                        <div class="fo-modal-title" id="fo-edit-modal-title">
-                            <span><i class="fas fa-code"></i> Edit Skills</span>
-                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
-                        </div>
-                        <form method="post" action="{{ path('app_profile_skills_save') }}">
-                            <div class="fo-form-group">
-                                <label class="fo-form-label">Soft Skills</label>
-                                <textarea class="fo-form-control" name="softSkills">{{ user.softSkills|default('') }}</textarea>
-                            </div>
-                            <div class="fo-form-group">
-                                <label class="fo-form-label">Technical Skills</label>
-                                <textarea class="fo-form-control" name="hardSkills">{{ user.hardSkills|default('') }}</textarea>
-                            </div>
-                            <div class="fo-modal-actions">
-                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
-                                <button type="submit" class="fo-btn-primary">Save</button>
-                            </div>
-                        </form>
-                    {% elseif currentEdit == 'links' %}
-                        <div class="fo-modal-title" id="fo-edit-modal-title">
-                            <span><i class="fas fa-link"></i> Edit Links</span>
-                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
-                        </div>
-                        <form method="post" action="{{ path('app_profile_links_save') }}">
-                            <div class="fo-form-grid">
-                                <div class="fo-form-group">
-                                    <label class="fo-form-label">GitHub</label>
-                                    <input class="fo-form-control" type="text" name="githubUrl" value="{{ user.githubUrl|default('') }}">
-                                </div>
-                                <div class="fo-form-group">
-                                    <label class="fo-form-label">Portfolio</label>
-                                    <input class="fo-form-control" type="text" name="portfolioUrl" value="{{ user.portfolioUrl|default('') }}">
+                                    <input class="fo-form-control {% if form_errors.headline is defined %}is-invalid{% endif %}"
+                                           type="text" name="headline"
+                                           value="{{ old_input.headline|default(user.headline|default('')) }}">
+                                    {% if form_errors.headline is defined %}
+                                        <div class="form-error">{{ form_errors.headline }}</div>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="fo-modal-actions">
@@ -894,6 +869,163 @@
                             </div>
                         </form>
                     {% endif %}
+
+                    {# EDUCATION FORM #}
+                    {% if currentEdit == 'education' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-graduation-cap"></i> Edit Education</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_education_save') }}" id="education-form">
+                            <div class="fo-form-grid">
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">School</label>
+                                    <input class="fo-form-control {% if form_errors.school is defined %}is-invalid{% endif %}"
+                                           type="text" name="school"
+                                           value="{{ old_input.school|default(user.school|default('')) }}">
+                                    {% if form_errors.school is defined %}
+                                        <div class="form-error">{{ form_errors.school }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Degree</label>
+                                    <input class="fo-form-control {% if form_errors.degree is defined %}is-invalid{% endif %}"
+                                           type="text" name="degree"
+                                           value="{{ old_input.degree|default(user.degree|default('')) }}">
+                                    {% if form_errors.degree is defined %}
+                                        <div class="form-error">{{ form_errors.degree }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Field of Study</label>
+                                    <input class="fo-form-control {% if form_errors.fieldOfStudy is defined %}is-invalid{% endif %}"
+                                           type="text" name="fieldOfStudy"
+                                           value="{{ old_input.fieldOfStudy|default(user.fieldOfStudy|default('')) }}">
+                                    {% if form_errors.fieldOfStudy is defined %}
+                                        <div class="form-error">{{ form_errors.fieldOfStudy }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Graduation Year</label>
+                                    <input class="fo-form-control {% if form_errors.graduationYear is defined %}is-invalid{% endif %}"
+                                           type="text" name="graduationYear"
+                                           value="{{ old_input.graduationYear|default(user.graduationYear|default('')) }}">
+                                    {% if form_errors.graduationYear is defined %}
+                                        <div class="form-error">{{ form_errors.graduationYear }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% endif %}
+
+                    {# SKILLS FORM #}
+                    {% if currentEdit == 'skills' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-code"></i> Edit Skills</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_skills_save') }}" id="skills-form">
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Soft Skills (comma separated)</label>
+                                <textarea class="fo-form-control {% if form_errors.softSkills is defined %}is-invalid{% endif %}"
+                                          name="softSkills">{{ old_input.softSkills|default(user.softSkills|default('')) }}</textarea>
+                                {% if form_errors.softSkills is defined %}
+                                    <div class="form-error">{{ form_errors.softSkills }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Technical Skills (comma separated)</label>
+                                <textarea class="fo-form-control {% if form_errors.hardSkills is defined %}is-invalid{% endif %}"
+                                          name="hardSkills">{{ old_input.hardSkills|default(user.hardSkills|default('')) }}</textarea>
+                                {% if form_errors.hardSkills is defined %}
+                                    <div class="form-error">{{ form_errors.hardSkills }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% endif %}
+
+                    {# LINKS FORM #}
+                    {% if currentEdit == 'links' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-link"></i> Edit Links</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_links_save') }}" id="links-form">
+                            <div class="fo-form-grid">
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">GitHub URL</label>
+                                    <input class="fo-form-control {% if form_errors.githubUrl is defined %}is-invalid{% endif %}"
+                                           type="text" name="githubUrl"
+                                           value="{{ old_input.githubUrl|default(user.githubUrl|default('')) }}">
+                                    {% if form_errors.githubUrl is defined %}
+                                        <div class="form-error">{{ form_errors.githubUrl }}</div>
+                                    {% endif %}
+                                </div>
+                                <div class="fo-form-group">
+                                    <label class="fo-form-label">Portfolio URL</label>
+                                    <input class="fo-form-control {% if form_errors.portfolioUrl is defined %}is-invalid{% endif %}"
+                                           type="text" name="portfolioUrl"
+                                           value="{{ old_input.portfolioUrl|default(user.portfolioUrl|default('')) }}">
+                                    {% if form_errors.portfolioUrl is defined %}
+                                        <div class="form-error">{{ form_errors.portfolioUrl }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% endif %}
+
+                    {# ORGANIZATION FORM #}
+                    {% if currentEdit == 'organization' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-building"></i> Edit Organization</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+                        <form method="post" action="{{ path('app_profile_organization_save') }}" id="organization-form">
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Organization Name</label>
+                                <input class="fo-form-control {% if form_errors.orgName is defined %}is-invalid{% endif %}"
+                                       type="text" name="orgName"
+                                       value="{{ old_input.orgName|default(user.orgName|default('')) }}">
+                                {% if form_errors.orgName is defined %}
+                                    <div class="form-error">{{ form_errors.orgName }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Website URL</label>
+                                <input class="fo-form-control {% if form_errors.websiteUrl is defined %}is-invalid{% endif %}"
+                                       type="text" name="websiteUrl"
+                                       value="{{ old_input.websiteUrl|default(user.websiteUrl|default('')) }}">
+                                {% if form_errors.websiteUrl is defined %}
+                                    <div class="form-error">{{ form_errors.websiteUrl }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Description</label>
+                                <textarea class="fo-form-control {% if form_errors.description is defined %}is-invalid{% endif %}"
+                                          name="description">{{ old_input.description|default(user.description|default('')) }}</textarea>
+                                {% if form_errors.description is defined %}
+                                    <div class="form-error">{{ form_errors.description }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% endif %}
+
                 </div>
             </div>
         {% endif %}

@@ -72,6 +72,15 @@
                     </ul>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ path('app_recruiter_live_sessions') }}" class="nav-link">
+                        <i class="nav-icon fas fa-chart-line"></i>
+                        <p>
+                            Live Tracker
+                            <span class="badge badge-danger navbar-badge" id="liveCount">0</span>
+                        </p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ path('app_admin_missions_list') }}" class="nav-link {% if app.request.attributes.get('_route') starts with 'app_admin_missions' %}active{% endif %}">
                         <i class="nav-icon fas fa-tasks"></i>
                         <p>Missions</p>

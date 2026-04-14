@@ -1,0 +1,74 @@
+{# templates/BackOffice/dashboard/entretiens/active_sessions.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Sessions actives{% endblock %}
+
+{% block page_title %}Sessions actives - Observation en direct{% endblock %}
+
+{% block breadcrumbs %}
+    <li class="breadcrumb-item active">Sessions actives</li>
+{% endblock %}
+
+{% block body %}
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">
+                <i class="fas fa-eye"></i>
+                Candidats en train de travailler
+            </h3>
+            <div class="card-tools">
+                <span class="badge badge-danger">
+                    <i class="fas fa-circle" style="font-size: 8px;"></i>
+                    {{ sessions|length }} session(s) active(s)
+                </span>
+            </div>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover table-striped mb-0">
+                    <thead>
+                    <tr>
+                        <th>Candidat</th>
+                        <th>Mission</th>
+                        <th>Début</th>
+                        <th>Temps écoulé</th>
+                        <th>Exécutions restantes</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for rendu in sessions %}
+                        <tr>
+                            <td>
+                                <strong>{{ rendu.user.firstName }} {{ rendu.user.lastName }}</strong><br>
+                                <small class="text-muted">{{ rendu.user.email }}</small>
+                            </td>
+                            <td>
+                                {{ rendu.mission.type }}<br>
+                                <small class="text-muted">Score requis: {{ rendu.mission.scoreMin }}%</small>
+                            </td>
+                            <td>{{ rendu.dateRendu|date('H:i:s') }}</td>
+                            <td>
+                                {% set elapsed = date().timestamp - rendu.dateRendu.timestamp %}
+                                {% set minutes = (elapsed / 60)|round(0, 'floor') %}
+                                {% set seconds = elapsed % 60 %}
+                                <span class="badge badge-warning">{{ minutes }}min {{ seconds }}s</span>
+                            </td>
+                            <td>
+                                {# À implémenter si vous stockez les exécutions restantes #}
+                                <span class="badge badge-info">3/3</span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="fas fa-user-slash fa-2x mb-2 d-block"></i>
+                                <p>Aucun candidat n'est actuellement en train de travailler sur une mission.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+{% endblock %}

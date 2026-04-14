@@ -1,0 +1,441 @@
+{# templates/BackOffice/dashboard/entretiens/live_sessions.html.twig #}
+{% extends 'BackOffice/base.html.twig' %}
+
+{% block title %}Sessions en direct{% endblock %}
+
+{% block page_title %}Sessions en direct - Live Tracker{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Stats Cards */
+        .stats-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            flex: 1;
+            min-width: 180px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border: 1px solid #eef2f6;
+            transition: all 0.3s;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .stat-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1e293b;
+        }
+        .stat-label {
+            color: #64748b;
+            font-size: 13px;
+            margin-top: 5px;
+        }
+
+        /* Session Cards */
+        .session-card {
+            background: white;
+            border-radius: 16px;
+            padding: 18px;
+            margin-bottom: 15px;
+            border-left: 4px solid #22c55e;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: all 0.3s;
+            border: 1px solid #eef2f6;
+        }
+        .session-card:hover {
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .session-card.inactive {
+            border-left-color: #ef4444;
+            opacity: 0.7;
+        }
+        .session-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .session-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .session-name i {
+            color: #3b82f6;
+            font-size: 18px;
+        }
+        .live-badge {
+            background: #dc2626;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 30px;
+            font-size: 10px;
+            font-weight: 600;
+            animation: pulse 1.5s infinite;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .session-mission {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .session-stats {
+            display: flex;
+            gap: 20px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .stat {
+            background: #f8fafc;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .stat i {
+            color: #94a3b8;
+            width: 16px;
+        }
+        .stat-value {
+            font-weight: 700;
+            color: #3b82f6;
+            font-size: 14px;
+        }
+
+        /* Header Actions */
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .count-badge {
+            background: #e2e8f0;
+            color: #1e293b;
+            padding: 4px 12px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .refresh-btn {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 8px 16px;
+            border-radius: 10px;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 13px;
+        }
+        .refresh-btn:hover {
+            background: #e2e8f0;
+            transform: scale(0.98);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+        }
+        .empty-icon {
+            font-size: 64px;
+            color: #cbd5e1;
+            margin-bottom: 15px;
+        }
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+        .empty-text {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Card Header */
+        .card-header-custom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .card-title-custom {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card-title-custom i {
+            color: #3b82f6;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="card" style="border: none; box-shadow: none; background: #f8fafc;">
+        <div class="card-body" style="padding: 0;">
+            <!-- Header -->
+            <div class="card-header-custom">
+                <div class="card-title-custom">
+                    <i class="fas fa-chart-line"></i>
+                    Sessions en direct
+                </div>
+                <div class="header-actions">
+                    <span class="count-badge" id="sessionCount">
+                        <i class="fas fa-users"></i> 0 actif(s)
+                    </span>
+                    <button class="refresh-btn" id="refreshBtn">
+                        <i class="fas fa-sync-alt"></i> Rafraîchir
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="stats-row" id="statsRow" style="display: none;">
+                <div class="stat-card">
+                    <div class="stat-icon">👥</div>
+                    <div class="stat-number" id="statActive">0</div>
+                    <div class="stat-label">Sessions actives</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⏱️</div>
+                    <div class="stat-number" id="statAvgTime">0m</div>
+                    <div class="stat-label">Durée moyenne</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-number" id="statExecutions">0</div>
+                    <div class="stat-label">Exécutions</div>
+                </div>
+            </div>
+
+            <!-- Sessions Container -->
+            <div id="sessionsContainer">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                    <div class="empty-title">Aucune session active</div>
+                    <div class="empty-text">Les candidats qui commencent une mission apparaîtront ici</div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        let socket = null;
+        let activeSessions = [];
+
+        function formatDuration(ms) {
+            const seconds = Math.floor(ms / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (minutes > 0) {
+                return `${minutes}min ${secs}s`;
+            }
+            return `${secs}s`;
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString('fr-FR', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function updateStats(sessions) {
+            const statsRow = document.getElementById('statsRow');
+            if (sessions.length > 0) {
+                statsRow.style.display = 'flex';
+                document.getElementById('statActive').textContent = sessions.length;
+
+                // Calculer la durée moyenne
+                let totalDuration = 0;
+                sessions.forEach(s => {
+                    totalDuration += (Date.now() - s.startTime);
+                });
+                const avgMinutes = Math.floor((totalDuration / sessions.length) / 60000);
+                document.getElementById('statAvgTime').textContent = avgMinutes + 'min';
+
+                // Compter les exécutions (simulé)
+                const totalExecutions = sessions.reduce((sum, s) => sum + (s.executions || 0), 0);
+                document.getElementById('statExecutions').textContent = totalExecutions;
+            } else {
+                statsRow.style.display = 'none';
+            }
+        }
+
+        function renderSessions(data) {
+            const container = document.getElementById('sessionsContainer');
+            const countBadge = document.getElementById('sessionCount');
+
+            activeSessions = data.sessions;
+
+            countBadge.innerHTML = `<i class="fas fa-users"></i> ${data.count} actif(s)`;
+            updateStats(data.sessions);
+
+            if (data.sessions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                        <div class="empty-title">Aucune session active</div>
+                        <div class="empty-text">Les candidats qui commencent une mission apparaîtront ici</div>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.sessions.map(session => `
+                <div class="session-card" data-session-id="${session.sessionId}">
+                    <div class="session-header">
+                        <div class="session-name">
+                            <i class="fas fa-user-circle"></i>
+                            ${escapeHtml(session.candidatName)}
+                        </div>
+                        <span class="live-badge">
+                            <i class="fas fa-circle" style="font-size: 8px;"></i> EN DIRECT
+                        </span>
+                    </div>
+                    <div class="session-mission">
+                        <i class="fas fa-code"></i>
+                        ${escapeHtml(session.missionTitle)}
+                    </div>
+                    <div class="session-stats">
+                        <div class="stat">
+                            <i class="fas fa-play"></i>
+                            Début: ${formatTime(session.startTime)}
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-hourglass-half"></i>
+                            Durée: <span class="stat-value" id="duration-${session.sessionId}">${formatDuration(session.currentDuration)}</span>
+                        </div>
+                        <div class="stat">
+                            <i class="fas fa-brain"></i>
+                            Actif: <span id="active-${session.sessionId}">${formatDuration(session.activeTime)}</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Mettre à jour les durées en temps réel
+            data.sessions.forEach(session => {
+                updateDuration(session.sessionId, session.startTime);
+            });
+        }
+
+        function updateDuration(sessionId, startTime) {
+            const durationElement = document.getElementById(`duration-${sessionId}`);
+            if (durationElement) {
+                const elapsed = Date.now() - startTime;
+                durationElement.textContent = formatDuration(elapsed);
+                setTimeout(() => updateDuration(sessionId, startTime), 1000);
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function initWebSocket() {
+            socket = io('http://localhost:3001', {
+                transports: ['websocket', 'polling']
+            });
+
+            socket.on('connect', () => {
+                console.log('✅ Connecté au tracker');
+                socket.emit('sessions:get');
+            });
+
+            socket.on('sessions:list', (data) => {
+                console.log('📊 Sessions reçues:', data.count);
+                renderSessions(data);
+            });
+
+            socket.on('session:started', (data) => {
+                console.log('🎉 Nouvelle session:', data.candidatName);
+                socket.emit('sessions:get');
+                showNotification('Nouvelle session', `${data.candidatName} a commencé ${data.missionTitle}`);
+            });
+
+            socket.on('session:ended', (data) => {
+                console.log('🏁 Session terminée:', data.candidatName);
+                socket.emit('sessions:get');
+                showNotification('Session terminée', `${data.candidatName} a terminé (${formatDuration(data.totalDuration)})`);
+            });
+
+            socket.on('session:execute', (data) => {
+                console.log('⚡ Exécution:', data);
+                // Mettre à jour le compteur d'exécutions
+                const session = activeSessions.find(s => s.sessionId === data.sessionId);
+                if (session) {
+                    session.executions = (session.executions || 0) + 1;
+                    updateStats(activeSessions);
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.log('🔌 Déconnecté');
+            });
+        }
+
+        function showNotification(title, body) {
+            if (Notification.permission === 'granted') {
+                new Notification(title, { body });
+            }
+        }
+
+        // Demander la permission pour les notifications
+        if (Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        document.getElementById('refreshBtn').addEventListener('click', () => {
+            if (socket) {
+                socket.emit('sessions:get');
+            }
+        });
+
+        initWebSocket();
+    </script>
+{% endblock %}
