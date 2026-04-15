@@ -242,11 +242,12 @@ class CertificationService
     /**
      * Génère le HTML du certificat
      */
+
     private function generateCertificateHTML(User $user, Cours $cours, ?Certification $certificate = null): string
     {
-        $displayName = trim((string) $user->getFirstName() . ' ' . (string) $user->getLastName());
-        if ($displayName === '') {
-            $displayName = (string) ($user->getEmail() ?? 'Candidat');
+        $displayName = trim($user->getFirstName() . ' ' . $user->getLastName());
+        if (empty($displayName)) {
+            $displayName = $user->getEmail() ?? 'Candidat';
         }
 
         $certNumber = $certificate?->getId() !== null
@@ -256,21 +257,21 @@ class CertificationService
         $safeDisplayName = htmlspecialchars($displayName, ENT_QUOTES, 'UTF-8');
         $verificationUrl = $certificate instanceof Certification ? $this->getPublicVerificationUrl($certificate) : null;
         $qrImageUrl = $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null;
-        $qrHtml = '';
 
-        if ($qrImageUrl !== null) {
+        $qrHtml = '';
+        if ($qrImageUrl !== null && $verificationUrl !== null) {
             $safeQrImage = htmlspecialchars($qrImageUrl, ENT_QUOTES, 'UTF-8');
+            $safeVerification = htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8');
             $qrHtml = <<<QRCODE
-                <div class="qr-box">
-                    <img src="{$safeQrImage}" alt="QR Code de vérification" class="qr-image">
-                    <div class="qr-title">QR de vérification</div>
-                    <div class="qr-subtitle">Scan rapide du certificat</div>
-                </div>
+            <div class="verification-qr">
+                <img src="{$safeQrImage}" alt="QR Code" class="verification-qr-image">
+                <div class="verification-text">Verifier ce certificat</div>
+            </div>
 QRCODE;
         }
 
         $dateObj = $certificate?->getDateObtention() ?? new \DateTimeImmutable();
-        $formattedDate = $dateObj->format('d/m/Y');
+        $formattedDate = $dateObj->format('F d, Y');
 
         return <<<HTML
 <!DOCTYPE html>
@@ -279,302 +280,308 @@ QRCODE;
     <meta charset="UTF-8">
     <title>Certificat d'achèvement</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        @page { size: A4 landscape; margin: 0; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
-            font-family: Helvetica, Arial, sans-serif;
-            background: #f7f7fb;
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            background: #ffffff;
             width: 100%;
+            margin: 0;
+            padding: 0;
         }
 
         .page {
             width: 297mm;
             height: 210mm;
             position: relative;
+            background: #ffffff;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+            break-inside: avoid;
             overflow: hidden;
-            background:
-                radial-gradient(circle at top left, rgba(99,102,241,0.16), transparent 28%),
-                radial-gradient(circle at bottom right, rgba(168,85,247,0.14), transparent 30%),
-                linear-gradient(135deg, #ffffff 0%, #fbfbff 100%);
         }
 
-        .frame {
+        /* Bande bleue en haut */
+        .top-blue-band {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 45mm;
+            background: linear-gradient(135deg, #1e3a5f 0%, #2a4a7a 100%);
+        }
+
+        /* Bordures */
+        .border-outer {
             position: absolute;
             top: 12mm;
             left: 12mm;
             right: 12mm;
             bottom: 12mm;
-            border: 1.4px solid #c7d2fe;
+            border: 1px solid #c4a747;
         }
 
-        .frame-inner {
+        .border-inner {
             position: absolute;
             top: 17mm;
             left: 17mm;
             right: 17mm;
             bottom: 17mm;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #d4c5a0;
         }
 
-        .top-band {
+        /* Header en haut sur fond bleu */
+        .header {
             position: absolute;
-            top: 20mm;
-            left: 20mm;
-            right: 20mm;
-            height: 24mm;
-            background: linear-gradient(120deg, #312e81 0%, #4f46e5 45%, #7c3aed 100%);
-            border-radius: 8px;
-            color: #fff;
-            padding: 7mm 10mm 0 10mm;
+            top: 22mm;
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 2;
         }
 
-        .brand {
-            font-size: 11px;
-            letter-spacing: 3px;
-            text-transform: uppercase;
-            opacity: .88;
-        }
-
-        .title {
-            margin-top: 1mm;
+        .logo {
             font-size: 28px;
             font-weight: 700;
-            letter-spacing: 1.5px;
+            letter-spacing: 6px;
+            color: #ffffff;
+            margin-bottom: 8px;
         }
 
-        .title strong { display: block; font-size: 34px; line-height: 1.05; }
-
-        .seal {
-            position: absolute;
-            top: 52mm;
-            right: 36mm;
-            width: 34mm;
-            height: 34mm;
-            border-radius: 50%;
-            border: 2px solid rgba(79,70,229,0.25);
-            background: radial-gradient(circle at 35% 35%, #fff 0%, #eef2ff 72%, #e0e7ff 100%);
-            text-align: center;
-            padding-top: 7mm;
-            color: #4338ca;
-            box-shadow: 0 10px 30px rgba(79,70,229,0.12);
-        }
-
-        .seal .emoji { font-size: 22px; display: block; }
-        .seal .small { font-size: 7px; margin-top: 1.5mm; letter-spacing: 1.2px; text-transform: uppercase; }
-
-        .body {
-            position: absolute;
-            top: 78mm;
-            left: 24mm;
-            right: 24mm;
-            text-align: center;
-        }
-
-        .label {
-            font-size: 11px;
+        .certificate-title {
+            font-size: 20px;
+            font-weight: 400;
+            color: #ffffff;
             letter-spacing: 3px;
-            color: #6b7280;
             text-transform: uppercase;
         }
 
-        .recipient {
-            margin-top: 4mm;
-            font-size: 31px;
-            font-family: Georgia, 'Times New Roman', serif;
+        .certificate-title strong {
             font-weight: 700;
-            color: #111827;
+            display: block;
+            font-size: 28px;
+            margin-top: 4px;
+            letter-spacing: 4px;
         }
 
-        .course-line {
-            margin-top: 5mm;
-            font-size: 14px;
-            color: #374151;
+        /* Body centré verticalement */
+        .body {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            transform: translateY(-50%);
+            text-align: center;
+            padding: 0 40px;
+            z-index: 2;
+            background: #ffffff;
+        }
+
+        .awarded-to {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            font-weight: 500;
+        }
+
+        .recipient-name {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1e3a5f;
+            margin: 12px 0;
+            font-family: 'Georgia', serif;
+            text-transform: lowercase;
+        }
+
+        .recipient-name::first-letter {
+            text-transform: uppercase;
+        }
+
+        .completion-text {
+            font-size: 13px;
+            color: #6b7280;
+            margin: 18px 0 8px;
+            letter-spacing: 1px;
         }
 
         .course-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin: 12px 0;
+            font-family: 'Georgia', serif;
+        }
+
+        .success-badge {
             display: inline-block;
-            margin-top: 3mm;
-            padding: 3mm 7mm;
-            font-size: 21px;
-            font-weight: 700;
-            color: #4f46e5;
-            background: rgba(79,70,229,0.07);
-            border: 1px solid rgba(79,70,229,0.15);
-            border-radius: 999px;
-            max-width: 240mm;
-        }
-
-        .summary {
-            margin: 8mm auto 0 auto;
-            max-width: 175mm;
-            font-size: 11.5px;
-            line-height: 1.7;
-            color: #6b7280;
-        }
-
-        .bottom-row {
-            position: absolute;
-            left: 24mm;
-            right: 24mm;
-            bottom: 24mm;
-            display: table;
-            width: calc(100% - 0mm);
-        }
-
-        .sign, .qr-col, .meta {
-            display: table-cell;
-            vertical-align: bottom;
-            width: 33.33%;
-        }
-
-        .sign { text-align: left; }
-        .meta { text-align: right; }
-        .qr-col { text-align: center; }
-
-        .line {
-            width: 62mm;
-            border-top: 1px solid #9ca3af;
-            margin-bottom: 3mm;
-        }
-
-        .sign-name {
+            background: #e8f0fe;
+            color: #1e3a5f;
+            padding: 6px 24px;
+            border-radius: 30px;
             font-size: 12px;
-            font-weight: 700;
-            color: #111827;
+            font-weight: 500;
+            letter-spacing: 1px;
+            margin-top: 10px;
         }
 
-        .sign-role {
+        /* Footer tout en bas */
+        .footer {
+            position: absolute;
+            bottom: 22mm;
+            left: 25mm;
+            right: 25mm;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            z-index: 2;
+        }
+
+        .signature-section {
+            text-align: left;
+            flex: 1;
+        }
+
+        .signature-line {
+            width: 130px;
+            border-top: 1px solid #1e3a5f;
+            margin-bottom: 6px;
+        }
+
+        .signature-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: #1e3a5f;
+        }
+
+        .signature-title {
             font-size: 9px;
             color: #6b7280;
-            margin-top: 1mm;
+            margin-top: 2px;
         }
 
-        .meta-box {
+        .verification-section {
+            text-align: center;
+            flex: 1;
+        }
+
+        .verification-qr {
             display: inline-block;
-            text-align: right;
-            padding: 4mm 5mm;
-            background: rgba(255,255,255,0.7);
-            border: 1px solid #e5e7eb;
-            border-radius: 10px;
-            min-width: 56mm;
+            text-align: center;
         }
 
-        .meta-label {
-            font-size: 8.5px;
-            color: #9ca3af;
+        .verification-qr-image {
+            width: 50px;
+            height: 50px;
+            border: 1px solid #e5e7eb;
+            padding: 3px;
+            background: #ffffff;
+        }
+
+        .verification-text {
+            margin-top: 5px;
+            font-size: 9px;
+            color: #6b7280;
+            font-weight: 500;
+            text-decoration: underline;
+            cursor: pointer;
+        }
+
+        .date-section {
+            text-align: right;
+            flex: 1;
+        }
+
+        .date-label {
+            font-size: 9px;
+            color: #6b7280;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .meta-value {
-            margin-top: 1mm;
+        .date-value {
             font-size: 13px;
-            font-weight: 700;
-            color: #374151;
+            font-weight: 600;
+            color: #1e3a5f;
+            margin-top: 4px;
         }
 
-        .cert-number {
-            margin-top: 1mm;
+        .certificate-number {
             font-size: 9px;
-            color: #9ca3af;
-        }
-
-        .qr-box {
-            display: inline-block;
-            text-align: center;
-            padding: 3mm;
-            border-radius: 12px;
-            background: #ffffff;
-            border: 1px solid #e5e7eb;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.05);
-        }
-
-        .qr-image {
-            width: 46mm;
-            height: 46mm;
-            display: block;
-            border-radius: 8px;
-        }
-
-        .qr-title {
-            margin-top: 2mm;
-            font-size: 9px;
-            font-weight: 700;
-            color: #111827;
-        }
-
-        .qr-subtitle {
-            margin-top: 1mm;
-            font-size: 7.5px;
             color: #6b7280;
+            margin-top: 5px;
         }
 
-        .footer-note {
-            position: absolute;
-            left: 24mm;
-            right: 24mm;
-            bottom: 16mm;
-            text-align: center;
-            font-size: 8.5px;
-            color: #9ca3af;
-            letter-spacing: .4px;
+        @media print {
+            body {
+                margin: 0;
+                padding: 0;
+            }
+            
+            .page {
+                margin: 0;
+                padding: 0;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
         }
     </style>
 </head>
 <body>
     <div class="page">
-        <div class="frame"></div>
-        <div class="frame-inner"></div>
-
-        <div class="top-band">
-            <div class="brand">Carrieri Academy</div>
-            <div class="title">CERTIFICAT <strong>D'ACHÈVEMENT</strong></div>
-        </div>
-
-        <div class="seal">
-            <span class="emoji">🎓</span>
-            <span class="small">Officiel</span>
+        <div class="top-blue-band"></div>
+        <div class="border-outer"></div>
+        <div class="border-inner"></div>
+        
+        <div class="header">
+            <div class="logo">CARRIERI</div>
+            <div class="certificate-title">
+                CERTIFICAT<br>
+                <strong>D'ACHÈVEMENT</strong>
+            </div>
         </div>
 
         <div class="body">
-            <div class="label">Ce certificat est décerné à</div>
-            <div class="recipient">{$safeDisplayName}</div>
-            <div class="course-line">pour avoir complété avec succès le cours</div>
+            <div class="awarded-to">CE CERTIFICAT EST DÉCERNÉ À</div>
+            <div class="recipient-name">{$safeDisplayName}</div>
+            <div class="completion-text">pour avoir complété avec succès le cours</div>
             <div class="course-name">{$courseTitle}</div>
-            <div class="summary">
-                Ce document atteste que l’apprenant a suivi le parcours complet, validé les modules associés et réussi l’évaluation finale conformément aux exigences de la plateforme Carrieri.
-            </div>
+            <div class="success-badge">Formation complétée avec succès</div>
         </div>
 
-        <div class="bottom-row">
-            <div class="sign">
-                <div class="line"></div>
-                <div class="sign-name">Carrieri</div>
-                <div class="sign-role">Plateforme de formation</div>
+        <div class="footer">
+            <div class="signature-section">
+                <div class="signature-line"></div>
+                <div class="signature-name">Bilal El Eter</div>
+                <div class="signature-title">Executive Director, CARRIERI</div>
             </div>
 
-            <div class="qr-col">
+            <div class="verification-section">
                 {$qrHtml}
             </div>
 
-            <div class="meta">
-                <div class="meta-box">
-                    <div class="meta-label">Date d'obtention</div>
-                    <div class="meta-value">{$formattedDate}</div>
-                    <div class="cert-number">N° {$certNumber}</div>
-                </div>
+            <div class="date-section">
+                <div class="date-label">DATE D'OBTENTION</div>
+                <div class="date-value">{$formattedDate}</div>
+                <div class="certificate-number">N° {$certNumber}</div>
             </div>
         </div>
-
-        <div class="footer-note">Certificat généré automatiquement • Vérification via QR • Carrieri</div>
     </div>
 </body>
 </html>
 HTML;
     }
-
     /**
      * Génère un nom de fichier unique pour le certificat
      */
