@@ -8,6 +8,8 @@ use App\Entity\Cours;
 use App\Entity\Lecon;
 use App\Repository\LeconRepository;
 use App\Repository\ModuleRepository;
+use App\Repository\ResultatQuizModuleRepository;
+use App\Repository\ResultatTestCoursRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +23,8 @@ class LeconController extends AbstractController
     public function __construct(
         private ModuleRepository $moduleRepository,
         private LeconRepository $leconRepository,
+        private ResultatQuizModuleRepository $resultatQuizModuleRepository,
+        private ResultatTestCoursRepository $resultatTestCoursRepository,
     ) {
     }
 
@@ -121,13 +125,57 @@ class LeconController extends AbstractController
             }
         }
 
+        $progress = $this->computeCompositeProgress($cours, $modules, $totalLessons, $viewedCount);
+
         return [
             'modules' => $modules,
             'lessons_by_module' => $lessonsByModule,
             'viewed_lesson_ids' => $viewedLookup,
-            'progress' => $totalLessons > 0 ? (int) round(($viewedCount / $totalLessons) * 100) : 0,
+            'progress' => $progress,
             'continue_lesson' => $continueLesson,
         ];
+    }
+
+    /**
+     * @param array<int, \App\Entity\Module> $modules
+     */
+    private function computeCompositeProgress(Cours $cours, array $modules, int $totalLessons, int $viewedCount): int
+    {
+        $moduleCount = count($modules);
+        if ($moduleCount === 0) {
+            return $totalLessons > 0 ? (int) round(($viewedCount / $totalLessons) * 100) : 0;
+        }
+
+        $completedModuleQuizzes = 0;
+        $passedFinalTest = 0;
+
+        $user = $this->getUser();
+        if ($user instanceof \App\Entity\User && $user->getId() !== null) {
+            foreach ($modules as $module) {
+                $moduleId = $module->getId();
+                if ($moduleId === null) {
+                    continue;
+                }
+
+                $latestQuiz = $this->resultatQuizModuleRepository->findLatestForCandidateAndModule((int) $user->getId(), $moduleId);
+                if ($latestQuiz !== null && (int) $latestQuiz->getReussite() === 1) {
+                    $completedModuleQuizzes++;
+                }
+            }
+
+            $coursId = $cours->getId();
+            if ($coursId !== null) {
+                $latestTest = $this->resultatTestCoursRepository->findLatestForCandidateAndCours((int) $user->getId(), $coursId);
+                if ($latestTest !== null && (int) $latestTest->getReussite() === 1) {
+                    $passedFinalTest = 1;
+                }
+            }
+        }
+
+        $requiredItems = max(1, $totalLessons + $moduleCount + 1);
+        $completedItems = $viewedCount + $completedModuleQuizzes + $passedFinalTest;
+
+        return (int) round(($completedItems / $requiredItems) * 100);
     }
 
     private function readBlobContent(mixed $blob): ?string
@@ -163,3 +211,4 @@ class LeconController extends AbstractController
         return $default;
     }
 }
+

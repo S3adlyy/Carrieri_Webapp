@@ -159,6 +159,7 @@ class LeconController extends AbstractController
 
         return $this->render('BackOffice/dashboard/lecons/show.html.twig', [
             'lecon' => $lecon,
+            'lecon_video_base64' => $this->encodeBinaryToBase64($lecon->getVideo()),
         ]);
     }
 
@@ -324,5 +325,28 @@ class LeconController extends AbstractController
         if ($coursId !== null) {
             $request->getSession()->set('selected_cours_id', $coursId);
         }
+    }
+
+    private function encodeBinaryToBase64(mixed $blob): ?string
+    {
+        if ($blob === null) {
+            return null;
+        }
+
+        if (is_resource($blob)) {
+            $meta = stream_get_meta_data($blob);
+            if (($meta['seekable'] ?? false) === true) {
+                rewind($blob);
+            }
+            $content = stream_get_contents($blob);
+
+            return is_string($content) && $content !== '' ? base64_encode($content) : null;
+        }
+
+        if (is_string($blob) && $blob !== '') {
+            return base64_encode($blob);
+        }
+
+        return null;
     }
 }

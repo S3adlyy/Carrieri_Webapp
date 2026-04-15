@@ -8,8 +8,11 @@ use App\Entity\User;
 use App\Repository\OffreEmploiRepository;
 use App\Service\BackOfficeDashboardService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use App\Service\CertificateModerationService;
+use App\Service\CertificationService;
 
 #[Route('/admin')]
 class AdminController extends AbstractController
@@ -17,6 +20,8 @@ class AdminController extends AbstractController
     public function __construct(
         private BackOfficeDashboardService $dashboardData,
         private OffreEmploiRepository $offreEmploiRepository,// Add this
+        private CertificationService $certificationService,
+        private CertificateModerationService $certificateModerationService,
     ) {
     }
 
@@ -134,11 +139,77 @@ class AdminController extends AbstractController
     public function certifications(): Response
     {
         $user = $this->requireUser();
+        $certifications = $this->dashboardData->listCertifications($user);
+        $certificateStates = [];
+
+        foreach ($certifications as $certification) {
+            $id = $certification->getId();
+            if ($id === null) {
+                continue;
+            }
+            $certificateStates[$id] = $this->certificateModerationService->getCertificateState($certification);
+        }
 
         return $this->render('BackOffice/dashboard/certifications/index.html.twig', [
-            'certifications' => $this->dashboardData->listCertifications($user),
+            'certifications' => $certifications,
+            'certificate_states' => $certificateStates,
             'is_admin_view' => $this->dashboardData->isAdmin($user),
         ]);
+    }
+
+    #[Route('/certifications/{id}/invalider', name: 'app_admin_certification_invalidate', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function invalidateCertification(Request $request, int $id): Response
+    {
+        $user = $this->requireUser();
+        $certificate = $this->certificationService->getCertificate($id);
+        if ($certificate === null) {
+            $this->addFlash('danger', 'Certification introuvable.');
+
+            return $this->redirectToRoute('app_admin_certifications');
+        }
+
+        if (!$this->canModerateCertificate($user, $certificate)) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('invalidate_cert_' . $id, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+
+            return $this->redirectToRoute('app_admin_certifications');
+        }
+
+        $reason = (string) $request->request->get('reason', '');
+        $this->certificateModerationService->markInvalid($certificate, $user, $reason);
+        $this->addFlash('success', 'Certificat marque comme non valide (fraude).');
+
+        return $this->redirectToRoute('app_admin_certifications');
+    }
+
+    #[Route('/certifications/{id}/valider', name: 'app_admin_certification_validate', methods: ['POST'], requirements: ['id' => '\\d+'])]
+    public function validateCertification(Request $request, int $id): Response
+    {
+        $user = $this->requireUser();
+        $certificate = $this->certificationService->getCertificate($id);
+        if ($certificate === null) {
+            $this->addFlash('danger', 'Certification introuvable.');
+
+            return $this->redirectToRoute('app_admin_certifications');
+        }
+
+        if (!$this->canModerateCertificate($user, $certificate)) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if (!$this->isCsrfTokenValid('validate_cert_' . $id, (string) $request->request->get('_token'))) {
+            $this->addFlash('danger', 'Jeton CSRF invalide.');
+
+            return $this->redirectToRoute('app_admin_certifications');
+        }
+
+        $this->certificateModerationService->markValid($certificate, $user);
+        $this->addFlash('success', 'Certificat valide confirme.');
+
+        return $this->redirectToRoute('app_admin_certifications');
     }
 
     #[Route('/reclamations', name: 'app_admin_reclamations')]
@@ -169,5 +240,13 @@ class AdminController extends AbstractController
         }
 
         return $user;
+    }
+    private function canModerateCertificate(User $user, \App\Entity\Certification $certificate): bool
+    {
+        if ($this->dashboardData->isAdmin($user)) {
+            return true;
+        }
+
+        return $certificate->getCours()?->getUser()?->getId() === $user->getId();
     }
 }

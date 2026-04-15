@@ -68,7 +68,7 @@ class CoursController extends AbstractController
                 $cours->setCompetencesVisees('');
             }
 
-            // Handle file upload for image
+
             $imageFile = $form->get('imageCouverture')->getData();
             if ($imageFile) {
                 $fileContent = file_get_contents($imageFile->getPathname());
@@ -108,6 +108,7 @@ class CoursController extends AbstractController
             'cours' => $cours,
             'modules' => $modules,
             'lessons_by_module' => $lessonsByModule,
+            'course_image_base64' => $this->encodeBinaryToBase64($cours->getImageCouverture()),
         ]);
     }
 
@@ -224,5 +225,28 @@ class CoursController extends AbstractController
         }
 
         return [$modules, $lessonsByModule];
+    }
+
+    private function encodeBinaryToBase64(mixed $blob): ?string
+    {
+        if ($blob === null) {
+            return null;
+        }
+
+        if (is_resource($blob)) {
+            $meta = stream_get_meta_data($blob);
+            if (($meta['seekable'] ?? false) === true) {
+                rewind($blob);
+            }
+            $content = stream_get_contents($blob);
+
+            return is_string($content) && $content !== '' ? base64_encode($content) : null;
+        }
+
+        if (is_string($blob) && $blob !== '') {
+            return base64_encode($blob);
+        }
+
+        return null;
     }
 }

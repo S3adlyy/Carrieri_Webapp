@@ -10,6 +10,11 @@ use Doctrine\ORM\Mapping as ORM;
 #[ORM\Entity]
 class SnapshotItem
 {
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column]
+    private ?int $id = null;
+
     #[ORM\Column]
     private ?int $snapshotId = null;
 
@@ -27,13 +32,21 @@ class SnapshotItem
     #[ORM\JoinColumn(name: 'artifact_id', referencedColumnName: 'id')]
     private ?Artifact $artifact = null;
 
+    // ✅ Une seule déclaration de $fileObject (supprimez la ligne 30)
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'file_object_id', referencedColumnName: 'id')]
     private ?FileObject $fileObject = null;
 
-    #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'artifact_id', referencedColumnName: 'id')]
-    private ?FileObject $fileObject = null;
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function setId(?int $id): self
+    {
+        $this->id = $id;
+        return $this;
+    }
 
     public function getSnapshotId(): ?int
     {
@@ -90,22 +103,13 @@ class SnapshotItem
         return $this;
     }
 
+    // ✅ Une seule méthode getFileObject()
     public function getFileObject(): ?FileObject
     {
         return $this->fileObject;
     }
 
-    public function setFileObject(?FileObject $fileObject): self
-    {
-        $this->fileObject = $fileObject;
-        return $this;
-    }
-
-    public function getFileObject(): ?FileObject
-    {
-        return $this->fileObject;
-    }
-
+    // ✅ Une seule méthode setFileObject()
     public function setFileObject(?FileObject $fileObject): self
     {
         $this->fileObject = $fileObject;

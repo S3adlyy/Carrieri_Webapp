@@ -27,7 +27,7 @@ class ResultatQuizModule
     #[ORM\Column]
     private ?int $totalPoints = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime_immutable')]
     private ?\DateTimeInterface $dateCompletion = null;
 
     #[ORM\Column]

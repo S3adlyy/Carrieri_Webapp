@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Table(name: 'cours')]
 #[ORM\Entity]
+#[UniqueEntity(fields: ['titre'], message: 'Un cours avec ce titre existe deja.', errorPath: 'titre')]
 class Cours
 {
     #[ORM\Id]
@@ -36,8 +38,8 @@ class Cours
     #[ORM\Column]
     private ?int $createdBy = null;
 
-    #[ORM\Column]
-    private ?string $imageCouverture = null;
+    #[ORM\Column(type: 'blob', nullable: true)]
+    private mixed $imageCouverture = null;
 
     #[ORM\Column]
     private ?float $prix = null;
@@ -137,12 +139,12 @@ class Cours
         return $this;
     }
 
-    public function getImageCouverture(): ?string
+    public function getImageCouverture(): mixed
     {
         return $this->imageCouverture;
     }
 
-    public function setImageCouverture(?string $imageCouverture): self
+    public function setImageCouverture(mixed $imageCouverture): self
     {
         $this->imageCouverture = $imageCouverture;
         return $this;

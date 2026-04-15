@@ -33,10 +33,10 @@ class AchatCours
     #[ORM\Column]
     private ?string $statut = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dateAchat = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dateExpiration = null;
 
     #[ORM\ManyToOne]

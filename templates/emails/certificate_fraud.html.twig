@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerte certificat</title>
+</head>
+<body style="margin:0;padding:24px 12px;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+<table style="width:100%;max-width:680px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 10px 30px rgba(0,0,0,0.08);border-collapse:collapse;">
+    <tr>
+        <td style="padding:0;background:linear-gradient(120deg,#b91c1c,#ef4444);color:#ffffff;">
+            <div style="padding:28px 28px 22px 28px;">
+                <div style="font-size:12px;letter-spacing:1px;text-transform:uppercase;opacity:.9;">Carrieri • Notification de sécurité</div>
+                <h1 style="margin:10px 0 0 0;font-size:26px;line-height:1.2;font-weight:700;">Certificat signalé comme fraude</h1>
+                <p style="margin:8px 0 0 0;font-size:14px;opacity:.95;">Un recruteur a invalidé l'un de vos certificats.</p>
+            </div>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:26px 28px 10px 28px;color:#111827;">
+            <p style="margin:0 0 14px 0;font-size:16px;line-height:1.6;">Bonjour <strong>{{ display_name }}</strong>,</p>
+            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#374151;">
+                Votre certificat lié au cours <strong style="color:#b91c1c;">{{ course_title }}</strong> a été marqué comme non valide.
+            </p>
+            <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px 18px;margin:18px 0;">
+                <div style="font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#991b1b;font-weight:700;margin-bottom:6px;">Motif communiqué</div>
+                <div style="font-size:14px;line-height:1.7;color:#7f1d1d;">{{ reason }}</div>
+            </div>
+            <p style="margin:0 0 14px 0;font-size:15px;line-height:1.7;color:#374151;">
+                Votre progression dans ce cours a été réinitialisée afin de préserver l'intégrité du parcours.
+                Vous pouvez reprendre l'apprentissage depuis votre espace candidat.
+            </p>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:0 28px 24px 28px;">
+            <a href="{{ courses_url }}" style="display:inline-block;background:#b91c1c;color:#ffffff;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px;font-size:14px;">Reprendre mes cours</a>
+            <span style="display:inline-block;width:10px;height:10px;"></span>
+            <a href="{{ certificates_url }}" style="display:inline-block;background:#ffffff;color:#b91c1c;text-decoration:none;font-weight:700;padding:12px 18px;border-radius:10px;font-size:14px;border:1px solid #fecaca;">Voir mes certificats</a>
+        </td>
+    </tr>
+
+    <tr>
+        <td style="padding:16px 28px 22px 28px;border-top:1px solid #e5e7eb;color:#6b7280;font-size:12px;line-height:1.7;">
+            <div>Si vous pensez qu'il s'agit d'une erreur, contactez l'équipe support.</div>
+            <div>Révision effectuée par : {{ reviewer_name }}</div>
+            <div style="margin-top:6px;">{{ year }} Carrieri. Tous droits réservés.</div>
+        </td>
+    </tr>
+</table>
+</body>
+</html>
+
+

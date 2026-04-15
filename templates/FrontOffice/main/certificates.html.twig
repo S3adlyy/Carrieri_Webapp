@@ -1,0 +1,161 @@
+{% extends "FrontOffice/main/base_candidate.html.twig" %}
+
+{% block title %}Mes Certificats - Carrieri{% endblock %}
+
+{% block candidate_page_heading %}Mes Certificats{% endblock %}
+
+{% block candidate_breadcrumb %} / Mes Certificats{% endblock %}
+
+{% block candidate_content %}
+    <div class="container mt-5 mb-5">
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <h1 class="display-5 fw-bold">Mes Certificats</h1>
+                <p class="text-muted">Consultez et téléchargez vos certificats d'achèvement</p>
+            </div>
+            <div class="col-lg-4 d-flex align-items-center justify-content-end">
+                <div class="badge bg-primary p-3">
+                    <span class="fs-5">{{ total_certificates }} certificat{{ total_certificates != 1 ? 's' : '' }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if certificates %}
+            <div class="row g-4">
+                {% for cert in certificates %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 shadow-sm border-0 certificate-card">
+                            <!-- En-tête du certificat -->
+                            <div class="card-header bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center; color: white;">
+                                <div style="font-size: 36px; margin-bottom: 10px;">🎓</div>
+                                <h5 class="mb-0">CERTIFICAT</h5>
+                                <small class="text-white-50">
+                                    {{ cert.date_obtained ? cert.date_obtained.format('d/m/Y') : 'Date inconnue' }}
+                                </small>
+                            </div>
+
+                            <!-- Contenu principal -->
+                            <div class="card-body">
+                                <h5 class="card-title text-center mb-3">{{ cert.course_title }}</h5>
+
+                                {% if cert.course_description %}
+                                    <p class="card-text text-muted small text-center">
+                                        {% if cert.course_description|length > 80 %}
+                                            {{ cert.course_description[:80] }}...
+                                        {% else %}
+                                            {{ cert.course_description }}
+                                        {% endif %}
+                                    </p>
+                                {% endif %}
+
+                                <!-- Badge d'obtention -->
+                                <div class="text-center mb-3">
+                                    {% if cert.is_invalid|default(false) %}
+                                        <span class="badge bg-danger">⚠ CERTIFICAT NON VALIDE</span>
+                                    {% else %}
+                                        <span class="badge bg-success">🏆 OBTENU AVEC SUCCÈS</span>
+                                    {% endif %}
+                                </div>
+
+                                <!-- Numéro et année -->
+                                <div class="row text-center text-muted small mb-3">
+                                    <div class="col-6">
+                                        <small class="d-block text-uppercase fw-bold">N°</small>
+                                        <small>{{ cert.certificate_number }}</small>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="d-block text-uppercase fw-bold">Année</small>
+                                        <small>{{ cert.date_obtained ? cert.date_obtained.format('Y') : '-' }}</small>
+                                    </div>
+                                </div>
+
+                                <hr class="my-2">
+
+                                <!-- Boutons d'action -->
+                                <div class="d-grid gap-2">
+                                    {% if cert.is_invalid|default(false) %}
+                                        <button class="btn btn-sm btn-danger" disabled>
+                                            Certificat non valide
+                                        </button>
+                                        <div class="small text-muted text-center">
+                                            {{ cert.moderation_reason|default('Fraude signalee par recruteur.') }}
+                                        </div>
+                                    {% elseif cert.has_file %}
+                                        <a href="{{ path('app_candidate_certificate_view', { id: cert.id }) }}"
+                                           class="btn btn-sm btn-outline-primary" target="_blank">
+                                            <i class="fas fa-eye"></i> Voir le PDF
+                                        </a>
+                                        <a href="{{ path('app_candidate_certificate_download', { id: cert.id }) }}"
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-download"></i> Télécharger
+                                        </a>
+                                        <div class="small text-muted text-center mt-1">
+                                            QR de vérification intégré au PDF
+                                        </div>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-secondary" disabled>
+                                            ❌ Fichier indisponible
+                                        </button>
+                                    {% endif %}
+                                </div>
+
+                                {% if cert.verification_qr_url %}
+                                    <div class="text-center mt-3">
+                                        <img src="{{ cert.verification_qr_url }}" alt="QR verification" style="width:110px;height:110px;border:1px solid #e5e7eb;border-radius:8px;">
+                                        <div class="text-muted mt-1" style="font-size:11px;">QR de vérification{% if cert.is_invalid|default(false) %} (statut frauduleux){% endif %}</div>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Pied de page -->
+                            <div class="card-footer bg-light text-center text-muted small">
+                                <small>Certificat officiel Carrieri</small>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="alert alert-info d-flex align-items-center" role="alert">
+                <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+                <div>
+                    <strong>Aucun certificat pour le moment.</strong> Complétez un cours pour obtenir votre certificat d'achèvement!
+                </div>
+            </div>
+
+            <div class="text-center mt-5">
+                <a href="{{ path('app_candidate_cours') }}" class="btn btn-primary">
+                    <i class="fas fa-book"></i> Voir les cours disponibles
+                </a>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .certificate-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .certificate-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .bg-gradient {
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 0 15px;
+            }
+
+            .display-5 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+
+

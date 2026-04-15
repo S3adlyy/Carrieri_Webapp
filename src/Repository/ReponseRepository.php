@@ -16,16 +16,19 @@ class ReponseRepository extends ServiceEntityRepository
         parent::__construct($registry, Reponse::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    /**
+     * @return Reponse[]
+     */
+    public function findByQuestionAndType(int $questionId, string $questionType): array
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.questionId = :questionId')
+            ->andWhere('r.questionType = :questionType')
+            ->setParameter('questionId', $questionId)
+            ->setParameter('questionType', strtoupper($questionType))
+            ->orderBy('r.ordre', 'ASC')
+            ->addOrderBy('r.id', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 }

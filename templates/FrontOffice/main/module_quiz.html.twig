@@ -1,0 +1,177 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Quiz module{% endblock %}
+
+{% block candidate_page_heading %}Quiz du module{% endblock %}
+
+{% block candidate_breadcrumb %}
+    / <a href="{{ path('app_candidate_cours') }}">Cours</a>
+    {% if cours %}/ <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}">{{ cours.titre|default('Cours') }}</a>{% endif %}
+    / Quiz module
+{% endblock %}
+
+{% block candidate_content %}
+    <div class="w-100 text-start fo-charte-ui fo-anti-copy-page" id="module-quiz-page">
+        {% if cours %}
+            <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}" class="btn btn-outline-secondary btn-sm mb-3">Retour au cours</a>
+        {% endif %}
+
+        <div class="card shadow-sm fo-charte-card mb-4">
+            <div class="card-body">
+                <h4 class="mb-1">{{ module.titre|default('Module') }}</h4>
+                <p class="text-muted mb-0">Quiz de {{ expected_count }} questions - Seuil de réussite: {{ pass_threshold }}%</p>
+                <p class="text-muted mb-0">Leçons lues: {{ module_lessons_viewed|default(0) }}/{{ module_lessons_total|default(0) }}</p>
+            </div>
+        </div>
+
+        {% if module_quiz_unlocked is defined and not module_quiz_unlocked %}
+            <div class="alert alert-warning mb-4">
+                Vous devez lire toutes les leçons de ce module avant d'accéder au quiz.
+            </div>
+        {% endif %}
+
+        {% if latest_result %}
+            <div class="alert {{ latest_result.reussite ? 'alert-success' : 'alert-warning' }} mb-4">
+                Dernier résultat: {{ latest_result.score }}/{{ latest_result.totalPoints }}
+                ({{ latest_result.totalPoints > 0 ? ((latest_result.score / latest_result.totalPoints) * 100)|round : 0 }}%)
+                - {{ latest_result.reussite ? 'Réussi' : 'Non réussi' }}.
+            </div>
+        {% endif %}
+
+        {% if module_quiz_unlocked is defined and not module_quiz_unlocked %}
+            <div class="alert alert-light border">Terminez d'abord toutes les leçons du module pour débloquer ce quiz.</div>
+        {% elseif questions is empty %}
+            <div class="alert alert-light border">Aucune question de quiz n'est disponible pour ce module.</div>
+        {% else %}
+            <form method="post" class="card shadow-sm fo-charte-card fo-anti-copy" id="module-quiz-form">
+                <div class="card-body">
+                    {% for q in questions %}
+                        <div class="mb-4 quiz-question-block {{ loop.first ? '' : 'd-none' }}" data-question-index="{{ loop.index0 }}">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h5 class="mb-0">{{ loop.index }}. {{ q.text }}</h5>
+                                <span class="badge badge-success">{{ q.points }} pt{{ q.points > 1 ? 's' : '' }}</span>
+                            </div>
+
+                            {% for answer in q.answers %}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="answers[{{ q.id }}]" id="q{{ q.id }}_a{{ answer.id }}" value="{{ answer.id }}">
+                                    <label class="form-check-label" for="q{{ q.id }}_a{{ answer.id }}">{{ answer.text }}</label>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <button type="button" class="btn btn-outline-secondary" id="quiz-prev" disabled>Precedent</button>
+                        <small class="text-muted" id="quiz-progress">Question 1/{{ questions|length }}</small>
+                        <button type="button" class="btn btn-outline-primary" id="quiz-next">Suivant</button>
+                    </div>
+
+                    <hr>
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary" id="quiz-submit">Terminer le quiz</button>
+                    </div>
+                </div>
+            </form>
+        {% endif %}
+
+        {% if result %}
+            <div class="card shadow-sm fo-charte-card mt-4">
+                <div class="card-body text-center">
+                    <h4 class="mb-2">Score: {{ result.score }}/{{ result.total_points }} ({{ result.percentage|round }}%)</h4>
+                    <p class="mb-0 {{ result.passed ? 'text-success' : 'text-danger' }} font-weight-bold">
+                        {{ result.passed ? 'Felicitations ! Quiz reussi.' : 'Quiz non reussi. Minimum ' ~ pass_threshold ~ '% requis.' }}
+                    </p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const page = document.getElementById('module-quiz-page');
+            const blocks = Array.from(document.querySelectorAll('.quiz-question-block'));
+            if (!blocks.length) {
+                return;
+            }
+
+            let currentIndex = 0;
+            const prevBtn = document.getElementById('quiz-prev');
+            const nextBtn = document.getElementById('quiz-next');
+            const progressLabel = document.getElementById('quiz-progress');
+            const form = document.getElementById('module-quiz-form');
+
+            const blockCopy = function (event) {
+                if (page && event.target.closest('#module-quiz-page')) {
+                    event.preventDefault();
+                }
+            };
+
+            document.addEventListener('keydown', function (event) {
+                if (!page || !event.target.closest('#module-quiz-page')) {
+                    return;
+                }
+
+                const key = (event.key || '').toLowerCase();
+                if ((event.ctrlKey || event.metaKey) && ['a', 'c', 'x', 'u', 's', 'p'].includes(key)) {
+                    event.preventDefault();
+                }
+            });
+
+            document.addEventListener('copy', blockCopy);
+            document.addEventListener('cut', blockCopy);
+            document.addEventListener('contextmenu', blockCopy);
+            document.addEventListener('selectstart', blockCopy);
+
+            form?.addEventListener('copy', blockCopy);
+            form?.addEventListener('cut', blockCopy);
+            form?.addEventListener('contextmenu', blockCopy);
+            form?.addEventListener('selectstart', blockCopy);
+
+            const update = function () {
+                blocks.forEach(function (block, index) {
+                    block.classList.toggle('d-none', index !== currentIndex);
+                });
+                prevBtn.disabled = currentIndex === 0;
+                nextBtn.disabled = currentIndex === (blocks.length - 1);
+                progressLabel.textContent = 'Question ' + (currentIndex + 1) + '/' + blocks.length;
+            };
+
+            prevBtn?.addEventListener('click', function () {
+                if (currentIndex > 0) {
+                    currentIndex -= 1;
+                    update();
+                }
+            });
+
+            nextBtn?.addEventListener('click', function () {
+                if (currentIndex < blocks.length - 1) {
+                    currentIndex += 1;
+                    update();
+                }
+            });
+
+            form?.addEventListener('submit', function (event) {
+                const totalQuestions = blocks.length;
+                let answered = 0;
+
+                blocks.forEach(function (block) {
+                    if (block.querySelector('input[type="radio"]:checked')) {
+                        answered += 1;
+                    }
+                });
+
+                if (answered < totalQuestions) {
+                    event.preventDefault();
+                    alert('Veuillez repondre a toutes les questions avant de terminer.');
+                }
+            });
+
+            update();
+        });
+    </script>
+{% endblock %}
+

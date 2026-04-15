@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 
 #[ORM\Table(name: 'lecon')]
 #[ORM\Entity]
+#[UniqueEntity(fields: ['titre', 'module'], message: 'Une lecon avec ce titre existe deja dans ce module.', errorPath: 'titre')]
 class Lecon
 {
     #[ORM\Id]
@@ -27,11 +29,8 @@ class Lecon
     #[ORM\Column]
     private ?int $moduleId = null;
 
-    #[ORM\Column]
-    private ?string $type = null;
-
-    #[ORM\Column]
-    private ?string $video = null;
+    #[ORM\Column(type: 'blob', nullable: true)]
+    private mixed $video = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'module_id', referencedColumnName: 'id')]
@@ -92,23 +91,12 @@ class Lecon
         return $this;
     }
 
-    public function getType(): ?string
-    {
-        return $this->type;
-    }
-
-    public function setType(?string $type): self
-    {
-        $this->type = $type;
-        return $this;
-    }
-
-    public function getVideo(): ?string
+    public function getVideo(): mixed
     {
         return $this->video;
     }
 
-    public function setVideo(?string $video): self
+    public function setVideo(mixed $video): self
     {
         $this->video = $video;
         return $this;

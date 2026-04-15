@@ -16,16 +16,17 @@ class ResultatQuizModuleRepository extends ServiceEntityRepository
         parent::__construct($registry, ResultatQuizModule::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    public function findLatestForCandidateAndModule(int $candidatId, int $moduleId): ?ResultatQuizModule
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.candidatId = :candidatId')
+            ->andWhere('r.moduleId = :moduleId')
+            ->setParameter('candidatId', $candidatId)
+            ->setParameter('moduleId', $moduleId)
+            ->orderBy('r.dateCompletion', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

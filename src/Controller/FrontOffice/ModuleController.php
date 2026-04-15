@@ -26,3 +26,4 @@ class ModuleController extends AbstractController
         return $this->redirectToRoute('app_candidate_cours_show', ['id' => $cours->getId()]);
     }
 }
+

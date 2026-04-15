@@ -39,11 +39,6 @@ class CandidateMainController extends AbstractController
         return $this->render('FrontOffice/main/main.html.twig');
     }
 
-    #[Route('/cours', name: 'app_candidate_cours')]
-    public function cours(): Response
-    {
-        return $this->render('FrontOffice/main/cours.html.twig');
-    }
 
     #[Route('/offres', name: 'app_candidate_offres')]
     public function offres(Request $request, OffreEmploiRepository $offreEmploiRepository): Response

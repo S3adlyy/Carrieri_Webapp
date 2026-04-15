@@ -1,0 +1,273 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Paiement réussi - {{ cours.titre }}{% endblock %}
+
+{% block candidate_page_heading %}Paiement réussi{% endblock %}
+
+{% block candidate_breadcrumb %} / Paiement / Succès{% endblock %}
+
+{% block candidate_content_col_class %}col-12{% endblock %}
+
+{% block candidate_content %}
+<div class="paiement-succes-container">
+    <div class="succes-card">
+        <div class="succes-icon">✅</div>
+
+        <h1>Paiement réussi!</h1>
+
+        <div class="succes-details">
+            <p class="cours-achetée">
+                Félicitations! Vous avez acheté le cours
+            </p>
+            <h2 class="titre-cours">{{ cours.titre }}</h2>
+            <p class="prix-paye">{{ cours.prix|number_format(2, ',', ' ') }} €</p>
+        </div>
+
+        <div class="actions-succes">
+            <a href="{{ path('app_candidate_cours_show', {'id': cours.id}) }}" class="btn-acces-cours">
+                📚 Accéder au cours
+            </a>
+
+            <a href="{{ path('app_candidate_cours') }}" class="btn-retour-catalogue">
+                🏠 Retour au catalogue
+            </a>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card">
+                <h3>📚 Votre accès</h3>
+                <p>Vous pouvez accéder au cours pendant <strong>1 an</strong> à partir de maintenant.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>🔄 Téléchargement</h3>
+                <p>Vous pouvez télécharger les ressources du cours pour étudier hors ligne.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>📧 Confirmation</h3>
+                <p>Un e-mail de confirmation a été envoyé à votre adresse email.</p>
+            </div>
+
+            <div class="info-card">
+                <h3>❓ Support</h3>
+                <p>En cas de problème, contactez notre support via le formulaire de contact.</p>
+            </div>
+        </div>
+
+        <div class="prochaines-etapes">
+            <h3>Prochaines étapes</h3>
+            <ol>
+                <li>Accédez au cours en cliquant sur le bouton ci-dessus</li>
+                <li>Complétez les modules selon votre rythme</li>
+                <li>Passez les quiz et tests pour valider votre apprentissage</li>
+                <li>Obtenez votre certification à la fin du cours</li>
+            </ol>
+        </div>
+    </div>
+
+    <!-- Bouton de retour rapide -->
+    <div class="retour-rapide">
+        <a href="{{ path('app_candidate_cours') }}" class="btn-simple">
+            ← Retour à l'accueil
+        </a>
+    </div>
+</div>
+
+<style>
+.paiement-succes-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.succes-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.succes-icon {
+    font-size: 80px;
+    margin-bottom: 20px;
+    animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-20px); }
+}
+
+.succes-card h1 {
+    color: #10b981;
+    margin: 20px 0;
+    font-size: 32px;
+}
+
+.succes-details {
+    background: #f0fdf4;
+    border-left: 4px solid #10b981;
+    padding: 20px;
+    margin: 30px 0;
+    border-radius: 10px;
+}
+
+.cours-achetée {
+    color: #666;
+    margin: 0 0 10px 0;
+    font-size: 14px;
+}
+
+.titre-cours {
+    color: #231942;
+    margin: 10px 0;
+    font-size: 24px;
+}
+
+.prix-paye {
+    color: #10b981;
+    font-size: 28px;
+    font-weight: bold;
+    margin: 10px 0 0 0;
+}
+
+.actions-succes {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 30px 0;
+}
+
+.btn-acces-cours {
+    display: block;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-acces-cours:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+}
+
+.btn-retour-catalogue {
+    display: block;
+    background: #f0f0f0;
+    color: #333;
+    padding: 15px;
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+.btn-retour-catalogue:hover {
+    background: #e0e0e0;
+    transform: translateY(-2px);
+}
+
+.info-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.info-card {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    border-left: 3px solid #5E548E;
+}
+
+.info-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 14px;
+    color: #231942;
+}
+
+.info-card p {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.prochaines-etapes {
+    background: #efefff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 30px;
+    text-align: left;
+}
+
+.prochaines-etapes h3 {
+    color: #231942;
+    margin-top: 0;
+}
+
+.prochaines-etapes ol {
+    margin: 10px 0;
+    padding-left: 20px;
+    color: #666;
+}
+
+.prochaines-etapes li {
+    margin: 8px 0;
+}
+
+.retour-rapide {
+    text-align: center;
+    margin-top: 30px;
+}
+
+.btn-simple {
+    display: inline-block;
+    color: #5E548E;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-simple:hover {
+    color: #231942;
+    transform: translateX(-5px);
+}
+
+@media (max-width: 600px) {
+    .succes-card {
+        padding: 20px;
+    }
+
+    .succes-icon {
+        font-size: 60px;
+    }
+
+    .succes-card h1 {
+        font-size: 24px;
+    }
+
+    .titre-cours {
+        font-size: 18px;
+    }
+
+    .actions-succes {
+        gap: 10px;
+    }
+
+    .info-cards {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+
+

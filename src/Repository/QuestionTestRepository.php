@@ -16,16 +16,28 @@ class QuestionTestRepository extends ServiceEntityRepository
         parent::__construct($registry, QuestionTest::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    /**
+     * @return QuestionTest[]
+     */
+    public function findByCoursOrdered(int $coursId, int $limit = 15): array
+    {
+        return $this->createQueryBuilder('q')
+            ->andWhere('q.coursId = :coursId')
+            ->setParameter('coursId', $coursId)
+            ->orderBy('q.ordre', 'ASC')
+            ->addOrderBy('q.id', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    public function countForCours(int $coursId): int
+    {
+        return (int) $this->createQueryBuilder('q')
+            ->select('COUNT(q.id)')
+            ->andWhere('q.coursId = :coursId')
+            ->setParameter('coursId', $coursId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

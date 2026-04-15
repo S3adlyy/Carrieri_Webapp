@@ -20,11 +20,11 @@
                     <h5>Contenu</h5>
                     <div class="p-3 bg-light rounded mb-3">{{ lecon.contenu|default('—') }}</div>
 
-                    {% if lecon.video %}
+                    {% if lecon_video_base64 %}
                         <h5>Vidéo</h5>
                         <div class="mb-3">
                             <video width="100%" height="auto" controls style="max-width: 600px;">
-                                <source src="data:video/mp4;base64,{{ lecon.video|b64encode }}" type="video/mp4">
+                                <source src="data:video/mp4;base64,{{ lecon_video_base64 }}" type="video/mp4">
                                 Votre navigateur ne supporte pas la balise vidéo.
                             </video>
                         </div>

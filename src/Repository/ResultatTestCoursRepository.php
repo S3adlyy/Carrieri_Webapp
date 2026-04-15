@@ -16,16 +16,36 @@ class ResultatTestCoursRepository extends ServiceEntityRepository
         parent::__construct($registry, ResultatTestCours::class);
     }
 
-    // Ajoutez vos méthodes personnalisées ici
-    // public function findBySomething($value): array
-    // {
-    //     return $this->createQueryBuilder('e')
-    //         ->andWhere('e.exampleField = :val')
-    //         ->setParameter('val', $value)
-    //         ->orderBy('e.id', 'ASC')
-    //         ->setMaxResults(10)
-    //         ->getQuery()
-    //         ->getResult()
-    //     ;
-    // }
+    public function findLatestForCandidateAndCours(int $candidatId, int $coursId): ?ResultatTestCours
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.candidatId = :candidatId')
+            ->andWhere('r.coursId = :coursId')
+            ->setParameter('candidatId', $candidatId)
+            ->setParameter('coursId', $coursId)
+            ->orderBy('r.dateCompletion', 'DESC')
+            ->addOrderBy('r.id', 'DESC')
+            ->setMaxResults(1)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * @return int[]
+     */
+    public function findPassedCoursIdsForCandidate(int $candidatId): array
+    {
+        $rows = $this->createQueryBuilder('r')
+            ->select('DISTINCT r.coursId AS cours_id')
+            ->andWhere('r.candidatId = :candidatId')
+            ->andWhere('r.reussite = 1')
+            ->setParameter('candidatId', $candidatId)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_values(array_filter(array_unique(array_map(
+            static fn (array $row): int => (int) ($row['cours_id'] ?? 0),
+            $rows
+        )), static fn (int $id): bool => $id > 0));
+    }
 }
