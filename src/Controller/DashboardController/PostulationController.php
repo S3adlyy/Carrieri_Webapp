@@ -15,6 +15,10 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
+use Psr\Log\LoggerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 #[Route('/admin/postulations')]
 class PostulationController extends AbstractController
@@ -23,6 +27,10 @@ class PostulationController extends AbstractController
         private EntityManagerInterface $entityManager,
         private PostulationRepository $postulationRepository,
         private OffreEmploiRepository $offreEmploiRepository,
+        private MailerInterface $mailer,
+        private LoggerInterface $logger,
+        #[Autowire('%env(SENDER_EMAIL)%')]
+        private string $senderEmail,
     ) {
     }
 
@@ -130,11 +138,85 @@ class PostulationController extends AbstractController
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
+        $oldStatut = $postulation->getStatut();
         $postulation->setStatut($statut);
         $this->entityManager->flush();
 
-        $this->addFlash('success', 'Statut mis à jour avec succès.');
+// Send email only when status changes to Acceptée or Refusée
+        if ($statut !== $oldStatut && in_array($statut, ['Acceptée', 'Refusée'])) {
+            $candidate = $postulation->getUser();
+            
+            // Check if candidate exists
+            if (!$candidate) {
+                $this->logger->warning('Cannot send email: candidate not found for postulation', [
+                    'postulation_id' => $postulation->getId()
+                ]);
+                $this->addFlash('warning', '⚠️ Impossible d\'envoyer l\'email: candidat non trouvé');
+            }
+            // Check if candidate has email
+            elseif (!$candidate->getEmail()) {
+                $this->logger->warning('Cannot send email: candidate has no email address', [
+                    'postulation_id' => $postulation->getId(),
+                    'candidate_id' => $candidate->getId(),
+                    'candidate_name' => $candidate->getFirstName() . ' ' . $candidate->getLastName()
+                ]);
+                $this->addFlash('warning', '⚠️ Email du candidat manquant - impossible d\'envoyer la notification');
+            }
+            // Send email if candidate and email exist
+            else {
+                $subject = $statut === 'Acceptée'
+                    ? '🎉 Votre candidature a été acceptée !'
+                    : 'Résultat de votre candidature';
 
+                $bodyHtml = $statut === 'Acceptée'
+                    ? '
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#f0fdf4;border-radius:16px;">
+                    <h2 style="color:#059669;">🎉 Félicitations !</h2>
+                    <p>Bonjour <strong>' . htmlspecialchars($candidate->getFirstName() ?? '') . '</strong>,</p>
+                    <p>Votre candidature pour l\'offre <strong>' . htmlspecialchars($offre->getTitre()) . '</strong> 
+                    chez <strong>' . htmlspecialchars($offre->getEntreprise()) . '</strong> a été <strong style="color:#059669;">acceptée</strong>.</p>
+                    <p>Le recruteur vous contactera prochainement à l\'adresse : <strong>' . htmlspecialchars($offre->getContactRecruteur() ?? '') . '</strong></p>
+                    <p style="color:#6b7280;font-size:13px;margin-top:24px;">Carrieri — Plateforme de recrutement</p>
+                </div>'
+                    : '
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#fef2f2;border-radius:16px;">
+                    <h2 style="color:#dc2626;">Résultat de votre candidature</h2>
+                    <p>Bonjour <strong>' . htmlspecialchars($candidate->getFirstName() ?? '') . '</strong>,</p>
+                    <p>Nous vous informons que votre candidature pour l\'offre <strong>' . htmlspecialchars($offre->getTitre()) . '</strong> 
+                    chez <strong>' . htmlspecialchars($offre->getEntreprise()) . '</strong> n\'a pas été retenue.</p>
+                    <p>Ne vous découragez pas, d\'autres opportunités vous attendent sur Carrieri !</p>
+                    <p style="color:#6b7280;font-size:13px;margin-top:24px;">Carrieri — Plateforme de recrutement</p>
+                </div>';
+
+                $email = (new Email())
+                    ->from($this->senderEmail)
+                    ->to($candidate->getEmail())
+                    ->subject($subject)
+                    ->html($bodyHtml);
+
+                try {
+                    $this->mailer->send($email);
+                    $this->logger->info('Email sent successfully', [
+                        'postulation_id' => $postulation->getId(),
+                        'candidate_id' => $candidate->getId(),
+                        'recipient' => $candidate->getEmail(),
+                        'status' => $statut
+                    ]);
+                    $this->addFlash('success', '✅ Email envoyé avec succès à ' . $candidate->getEmail());
+                } catch (\Exception $e) {
+                    $this->logger->error('Email sending failed', [
+                        'postulation_id' => $postulation->getId(),
+                        'candidate_id' => $candidate->getId(),
+                        'recipient' => $candidate->getEmail(),
+                        'error' => $e->getMessage(),
+                        'status' => $statut
+                    ]);
+                    $this->addFlash('error', '❌ Erreur lors de l\'envoi d\'email: ' . $e->getMessage());
+                }
+            }
+        }
+
+        $this->addFlash('success', 'Statut mis à jour avec succès.');
         // Redirect back to the offer's postulations
         return $this->redirectToRoute('app_admin_postulations_by_offre', ['id' => $offre->getId()]);
     }
