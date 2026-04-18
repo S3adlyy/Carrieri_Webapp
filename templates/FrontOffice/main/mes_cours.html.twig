@@ -1,15 +1,15 @@
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
-{% block title %}Mes cours{% endblock %}
+{% block title %}{{ 'Mes cours'|trans_lang }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260405-1">
 {% endblock %}
 
-{% block candidate_page_heading %}Mes cours{% endblock %}
+{% block candidate_page_heading %}{{ 'Mes cours'|trans_lang }}{% endblock %}
 
-{% block candidate_breadcrumb %} / Mes cours{% endblock %}
+{% block candidate_breadcrumb %} / {{ 'Mes cours'|trans_lang }}{% endblock %}
 
 {% block candidate_content_container_class %}container-fluid px-3 px-md-4 px-lg-5{% endblock %}
 
@@ -26,81 +26,124 @@
         <div class="fo-catalog-header mb-3 position-relative">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
                 <div>
-                    <h3 class="mb-1">Mes cours</h3>
-                    <p class="mb-0">{{ my_courses_stats.total|default(0) }} cours suivis</p>
+                    <h3 class="mb-1">{{ 'Mes cours'|trans_lang }}</h3>
+                    <p class="mb-0">{{ my_courses_stats.total|default(0) }} {{ 'cours suivis'|trans_lang }}</p>
                 </div>
                 <div class="d-flex flex-wrap gap-2 mt-2 mt-md-0">
-                    <a href="{{ path('app_candidate_cours') }}" class="btn fo-search-button">Catalogue</a>
-                    <a href="{{ path('app_candidate_mes_recommandations') }}" class="btn fo-search-button">Recommandations</a>
+                    <a href="{{ path('app_candidate_cours') }}" class="btn fo-search-button">{{ 'Catalogue'|trans_lang }}</a>
+                    <a href="{{ path('app_candidate_mes_recommandations') }}" class="btn fo-search-button">{{ 'Recommandations'|trans_lang }}</a>
                 </div>
             </div>
         </div>
 
         <div class="row text-center mb-3 position-relative">
-            <div class="col-md-3 col-6 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>Mes cours</small><strong>{{ my_courses_stats.total|default(0) }}</strong></div></div>
-            <div class="col-md-3 col-6 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>En cours</small><strong>{{ my_courses_stats.in_progress|default(0) }}</strong></div></div>
-            <div class="col-md-3 col-6 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>Complétés</small><strong>{{ my_courses_stats.completed|default(0) }}</strong></div></div>
-            <div class="col-md-3 col-6"><div class="fo-charte-card fo-stat-card"><small>Heures suivies</small><strong>{{ my_courses_stats.hours|default(0) }}h</strong></div></div>
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Mes cours'|trans_lang }}</small><strong>{{ my_courses_stats.total|default(0) }}</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'En cours'|trans_lang }}</small><strong>{{ my_courses_stats.in_progress|default(0) }}</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Complétés'|trans_lang }}</small><strong>{{ my_courses_stats.completed|default(0) }}</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Heures suivies'|trans_lang }}</small><strong>{{ my_courses_stats.hours|default(0) }}h</strong>
+                </div>
+            </div>
         </div>
 
         <form method="get" class="mb-4 position-relative">
             <div class="fo-charte-card fo-glass-card p-3 p-md-4 mb-3">
                 <div class="d-flex flex-wrap align-items-center justify-content-between mb-3">
                     <div class="d-flex flex-wrap gap-2">
-                        <button type="submit" name="my_state" value="all" class="btn btn-sm {{ my_filters.state == 'all' ? 'fo-btn-state-active' : 'fo-btn-state' }}">Tous</button>
-                        <button type="submit" name="my_state" value="in_progress" class="btn btn-sm {{ my_filters.state == 'in_progress' ? 'fo-btn-state-active' : 'fo-btn-state' }}">En cours</button>
-                        <button type="submit" name="my_state" value="completed" class="btn btn-sm {{ my_filters.state == 'completed' ? 'fo-btn-state-active' : 'fo-btn-state' }}">Terminés</button>
+                        <button type="submit" name="my_state" value="all"
+                                class="btn btn-sm {{ my_filters.state == 'all' ? 'fo-btn-state-active' : 'fo-btn-state' }}">
+                            {{ 'Tous'|trans_lang }}
+                        </button>
+                        <button type="submit" name="my_state" value="in_progress"
+                                class="btn btn-sm {{ my_filters.state == 'in_progress' ? 'fo-btn-state-active' : 'fo-btn-state' }}">
+                            {{ 'En cours'|trans_lang }}
+                        </button>
+                        <button type="submit" name="my_state" value="completed"
+                                class="btn btn-sm {{ my_filters.state == 'completed' ? 'fo-btn-state-active' : 'fo-btn-state' }}">
+                            {{ 'Terminés'|trans_lang }}
+                        </button>
                     </div>
                     <a href="{{ path('app_candidate_mes_cours') }}" class="fo-reset-link">Reset</a>
                 </div>
                 <div class="fo-search-wrap">
-                    <label for="my-course-search" class="sr-only">Rechercher dans mes cours</label>
-                    <input id="my-course-search" type="text" name="my_q" class="form-control fo-search-input" placeholder="Rechercher dans mes cours..." value="{{ my_filters.q|default('') }}">
-                    <button type="submit" class="btn fo-search-button">Filtrer</button>
+                    <label for="my-course-search" class="sr-only">{{ 'Rechercher dans mes cours'|trans_lang }}</label>
+                    <input id="my-course-search" type="text" name="my_q"
+                           class="form-control fo-search-input"
+                           placeholder="{{ 'Rechercher dans mes cours...'|trans_lang }}"
+                           value="{{ my_filters.q|default('') }}">
+                    <button type="submit" class="btn fo-search-button">{{ 'Filtrer'|trans_lang }}</button>
                 </div>
             </div>
         </form>
 
         {% if my_courses is empty %}
-            <div class="alert alert-light border mb-0">Aucun cours correspondant dans Mes cours.</div>
+            <div class="alert alert-light border mb-0">{{ 'Aucun cours correspondant dans Mes cours.'|trans_lang }}</div>
         {% else %}
             <div class="row position-relative fo-courses-grid mb-2">
                 {% for c in my_courses %}
                     {% set state = my_course_states[c.id]|default({}) %}
                     {% set progress = state.progress|default(0) %}
-                    {% set level_class = c.niveau in ['Debutant', 'Débutant'] ? 'fo-level-badge--beginner' : (c.niveau in ['Intermediaire', 'Intermédiaire'] ? 'fo-level-badge--intermediate' : 'fo-level-badge--advanced') %}
+                    {% set level_class = c.niveau in ['Debutant', 'Débutant'] ? 'fo-level-badge--beginner'
+                        : (c.niveau in ['Intermediaire', 'Intermédiaire'] ? 'fo-level-badge--intermediate'
+                        : 'fo-level-badge--advanced') %}
                     {% set category = c.competencesVisees ? (c.competencesVisees|split(',')|first|trim) : 'Général' %}
                     <div class="col-xl-4 col-md-6 mb-4">
                         <div class="card h-100 fo-charte-card fo-course-card">
                             <div class="fo-course-cover">
                                 {% if c.imageCouverture %}
-                                    <img src="{{ path('app_candidate_cours_image', {id: c.id}) }}" class="card-img-top" alt="{{ c.titre|default('Cours') }}">
+                                    <img src="{{ path('app_candidate_cours_image', {id: c.id}) }}"
+                                         class="card-img-top" alt="{{ c.titre|default('Cours') }}">
                                 {% endif %}
                             </div>
                             <div class="card-body d-flex flex-column">
                                 <div class="mb-2 d-flex align-items-center flex-wrap fo-card-badges">
-                                    <span class="badge fo-level-badge {{ level_class }} mr-2">{{ c.niveau|default('Niveau') }}</span>
-                                    <span class="badge fo-category-badge">{{ category }}</span>
+                                    <span class="badge fo-level-badge {{ level_class }} mr-2">{{ c.niveau|default('Niveau')|trans_lang }}</span>
+                                    <span class="badge fo-category-badge">{{ category|trans_lang }}</span>
                                 </div>
-                                <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours') }}</h5>
+                                <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours')|trans_lang }}</h5>
                                 <div class="fo-my-progress-wrap mb-3">
                                     <div class="progress fo-my-progress-bar">
-                                        <div class="progress-bar" role="progressbar" style="width: {{ progress }}%" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        <div class="progress-bar" role="progressbar"
+                                             style="width: {{ progress }}%"
+                                             aria-valuenow="{{ progress }}"
+                                             aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                     <div class="d-flex justify-content-between align-items-center mt-1">
-                                        <small class="text-muted">Progression</small>
+                                        <small class="text-muted">{{ 'Progression'|trans_lang }}</small>
                                         <small class="font-weight-bold">{{ progress }}%</small>
                                     </div>
                                 </div>
                                 <div class="fo-meta-row mb-3">
-                                    <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} heures</small></div>
-                                    <div class="fo-meta-item"><span class="mr-1">{{ progress >= 100 ? '✅' : '📖' }}</span><small>{{ progress >= 100 ? 'Terminé' : 'En cours' }}</small></div>
+                                    <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} {{ 'heures'|trans_lang }}</small></div>
+                                    <div class="fo-meta-item">
+                                        <span class="mr-1">{{ progress >= 100 ? '✅' : '📖' }}</span>
+                                        <small>{{ (progress >= 100 ? 'Terminé' : 'En cours')|trans_lang }}</small>
+                                    </div>
                                 </div>
                                 <div class="mt-auto">
                                     {% if state.continue_lesson is defined and state.continue_lesson %}
-                                        <a href="{{ path('app_candidate_lecon_show', {cours: c.id, id: state.continue_lesson.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">{{ progress >= 100 ? 'Revoir le cours' : 'Continuer' }}</a>
+                                        <a href="{{ path('app_candidate_lecon_show', {cours: c.id, id: state.continue_lesson.id}) }}"
+                                           class="btn btn-primary btn-sm btn-block fo-btn-commencer">
+                                            {{ (progress >= 100 ? 'Revoir le cours' : 'Continuer')|trans_lang }}
+                                        </a>
                                     {% else %}
-                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">{{ progress >= 100 ? 'Revoir le cours' : 'Accéder' }}</a>
+                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}"
+                                           class="btn btn-primary btn-sm btn-block fo-btn-commencer">
+                                            {{ (progress >= 100 ? 'Revoir le cours' : 'Accéder')|trans_lang }}
+                                        </a>
                                     {% endif %}
                                 </div>
                             </div>
@@ -111,4 +154,3 @@
         {% endif %}
     </div>
 {% endblock %}
-

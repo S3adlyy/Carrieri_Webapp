@@ -1,23 +1,25 @@
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
-{% block title %}{{ lecon.titre|default('Leçon') }}{% endblock %}
+{% block title %}{{ lecon.titre|default('Leçon')|trans_lang }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260409-1">
 {% endblock %}
 
-{% block candidate_page_heading %}{{ lecon.titre|default('Leçon') }}{% endblock %}
+{% block candidate_page_heading %}{{ lecon.titre|default('Leçon')|trans_lang }}{% endblock %}
 
 {% block candidate_breadcrumb %}
-    / <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}">{{ cours.titre|default('Cours') }}</a> / Leçon
+    / <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}">{{ cours.titre|default('Cours')|trans_lang }}</a> / {{ 'Leçon'|trans_lang }}
 {% endblock %}
 
 {% block candidate_content %}
     <div class="w-100 text-start fo-charte-ui">
         <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-            <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}" class="btn btn-outline-secondary btn-sm mb-2">Retour au cours</a>
-            <div class="text-muted mb-2">Progression : <strong>{{ progress|default(0) }}%</strong></div>
+            <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}" class="btn btn-outline-secondary btn-sm mb-2">
+                {{ 'Retour au cours'|trans_lang }}
+            </a>
+            <div class="text-muted mb-2">{{ 'Progression'|trans_lang }} : <strong>{{ progress|default(0) }}%</strong></div>
         </div>
 
         <div class="row g-4 fo-player-layout">
@@ -36,15 +38,15 @@
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-3 flex-wrap">
                             <div>
-                                <h3 class="mb-1">{{ lecon.titre|default('Leçon') }}</h3>
+                                <h3 class="mb-1">{{ lecon.titre|default('Leçon')|trans_lang }}</h3>
                                 <p class="text-muted mb-0">
-                                    <strong>Cours :</strong> {{ cours.titre|default('—') }}
+                                    <strong>{{ 'Cours'|trans_lang }} :</strong> {{ cours.titre|default('—')|trans_lang }}
                                     &nbsp;|&nbsp;
-                                    <strong>Module :</strong> {{ lecon.module ? lecon.module.titre : '—' }}
+                                    <strong>{{ 'Module'|trans_lang }} :</strong> {{ lecon.module ? lecon.module.titre|trans_lang : '—' }}
                                 </p>
                             </div>
                             {% if viewed_lesson_ids[lecon.id]|default(false) %}
-                                <span class="badge badge-success">Vue</span>
+                                <span class="badge badge-success">{{ 'Vue'|trans_lang }}</span>
                             {% endif %}
                         </div>
 
@@ -52,26 +54,28 @@
                             <div class="mb-3">
                                 <video controls class="w-100" style="max-height: 460px;">
                                     <source src="{{ path('app_candidate_lecon_video', {cours: cours.id, id: lecon.id}) }}" type="video/mp4">
-                                    Votre navigateur ne supporte pas la lecture vidéo.
+                                    {{ 'Votre navigateur ne supporte pas la lecture vidéo.'|trans_lang }}
                                 </video>
                             </div>
                         {% endif %}
 
-                        <div class="p-3 bg-light rounded">{{ lecon.contenu|default('—')|nl2br }}</div>
+                        <div class="p-3 bg-light rounded">{{ lecon.contenu|default('—')|trans_lang|nl2br }}</div>
                     </div>
                 </div>
 
                 <div class="card shadow-sm fo-charte-card">
                     <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
                         <div class="mb-2 mb-md-0">
-                            <strong>Progression globale :</strong> {{ progress|default(0) }}%
+                            <strong>{{ 'Progression globale'|trans_lang }} :</strong> {{ progress|default(0) }}%
                             <div class="progress mt-2" style="height: 10px; min-width: 260px;">
                                 <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress|default(0) }}%;" aria-valuenow="{{ progress|default(0) }}" aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         </div>
 
                         {% if continue_lesson is defined and continue_lesson %}
-                            <a href="{{ path('app_candidate_lecon_show', {cours: cours.id, id: continue_lesson.id}) }}" class="btn btn-primary">Continuer</a>
+                            <a href="{{ path('app_candidate_lecon_show', {cours: cours.id, id: continue_lesson.id}) }}" class="btn btn-primary">
+                                {{ 'Continuer'|trans_lang }}
+                            </a>
                         {% endif %}
                     </div>
                 </div>
@@ -79,5 +83,3 @@
         </div>
     </div>
 {% endblock %}
-
-
