@@ -13,19 +13,19 @@ function Test-PrivateIPv4 {
     if (-not $Address) { return $false }
 
     return $Address -match '^10\.' -or
-        $Address -match '^192\.168\.' -or
-        $Address -match '^172\.(1[6-9]|2[0-9]|3[0-1])\.'
+            $Address -match '^192\.168\.' -or
+            $Address -match '^172\.(1[6-9]|2[0-9]|3[0-1])\.'
 }
 
 function Get-LanIPv4 {
     $candidates = Get-NetIPConfiguration |
-        Where-Object {
-            $_.NetAdapter.Status -eq 'Up' -and
-            $_.IPv4Address -and
-            $_.NetAdapter.HardwareInterface -eq $true -and
-            $_.InterfaceAlias -notmatch 'vEthernet|VirtualBox|VMware|Hyper-V|Loopback|Tailscale|ZeroTier|WireGuard|Bluetooth'
-        } |
-        ForEach-Object { $_.IPv4Address.IPAddress }
+            Where-Object {
+                $_.NetAdapter.Status -eq 'Up' -and
+                        $_.IPv4Address -and
+                        $_.NetAdapter.HardwareInterface -eq $true -and
+                        $_.InterfaceAlias -notmatch 'vEthernet|VirtualBox|VMware|Hyper-V|Loopback|Tailscale|ZeroTier|WireGuard|Bluetooth'
+            } |
+            ForEach-Object { $_.IPv4Address.IPAddress }
 
     $preferred = $candidates | Where-Object { Test-PrivateIPv4 $_ } | Select-Object -First 1
     if ($preferred) {
@@ -70,7 +70,3 @@ else {
     Write-Host "Starting LAN server at $publicUrl"
     php -S "0.0.0.0:$Port" -t public
 }
-
-
-
-

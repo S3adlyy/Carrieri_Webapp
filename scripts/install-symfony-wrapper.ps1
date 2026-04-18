@@ -40,4 +40,3 @@ $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 Write-Host "PowerShell profile updated: $PROFILE"
 Write-Host "Open a new terminal, then use: symfony serve"
-

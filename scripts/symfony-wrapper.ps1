@@ -72,5 +72,3 @@ if ($first -eq 'serve' -or $first -eq 'server:start') {
 Set-Location $projectRoot
 & $symfonyBinary.Source @SymfonyArgs
 exit $LASTEXITCODE
-
-

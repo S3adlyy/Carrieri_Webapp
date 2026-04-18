@@ -20,6 +20,7 @@ final class CandidateRecommendationService
         private LeconRepository $leconRepository,
         private ResultatQuizModuleRepository $resultatQuizModuleRepository,
         private ResultatTestCoursRepository $resultatTestCoursRepository,
+        private OllamaRecommendationService $ollamaRecommendationService,
     ) {
     }
 
@@ -73,15 +74,16 @@ final class CandidateRecommendationService
                 continue;
             }
 
-            ['score' => $score, 'reasons' => $reasons] = $this->computeRecommendationScore($course, $skillProfile, $inferredLevel);
+            ['score' => $score, 'skills_data' => $skillsData] = $this->computeScore($course, $skillProfile, $inferredLevel);
             if ($score <= 0 && $skillProfile !== []) {
                 continue;
             }
 
             $recommendationRows[] = [
-                'course' => $course,
-                'score' => $score,
-                'reasons' => $reasons,
+                'course'      => $course,
+                'score'       => $score,
+                'skills_data' => $skillsData,
+                'reasons'     => [],
             ];
         }
 
@@ -109,6 +111,31 @@ final class CandidateRecommendationService
         }
 
         $recommendationRows = array_slice($recommendationRows, 0, 8);
+
+        // --- ONE batch call to Ollama for all top-N recommendations ---
+        $coursesBatch = [];
+        foreach ($recommendationRows as $row) {
+            $sd = $row['skills_data'];
+            $coursesBatch[] = [
+                'course_title'   => (string) ($row['course']->getTitre() ?? ''),
+                'course_skills'  => array_values($sd['course_skills']),
+                'course_level'   => (string) ($row['course']->getNiveau() ?? ''),
+                'course_duration' => $sd['duration'],
+                'skill_matches'  => ['exact' => $sd['exact'], 'partial' => $sd['partial']],
+            ];
+        }
+
+        $allReasons = $this->ollamaRecommendationService->generateReasonsForAllCourses(
+            candidateLevel:  $inferredLevel,
+            candidateSkills: array_values(array_keys($skillProfile)),
+            courses:         $coursesBatch,
+        );
+
+        foreach ($recommendationRows as $i => &$row) {
+            $row['reasons'] = $allReasons[$i] ?? ['Recommandé selon votre progression récente'];
+            unset($row['skills_data']);
+        }
+        unset($row);
 
         $totalCourses = count($courses);
         $followedCount = count($followedCourses);
@@ -254,24 +281,29 @@ final class CandidateRecommendationService
     }
 
     /**
+     * Compute a numeric relevance score for a course against the candidate's profile.
+     * Does NOT call Ollama — reasons are generated separately after filtering.
+     *
      * @param array<string, true> $skillProfile
-     * @return array{score:int,reasons:list<string>}
+     * @return array{score:int, skills_data:array{exact:int, partial:int, duration:int, course_skills:list<string>}}
      */
-    private function computeRecommendationScore(Cours $course, array $skillProfile, string $inferredLevel): array
+    private function computeScore(Cours $course, array $skillProfile, string $inferredLevel): array
     {
         $score = 0;
-        $reasons = [];
         $exactMatches = 0;
         $partialMatches = 0;
         $skillsList = (string) ($course->getCompetencesVisees() ?? '');
 
-        if ($skillsList !== '' && $skillProfile !== []) {
-            foreach (explode(',', mb_strtolower($skillsList)) as $courseSkillRaw) {
-                $courseSkill = trim($courseSkillRaw);
-                if ($courseSkill === '') {
-                    continue;
-                }
+        $courseSkills = [];
+        if ($skillsList !== '') {
+            $courseSkills = array_values(array_filter(
+                array_map('trim', explode(',', mb_strtolower($skillsList))),
+                static fn (string $s): bool => $s !== ''
+            ));
+        }
 
+        if ($skillsList !== '' && $skillProfile !== []) {
+            foreach ($courseSkills as $courseSkill) {
                 foreach (array_keys($skillProfile) as $candidateSkill) {
                     if ($courseSkill === $candidateSkill) {
                         $score += 10;
@@ -292,41 +324,23 @@ final class CandidateRecommendationService
 
         if ($courseLevel === $candidateLevel) {
             $score += 3;
-            $reasons[] = 'Niveau adapte a votre profil actuel';
         } elseif ($this->isNextLevel($candidateLevel, $courseLevel)) {
             $score += 2;
-            $reasons[] = 'Bon prochain palier pour progresser';
-        }
-
-        if ($exactMatches > 0) {
-            $reasons[] = sprintf('Correspond a %d competence(s) deja validee(s)', $exactMatches);
-        }
-
-        if ($partialMatches > 0 && $exactMatches === 0) {
-            $reasons[] = 'Renforce des competences proches de votre parcours';
         }
 
         $duration = (int) ($course->getDuree() ?? 0);
         if ($duration > 0 && $duration <= 8) {
             $score += 1;
-            $reasons[] = 'Format court pour monter rapidement en competence';
-        }
-
-        if ($skillsList === '' && $score > 0) {
-            $reasons[] = 'Cours complementaire recommande dans votre parcours';
-        }
-
-        if ($score <= 0) {
-            return ['score' => 0, 'reasons' => []];
-        }
-
-        if ($reasons === []) {
-            $reasons[] = 'Recommande selon votre progression recente';
         }
 
         return [
-            'score' => $score,
-            'reasons' => array_values(array_unique($reasons)),
+            'score'       => $score,
+            'skills_data' => [
+                'exact'        => $exactMatches,
+                'partial'      => $partialMatches,
+                'duration'     => $duration,
+                'course_skills' => $courseSkills,
+            ],
         ];
     }
 
