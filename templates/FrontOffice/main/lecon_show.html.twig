@@ -59,7 +59,20 @@
                             </div>
                         {% endif %}
 
-                        <div class="p-3 bg-light rounded">{{ lecon.contenu|default('—')|trans_lang|nl2br }}</div>
+                        <!-- TTS UI Controls -->
+                        <div class="d-flex justify-content-end mb-2 align-items-center">
+                            <span class="text-muted small me-2 d-none" id="tts-status"></span>
+                            <button id="tts-play-btn" class="btn btn-sm btn-outline-primary me-2">
+                                🔊 {{ 'Écouter'|trans_lang }}
+                            </button>
+                            <button id="tts-stop-btn" class="btn btn-sm btn-outline-danger d-none">
+                                ⏹ {{ 'Arrêter'|trans_lang }}
+                            </button>
+                        </div>
+
+                        <div class="p-3 bg-light rounded" id="lesson-content-text" data-lang="{{ current_lang() }}">
+                            {{ lecon.contenu|default('—')|trans_lang|nl2br }}
+                        </div>
                     </div>
                 </div>
 
@@ -82,4 +95,144 @@
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const playBtn = document.getElementById('tts-play-btn');
+            const stopBtn = document.getElementById('tts-stop-btn');
+            const statusText = document.getElementById('tts-status');
+            const contentDiv = document.getElementById('lesson-content-text');
+            
+            if (!playBtn || !contentDiv || !('speechSynthesis' in window)) {
+                if (playBtn) playBtn.style.display = 'none'; // Not supported
+                return;
+            }
+
+            let utterance = null;
+            let isPlaying = false;
+            let isPaused = false;
+            let textChunks = [];
+            let currentChunkIndex = 0;
+
+            const langMap = {
+                'fr': 'fr-FR', 'en': 'en-US', 'ar': 'ar-SA',
+                'es': 'es-ES', 'de': 'de-DE', 'it': 'it-IT'
+            };
+
+            const currentLang = contentDiv.getAttribute('data-lang') || 'fr';
+            const bcpLang = langMap[currentLang] || 'fr-FR';
+
+            // Chrome/Safari load voices asynchronously
+            let voices = window.speechSynthesis.getVoices();
+            window.speechSynthesis.onvoiceschanged = function() {
+                voices = window.speechSynthesis.getVoices();
+            };
+
+            function chunkText(text) {
+                // Couper le texte aux points, points d'interrogation, exclamation ou saut de ligne
+                // Tout en gardant la ponctuation pour que l'intonation soit naturelle
+                return text.match(/[^.!?\n]+[.!?\n]+/g) || [text];
+            }
+
+            function playNextChunk() {
+                if (currentChunkIndex >= textChunks.length || !isPlaying) {
+                    resetUI();
+                    return;
+                }
+
+                let chunk = textChunks[currentChunkIndex].trim();
+                if (chunk === '') {
+                    currentChunkIndex++;
+                    return playNextChunk();
+                }
+
+                utterance = new SpeechSynthesisUtterance(chunk);
+                utterance.lang = bcpLang;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+
+                if (voices.length > 0) {
+                    const matchedVoice = voices.find(voice => voice.lang.startsWith(currentLang));
+                    // Check base lang if local variant (like en-GB vs en-US) isn't explicitly found
+                    const fallbackVoice = voices.find(voice => voice.lang.startsWith(currentLang.split('-')[0]));
+                    if (matchedVoice) {
+                        utterance.voice = matchedVoice;
+                    } else if (fallbackVoice) {
+                        utterance.voice = fallbackVoice;
+                    }
+                }
+
+                utterance.onend = function() {
+                    currentChunkIndex++;
+                    playNextChunk(); // Chain next sentence
+                };
+                
+                utterance.onerror = function(e) {
+                    if (e.error !== 'canceled' && e.error !== 'interrupted') {
+                        console.error('TTS Error:', e);
+                    }
+                };
+
+                window.speechSynthesis.speak(utterance);
+            }
+
+            function resetUI() {
+                isPlaying = false;
+                isPaused = false;
+                currentChunkIndex = 0;
+                playBtn.innerHTML = '🔊 ' + "{{ 'Écouter'|trans_lang|escape('js') }}";
+                stopBtn.classList.add('d-none');
+                statusText.classList.add('d-none');
+            }
+
+            playBtn.addEventListener('click', function() {
+                if (isPlaying) {
+                    if (isPaused) {
+                        window.speechSynthesis.resume();
+                        isPaused = false;
+                        playBtn.innerHTML = '⏸ ' + "{{ 'Pause'|trans_lang|escape('js') }}";
+                        statusText.textContent = "{{ 'Lecture en cours...'|trans_lang|escape('js') }}";
+                    } else {
+                        window.speechSynthesis.pause();
+                        isPaused = true;
+                        playBtn.innerHTML = '▶ ' + "{{ 'Reprendre'|trans_lang|escape('js') }}";
+                        statusText.textContent = "{{ 'En pause'|trans_lang|escape('js') }}";
+                    }
+                } else {
+                    // C'est vital de cancel() avant de relancer sous Windows
+                    window.speechSynthesis.cancel();
+                    
+                    const textToSpeak = (contentDiv.innerText || contentDiv.textContent || '').trim();
+                    if (!textToSpeak) return;
+
+                    textChunks = chunkText(textToSpeak);
+                    currentChunkIndex = 0;
+                    isPlaying = true;
+                    isPaused = false;
+                    
+                    playBtn.innerHTML = '⏸ ' + "{{ 'Pause'|trans_lang|escape('js') }}";
+                    stopBtn.classList.remove('d-none');
+                    statusText.classList.remove('d-none');
+                    statusText.textContent = "{{ 'Lecture en cours...'|trans_lang|escape('js') }}";
+                    
+                    // Lancer la lecture par morceaux
+                    playNextChunk();
+                }
+            });
+
+            stopBtn.addEventListener('click', function() {
+                isPlaying = false;
+                window.speechSynthesis.cancel();
+                resetUI();
+            });
+            
+            // Clean up when leaving page
+            window.addEventListener('beforeunload', function() {
+                window.speechSynthesis.cancel();
+            });
+        });
+    </script>
 {% endblock %}
