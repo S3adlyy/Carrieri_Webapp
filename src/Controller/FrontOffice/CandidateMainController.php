@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Repository\OffreEmploiRepository;
 use App\Repository\PostulationRepository;
 use App\Repository\MissionRepository;
+use App\Service\SmsService;
 use App\Repository\FavoritesOffresRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\ORM\EntityManagerInterface;
@@ -160,7 +161,8 @@ class CandidateMainController extends AbstractController
         OffreEmploi $offre,
         Request $request,
         EntityManagerInterface $entityManager,
-        PostulationRepository $postulationRepository
+        PostulationRepository $postulationRepository,
+        SmsService $smsService          
     ): Response {
         if ($offre->getDateExpiration() && $offre->getDateExpiration() < new \DateTime()) {
             throw $this->createNotFoundException('Cette offre n\'est plus disponible.');
@@ -236,18 +238,45 @@ class CandidateMainController extends AbstractController
                     $entityManager->persist($postulation);
                     $entityManager->flush();
 
-                    $this->addFlash('success', 'Votre candidature a été envoyée avec succès.');
-                    return $this->redirectToRoute('app_candidate_offres');
-                }
-            }
+                    // ==================== SMS NOTIFICATION ====================
+                    $phone = $user->getPhone();
 
-            foreach ($errors as $error) {
-                $this->addFlash('error', $error);
+                    $this->logger->info('=== SMS DEBUG START ===', [
+                        'user_id' => $user->getId(),
+                        'phone_from_db' => $phone,
+                        'phone_not_empty' => !empty($phone),
+                        'offer_title' => $offre->getTitre()
+                    ]);
+
+                    if (!empty($phone)) {
+                        $smsMessage = "Candidature envoyée avec succès !\n" .
+                                  "Offre: {$offre->getTitre()}\n" .
+                                  "Vous serez contacté bientôt.\n\nCarrieri";
+                        $this->logger->info('Calling sendSms method', ['to' => $phone]);
+
+                        $sent = $smsService->sendSms($phone, $smsMessage);
+
+                        if ($sent) {
+                            $this->logger->info('SMS returned true - should be sent');
+                        } else {
+                            $this->logger->error('SMS returned false - failed');
+                        }
+                    } else {
+                        $this->logger->warning('No phone number found for user');
+                    }
+
+                    $this->logger->info('=== SMS DEBUG END ===');
+                                        // =========================================================
+
+                    $this->addFlash('success', 'Votre candidature a été envoyée avec succès.');
+                    return $this->redirectToRoute('app_candidate_postulations');
+                }
             }
         }
 
         return $this->render('FrontOffice/main/offre_apply.html.twig', [
             'offre' => $offre,
+            'errors' => $errors,
             'motivation' => $motivation,
         ]);
     }
