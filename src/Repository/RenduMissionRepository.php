@@ -44,9 +44,10 @@ class RenduMissionRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
     /**
-    * @return RenduMission[]
-    */
+     * @return RenduMission[]
+     */
     public function findAcceptedSubmissionsByRecruiter(int $recruiterId): array
     {
         return $this->createQueryBuilder('r')
@@ -82,7 +83,6 @@ class RenduMissionRepository extends ServiceEntityRepository
     {
         $conn = $this->getEntityManager()->getConnection();
 
-        // Récupérer les sessions actives (celles qui ont commencé il y a moins de 30 min)
         $sql = "
         SELECT DISTINCT 
             r.id as rendu_id,
@@ -101,7 +101,7 @@ class RenduMissionRepository extends ServiceEntityRepository
         WHERE r.statut = 'en_attente'
         AND TIMESTAMPDIFF(MINUTE, r.date_rendu, NOW()) < 30
         ORDER BY r.date_rendu DESC
-    ";
+        ";
 
         $stmt = $conn->prepare($sql);
         $result = $stmt->executeQuery();
@@ -118,7 +118,6 @@ class RenduMissionRepository extends ServiceEntityRepository
             return [];
         }
 
-        // Récupérer les sessions avec statut 'en_attente' créées dans les dernières 30 minutes
         $thirtyMinutesAgo = new \DateTime('-30 minutes');
 
         return $this->createQueryBuilder('r')
@@ -133,4 +132,15 @@ class RenduMissionRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * Trouve une soumission par son token public
+     */
+    public function findOneByPublicToken(string $token): ?RenduMission
+    {
+        return $this->createQueryBuilder('r')
+            ->andWhere('r.publicToken = :token')
+            ->setParameter('token', $token)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
 }

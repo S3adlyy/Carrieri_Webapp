@@ -48,6 +48,10 @@ class RenduMission
     #[ORM\Column(type: 'string', length: 50, nullable: true, options: ['default' => 'en_attente'])]
     private ?string $statut = 'en_attente';
 
+    // NOUVEAU CHAMP POUR LE TOKEN PUBLIC
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $publicToken = null;
+
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'candidat_id', referencedColumnName: 'id')]
     private ?User $user = null;
@@ -242,6 +246,16 @@ class RenduMission
                 $entretien->setRendu(null);
             }
         }
+        return $this;
+    }
+    public function getPublicToken(): ?string
+    {
+        return $this->publicToken;
+    }
+
+    public function setPublicToken(?string $publicToken): self
+    {
+        $this->publicToken = $publicToken;
         return $this;
     }
 }

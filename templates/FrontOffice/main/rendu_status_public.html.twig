@@ -1,0 +1,338 @@
+{# templates/FrontOffice/main/rendu_status_public.html.twig #}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Résultat - {{ mission.type }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .status-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 40px;
+        }
+
+        .status-icon.accepted {
+            background: #10b98120;
+            color: #10b981;
+        }
+
+        .status-icon.rejected {
+            background: #ef444420;
+            color: #ef4444;
+        }
+
+        .status-icon.pending {
+            background: #f59e0b20;
+            color: #f59e0b;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+
+        .mission-title {
+            color: #6b7280;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .score-section {
+            background: #f3f4f6;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .score {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+
+        .score.accepted {
+            color: #10b981;
+        }
+
+        .score.rejected {
+            color: #ef4444;
+        }
+
+        .score.pending {
+            color: #f59e0b;
+        }
+
+        .progress-bar {
+            background: #e5e7eb;
+            border-radius: 10px;
+            height: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            transition: width 1s ease;
+        }
+
+        .progress-fill.accepted {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .progress-fill.rejected {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+        }
+
+        .progress-fill.pending {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .info-item {
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 10px;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .feedback {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+
+        .feedback h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .feedback p {
+            color: #78350f;
+            line-height: 1.6;
+        }
+
+        .test-results {
+            background: #1f2937;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .test-results pre {
+            color: #e5e7eb;
+            font-size: 12px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            color: #9ca3af;
+            font-size: 12px;
+        }
+
+        .qr-mini {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        @media (max-width: 640px) {
+            .result-card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .score {
+                font-size: 36px;
+            }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .result-card {
+                box-shadow: none;
+                padding: 20px;
+            }
+            .qr-mini {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="result-card">
+        {% set isOk = rendu.score >= mission.scoreMin %}
+        {% set statut = rendu.statut %}
+        {% set statusCls = statut == 'accepte' ? 'accepted' : (statut == 'refuse' ? 'rejected' : 'pending') %}
+
+        <div class="header">
+            <div class="status-icon {{ statusCls }}">
+                {% if statut == 'accepte' %}
+                    <i class="fas fa-check-circle"></i>
+                {% elseif statut == 'refuse' %}
+                    <i class="fas fa-times-circle"></i>
+                {% else %}
+                    <i class="fas fa-hourglass-half"></i>
+                {% endif %}
+            </div>
+            <h1>
+                {% if statut == 'accepte' %}
+                    Félicitations !
+                {% elseif statut == 'refuse' %}
+                    Mission non validée
+                {% else %}
+                    En cours d'évaluation
+                {% endif %}
+            </h1>
+            <div class="mission-title">
+                <i class="fas fa-briefcase"></i> {{ mission.type }}
+            </div>
+        </div>
+
+        <div class="score-section">
+            <div>Score obtenu</div>
+            <div class="score {{ statusCls }}">
+                {{ rendu.score|default(0)|round }}%
+                <span style="font-size: 16px;">/ {{ mission.scoreMin }}% requis</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill {{ statusCls }}" style="width: {{ rendu.score|default(0)|round }}%"></div>
+            </div>
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Langage utilisé</div>
+                <div class="info-value">{{ rendu.langue|upper|default('Non spécifié') }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Date de soumission</div>
+                <div class="info-value">{{ rendu.dateRendu|date('d/m/Y à H:i') }}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Statut final</div>
+                <div class="info-value">
+                    {% if statut == 'accepte' %}
+                        <span style="color: #10b981;">✓ Acceptée</span>
+                    {% elseif statut == 'refuse' %}
+                        <span style="color: #ef4444;">✗ Refusée</span>
+                    {% else %}
+                        <span style="color: #f59e0b;">⏳ En attente</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if rendu.feedback %}
+            <div class="feedback">
+                <h3><i class="fas fa-comment-dots"></i> Feedback</h3>
+                <p>{{ rendu.feedback|nl2br }}</p>
+            </div>
+        {% endif %}
+
+        {% if rendu.resultat %}
+            <div class="test-results">
+                {{ rendu.resultat|raw }}
+            </div>
+        {% endif %}
+
+        <div class="footer">
+            <i class="fas fa-file-alt"></i> Document généré automatiquement<br>
+            Résultat de la mission {{ mission.type }}
+        </div>
+
+        <div class="qr-mini">
+            <small><i class="fas fa-qrcode"></i> Ce document est authentifié</small>
+        </div>
+    </div>
+</div>
+</body>
+</html>

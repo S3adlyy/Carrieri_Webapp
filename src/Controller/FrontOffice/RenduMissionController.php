@@ -19,6 +19,9 @@ use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use chillerlan\QRCode\QRCode;
+use chillerlan\QRCode\QROptions;
 
 #[Route('/candidat/rendu-mission')]
 #[IsGranted('ROLE_CANDIDAT')]
@@ -312,6 +315,12 @@ class RenduMissionController extends AbstractController
         $activeRendu->setFeedback($evaluation['feedback']);
         $activeRendu->setStatut($evaluation['statut']);
 
+        // Générer un token public pour le QR code
+        if (!$activeRendu->getPublicToken()) {
+            $publicToken = bin2hex(random_bytes(32));
+            $activeRendu->setPublicToken($publicToken);
+        }
+
         $this->entityManager->persist($activeRendu);
         $this->entityManager->flush();
 
@@ -419,5 +428,159 @@ class RenduMissionController extends AbstractController
             throw $this->createAccessDeniedException();
         }
         return $user;
+    }
+
+    /**
+     * Génère un QR code pour visualiser le résultat de la soumission
+     */
+    #[Route('/qr-code/{id}', name: 'app_candidate_rendu_qr_code')]
+    public function generateQrCode(int $id): Response
+    {
+        $user = $this->requireUser();
+        $rendu = $this->renduMissionRepository->find($id);
+
+        if (!$rendu || $rendu->getUser() !== $user) {
+            throw $this->createNotFoundException('Soumission non trouvée');
+        }
+
+        // Générer un token public s'il n'existe pas
+        if (!$rendu->getPublicToken()) {
+            $token = bin2hex(random_bytes(32));
+            $rendu->setPublicToken($token);
+            $this->entityManager->flush();
+        }
+
+        // URL à encoder
+        $url = $this->generateUrl('app_candidate_rendu_status_public', [
+            'token' => $rendu->getPublicToken()
+        ], UrlGeneratorInterface::ABSOLUTE_URL);
+
+        // Utiliser l'API Google Charts pour générer le QR code
+        $qrCodeUrl = 'https://quickchart.io/qr?text=' . urlencode($url) . '&size=300';
+
+        // Télécharger l'image
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $qrCodeUrl);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $qrCodeContent = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200 || $qrCodeContent === false) {
+            // Fallback: générer un QR code avec une autre API
+            $fallbackUrl = 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=' . urlencode($url);
+            $qrCodeContent = file_get_contents($fallbackUrl);
+
+            if ($qrCodeContent === false) {
+                // Dernier fallback: afficher un message d'erreur
+                return new Response($this->generateFallbackQrCode($url), 200, ['Content-Type' => 'text/html']);
+            }
+        }
+
+        // Retourner l'image
+        return new Response($qrCodeContent, 200, ['Content-Type' => 'image/png']);
+    }
+
+    /**
+     * Version publique pour visualiser le résultat (sans authentification)
+     */
+    #[Route('/resultat-public/{token}', name: 'app_candidate_rendu_status_public')]
+    public function publicStatus(string $token): Response
+    {
+        $rendu = $this->renduMissionRepository->findOneBy(['publicToken' => $token]);
+
+        if (!$rendu) {
+            throw $this->createNotFoundException('Résultat non trouvé ou lien invalide');
+        }
+
+        // Version simplifiée pour le public
+        return $this->render('FrontOffice/main/rendu_status_public.html.twig', [
+            'rendu'   => $rendu,
+            'mission' => $rendu->getMission(),
+        ]);
+    }
+
+    private function generateFallbackQrCode(string $url): string
+    {
+        return '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                background: #f5f5f5;
+                margin: 0;
+                padding: 20px;
+            }
+            .qr-fallback {
+                text-align: center;
+                background: white;
+                padding: 30px;
+                border-radius: 10px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                max-width: 500px;
+            }
+            .qr-placeholder {
+                width: 200px;
+                height: 200px;
+                background: repeating-linear-gradient(45deg, #333, #333 10px, #fff 10px, #fff 20px);
+                margin: 20px auto;
+                border-radius: 10px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-weight: bold;
+            }
+            .url {
+                word-break: break-all;
+                background: #f0f0f0;
+                padding: 10px;
+                border-radius: 5px;
+                margin: 10px 0;
+                font-size: 12px;
+            }
+            button {
+                background: #4f46e5;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                border-radius: 5px;
+                cursor: pointer;
+                margin: 5px;
+            }
+            button:hover {
+                background: #3730a3;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="qr-fallback">
+            <h3>🔗 Lien du résultat</h3>
+            <div class="qr-placeholder">
+                📱 QR Code
+            </div>
+            <div class="url">
+                ' . htmlspecialchars($url) . '
+            </div>
+            <button onclick="copyUrl()">📋 Copier le lien</button>
+            <button onclick="window.location.href=\'' . htmlspecialchars($url) . '\'">🔗 Ouvrir le lien</button>
+        </div>
+        <script>
+            function copyUrl() {
+                const url = \'' . htmlspecialchars($url) . '\';
+                navigator.clipboard.writeText(url);
+                alert("Lien copié !");
+            }
+        </script>
+    </body>
+    </html>';
     }
 }

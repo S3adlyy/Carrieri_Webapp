@@ -49,7 +49,6 @@
             --shadow-lg:    0 12px 40px rgba(79,70,229,.14);
         }
 
-        /* ── Page ── */
         .s-page {
             font-family: 'DM Sans', sans-serif;
             background: var(--bg);
@@ -57,7 +56,6 @@
             color: var(--text-primary);
         }
 
-        /* ── Header banner ── */
         .s-header {
             background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
             padding: 36px 48px;
@@ -67,7 +65,6 @@
             flex-wrap: wrap;
         }
 
-        /* Big status icon */
         .s-status-icon {
             width: 72px; height: 72px;
             border-radius: 20px;
@@ -94,7 +91,6 @@
             display: inline-flex; align-items: center; gap: 5px;
         }
 
-        /* Header mini-stats */
         .s-header-stats {
             display: flex; gap: 10px; flex-wrap: wrap; flex-shrink: 0;
         }
@@ -119,7 +115,6 @@
             font-weight: 500; text-transform: uppercase; letter-spacing: .4px;
         }
 
-        /* ── Breadcrumb nav ── */
         .s-nav {
             padding: 14px 48px;
             background: var(--surface);
@@ -134,7 +129,6 @@
         .s-nav span { color: var(--text-secondary); }
         .s-nav .current { color: var(--text-primary); font-weight: 600; }
 
-        /* ── Body ── */
         .s-body {
             padding: 32px 48px 48px;
             display: grid;
@@ -143,7 +137,6 @@
             align-items: start;
         }
 
-        /* ── Cards ── */
         .s-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -172,7 +165,6 @@
         .s-card-body { padding: 20px; }
         .s-card-body.p0 { padding: 0; }
 
-        /* ── Info rows ── */
         .s-info-row {
             display: flex; justify-content: space-between;
             align-items: center;
@@ -203,7 +195,6 @@
         .score-pill.ok  { background: var(--success-bg); color: #059669; }
         .score-pill.bad { background: var(--danger-bg);  color: #dc2626; }
 
-        /* ── Score bar card ── */
         .s-score-label {
             display: flex; justify-content: space-between;
             align-items: baseline; margin-bottom: 10px;
@@ -245,7 +236,6 @@
         .dot-score   { background: var(--indigo); }
         .dot-threshold { background: var(--danger); }
 
-        /* ── Status result card ── */
         .s-result-block {
             display: flex; align-items: flex-start; gap: 16px;
         }
@@ -269,7 +259,6 @@
             margin: 0; line-height: 1.55;
         }
 
-        /* Status pill banner */
         .status-banner {
             display: inline-flex; align-items: center; gap: 8px;
             padding: 8px 18px; border-radius: 50px;
@@ -279,7 +268,6 @@
         .banner-rejected { background: var(--danger-bg);  color: #dc2626; border: 1px solid var(--danger-border); }
         .banner-pending  { background: var(--warning-bg); color: #d97706; border: 1px solid var(--warning-border); }
 
-        /* ── Feedback card ── */
         .s-feedback-box {
             background: linear-gradient(135deg, #f5f3ff 0%, #eef2ff 100%);
             border: 1px solid #ddd6fe;
@@ -298,7 +286,6 @@
             font-size: 14px; line-height: 1.65;
         }
 
-        /* ── Interview card ── */
         .s-interview-row {
             display: flex; align-items: center; gap: 16px;
             padding: 16px 0; border-bottom: 1px solid var(--border);
@@ -352,7 +339,6 @@
         }
         .btn-calendar:hover { background: var(--indigo); color: #fff; }
 
-        /* ── Test results card ── */
         .s-results-code {
             background: #0f172a;
             padding: 20px;
@@ -363,7 +349,6 @@
             border-radius: 0 0 var(--radius-lg) var(--radius-lg);
         }
 
-        /* ── Actions bar ── */
         .s-actions {
             grid-column: 1 / -1;
             display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
@@ -400,7 +385,32 @@
         }
         .btn-missions:hover { background: #eef2ff; text-decoration: none; color: var(--indigo); }
 
-        /* ── Responsive ── */
+        .qr-code-container {
+            text-align: center;
+            padding: 20px;
+        }
+        .qr-code-image {
+            width: 180px;
+            height: 180px;
+            border-radius: 10px;
+            border: 2px solid var(--border);
+            margin-bottom: 15px;
+        }
+        .qr-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .public-link {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 11px;
+            word-break: break-all;
+        }
+
         @media (max-width: 960px) {
             .s-body   { grid-template-columns: 1fr; padding: 24px 28px 36px; }
             .s-header { padding: 26px 28px; }
@@ -424,7 +434,6 @@
 
     <div class="s-page">
 
-        {# ── Header ── #}
         <div class="s-header">
             <div class="s-status-icon {{ statusCls }}">
                 {% if statut == 'accepte' %}
@@ -463,7 +472,6 @@
             </div>
         </div>
 
-        {# ── Breadcrumb nav ── #}
         <div class="s-nav">
             <a href="{{ path('app_candidate_mission') }}"><i class="fas fa-th-large"></i> Missions</a>
             <span>›</span>
@@ -472,13 +480,10 @@
             <span class="current">Résultat #{{ rendu.id }}</span>
         </div>
 
-        {# ── Two-column body ── #}
         <div class="s-body">
 
-            {# ── LEFT COLUMN ── #}
             <div class="s-col-left">
 
-                {# Info mission #}
                 <div class="s-card" style="animation-delay:.05s">
                     <div class="s-card-header">
                         <i class="fas fa-info-circle"></i> Informations de la soumission
@@ -511,7 +516,6 @@
                     </div>
                 </div>
 
-                {# Score progression #}
                 <div class="s-card" style="animation-delay:.1s">
                     <div class="s-card-header">
                         <i class="fas fa-chart-line"></i> Progression du score
@@ -541,7 +545,38 @@
                     </div>
                 </div>
 
-                {# Statut détaillé #}
+                <!-- CARTE QR CODE -->
+                <div class="s-card" style="animation-delay:.12s">
+                    <div class="s-card-header">
+                        <i class="fas fa-qrcode"></i> QR Code - Résultat portable
+                    </div>
+                    <div class="qr-code-container">
+                        <img src="{{ path('app_candidate_rendu_qr_code', {'id': rendu.id}) }}"
+                             alt="QR Code du résultat"
+                             class="qr-code-image">
+                        <p style="font-size: 13px; color: var(--text-secondary);">
+                            <i class="fas fa-mobile-alt"></i> Scannez ce QR code pour voir le résultat<br>
+                            sur votre smartphone ou partagez-le avec le recruteur
+                        </p>
+                        <div class="qr-buttons">
+                            <button onclick="downloadQRCode()" class="btn-action btn-back" style="padding: 8px 16px;">
+                                <i class="fas fa-download"></i> Télécharger QR
+                            </button>
+                            <button onclick="copyResultLink()" class="btn-action btn-missions" style="padding: 8px 16px;">
+                                <i class="fas fa-link"></i> Copier le lien
+                            </button>
+                        </div>
+                        {% if rendu.publicToken %}
+                            <div class="public-link">
+                                <small><i class="fas fa-globe"></i> Lien public:</small><br>
+                                <span id="publicLink" style="font-size: 11px; color: var(--indigo);">
+                                {{ url('app_candidate_rendu_status_public', {'token': rendu.publicToken}) }}
+                            </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <div class="s-card" style="animation-delay:.15s">
                     <div class="s-card-header">
                         <i class="fas fa-flag-checkered"></i> Décision finale
@@ -577,12 +612,10 @@
                     </div>
                 </div>
 
-            </div>{# end left col #}
+            </div>
 
-            {# ── RIGHT COLUMN ── #}
             <div class="s-col-right">
 
-                {# Feedback #}
                 {% if rendu.feedback %}
                     <div class="s-card" style="animation-delay:.2s">
                         <div class="s-card-header">
@@ -596,7 +629,6 @@
                     </div>
                 {% endif %}
 
-                {# Entretien #}
                 {% if rendu.entretiens|length > 0 %}
                     {% set entretien = rendu.entretiens|first %}
                     <div class="s-card" style="animation-delay:.25s">
@@ -650,7 +682,6 @@
                     </div>
                 {% endif %}
 
-                {# Test results #}
                 {% if rendu.resultat %}
                     <div class="s-card" style="animation-delay:.3s">
                         <div class="s-card-header">
@@ -662,7 +693,6 @@
                     </div>
                 {% endif %}
 
-                {# Placeholder if right column is empty #}
                 {% if not rendu.feedback and rendu.entretiens|length == 0 and not rendu.resultat %}
                     <div class="s-card" style="animation-delay:.2s">
                         <div class="s-card-body" style="text-align:center;padding:40px 20px;color:var(--text-secondary);">
@@ -672,9 +702,8 @@
                     </div>
                 {% endif %}
 
-            </div>{# end right col #}
+            </div>
 
-            {# ── Actions ── #}
             <div class="s-actions">
                 <a href="{{ path('app_candidate_mission_show', {'id': mission.id}) }}" class="btn-action btn-back">
                     <i class="fas fa-arrow-left"></i> Retour à la mission
@@ -687,7 +716,7 @@
                 </a>
             </div>
 
-        </div>{# end s-body #}
+        </div>
     </div>
 
     <script>
@@ -703,6 +732,28 @@
                     window.URL.revokeObjectURL(url);
                 })
                 .catch(() => alert('Impossible de générer le fichier calendrier'));
+        }
+
+        function downloadQRCode() {
+            const qrImage = document.querySelector('.qr-code-image');
+            if (qrImage) {
+                const link = document.createElement('a');
+                link.download = 'resultat_{{ mission.type }}_{{ rendu.id }}.png';
+                link.href = qrImage.src;
+                link.click();
+            }
+        }
+
+        function copyResultLink() {
+            const publicLinkText = document.getElementById('publicLink');
+            if (publicLinkText) {
+                const link = publicLinkText.textContent;
+                navigator.clipboard.writeText(link).then(() => {
+                    alert('Lien copié dans le presse-papier !');
+                }).catch(() => {
+                    alert('Erreur lors de la copie du lien');
+                });
+            }
         }
     </script>
 
