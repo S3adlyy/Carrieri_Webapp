@@ -212,6 +212,13 @@
                                        title="Voir les postulations liées à cette offre">
                                         <i class="fas fa-users"></i>
                                     </a>
+
+                                    <a href="{{ path('app_admin_offres_insights', {'id': o.id}) }}"
+                                    class="btn btn-dark"
+                                    title="Statistiques et recommandations">
+                                        <i class="fas fa-chart-line"></i>
+                                    </a>
+
                                     <a href="{{ path('app_admin_offres_edit', {'id': o.id}) }}"
                                        class="btn btn-warning" title="Modifier avec formulaire">
                                         <i class="fas fa-edit"></i>
