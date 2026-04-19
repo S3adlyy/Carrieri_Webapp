@@ -157,8 +157,18 @@
                                 <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="fo-offre-btn">
                                     Voir plus
                                 </a>
+
+                                <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}" class="fo-favorite-form">
+                                    <button type="submit" class="fo-favorite-btn" title="{{ offre.id in favoriteIds ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
+                                        {% if offre.id in favoriteIds %}
+                                            <i class="fas fa-heart"></i>
+                                        {% else %}
+                                            <i class="far fa-heart"></i>
+                                        {% endif %}
+                                    </button>
+                                </form>
                             </div>
-                        </div>
+                                                    </div>
                     </div>
                 {% endfor %}
             </div>
@@ -171,6 +181,36 @@
     </div>
 
     <style>
+
+            .fo-offre-card__actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .fo-favorite-form {
+            margin: 0;
+        }
+
+        .fo-favorite-btn {
+            width: 46px;
+            height: 46px;
+            border: none;
+            border-radius: 50%;
+            background: rgba(239, 68, 68, 0.10);
+            color: #dc2626;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.25s ease;
+            cursor: pointer;
+        }
+
+        .fo-favorite-btn:hover {
+            transform: scale(1.08);
+            background: rgba(239, 68, 68, 0.18);
+        }
         .fo-candidate-content {
             background: linear-gradient(90deg, #f7eef9 0%, #eef6ff 100%);
         }

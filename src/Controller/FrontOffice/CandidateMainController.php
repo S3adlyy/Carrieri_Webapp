@@ -10,7 +10,7 @@ use App\Entity\User;
 use App\Repository\OffreEmploiRepository;
 use App\Repository\PostulationRepository;
 use App\Repository\MissionRepository;
-use App\Repository\FavoritesOffresRepository;   
+use App\Repository\FavoritesOffresRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -24,7 +24,7 @@ use Psr\Log\LoggerInterface;
 #[IsGranted('ROLE_CANDIDAT')]
 class CandidateMainController extends AbstractController
 {
-    private $logger;
+    private LoggerInterface $logger;
 
     public function __construct(LoggerInterface $logger)
     {
@@ -44,8 +44,11 @@ class CandidateMainController extends AbstractController
     }
 
     #[Route('/offres', name: 'app_candidate_offres')]
-    public function offres(Request $request, OffreEmploiRepository $offreEmploiRepository): Response
-    {
+    public function offres(
+        Request $request,
+        OffreEmploiRepository $offreEmploiRepository,
+        FavoritesOffresRepository $favoritesRepo
+    ): Response {
         $keyword = $request->query->get('keyword');
         $type = $request->query->get('type');
         $localisation = $request->query->get('localisation');
@@ -68,9 +71,17 @@ class CandidateMainController extends AbstractController
             'Freelance' => count(array_filter($allOffres, fn($o) => $o->getTypeContrat() === 'Freelance')),
         ];
 
+        $user = $this->getUser();
+        $favoriteIds = [];
+
+        if ($user instanceof User) {
+            $favoriteIds = $favoritesRepo->getFavoriteOfferIdsByCandidat($user->getId());
+        }
+
         return $this->render('FrontOffice/main/offres.html.twig', [
             'offres' => $offres,
             'stats' => $stats,
+            'favoriteIds' => $favoriteIds,
         ]);
     }
 
@@ -78,7 +89,8 @@ class CandidateMainController extends AbstractController
     public function showOffre(
         OffreEmploi $offre,
         MissionRepository $missionRepository,
-        PostulationRepository $postulationRepository
+        PostulationRepository $postulationRepository,
+        FavoritesOffresRepository $favoritesRepo
     ): Response {
         if ($offre->getDateExpiration() && $offre->getDateExpiration() < new \DateTime()) {
             throw $this->createNotFoundException('Cette offre n\'est plus disponible.');
@@ -91,10 +103,12 @@ class CandidateMainController extends AbstractController
 
         $alreadyApplied = false;
         $postulationStatus = null;
+        $isFavorite = false;
 
         $user = $this->getUser();
         if ($user instanceof User) {
             $alreadyApplied = $postulationRepository->hasUserAppliedToOffer($user, $offre);
+            $isFavorite = $favoritesRepo->isFavorite($user->getId(), $offre->getId());
 
             if ($alreadyApplied) {
                 $postulation = $postulationRepository->findOneBy([
@@ -116,9 +130,10 @@ class CandidateMainController extends AbstractController
             'offre' => $offre,
             'missions' => $missions,
             'alreadyApplied' => $alreadyApplied,
-            'postulationStatus' => $postulationStatus,   // This must be the real status from DB
+            'postulationStatus' => $postulationStatus,
             'joursRestants' => $joursRestants,
             'missionsCount' => count($missions),
+            'isFavorite' => $isFavorite,
         ]);
     }
 
@@ -237,7 +252,7 @@ class CandidateMainController extends AbstractController
         ]);
     }
 
-   #[Route('/mes-postulations', name: 'app_candidate_postulations')]
+    #[Route('/mes-postulations', name: 'app_candidate_postulations')]
     public function myApplications(Request $request, PostulationRepository $postulationRepository): Response
     {
         $user = $this->getUser();
@@ -252,8 +267,6 @@ class CandidateMainController extends AbstractController
         ];
 
         $postulations = $postulationRepository->searchPostulationsForCandidate($user, $filters);
-
-        // Get statistics
         $stats = $postulationRepository->getStatsByUser($user);
 
         return $this->render('FrontOffice/main/postulations.html.twig', [
@@ -262,43 +275,66 @@ class CandidateMainController extends AbstractController
         ]);
     }
 
-    // ==================== FAVORITES ====================
-
     #[Route('/favorites', name: 'app_candidate_favorites')]
-    public function favorites(FavoritesOffresRepository $favoritesRepo): Response
-    {
+    public function favorites(
+        FavoritesOffresRepository $favoritesRepo,
+        OffreEmploiRepository $offreEmploiRepository
+    ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        $favorites = $favoritesRepo->getFavoritesByCandidat($user->getId());
+        $favoritesEntities = $favoritesRepo->getFavoritesByCandidat($user->getId());
+        $favorites = [];
+
+        foreach ($favoritesEntities as $favorite) {
+            $offre = $offreEmploiRepository->find($favorite->getOffreId());
+
+            if (!$offre) {
+                continue;
+            }
+
+            $dateAjout = $favorite->getDateAjout();
+            $dateAjoutString = $dateAjout instanceof \DateTimeInterface
+                ? $dateAjout->format('d/m/Y H:i')
+                : '—';
+
+            $favorites[] = [
+                'id' => $favorite->getId(),
+                'dateAjout' => $dateAjoutString,
+                'offre' => $offre,
+            ];
+        }
 
         return $this->render('FrontOffice/main/favorites.html.twig', [
             'favorites' => $favorites,
         ]);
     }
-
     #[Route('/offre/{id}/toggle-favorite', name: 'app_candidate_favorite_toggle', methods: ['POST'])]
-    public function toggleFavorite(int $id, FavoritesOffresRepository $favoritesRepo): Response
-    {
+    public function toggleFavorite(
+        int $id,
+        Request $request,
+        FavoritesOffresRepository $favoritesRepo
+    ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return $this->json(['success' => false, 'message' => 'Non authentifié'], 403);
+            throw $this->createAccessDeniedException();
         }
 
         $isFavorite = $favoritesRepo->isFavorite($user->getId(), $id);
 
         if ($isFavorite) {
             $success = $favoritesRepo->removeFavorite($user->getId(), $id);
+            $message = $success ? 'Offre retirée des favoris.' : 'Impossible de retirer cette offre des favoris.';
         } else {
             $success = $favoritesRepo->addFavorite($user->getId(), $id);
+            $message = $success ? 'Offre ajoutée aux favoris.' : 'Impossible d’ajouter cette offre aux favoris.';
         }
 
-        return $this->json([
-            'success'    => $success,
-            'isFavorite' => !$isFavorite,
-        ]);
+        $this->addFlash($success ? 'success' : 'error', $message);
+
+        $referer = $request->headers->get('referer');
+        return $this->redirect($referer ?: $this->generateUrl('app_candidate_offres'));
     }
-    
 }

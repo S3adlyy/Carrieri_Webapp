@@ -13,7 +13,20 @@
     <div class="fo-offre-detail-card">
 
         <div class="fo-offre-detail-header">
-            <h2 class="fo-title">{{ offre.titre }}</h2>
+            <div class="d-flex justify-content-between align-items-start w-100 flex-wrap gap-3">
+                <h2 class="fo-title mb-0">{{ offre.titre }}</h2>
+
+                <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}" class="fo-favorite-form">
+                    <button type="submit" class="fo-detail-favorite-btn" title="{{ isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
+                        {% if isFavorite %}
+                            <i class="fas fa-heart"></i>
+                        {% else %}
+                            <i class="far fa-heart"></i>
+                        {% endif %}
+                    </button>
+                </form>
+            </div>
+
             <span class="fo-badge
                 {% if offre.typeContrat == 'CDI' %}
                     fo-badge-cdi
@@ -177,6 +190,31 @@
 </div>
 
 <style>
+
+    .fo-favorite-form {
+        margin: 0;
+    }
+
+    .fo-detail-favorite-btn {
+        width: 54px;
+        height: 54px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.10);
+        color: #dc2626;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        transition: all 0.25s ease;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(239, 68, 68, 0.12);
+    }
+
+    .fo-detail-favorite-btn:hover {
+        transform: scale(1.08);
+        background: rgba(239, 68, 68, 0.18);
+    }
     .fo-offre-detail-card {
         background: rgba(255,255,255,0.95);
         border-radius: 22px;

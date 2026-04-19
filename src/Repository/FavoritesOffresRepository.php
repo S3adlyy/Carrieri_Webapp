@@ -19,7 +19,8 @@ class FavoritesOffresRepository extends ServiceEntityRepository
             ->select('COUNT(f.id)')
             ->where('f.candidatId = :candidatId')
             ->andWhere('f.offreId = :offreId')
-            ->setParameters(['candidatId' => $candidatId, 'offreId' => $offreId])
+            ->setParameter('candidatId', $candidatId)
+            ->setParameter('offreId', $offreId)
             ->getQuery()
             ->getSingleScalarResult();
     }
@@ -33,7 +34,7 @@ class FavoritesOffresRepository extends ServiceEntityRepository
         $favorite = new FavoritesOffres();
         $favorite->setCandidatId($candidatId);
         $favorite->setOffreId($offreId);
-        $favorite->setDateAjout(new \DateTime());
+        $favorite->setDateAjout(new \DateTimeImmutable());
 
         $this->getEntityManager()->persist($favorite);
         $this->getEntityManager()->flush();
@@ -45,7 +46,7 @@ class FavoritesOffresRepository extends ServiceEntityRepository
     {
         $favorite = $this->findOneBy([
             'candidatId' => $candidatId,
-            'offreId' => $offreId
+            'offreId' => $offreId,
         ]);
 
         if (!$favorite) {
@@ -58,16 +59,25 @@ class FavoritesOffresRepository extends ServiceEntityRepository
         return true;
     }
 
-    // Improved method with JOIN to load the offer
     public function getFavoritesByCandidat(int $candidatId): array
     {
         return $this->createQueryBuilder('f')
-            ->innerJoin('f.offreEmploi', 'o')   // Important: load the offer
-            ->addSelect('o')
             ->where('f.candidatId = :candidatId')
             ->orderBy('f.dateAjout', 'DESC')
             ->setParameter('candidatId', $candidatId)
             ->getQuery()
             ->getResult();
+    }
+
+    public function getFavoriteOfferIdsByCandidat(int $candidatId): array
+    {
+        $rows = $this->createQueryBuilder('f')
+            ->select('f.offreId')
+            ->where('f.candidatId = :candidatId')
+            ->setParameter('candidatId', $candidatId)
+            ->getQuery()
+            ->getArrayResult();
+
+        return array_map(static fn(array $row) => (int) $row['offreId'], $rows);
     }
 }
