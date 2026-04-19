@@ -15,14 +15,12 @@ class FavoritesOffresRepository extends ServiceEntityRepository
 
     public function isFavorite(int $candidatId, int $offreId): bool
     {
-        return (bool) $this->createQueryBuilder('f')
-            ->select('COUNT(f.id)')
-            ->where('f.candidatId = :candidatId')
-            ->andWhere('f.offreId = :offreId')
-            ->setParameter('candidatId', $candidatId)
-            ->setParameter('offreId', $offreId)
-            ->getQuery()
-            ->getSingleScalarResult();
+        $count = $this->getEntityManager()->getConnection()->fetchOne(
+            'SELECT COUNT(id) FROM favorites_offres WHERE candidat_id = ? AND offre_id = ?',
+            [$candidatId, $offreId]
+        );
+
+        return (int) $count > 0;
     }
 
     public function addFavorite(int $candidatId, int $offreId): bool
@@ -31,53 +29,41 @@ class FavoritesOffresRepository extends ServiceEntityRepository
             return false;
         }
 
-        $favorite = new FavoritesOffres();
-        $favorite->setCandidatId($candidatId);
-        $favorite->setOffreId($offreId);
-        $favorite->setDateAjout(new \DateTimeImmutable());
-
-        $this->getEntityManager()->persist($favorite);
-        $this->getEntityManager()->flush();
+        // Use a direct DBAL insert to avoid PDO trying to cast DateTime objects to string.
+        $this->getEntityManager()->getConnection()->insert('favorites_offres', [
+            'candidat_id' => $candidatId,
+            'offre_id' => $offreId,
+            'date_ajout' => (new \DateTimeImmutable())->format('Y-m-d H:i:s'),
+        ]);
 
         return true;
     }
 
     public function removeFavorite(int $candidatId, int $offreId): bool
     {
-        $favorite = $this->findOneBy([
-            'candidatId' => $candidatId,
-            'offreId' => $offreId,
+        $affected = $this->getEntityManager()->getConnection()->delete('favorites_offres', [
+            'candidat_id' => $candidatId,
+            'offre_id' => $offreId,
         ]);
 
-        if (!$favorite) {
-            return false;
-        }
-
-        $this->getEntityManager()->remove($favorite);
-        $this->getEntityManager()->flush();
-
-        return true;
+        return $affected > 0;
     }
 
     public function getFavoritesByCandidat(int $candidatId): array
     {
-        return $this->createQueryBuilder('f')
-            ->where('f.candidatId = :candidatId')
-            ->orderBy('f.dateAjout', 'DESC')
-            ->setParameter('candidatId', $candidatId)
-            ->getQuery()
-            ->getResult();
+        return $this->getEntityManager()->getConnection()->fetchAllAssociative(
+            'SELECT id, candidat_id, offre_id, date_ajout FROM favorites_offres WHERE candidat_id = ? ORDER BY date_ajout DESC',
+            [$candidatId]
+        );
     }
 
     public function getFavoriteOfferIdsByCandidat(int $candidatId): array
     {
-        $rows = $this->createQueryBuilder('f')
-            ->select('f.offreId')
-            ->where('f.candidatId = :candidatId')
-            ->setParameter('candidatId', $candidatId)
-            ->getQuery()
-            ->getArrayResult();
+        $rows = $this->getEntityManager()->getConnection()->fetchFirstColumn(
+            'SELECT offre_id FROM favorites_offres WHERE candidat_id = ?',
+            [$candidatId]
+        );
 
-        return array_map(static fn(array $row) => (int) $row['offreId'], $rows);
+        return array_map(static fn($value) => (int) $value, $rows);
     }
 }

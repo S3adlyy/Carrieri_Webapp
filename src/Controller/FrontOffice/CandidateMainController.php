@@ -285,24 +285,33 @@ class CandidateMainController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $favoritesEntities = $favoritesRepo->getFavoritesByCandidat($user->getId());
+        $favoritesRows = $favoritesRepo->getFavoritesByCandidat($user->getId());
         $favorites = [];
 
-        foreach ($favoritesEntities as $favorite) {
-            $offre = $offreEmploiRepository->find($favorite->getOffreId());
+        foreach ($favoritesRows as $favoriteRow) {
+            $offreId = isset($favoriteRow['offre_id']) ? (int) $favoriteRow['offre_id'] : null;
+            if (!$offreId) {
+                continue;
+            }
+
+            $offre = $offreEmploiRepository->find($offreId);
 
             if (!$offre) {
                 continue;
             }
 
-            $dateAjout = $favorite->getDateAjout();
-            $dateAjoutString = $dateAjout instanceof \DateTimeInterface
-                ? $dateAjout->format('d/m/Y H:i')
-                : '—';
+            $dateAjout = null;
+            if (!empty($favoriteRow['date_ajout']) && is_string($favoriteRow['date_ajout'])) {
+                try {
+                    $dateAjout = new \DateTimeImmutable($favoriteRow['date_ajout']);
+                } catch (\Exception) {
+                    $dateAjout = null;
+                }
+            }
 
             $favorites[] = [
-                'id' => $favorite->getId(),
-                'dateAjout' => $dateAjoutString,
+                'id' => isset($favoriteRow['id']) ? (int) $favoriteRow['id'] : null,
+                'dateAjout' => $dateAjout,
                 'offre' => $offre,
             ];
         }
