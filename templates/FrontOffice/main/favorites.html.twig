@@ -1,0 +1,189 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Détail de l'offre - Carrieri{% endblock %}
+
+{% block candidate_page_heading %}Détail de l'offre{% endblock %}
+
+{% block candidate_breadcrumb %} / Détail{% endblock %}
+
+{% block candidate_content %}
+
+<div class="fo-offre-detail">
+
+    <div class="fo-offre-detail-card">
+
+        <div class="fo-offre-detail-header">
+            <div class="d-flex justify-content-between align-items-start w-100">
+                <div>
+                    <h2 class="fo-title">{{ offre.titre }}</h2>
+                    <div class="fo-company">{{ offre.entreprise }}</div>
+                </div>
+                
+                <!-- ❤️ Favorite Heart Button -->
+                <button id="favorite-btn" 
+                        class="favorite-heart-btn btn btn-light border-0 p-2"
+                        data-offre-id="{{ offre.id }}"
+                        title="Ajouter aux favoris">
+                    <i class="far fa-heart fa-3x"></i>
+                </button>
+            </div>
+
+            <span class="fo-badge
+                {% if offre.typeContrat == 'CDI' %}fo-badge-cdi
+                {% elseif offre.typeContrat == 'CDD' %}fo-badge-cdd
+                {% elseif offre.typeContrat == 'Stage' %}fo-badge-stage
+                {% else %}fo-badge-other{% endif %}">
+                {{ offre.typeContrat }}
+            </span>
+        </div>
+
+        <div class="fo-company">{{ offre.entreprise }}</div>
+
+        {# ===== STATS ===== #}
+        <div class="fo-stats-grid">
+            <div class="fo-stat-card fo-stat-salary">
+                <span class="fo-stat-label">Salaire</span>
+                <strong class="fo-stat-value">{{ offre.salaire }} DT</strong>
+            </div>
+
+            <div class="fo-stat-card fo-stat-days">
+                <span class="fo-stat-label">Jours restants</span>
+                <strong class="fo-stat-value">{{ joursRestants is not null ? joursRestants : '—' }}</strong>
+            </div>
+
+            <div class="fo-stat-card fo-stat-missions">
+                <span class="fo-stat-label">Missions</span>
+                <strong class="fo-stat-value">{{ missionsCount }}</strong>
+            </div>
+
+            <div class="fo-stat-card {% if alreadyApplied %}
+                {% if postulationStatus == 'Acceptée' %}fo-stat-accepted
+                {% elseif postulationStatus == 'Refusée' %}fo-stat-refused
+                {% else %}fo-stat-pending{% endif %}
+            {% else %}fo-stat-not-applied{% endif %}">
+                <span class="fo-stat-label">Candidature</span>
+                <strong class="fo-stat-value">
+                    {% if alreadyApplied %}
+                        {% if postulationStatus == 'Acceptée' %}Acceptée
+                        {% elseif postulationStatus == 'Refusée' %}Refusée
+                        {% else %}En attente{% endif %}
+                    {% else %}Pas encore postulé{% endif %}
+                </strong>
+            </div>
+        </div>
+
+        <div class="fo-meta-grid">
+            <div class="fo-meta-box"><span>Localisation</span><strong>{{ offre.localisation }}</strong></div>
+            <div class="fo-meta-box"><span>Qualification</span><strong>{{ offre.niveauQualification }}</strong></div>
+            <div class="fo-meta-box"><span>Expérience</span><strong>{{ offre.experienceRequise }}</strong></div>
+            <div class="fo-meta-box"><span>Expiration</span><strong>{{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}</strong></div>
+            <div class="fo-meta-box"><span>Contact</span><strong>{{ offre.contactRecruteur }}</strong></div>
+            <div class="fo-meta-box"><span>Secteur</span><strong>{{ offre.secteurActivite }}</strong></div>
+        </div>
+
+        <div class="fo-description">
+            <h4>Description</h4>
+            <p>{{ offre.description|nl2br }}</p>
+        </div>
+
+        <div class="fo-missions-section">
+            <div class="fo-missions-header">
+                <h4>Exemples de Missions associées à cet offre</h4>
+                <button type="button" class="fo-toggle-btn" id="missionToggleBtn" onclick="toggleMissions()">↓</button>
+            </div>
+
+            <div id="missionsBlock" class="fo-missions-list" style="display: none;">
+                {% if missions is defined and missions|length > 0 %}
+                    {% for mission in missions %}
+                        <div class="fo-mission-card">
+                            <div class="fo-mission-top">
+                                <span class="fo-mission-type">{{ mission.type ?: 'Mission' }}</span>
+                                <span class="fo-mission-score">Score min : {{ mission.scoreMin ?: '—' }}</span>
+                            </div>
+                            <div class="fo-mission-description">{{ mission.description ?: 'Aucune description.' }}</div>
+                            <div class="fo-mission-date">Créée le : {{ mission.createdAt ? mission.createdAt|date('d/m/Y H:i') : '—' }}</div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="fo-no-missions">Aucune mission liée à cet offre.</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="fo-actions">
+            <a href="{{ path('app_candidate_offres') }}" class="fo-btn-secondary">Retour aux offres</a>
+
+            {% if alreadyApplied %}
+                <span class="fo-btn-disabled">Déjà postulé</span>
+            {% else %}
+                <a href="{{ path('app_candidate_offre_apply', {'id': offre.id}) }}" class="fo-btn-primary">Postuler</a>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const favBtn = document.getElementById('favorite-btn');
+    if (!favBtn) return;
+
+    const offreId = favBtn.dataset.offreId;
+    const icon = favBtn.querySelector('i');
+
+    // Check current status
+    fetch(`/candidat/offre/${offreId}/toggle-favorite`, { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.isFavorite) {
+                icon.classList.remove('far');
+                icon.classList.add('fas', 'text-danger');
+                favBtn.title = "Retirer des favoris";
+            }
+        });
+
+    // Toggle on click
+    favBtn.addEventListener('click', function() {
+        fetch(`/candidat/offre/${offreId}/toggle-favorite`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                if (data.isFavorite) {
+                    icon.classList.remove('far');
+                    icon.classList.add('fas', 'text-danger');
+                    favBtn.title = "Retirer des favoris";
+                } else {
+                    icon.classList.remove('fas', 'text-danger');
+                    icon.classList.add('far');
+                    favBtn.title = "Ajouter aux favoris";
+                }
+            }
+        });
+    });
+});
+</script>
+
+<script>
+    function toggleMissions() {
+        const block = document.getElementById('missionsBlock');
+        const btn = document.getElementById('missionToggleBtn');
+
+        if (block.style.display === 'none') {
+            block.style.display = 'block';
+            btn.style.transform = 'rotate(180deg)';
+        } else {
+            block.style.display = 'none';
+            btn.style.transform = 'rotate(0deg)';
+        }
+    }
+</script>
+
+{% endblock %}

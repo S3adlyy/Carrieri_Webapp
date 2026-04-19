@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Repository\OffreEmploiRepository;
 use App\Repository\PostulationRepository;
 use App\Repository\MissionRepository;
+use App\Repository\FavoritesOffresRepository;   
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -258,6 +259,45 @@ class CandidateMainController extends AbstractController
         return $this->render('FrontOffice/main/postulations.html.twig', [
             'postulations' => $postulations,
             'stats' => $stats,
+        ]);
+    }
+
+    // ==================== FAVORITES ====================
+
+    #[Route('/favorites', name: 'app_candidate_favorites')]
+    public function favorites(FavoritesOffresRepository $favoritesRepo): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $favorites = $favoritesRepo->getFavoritesByCandidat($user->getId());
+
+        return $this->render('FrontOffice/main/favorites.html.twig', [
+            'favorites' => $favorites,
+        ]);
+    }
+
+    #[Route('/offre/{id}/toggle-favorite', name: 'app_candidate_favorite_toggle', methods: ['POST'])]
+    public function toggleFavorite(int $id, FavoritesOffresRepository $favoritesRepo): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['success' => false, 'message' => 'Non authentifié'], 403);
+        }
+
+        $isFavorite = $favoritesRepo->isFavorite($user->getId(), $id);
+
+        if ($isFavorite) {
+            $success = $favoritesRepo->removeFavorite($user->getId(), $id);
+        } else {
+            $success = $favoritesRepo->addFavorite($user->getId(), $id);
+        }
+
+        return $this->json([
+            'success'    => $success,
+            'isFavorite' => !$isFavorite,
         ]);
     }
     
