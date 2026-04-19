@@ -142,7 +142,7 @@ class PostulationController extends AbstractController
         $postulation->setStatut($statut);
         $this->entityManager->flush();
 
-// Send email only when status changes to Acceptée or Refusée
+        // Send email only when status changes to Acceptée or Refusée
         if ($statut !== $oldStatut && in_array($statut, ['Acceptée', 'Refusée'])) {
             $candidate = $postulation->getUser();
             
@@ -217,6 +217,7 @@ class PostulationController extends AbstractController
         }
 
         $this->addFlash('success', 'Statut mis à jour avec succès.');
+
         // Redirect back to the offer's postulations
         return $this->redirectToRoute('app_admin_postulations_by_offre', ['id' => $offre->getId()]);
     }
