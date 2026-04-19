@@ -10,39 +10,55 @@
 
 <div class="fo-offre-detail">
 
+    {% set qrText %}
+    {{ absolute_url(path('app_candidate_offre_show', {'id': offre.id})) }}
+
+    Titre: {{ offre.titre }}
+    Entreprise: {{ offre.entreprise }}
+    Type de contrat: {{ offre.typeContrat }}
+    Localisation: {{ offre.localisation }}
+    Salaire: {{ offre.salaire ? offre.salaire ~ ' TND' : 'Non précisé' }}
+    {% endset %}
+
     <div class="fo-offre-detail-card">
 
         <div class="fo-offre-detail-header">
-            <div class="d-flex justify-content-between align-items-start w-100 flex-wrap gap-3">
-                <h2 class="fo-title mb-0">{{ offre.titre }}</h2>
+            <div class="fo-header-top">
+                <div class="fo-header-left">
+                    <h2 class="fo-title mb-0">{{ offre.titre }}</h2>
 
-                <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}" class="fo-favorite-form">
-                    <button type="submit" class="fo-detail-favorite-btn" title="{{ isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
-                        {% if isFavorite %}
-                            <i class="fas fa-heart"></i>
+                    <span class="fo-badge
+                        {% if offre.typeContrat == 'CDI' %}
+                            fo-badge-cdi
+                        {% elseif offre.typeContrat == 'CDD' %}
+                            fo-badge-cdd
+                        {% elseif offre.typeContrat == 'Stage' %}
+                            fo-badge-stage
                         {% else %}
-                            <i class="far fa-heart"></i>
+                            fo-badge-other
                         {% endif %}
+                    ">
+                        {{ offre.typeContrat }}
+                    </span>
+                </div>
+
+                <div class="fo-header-actions">
+                    <button type="button" class="fo-qr-btn" onclick="openQrModal()" title="Voir le QR code de l'offre">
+                        <i class="fas fa-qrcode"></i>
                     </button>
-                </form>
-                
+
+                    <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}" class="fo-favorite-form">
+                        <button type="submit" class="fo-detail-favorite-btn" title="{{ isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
+                            {% if isFavorite %}
+                                <i class="fas fa-heart"></i>
+                            {% else %}
+                                <i class="far fa-heart"></i>
+                            {% endif %}
+                        </button>
+                    </form>
+                </div>
             </div>
-
-            <span class="fo-badge
-                {% if offre.typeContrat == 'CDI' %}
-                    fo-badge-cdi
-                {% elseif offre.typeContrat == 'CDD' %}
-                    fo-badge-cdd
-                {% elseif offre.typeContrat == 'Stage' %}
-                    fo-badge-stage
-                {% else %}
-                    fo-badge-other
-                {% endif %}
-            ">
-                {{ offre.typeContrat }}
-            </span>
         </div>
-
         <div class="fo-company">{{ offre.entreprise }}</div>
 
         {# ===== STATS ===== #}
@@ -213,6 +229,154 @@
 
 <style>
 
+
+.fo-offre-detail-header {
+        margin-bottom: 10px;
+    }
+
+    .fo-header-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        width: 100%;
+        flex-wrap: nowrap;
+    }
+
+    .fo-header-left {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        min-width: 0;
+        flex: 1;
+    }
+
+    .fo-title {
+        font-size: 34px;
+        font-weight: 800;
+        color: #1f3470;
+        margin: 0;
+        line-height: 1.2;
+        word-break: break-word;
+    }
+
+    .fo-header-actions {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        gap: 12px;
+        flex-shrink: 0;
+    }
+
+    .fo-favorite-form {
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .fo-detail-favorite-btn {
+        width: 52px;
+        height: 52px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.10);
+        color: #dc2626;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        transition: all 0.25s ease;
+        cursor: pointer;
+        box-shadow: 0 8px 18px rgba(239, 68, 68, 0.12);
+    }
+
+    .fo-detail-favorite-btn:hover {
+        transform: translateY(-2px) scale(1.04);
+        background: rgba(239, 68, 68, 0.18);
+    }
+
+    .fo-qr-btn {
+        height: 52px;
+        border: none;
+        border-radius: 999px;
+        padding: 0 18px;
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        color: #ffffff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: all 0.25s ease;
+        box-shadow: 0 10px 22px rgba(37, 99, 235, 0.22);
+        white-space: nowrap;
+    }
+
+    .fo-qr-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
+        background: linear-gradient(90deg, #2563eb 0%, #1d4ed8 100%);
+    }
+
+    .fo-qr-btn i {
+        font-size: 16px;
+    }
+
+    .fo-badge-cdi,
+    .fo-badge-cdd,
+    .fo-badge-stage,
+    .fo-badge-other {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: fit-content;
+        font-weight: 800;
+        font-size: 13px;
+        padding: 8px 14px;
+        border-radius: 999px;
+    }
+
+    .fo-badge-cdi {
+        background: #dbeafe;
+        color: #2563eb;
+    }
+
+    .fo-badge-cdd {
+        background: #fef3c7;
+        color: #d97706;
+    }
+
+    .fo-badge-stage {
+        background: #d1fae5;
+        color: #059669;
+    }
+
+    .fo-badge-other {
+        background: #ede9fe;
+        color: #7c3aed;
+    }
+
+    @media (max-width: 768px) {
+        .fo-header-top {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .fo-header-actions {
+            margin-left: 0;
+            justify-content: flex-start;
+        }
+
+        .fo-qr-btn {
+            padding: 0 16px;
+        }
+    }
+
+
     .fo-favorite-form {
         margin: 0;
     }
@@ -339,7 +503,7 @@
     }
     .fo-stat-accepted .fo-stat-label,
     .fo-stat-accepted .fo-stat-value {
-        color: #15803d;   /* Strong green */
+        color: #15803d;
     }
 
     .fo-stat-refused {
@@ -569,7 +733,6 @@
         }
     }
 
-
     /* MAP BUTTON - DETAIL PAGE */
     .map-btn {
         display: inline-flex;
@@ -594,6 +757,142 @@
 
     .map-btn i {
         font-size: 17px;
+    }
+
+    .fo-qr-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        border-radius: 999px;
+        padding: 11px 18px;
+        background: linear-gradient(90deg, #111827 0%, #374151 100%);
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 10px 20px rgba(17, 24, 39, 0.18);
+        transition: all 0.25s ease;
+    }
+
+    .fo-qr-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .fo-qr-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.65);
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .fo-qr-modal-content {
+        width: 100%;
+        max-width: 520px;
+        background: #fff;
+        border-radius: 24px;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+        overflow: hidden;
+    }
+
+    .fo-qr-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 20px 24px;
+        border-bottom: 1px solid #e5e7eb;
+    }
+
+    .fo-qr-modal-header h4 {
+        margin: 0;
+        font-size: 20px;
+        font-weight: 800;
+        color: #1f3470;
+    }
+
+    .fo-qr-close {
+        border: none;
+        background: transparent;
+        font-size: 28px;
+        line-height: 1;
+        cursor: pointer;
+        color: #6b7280;
+    }
+
+    .fo-qr-body {
+        padding: 24px;
+        text-align: center;
+    }
+
+    .fo-qr-image-wrap {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 20px;
+        padding: 20px;
+        display: inline-block;
+    }
+
+    .fo-qr-image {
+        width: 280px;
+        max-width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .fo-qr-note {
+        margin: 18px 0 0;
+        color: #6b7280;
+        font-size: 14px;
+        line-height: 1.7;
+    }
+
+    .fo-qr-actions {
+        margin-top: 22px;
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .fo-qr-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: none;
+        border-radius: 999px;
+        padding: 11px 18px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: 0.25s ease;
+    }
+
+    .fo-qr-download {
+        background: linear-gradient(90deg, #10b981 0%, #059669 100%);
+        color: white;
+    }
+
+    .fo-qr-print {
+        background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+        color: white;
+    }
+
+    .fo-qr-action-btn:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .fo-qr-btn,
+    .fo-detail-favorite-btn {
+        width: 50px;
+        height: 50px;
+        justify-content: center;
+        padding: 0;
     }
 
 </style>
@@ -625,7 +924,6 @@
         const modal = document.getElementById('mapModal');
         modal.style.display = 'flex';
 
-        // Use OpenStreetMap Nominatim API to geocode the location
         fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(location))
             .then(response => response.json())
             .then(data => {
@@ -667,7 +965,6 @@
         }
     }
 
-    // Close modal on backdrop click
     document.getElementById('mapModal').addEventListener('click', function(e) {
         if (e.target === this) closeMap();
     });
@@ -676,5 +973,116 @@
 {# Leaflet.js CSS + JS #}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+    function openQrModal() {
+        const modal = document.getElementById('qrModal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
+    }
+
+    function closeQrModal() {
+        const modal = document.getElementById('qrModal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    function printQrCode() {
+        const qrImage = document.getElementById('offerQrImage');
+        if (!qrImage) {
+            return;
+        }
+
+        const printWindow = window.open('', '_blank', 'width=700,height=800');
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>QR Code - Offre</title>
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            text-align: center;
+                            padding: 30px;
+                        }
+                        img {
+                            width: 320px;
+                            max-width: 100%;
+                            margin-bottom: 20px;
+                        }
+                        h2 {
+                            margin-bottom: 10px;
+                        }
+                        p {
+                            color: #444;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <h2>{{ offre.titre|e('js') }}</h2>
+                    <p>{{ offre.entreprise|e('js') }} - {{ offre.localisation|e('js') }}</p>
+                    <img src="${qrImage.src}" alt="QR Code">
+                </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    }
+
+    window.addEventListener('click', function (event) {
+        const modal = document.getElementById('qrModal');
+        if (event.target === modal) {
+            closeQrModal();
+        }
+    });
+</script>
+
+<div id="qrModal" class="fo-qr-modal" style="display:none;">
+    <div class="fo-qr-modal-content">
+        <div class="fo-qr-modal-header">
+            <h4>
+                <i class="fas fa-qrcode"></i>
+                QR Code - {{ offre.titre }}
+            </h4>
+            <button type="button" class="fo-qr-close" onclick="closeQrModal()">&times;</button>
+        </div>
+
+        <div class="fo-qr-body">
+            <div class="fo-qr-image-wrap">
+                <img
+                    id="offerQrImage"
+                    src="{{ qr_code_data_uri(qrText, 'custom') }}"
+                    alt="QR Code de l'offre {{ offre.titre }}"
+                    class="fo-qr-image"
+                >
+            </div>
+
+            <p class="fo-qr-note">
+                Scannez ce QR code pour récupérer les informations principales de l'offre.
+            </p>
+
+            <div class="fo-qr-actions">
+                <a
+                    id="downloadQrBtn"
+                    href="{{ qr_code_data_uri(qrText, 'custom') }}"
+                    download="offre-{{ offre.id }}-qr.svg"
+                    class="fo-qr-action-btn fo-qr-download"
+                >
+                    <i class="fas fa-download"></i>
+                    Télécharger
+                </a>
+
+                <button type="button" class="fo-qr-action-btn fo-qr-print" onclick="printQrCode()">
+                    <i class="fas fa-print"></i>
+                    Imprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}
