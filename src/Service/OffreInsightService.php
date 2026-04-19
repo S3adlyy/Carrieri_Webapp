@@ -7,6 +7,7 @@ namespace App\Service;
 use App\Entity\OffreEmploi;
 use App\Entity\Postulation;
 
+
 class OffreInsightService
 {
     /**

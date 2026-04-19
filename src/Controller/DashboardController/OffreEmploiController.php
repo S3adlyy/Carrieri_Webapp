@@ -16,6 +16,11 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 #[Route('/admin/offres')]
 class OffreEmploiController extends AbstractController
@@ -341,5 +346,193 @@ class OffreEmploiController extends AbstractController
             'insights' => $insights,
         ]);
     }
+
+
+    #[Route('/{id}/insights/export-pdf', name: 'app_admin_offres_insights_export_pdf')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function exportInsightsPdf(OffreEmploi $offre): Response
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles())) {
+            $this->addFlash('error', "Vous ne pouvez pas exporter cette offre.");
+            return $this->redirectToRoute('app_admin_offres_list');
+        }
+
+        $postulations = $this->entityManager
+            ->getRepository(Postulation::class)
+            ->findBy(['offreEmploi' => $offre], ['datePostulation' => 'ASC']);
+
+        $accepted = 0;
+        $refused = 0;
+        $pending = 0;
+
+        foreach ($postulations as $postulation) {
+            match ($postulation->getStatut()) {
+                'Acceptée' => $accepted++,
+                'Refusée' => $refused++,
+                default => $pending++,
+            };
+        }
+
+        $insights = $this->offreInsightService->analyze($offre, $postulations);
+
+        $html = $this->renderView('BackOffice/dashboard/offres_emploi/insights_export_pdf.html.twig', [
+            'offre' => $offre,
+            'postulations' => $postulations,
+            'acceptedCount' => $accepted,
+            'refusedCount' => $refused,
+            'pendingCount' => $pending,
+            'insights' => $insights,
+            'exportDate' => new \DateTime(),
+        ]);
+
+        $options = new Options();
+        $options->set('defaultFont', 'Arial');
+        $options->set('isHtml5ParserEnabled', true);
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($html);
+        $dompdf->setPaper('A4', 'portrait');
+        $dompdf->render();
+
+        $fileName = 'insights_offre_' . $offre->getId() . '.pdf';
+
+        return new Response(
+            $dompdf->output(),
+            200,
+            [
+                'Content-Type' => 'application/pdf',
+                'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+            ]
+        );
+    }
+
+    #[Route('/{id}/insights/export-excel', name: 'app_admin_offres_insights_export_excel')]
+    #[IsGranted('ROLE_RECRUITER')]
+    public function exportInsightsExcel(OffreEmploi $offre): StreamedResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        if ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles())) {
+            $this->addFlash('error', "Vous ne pouvez pas exporter cette offre.");
+            return new StreamedResponse(function () {}, 403);
+        }
+
+        $postulations = $this->entityManager
+            ->getRepository(Postulation::class)
+            ->findBy(['offreEmploi' => $offre], ['datePostulation' => 'ASC']);
+
+        $accepted = 0;
+        $refused = 0;
+        $pending = 0;
+
+        foreach ($postulations as $postulation) {
+            match ($postulation->getStatut()) {
+                'Acceptée' => $accepted++,
+                'Refusée' => $refused++,
+                default => $pending++,
+            };
+        }
+
+        $insights = $this->offreInsightService->analyze($offre, $postulations);
+
+        $spreadsheet = new Spreadsheet();
+
+        $sheet1 = $spreadsheet->getActiveSheet();
+        $sheet1->setTitle('Résumé offre');
+
+        $sheet1->fromArray([
+            ['Champ', 'Valeur'],
+            ['Titre', $offre->getTitre()],
+            ['Entreprise', $offre->getEntreprise()],
+            ['Localisation', $offre->getLocalisation()],
+            ['Type contrat', $offre->getTypeContrat()],
+            ['Secteur', $offre->getSecteurActivite()],
+            ['Salaire', $offre->getSalaire()],
+            ['Score global', $insights['scores']['global']],
+            ['Clarté', $insights['scores']['clarity']],
+            ['Attractivité', $insights['scores']['attractiveness']],
+            ['Transparence', $insights['scores']['transparency']],
+            ['Compétitivité', $insights['scores']['competitiveness']],
+            ['Crédibilité', $insights['scores']['credibility']],
+            ['Total postulations', count($postulations)],
+            ['Acceptées', $accepted],
+            ['En attente', $pending],
+            ['Refusées', $refused],
+            ['Prédiction', $insights['prediction']],
+        ]);
+
+        $sheet2 = $spreadsheet->createSheet();
+        $sheet2->setTitle('Remarques');
+
+        $sheet2->fromArray([['Type', 'Contenu']], null, 'A1');
+
+        $row = 2;
+        foreach ($insights['strengths'] as $item) {
+            $sheet2->setCellValue('A' . $row, 'Point fort');
+            $sheet2->setCellValue('B' . $row, $item);
+            $row++;
+        }
+
+        foreach ($insights['remarks'] as $item) {
+            $sheet2->setCellValue('A' . $row, 'Amélioration');
+            $sheet2->setCellValue('B' . $row, $item);
+            $row++;
+        }
+
+        $sheet3 = $spreadsheet->createSheet();
+        $sheet3->setTitle('Postulations');
+
+        $sheet3->fromArray([
+            ['ID', 'Candidat', 'Email', 'Téléphone', 'Date postulation', 'Statut']
+        ], null, 'A1');
+
+        $row = 2;
+        foreach ($postulations as $p) {
+            $candidateName = $p->getUser()
+                ? trim(($p->getUser()->getFirstName() ?? '') . ' ' . ($p->getUser()->getLastName() ?? ''))
+                : '—';
+
+            $sheet3->fromArray([
+                [
+                    $p->getId(),
+                    $candidateName,
+                    $p->getUser()?->getEmail() ?? '—',
+                    $p->getUser()?->getPhone() ?? '—',
+                    $p->getDatePostulation()?->format('d/m/Y H:i') ?? '—',
+                    $p->getStatut(),
+                ]
+            ], null, 'A' . $row);
+
+            $row++;
+        }
+
+        foreach ($spreadsheet->getAllSheets() as $sheet) {
+            foreach (range('A', 'F') as $column) {
+                $sheet->getColumnDimension($column)->setAutoSize(true);
+            }
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'insights_offre_' . $offre->getId() . '.xlsx';
+
+        $response = new StreamedResponse(function () use ($writer) {
+            $writer->save('php://output');
+        });
+
+        $response->headers->set('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        $response->headers->set('Content-Disposition', 'attachment;filename="' . $fileName . '"');
+        $response->headers->set('Cache-Control', 'max-age=0');
+
+        return $response;
+    }
+
 
 }

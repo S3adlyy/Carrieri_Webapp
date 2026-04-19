@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Insights Offre</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            color: #222;
+            margin: 30px;
+        }
+
+        h1, h2, h3 {
+            margin-bottom: 8px;
+        }
+
+        .meta, .box {
+            margin-bottom: 18px;
+        }
+
+        .box {
+            border: 1px solid #dcdcdc;
+            border-radius: 8px;
+            padding: 14px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            vertical-align: top;
+        }
+
+        th {
+            background: #f5f7fb;
+            text-align: left;
+        }
+
+        ul {
+            margin: 8px 0 0 18px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Rapport d’analyse de l’offre</h1>
+
+    <div class="meta">
+        <strong>Titre :</strong> {{ offre.titre }}<br>
+        <strong>Entreprise :</strong> {{ offre.entreprise }}<br>
+        <strong>Localisation :</strong> {{ offre.localisation }}<br>
+        <strong>Type de contrat :</strong> {{ offre.typeContrat }}<br>
+        <strong>Date export :</strong> {{ exportDate|date('d/m/Y H:i') }}
+    </div>
+
+    <div class="box">
+        <h3>Scores</h3>
+        <table>
+            <tr><th>Clarté</th><td>{{ insights.scores.clarity }}/100</td></tr>
+            <tr><th>Attractivité</th><td>{{ insights.scores.attractiveness }}/100</td></tr>
+            <tr><th>Transparence</th><td>{{ insights.scores.transparency }}/100</td></tr>
+            <tr><th>Compétitivité</th><td>{{ insights.scores.competitiveness }}/100</td></tr>
+            <tr><th>Crédibilité</th><td>{{ insights.scores.credibility }}/100</td></tr>
+            <tr><th>Global</th><td><strong>{{ insights.scores.global }}/100</strong></td></tr>
+        </table>
+    </div>
+
+    <div class="box">
+        <h3>Statistiques</h3>
+        <table>
+            <tr><th>Total postulations</th><td>{{ postulations|length }}</td></tr>
+            <tr><th>Acceptées</th><td>{{ acceptedCount }}</td></tr>
+            <tr><th>En attente</th><td>{{ pendingCount }}</td></tr>
+            <tr><th>Refusées</th><td>{{ refusedCount }}</td></tr>
+        </table>
+    </div>
+
+    <div class="box">
+        <h3>Prédiction</h3>
+        <p>{{ insights.prediction }}</p>
+    </div>
+
+    <div class="box">
+        <h3>Points forts</h3>
+        <ul>
+            {% for item in insights.strengths %}
+                <li>{{ item }}</li>
+            {% else %}
+                <li>Aucun point fort majeur détecté.</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <div class="box">
+        <h3>Remarques d’amélioration</h3>
+        <ul>
+            {% for item in insights.remarks %}
+                <li>{{ item }}</li>
+            {% else %}
+                <li>Aucune remarque particulière.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
