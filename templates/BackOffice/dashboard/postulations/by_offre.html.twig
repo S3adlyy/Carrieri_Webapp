@@ -11,24 +11,46 @@
 
 {% block body %}
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
-            <div>
-                <h3 class="card-title mb-1">
-                    Postulations liées à l'offre :
-                    <strong>{{ offre.titre }}</strong>
-                </h3>
-                <div class="text-muted mt-1">
-                    <i class="fas fa-building"></i> {{ offre.entreprise }}
-                    &nbsp; | &nbsp;
-                    <i class="fas fa-map-marker-alt"></i> {{ offre.localisation }}
-                    &nbsp; | &nbsp;
-                    <i class="fas fa-file-contract"></i> {{ offre.typeContrat }}
+        <div class="card-header offre-post-header">
+            <div class="offre-post-header-left">
+                <div class="offre-title-block">
+                    <h3 class="offre-title">
+                        Postulations liées à l'offre :
+                        <span class="offre-name">{{ offre.titre }}</span>
+                    </h3>
+
+                    <div class="offre-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-building"></i>
+                            <span>{{ offre.entreprise }}</span>
+                        </div>
+
+                        <div class="meta-separator"></div>
+
+                        <div class="meta-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>{{ offre.localisation }}</span>
+                        </div>
+
+                        <div class="meta-separator"></div>
+
+                        <div class="meta-item">
+                            <i class="fas fa-file-contract"></i>
+                            <span>{{ offre.typeContrat }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="card-tools mt-2 mt-md-0">
-                <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary btn-sm">
-                    <i class="fas fa-arrow-left"></i> Retour aux offres
+            <div class="offre-post-header-actions">
+                <a href="{{ path('app_admin_offres_list') }}" class="btn btn-secondary btn-sm top-action-btn">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Retour aux offres</span>
+                </a>
+
+                <a href="{{ path('app_admin_postulations_export_pdf', {'id': offre.id}) }}" class="btn btn-danger btn-sm top-action-btn">
+                    <i class="fas fa-file-pdf"></i>
+                    <span>Export PDF</span>
                 </a>
             </div>
         </div>
@@ -45,7 +67,7 @@
 
             <div class="row mb-3">
                 <div class="col-md-4">
-                    <div class="small-box bg-info">
+                    <div class="small-box bg-info postulation-stats-box">
                         <div class="inner">
                             <h3>{{ postulations|length }}</h3>
                             <p>Total postulations</p>
@@ -57,6 +79,45 @@
                 </div>
             </div>
 
+            <form method="get" action="{{ path('app_admin_postulations_by_offre', {'id': offre.id}) }}" class="mb-4">
+                <div class="row">
+                    <div class="col-md-4">
+                        <input
+                            type="text"
+                            name="keyword"
+                            class="form-control"
+                            placeholder="Rechercher par nom, prénom, email..."
+                            value="{{ filters.keyword|default('') }}"
+                        >
+                    </div>
+
+                    <div class="col-md-3">
+                        <select name="statut" class="form-control">
+                            <option value="">Tous les statuts</option>
+                            <option value="En attente" {{ filters.statut == 'En attente' ? 'selected' : '' }}>En attente</option>
+                            <option value="Acceptée" {{ filters.statut == 'Acceptée' ? 'selected' : '' }}>Acceptée</option>
+                            <option value="Refusée" {{ filters.statut == 'Refusée' ? 'selected' : '' }}>Refusée</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <input
+                            type="date"
+                            name="dateDebut"
+                            class="form-control"
+                            value="{{ filters.dateDebut|default('') }}"
+                        >
+                    </div>
+
+                
+                    <div class="col-md-1">
+                        <button class="btn btn-primary w-100" type="submit">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
             {% if postulations is not empty %}
                 <div class="table-responsive">
                     <table class="table table-hover table-striped">
@@ -67,85 +128,107 @@
                                 <th>Email</th>
                                 <th>Téléphone</th>
                                 <th>Date postulation</th>
-                                <th>Statut</th>
+                                <th>Motivation</th>
                                 <th>CV</th>
+                                <th>Statut actuel</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {% for postulation in postulations %}
+                            {% for p in postulations %}
                                 <tr>
-                                    <td>{{ postulation.id }}</td>
+                                    <td>{{ p.id }}</td>
+
                                     <td>
-                                        {% if postulation.candidat is defined and postulation.candidat %}
-                                            {{ postulation.candidat.nom }} {{ postulation.candidat.prenom }}
+                                        {% if p.user %}
+                                            {{ p.user.firstName|default('') }} {{ p.user.lastName|default('') }}
+                                        {% elseif p.candidatId %}
+                                            <span class="text-muted">Utilisateur #{{ p.candidatId }}</span>
                                         {% else %}
-                                            —
+                                            <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
+
                                     <td>
-                                        {% if postulation.candidat is defined and postulation.candidat and postulation.candidat.email is defined %}
-                                            {{ postulation.candidat.email }}
+                                        {% if p.user and p.user.email %}
+                                            {{ p.user.email }}
                                         {% else %}
-                                            —
+                                            <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
+
                                     <td>
-                                        {% if postulation.candidat is defined and postulation.candidat and postulation.candidat.telephone is defined %}
-                                            {{ postulation.candidat.telephone }}
+                                        {% if p.user and p.user.phone %}
+                                            {{ p.user.phone }}
                                         {% else %}
-                                            —
+                                            <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
-                                    <td>
-                                        {{ postulation.datePostulation ? postulation.datePostulation|date('d/m/Y H:i') : '—' }}
-                                    </td>
-                                    <td>
-                                        {% if postulation.statut == 'Acceptée' %}
-                                            <span class="badge badge-success">Acceptée</span>
-                                        {% elseif postulation.statut == 'Refusée' %}
-                                            <span class="badge badge-danger">Refusée</span>
+
+                                    <td>{{ p.datePostulation ? p.datePostulation|date('d/m/Y H:i') : '—' }}</td>
+
+                                    <td class="motivation-cell">
+                                        {% set motivation = p.motivationCandidature|default('') %}
+                                        {% if motivation %}
+                                            <span title="{{ motivation }}">
+                                                {{ motivation|length > 100 ? motivation|slice(0, 100) ~ '...' : motivation }}
+                                            </span>
                                         {% else %}
-                                            <span class="badge badge-warning">En attente</span>
+                                            <span class="text-muted">—</span>
                                         {% endif %}
                                     </td>
+
                                     <td>
-                                        {% if postulation.cvPath %}
-                                            <a href="{{ asset(postulation.cvPath) }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                <i class="fas fa-file-pdf"></i> Voir CV
+                                        {% if p.cvPath %}
+                                            <a href="{{ asset(p.cvPath) }}" target="_blank" class="btn btn-outline-primary btn-sm cv-btn">
+                                                <i class="fas fa-file-pdf"></i>
+                                                <span>Voir CV</span>
                                             </a>
                                         {% else %}
                                             <span class="text-muted">Aucun CV</span>
                                         {% endif %}
                                     </td>
+
                                     <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <form method="post" action="{{ path('app_admin_postulations_update_statut', {'id': postulation.id}) }}" style="display:inline-block;">
-                                                <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ postulation.id) }}">
+                                        {% if p.statut == 'Acceptée' %}
+                                            <span class="badge badge-success">Acceptée</span>
+                                        {% elseif p.statut == 'Refusée' %}
+                                            <span class="badge badge-danger">Refusée</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">En attente</span>
+                                        {% endif %}
+                                    </td>
+
+                                    <td>
+                                        <div class="post-actions">
+                                            <form method="post" action="{{ path('app_admin_postulations_update_statut', {'id': p.id}) }}" class="post-action-form">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ p.id) }}">
                                                 <input type="hidden" name="statut" value="Acceptée">
-                                                <button type="submit" class="btn btn-success" title="Accepter">
+                                                <button type="submit" class="btn post-btn post-btn-success" title="Accepter">
                                                     <i class="fas fa-check"></i>
                                                 </button>
                                             </form>
 
-                                            <form method="post" action="{{ path('app_admin_postulations_update_statut', {'id': postulation.id}) }}" style="display:inline-block;">
-                                                <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ postulation.id) }}">
+                                            <form method="post" action="{{ path('app_admin_postulations_update_statut', {'id': p.id}) }}" class="post-action-form">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('statut' ~ p.id) }}">
                                                 <input type="hidden" name="statut" value="Refusée">
-                                                <button type="submit" class="btn btn-warning" title="Refuser">
+                                                <button type="submit" class="btn post-btn post-btn-warning" title="Refuser">
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             </form>
 
-                                            <button type="button"
-                                                    class="btn btn-danger"
-                                                    data-toggle="modal"
-                                                    data-target="#deleteModal{{ postulation.id }}"
-                                                    title="Supprimer">
+                                            <button
+                                                type="button"
+                                                class="btn post-btn post-btn-danger"
+                                                data-toggle="modal"
+                                                data-target="#deleteModal{{ p.id }}"
+                                                title="Supprimer"
+                                            >
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
 
-                                        <div class="modal fade" id="deleteModal{{ postulation.id }}" tabindex="-1" role="dialog">
+                                        <div class="modal fade" id="deleteModal{{ p.id }}" tabindex="-1" role="dialog" aria-hidden="true">
                                             <div class="modal-dialog" role="document">
                                                 <div class="modal-content">
                                                     <div class="modal-header">
@@ -154,16 +237,19 @@
                                                             <span>&times;</span>
                                                         </button>
                                                     </div>
+
                                                     <div class="modal-body">
                                                         <p>Êtes-vous sûr de vouloir supprimer cette postulation ?</p>
                                                         <p class="text-muted mb-0">
-                                                            ID : <strong>{{ postulation.id }}</strong>
+                                                            ID : <strong>{{ p.id }}</strong>
                                                         </p>
                                                     </div>
+
                                                     <div class="modal-footer">
                                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
-                                                        <form method="post" action="{{ path('app_admin_postulations_delete', {'id': postulation.id}) }}">
-                                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_postulation_' ~ postulation.id) }}">
+
+                                                        <form method="post" action="{{ path('app_admin_postulations_delete', {'id': p.id}) }}">
+                                                            <input type="hidden" name="_token" value="{{ csrf_token('delete_postulation_' ~ p.id) }}">
                                                             <button type="submit" class="btn btn-danger">Supprimer</button>
                                                         </form>
                                                     </div>
@@ -184,4 +270,200 @@
             {% endif %}
         </div>
     </div>
+
+    <style>
+        .offre-post-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            flex-wrap: nowrap;
+        }
+
+        .offre-post-header-left {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .offre-title-block {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .offre-title {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1f2937;
+            line-height: 1.3;
+        }
+
+        .offre-name {
+            color: #111827;
+            font-weight: 800;
+        }
+
+        .offre-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .meta-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            line-height: 1;
+        }
+
+        .meta-item i {
+            font-size: 14px;
+            color: #6b7280;
+            width: 14px;
+            text-align: center;
+            position: relative;
+            top: -1px;
+        }
+
+        .meta-separator {
+            width: 1px;
+            height: 15px;
+            background: #d1d5db;
+        }
+
+        .offre-post-header-actions {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-shrink: 0;
+        }
+
+        .top-action-btn {
+            min-width: 170px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            border-radius: 8px;
+            white-space: nowrap;
+        }
+
+        .postulation-stats-box {
+            margin-bottom: 8px;
+        }
+
+        .motivation-cell {
+            max-width: 280px;
+        }
+
+        .cv-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .post-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            flex-wrap: nowrap;
+        }
+
+        .post-action-form {
+            margin: 0;
+        }
+
+        .post-btn {
+            width: 42px;
+            height: 42px;
+            padding: 0;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease;
+        }
+
+        .post-btn i {
+            font-size: 15px;
+        }
+
+        .post-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .post-btn-success {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .post-btn-success:hover {
+            background: #218838;
+            color: #fff;
+        }
+
+        .post-btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .post-btn-warning:hover {
+            background: #e0a800;
+            color: #212529;
+        }
+
+        .post-btn-danger {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .post-btn-danger:hover {
+            background: #c82333;
+            color: #fff;
+        }
+
+        .table td,
+        .table th {
+            vertical-align: middle;
+        }
+
+        @media (max-width: 991px) {
+            .offre-post-header {
+                flex-wrap: wrap;
+            }
+
+            .offre-post-header-actions {
+                width: 100%;
+                margin-left: 0;
+                justify-content: flex-end;
+            }
+        }
+
+        @media (max-width: 767px) {
+            .offre-post-header-actions {
+                justify-content: flex-start;
+                flex-wrap: wrap;
+            }
+
+            .offre-meta {
+                gap: 10px;
+            }
+
+            .meta-separator {
+                display: none;
+            }
+        }
+    </style>
 {% endblock %}
