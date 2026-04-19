@@ -1,22 +1,15 @@
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
 {% block title %}Offres d'emploi{% endblock %}
-
 {% block candidate_page_heading %}Offres d'emploi{% endblock %}
-
 {% block candidate_breadcrumb %} / Offres d'emploi{% endblock %}
 
 {% block candidate_content %}
     {% for message in app.flashes('success') %}
-        <div class="fo-alert fo-alert-success fo-auto-hide-alert">
-            {{ message }}
-        </div>
+        <div class="fo-alert fo-alert-success fo-auto-hide-alert">{{ message }}</div>
     {% endfor %}
-
     {% for message in app.flashes('error') %}
-        <div class="fo-alert fo-alert-danger fo-auto-hide-alert">
-            {{ message }}
-        </div>
+        <div class="fo-alert fo-alert-danger fo-auto-hide-alert">{{ message }}</div>
     {% endfor %}
 
     <div class="fo-stats-row">
@@ -43,13 +36,8 @@
     </div>
 
     <form method="get" class="fo-filter-bar">
-        <input
-            type="text"
-            name="keyword"
-            placeholder="Rechercher..."
-            value="{{ app.request.get('keyword') }}"
-        >
-
+        <input type="text" name="keyword" placeholder="Rechercher..."
+               value="{{ app.request.get('keyword') }}">
         <select name="type">
             <option value="">Type</option>
             <option value="CDI" {{ app.request.get('type') == 'CDI' ? 'selected' : '' }}>CDI</option>
@@ -57,21 +45,10 @@
             <option value="Stage" {{ app.request.get('type') == 'Stage' ? 'selected' : '' }}>Stage</option>
             <option value="Freelance" {{ app.request.get('type') == 'Freelance' ? 'selected' : '' }}>Freelance</option>
         </select>
-
-        <input
-            type="text"
-            name="localisation"
-            placeholder="Localisation"
-            value="{{ app.request.get('localisation') }}"
-        >
-
-        <input
-            type="number"
-            name="salaire"
-            placeholder="Salaire min"
-            value="{{ app.request.get('salaire') }}"
-        >
-
+        <input type="text" name="localisation" placeholder="Localisation"
+               value="{{ app.request.get('localisation') }}">
+        <input type="number" name="salaire" placeholder="Salaire min"
+               value="{{ app.request.get('salaire') }}">
         <div class="fo-filter-actions">
             <button type="submit">Filtrer</button>
             <a href="{{ path('app_candidate_offres') }}" class="fo-reset-btn">Réinitialiser</a>
@@ -81,7 +58,7 @@
     <div class="fo-offres-page">
         <div class="fo-offres-intro text-center">
             <p class="fo-offres-intro__text">
-                Découvrez les opportunités disponibles et trouvez l’offre qui correspond à votre profil.
+                Découvrez les opportunités disponibles et trouvez l'offre qui correspond à votre profil.
             </p>
         </div>
 
@@ -95,50 +72,43 @@
                                     <h3 class="fo-offre-card__title">{{ offre.titre }}</h3>
                                     <div class="fo-offre-card__company">{{ offre.entreprise }}</div>
                                 </div>
-
                                 <span class="fo-offre-card__badge
-                                    {% if offre.typeContrat == 'CDI' %}
-                                        fo-badge-cdi
-                                    {% elseif offre.typeContrat == 'CDD' %}
-                                        fo-badge-cdd
-                                    {% elseif offre.typeContrat == 'Stage' %}
-                                        fo-badge-stage
-                                    {% else %}
-                                        fo-badge-other
-                                    {% endif %}
-                                ">
+                                    {% if offre.typeContrat == 'CDI' %}fo-badge-cdi
+                                    {% elseif offre.typeContrat == 'CDD' %}fo-badge-cdd
+                                    {% elseif offre.typeContrat == 'Stage' %}fo-badge-stage
+                                    {% else %}fo-badge-other{% endif %}">
                                     {{ offre.typeContrat }}
                                 </span>
                             </div>
 
                             <div class="fo-offre-card__meta">
-                                <div class="fo-meta-item">
+                                <div class="fo-meta-item fo-meta-location">
                                     <span class="fo-meta-item__label">Localisation</span>
-                                    <span class="fo-meta-item__value">{{ offre.localisation }}</span>
+                                    <div class="fo-meta-location-row">
+                                        <span class="fo-meta-item__value">{{ offre.localisation }}</span>
+                                        <button class="map-btn-card" data-location="{{ offre.localisation|escape('html_attr') }}" title="Voir sur la carte">
+                                            <i class="fas fa-map-marked-alt"></i>
+                                        </button>
+                                    </div>
                                 </div>
-
                                 <div class="fo-meta-item">
                                     <span class="fo-meta-item__label">Salaire</span>
                                     <span class="fo-meta-item__value">{{ offre.salaire }} DT</span>
                                 </div>
-
                                 <div class="fo-meta-item">
                                     <span class="fo-meta-item__label">Qualification</span>
                                     <span class="fo-meta-item__value">{{ offre.niveauQualification }}</span>
                                 </div>
-
                                 <div class="fo-meta-item">
                                     <span class="fo-meta-item__label">Expérience</span>
                                     <span class="fo-meta-item__value">{{ offre.experienceRequise }}</span>
                                 </div>
-
                                 <div class="fo-meta-item">
                                     <span class="fo-meta-item__label">Expiration</span>
                                     <span class="fo-meta-item__value">
                                         {{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}
                                     </span>
                                 </div>
-
                                 <div class="fo-meta-item">
                                     <span class="fo-meta-item__label">Contact</span>
                                     <span class="fo-meta-item__value">{{ offre.contactRecruteur }}</span>
@@ -146,18 +116,13 @@
                             </div>
 
                             <div class="fo-offre-card__description">
-                                {{
-                                    offre.description|length > 180
-                                        ? offre.description|slice(0, 180) ~ '...'
-                                        : offre.description
-                                }}
+                                {{ offre.description|length > 180 ? offre.description|slice(0, 180) ~ '...' : offre.description }}
                             </div>
 
                             <div class="fo-offre-card__actions">
                                 <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="fo-offre-btn">
                                     Voir plus
                                 </a>
-
                                 <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}" class="fo-favorite-form">
                                     <button type="submit" class="fo-favorite-btn" title="{{ offre.id in favoriteIds ? 'Retirer des favoris' : 'Ajouter aux favoris' }}">
                                         {% if offre.id in favoriteIds %}
@@ -168,7 +133,7 @@
                                     </button>
                                 </form>
                             </div>
-                                                    </div>
+                        </div>
                     </div>
                 {% endfor %}
             </div>
@@ -180,369 +145,170 @@
         {% endif %}
     </div>
 
+    {# OpenStreetMap Modal #}
+    <div id="mapModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:22px; padding:24px; width:90%; max-width:700px; position:relative;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                <h4 style="margin:0; color:#1f3470; font-weight:800;">
+                    <i class="fas fa-map-marker-alt" style="color:#3b82f6;"></i>
+                    <span id="mapLocationLabel"></span>
+                </h4>
+                <button onclick="closeMap()" style="background:none; border:none; font-size:22px; cursor:pointer; color:#6b7280;">&times;</button>
+            </div>
+            <div id="map" style="height:400px; border-radius:14px; z-index:1;"></div>
+        </div>
+    </div>
+
     <style>
+        .fo-candidate-content { background: linear-gradient(90deg, #f7eef9 0%, #eef6ff 100%); }
 
-            .fo-offre-card__actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+        .fo-alert { border-radius: 14px; padding: 14px 18px; margin-bottom: 18px; font-weight: 600; text-align: left; transition: opacity 0.6s ease, transform 0.6s ease; }
+        .fo-alert-success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+        .fo-alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+        .fo-alert-hide { opacity: 0; transform: translateY(-8px); }
 
-        .fo-favorite-form {
-            margin: 0;
-        }
+        .fo-stats-row { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+        .fo-stat-card { flex: 1; min-width: 140px; display: flex; align-items: center; gap: 14px; background: rgba(255,255,255,0.92); border-radius: 18px; padding: 18px 20px; box-shadow: 0 8px 24px rgba(31,55,120,0.08); }
+        .fo-stat-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .fo-stat-value { display: block; font-size: 28px; font-weight: 800; color: #1f3470; line-height: 1; }
+        .fo-stat-label { display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-top: 4px; }
 
-        .fo-favorite-btn {
-            width: 46px;
-            height: 46px;
-            border: none;
-            border-radius: 50%;
-            background: rgba(239, 68, 68, 0.10);
-            color: #dc2626;
+        .fo-filter-bar { display: grid; grid-template-columns: 2fr 1fr 1.5fr 1fr auto; gap: 12px; margin-bottom: 28px; background: rgba(255,255,255,0.92); padding: 18px; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,55,120,0.08); }
+        .fo-filter-bar input, .fo-filter-bar select { border: 1px solid #dbe4f3; border-radius: 12px; padding: 12px 14px; font-size: 14px; background: #fff; color: #1f2937; width: 100%; }
+        .fo-filter-bar button { border: none; border-radius: 12px; padding: 12px 18px; font-weight: 700; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: #fff; cursor: pointer; }
+        .fo-filter-actions { display: flex; gap: 10px; align-items: center; }
+        .fo-reset-btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; padding: 12px 18px; font-weight: 700; background: #e5e7eb; color: #1f2937; text-decoration: none; white-space: nowrap; }
+        .fo-reset-btn:hover { text-decoration: none; color: #1f2937; background: #d1d5db; }
+
+        .fo-offres-page { width: 100%; }
+        .fo-offres-intro { margin-bottom: 35px; }
+        .fo-offres-intro__text { max-width: 760px; margin: 0 auto; color: #5b647d; font-size: 17px; line-height: 1.8; }
+
+        .fo-offre-card { height: 100%; border-radius: 22px; background: rgba(255,255,255,0.92); box-shadow: 0 12px 35px rgba(31,55,120,0.10); transition: all 0.25s ease; overflow: hidden; padding: 28px; text-align: left; }
+        .fo-offre-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(31,55,120,0.16); }
+
+        .fo-offre-card__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
+        .fo-offre-card__title { font-size: 30px; font-weight: 800; color: #1f3470; line-height: 1.2; margin-bottom: 8px; }
+        .fo-offre-card__company { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #6b7280; }
+
+        .fo-offre-card__badge { display: inline-block; padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; margin-top: 4px; }
+        .fo-badge-cdi { background: rgba(59,130,246,0.12); color: #2563eb; }
+        .fo-badge-cdd { background: rgba(245,158,11,0.15); color: #d97706; }
+        .fo-badge-stage { background: rgba(16,185,129,0.15); color: #059669; }
+        .fo-badge-other { background: rgba(139,92,246,0.14); color: #7c3aed; }
+
+        .fo-offre-card__meta { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 24px; }
+        .fo-meta-item { background: #f8fbff; border: 1px solid #e6eefc; border-radius: 14px; padding: 14px 16px; }
+        .fo-meta-item__label { display: block; font-size: 13px; font-weight: 700; color: #3b82f6; margin-bottom: 4px; }
+        .fo-meta-item__value { display: block; font-size: 15px; font-weight: 600; color: #1f2937; }
+
+        .fo-meta-location-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+        /* Map button on card — same style as offre_show */
+        .map-btn-card {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 20px;
-            transition: all 0.25s ease;
-            cursor: pointer;
-        }
-
-        .fo-favorite-btn:hover {
-            transform: scale(1.08);
-            background: rgba(239, 68, 68, 0.18);
-        }
-        .fo-candidate-content {
-            background: linear-gradient(90deg, #f7eef9 0%, #eef6ff 100%);
-        }
-
-        .fo-alert {
-            border-radius: 14px;
-            padding: 14px 18px;
-            margin-bottom: 18px;
-            font-weight: 600;
-            text-align: left;
-            transition: opacity 0.6s ease, transform 0.6s ease;
-        }
-
-        .fo-alert-success {
-            background: #dcfce7;
-            color: #166534;
-            border: 1px solid #bbf7d0;
-        }
-
-        .fo-alert-danger {
-            background: #fee2e2;
-            color: #991b1b;
-            border: 1px solid #fecaca;
-        }
-
-        .fo-alert-hide {
-            opacity: 0;
-            transform: translateY(-8px);
-        }
-
-        .fo-filter-bar {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1.5fr 1.3fr auto;
-            gap: 12px;
-            margin-bottom: 28px;
-            background: rgba(255,255,255,0.92);
-            padding: 18px;
-            border-radius: 18px;
-            box-shadow: 0 10px 28px rgba(31, 55, 120, 0.08);
-        }
-
-        .fo-filter-bar input,
-        .fo-filter-bar select {
-            border: 1px solid #dbe4f3;
-            border-radius: 12px;
-            padding: 12px 14px;
-            font-size: 14px;
-            background: #fff;
-            color: #1f2937;
-            width: 100%;
-        }
-
-        .fo-filter-bar button {
-            border: none;
-            border-radius: 12px;
-            padding: 12px 18px;
-            font-weight: 700;
-            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
-            color: #fff;
-            cursor: pointer;
-        }
-
-        .fo-filter-actions {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .fo-reset-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 12px;
-            padding: 12px 18px;
-            font-weight: 700;
-            background: #e5e7eb;
-            color: #1f2937;
-            text-decoration: none;
-            white-space: nowrap;
-        }
-
-        .fo-reset-btn:hover {
-            text-decoration: none;
-            color: #1f2937;
-            background: #d1d5db;
-        }
-
-        .fo-offres-page {
-            width: 100%;
-        }
-
-        .fo-offres-intro {
-            margin-bottom: 35px;
-        }
-
-        .fo-offres-intro__text {
-            max-width: 760px;
-            margin: 0 auto;
-            color: #5b647d;
-            font-size: 17px;
-            line-height: 1.8;
-        }
-
-        .fo-offre-card {
-            height: 100%;
-            border-radius: 22px;
-            background: rgba(255,255,255,0.92);
-            box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
-            transition: all 0.25s ease;
-            overflow: hidden;
-            padding: 28px;
-            text-align: left;
-        }
-
-        .fo-offre-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 18px 40px rgba(31, 55, 120, 0.16);
-        }
-
-        .fo-offre-card__top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 16px;
-            flex-wrap: wrap;
-            margin-bottom: 22px;
-        }
-
-        .fo-offre-card__title {
-            font-size: 30px;
-            font-weight: 800;
-            color: #1f3470;
-            line-height: 1.2;
-            margin-bottom: 8px;
-        }
-
-        .fo-offre-card__company {
-            font-size: 15px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            color: #6b7280;
-        }
-
-        .fo-offre-card__badge {
-            display: inline-block;
-            padding: 10px 16px;
-            border-radius: 999px;
-            font-size: 13px;
-            font-weight: 700;
-            margin-top: 4px;
-        }
-
-        .fo-badge-cdi {
-            background: rgba(59, 130, 246, 0.12);
-            color: #2563eb;
-        }
-
-        .fo-badge-cdd {
-            background: rgba(245, 158, 11, 0.15);
-            color: #d97706;
-        }
-
-        .fo-badge-stage {
-            background: rgba(16, 185, 129, 0.15);
-            color: #059669;
-        }
-
-        .fo-badge-other {
-            background: rgba(139, 92, 246, 0.14);
-            color: #7c3aed;
-        }
-
-        .fo-offre-card__meta {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-            margin-bottom: 24px;
-        }
-
-        .fo-meta-item {
-            background: #f8fbff;
-            border: 1px solid #e6eefc;
-            border-radius: 14px;
-            padding: 14px 16px;
-        }
-
-        .fo-meta-item__label {
-            display: block;
-            font-size: 13px;
-            font-weight: 700;
-            color: #3b82f6;
-            margin-bottom: 4px;
-        }
-
-        .fo-meta-item__value {
-            display: block;
-            font-size: 15px;
-            font-weight: 600;
-            color: #1f2937;
-        }
-
-        .fo-offre-card__description {
-            color: #5f6780;
-            font-size: 15px;
-            line-height: 1.8;
-            background: #fcfcff;
-            border-left: 4px solid #3b82f6;
-            padding: 14px 16px;
-            border-radius: 10px;
-            margin-bottom: 24px;
-        }
-
-        .fo-offre-card__actions {
-            display: flex;
-            justify-content: flex-end;
-        }
-
-        .fo-offre-btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
             color: white;
             border: none;
-            border-radius: 999px;
-            padding: 11px 24px;
+            border-radius: 50px;
+            padding: 7px 12px;
+            font-size: 13px;
             font-weight: 700;
-            box-shadow: 0 10px 20px rgba(37, 99, 235, 0.20);
-            transition: 0.25s ease;
-            text-decoration: none;
-        }
-
-        .fo-offre-btn:hover {
-            color: white;
-            text-decoration: none;
-            transform: translateY(-2px);
-            box-shadow: 0 14px 24px rgba(37, 99, 235, 0.28);
-        }
-
-        .fo-empty-box {
-            max-width: 720px;
-            margin: 0 auto;
-            background: rgba(255,255,255,0.92);
-            border-radius: 22px;
-            padding: 50px 30px;
-            box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
-            color: #5b647d;
-            text-align: center;
-        }
-
-        .fo-empty-box h3 {
-            color: #223a7a;
-            font-weight: 800;
-            margin-bottom: 12px;
-        }
-
-        @media (max-width: 991px) {
-            .fo-filter-bar {
-                grid-template-columns: 1fr;
-            }
-
-            .fo-filter-actions {
-                flex-direction: column;
-            }
-
-            .fo-reset-btn,
-            .fo-filter-bar button {
-                width: 100%;
-            }
-
-            .fo-offre-card__title {
-                font-size: 24px;
-            }
-
-            .fo-offre-card__meta {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .fo-stats-row {
-            display: flex;
-            gap: 16px;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-        }
-        .fo-stat-card {
-            flex: 1;
-            min-width: 140px;
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            background: rgba(255,255,255,0.92);
-            border-radius: 18px;
-            padding: 18px 20px;
-            box-shadow: 0 8px 24px rgba(31,55,120,0.08);
-        }
-        .fo-stat-icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+            box-shadow: 0 4px 12px rgba(37,99,235,0.30);
+            transition: all 0.3s ease;
+            cursor: pointer;
             flex-shrink: 0;
         }
-        .fo-stat-value {
-            display: block;
-            font-size: 28px;
-            font-weight: 800;
-            color: #1f3470;
-            line-height: 1;
-        }
-        .fo-stat-label {
-            display: block;
-            font-size: 13px;
-            font-weight: 600;
-            color: #6b7280;
-            margin-top: 4px;
+        .map-btn-card:hover { transform: translateY(-2px) scale(1.06); box-shadow: 0 8px 18px rgba(37,99,235,0.40); }
+        .map-btn-card i { font-size: 14px; }
+
+        .fo-offre-card__description { color: #5f6780; font-size: 15px; line-height: 1.8; background: #fcfcff; border-left: 4px solid #3b82f6; padding: 14px 16px; border-radius: 10px; margin-bottom: 24px; }
+
+        .fo-offre-card__actions { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
+
+        .fo-offre-btn { display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 999px; padding: 11px 24px; font-weight: 700; box-shadow: 0 10px 20px rgba(37,99,235,0.20); transition: 0.25s ease; text-decoration: none; }
+        .fo-offre-btn:hover { color: white; text-decoration: none; transform: translateY(-2px); }
+
+        .fo-favorite-form { margin: 0; }
+        .fo-favorite-btn { width: 46px; height: 46px; border: none; border-radius: 50%; background: rgba(239,68,68,0.10); color: #dc2626; display: inline-flex; align-items: center; justify-content: center; font-size: 20px; transition: all 0.25s ease; cursor: pointer; }
+        .fo-favorite-btn:hover { transform: scale(1.08); background: rgba(239,68,68,0.18); }
+
+        .fo-empty-box { max-width: 720px; margin: 0 auto; background: rgba(255,255,255,0.92); border-radius: 22px; padding: 50px 30px; box-shadow: 0 12px 35px rgba(31,55,120,0.10); color: #5b647d; text-align: center; }
+        .fo-empty-box h3 { color: #223a7a; font-weight: 800; margin-bottom: 12px; }
+
+        @media (max-width: 991px) {
+            .fo-filter-bar { grid-template-columns: 1fr; }
+            .fo-filter-actions { flex-direction: column; }
+            .fo-reset-btn, .fo-filter-bar button { width: 100%; }
+            .fo-offre-card__title { font-size: 24px; }
+            .fo-offre-card__meta { grid-template-columns: 1fr; }
         }
     </style>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
     <script>
+        // Auto-hide alerts
         setTimeout(function () {
             document.querySelectorAll('.fo-auto-hide-alert').forEach(function (alertBox) {
                 alertBox.classList.add('fo-alert-hide');
-
-                setTimeout(function () {
-                    alertBox.remove();
-                }, 600);
+                setTimeout(function () { alertBox.remove(); }, 600);
             });
         }, 10000);
+
+        // OpenStreetMap
+        let map = null;
+
+        document.querySelectorAll('.map-btn-card').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const location = this.getAttribute('data-location');
+                openMap(location);
+            });
+        });
+
+        function openMap(location) {
+            const modal = document.getElementById('mapModal');
+            document.getElementById('mapLocationLabel').textContent = location;
+            modal.style.display = 'flex';
+
+            fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(location))
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = parseFloat(data[0].lat);
+                        const lon = parseFloat(data[0].lon);
+
+                        if (map) { map.remove(); map = null; }
+
+                        map = L.map('map').setView([lat, lon], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                        }).addTo(map);
+                        L.marker([lat, lon]).addTo(map)
+                            .bindPopup('<strong>' + location + '</strong>')
+                            .openPopup();
+                    } else {
+                        document.getElementById('map').innerHTML =
+                            '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-weight:600;">Localisation introuvable.</div>';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('map').innerHTML =
+                        '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#6b7280;font-weight:600;">Erreur de chargement.</div>';
+                });
+        }
+
+        function closeMap() {
+            document.getElementById('mapModal').style.display = 'none';
+            if (map) { map.remove(); map = null; }
+        }
+
+        document.getElementById('mapModal').addEventListener('click', function(e) {
+            if (e.target === this) closeMap();
+        });
     </script>
 {% endblock %}
