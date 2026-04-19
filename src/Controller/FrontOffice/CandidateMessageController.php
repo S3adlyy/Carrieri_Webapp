@@ -69,34 +69,52 @@ class CandidateMessageController extends AbstractController
     #[Route('/conversations', name: 'app_candidate_get_conversations', methods: ['GET'])]
     public function getConversations(EntityManagerInterface $em): JsonResponse
     {
-        $user = $this->getUser();
+        try {
+            $user = $this->getUser();
 
-        $conversations = $em->createQueryBuilder()
-            ->select('c', 'u1', 'u2')
-            ->from(Conversation::class, 'c')
-            ->leftJoin('c.user1', 'u1')
-            ->leftJoin('c.user2', 'u2')
-            ->where('c.user1 = :userId OR c.user2 = :userId')
-            ->andWhere('c.statut != :archived')
-            ->setParameter('userId', $user)
-            ->setParameter('archived', 'archived')
-            ->orderBy('c.dateCreation', 'DESC')
-            ->getQuery()
-            ->getResult();
+            if (!$user) {
+                return $this->json(['error' => 'Utilisateur non connecté'], 401);
+            }
 
-        $data = [];
-        foreach ($conversations as $conv) {
-            $otherUser = $conv->getUser1()->getId() === $user->getId() ? $conv->getUser2() : $conv->getUser1();
-            $data[] = [
-                'id' => $conv->getId(),
-                'other_user_id' => $otherUser->getId(),
-                'other_user_name' => $otherUser->getFirstName() . ' ' . $otherUser->getLastName(),
-                'last_message' => $conv->getDernierMessage() ?? 'Aucun message',
-                'date' => $conv->getDateCreation()->format('d/m'),
-            ];
+            $conversations = $em->createQueryBuilder()
+                ->select('c', 'u1', 'u2')
+                ->from(Conversation::class, 'c')
+                ->leftJoin('c.user1', 'u1')
+                ->leftJoin('c.user2', 'u2')
+                ->where('c.user1 = :userId OR c.user2 = :userId')
+                ->andWhere('c.statut != :archived')
+                ->setParameter('userId', $user)
+                ->setParameter('archived', 'archived')
+                ->orderBy('c.dateCreation', 'DESC')
+                ->getQuery()
+                ->getResult();
+
+            $data = [];
+            foreach ($conversations as $conv) {
+                $otherUser = null;
+                if ($conv->getUser1() && $conv->getUser1()->getId() === $user->getId()) {
+                    $otherUser = $conv->getUser2();
+                } else {
+                    $otherUser = $conv->getUser1();
+                }
+
+                if (!$otherUser) {
+                    continue;
+                }
+
+                $data[] = [
+                    'id' => $conv->getId(),
+                    'other_user_id' => $otherUser->getId(),
+                    'other_user_name' => $otherUser->getFirstName() . ' ' . $otherUser->getLastName(),
+                    'last_message' => $conv->getDernierMessage() ?? 'Aucun message',
+                    'date' => $conv->getDateCreation() ? $conv->getDateCreation()->format('d/m') : '',
+                ];
+            }
+
+            return $this->json($data);
+        } catch (\Exception $e) {
+            return $this->json(['error' => $e->getMessage()], 500);
         }
-
-        return $this->json($data);
     }
 
     #[Route('/conversation/{id}/messages', name: 'app_candidate_get_messages', methods: ['GET'])]
@@ -105,7 +123,10 @@ class CandidateMessageController extends AbstractController
         try {
             $user = $this->getUser();
 
-            // Récupérer les messages via le repository
+            if (!$user) {
+                return $this->json(['error' => 'Utilisateur non connecté'], 401);
+            }
+
             $messages = $messageRepo->createQueryBuilder('m')
                 ->where('m.conversation = :convId')
                 ->setParameter('convId', $id)
@@ -115,11 +136,19 @@ class CandidateMessageController extends AbstractController
 
             $data = [];
             foreach ($messages as $message) {
+                // ✅ Vérification que l'expéditeur existe
+                $expediteur = $message->getExpediteur();
+                if (!$expediteur) {
+                    continue;
+                }
+
+                $estMoi = ($expediteur->getId() === $user->getId());
+
                 $data[] = [
                     'id' => $message->getId(),
                     'contenu' => $message->getContenu(),
                     'date_envoi' => $message->getDateEnvoi()->format('H:i'),
-                    'est_moi' => $message->getExpediteur()->getId() === $user->getId(),
+                    'est_moi' => $estMoi,
                     'statut' => $message->getStatut(),
                 ];
             }
@@ -335,5 +364,4 @@ class CandidateMessageController extends AbstractController
 
         return $this->json(['success' => true]);
     }
-
 }
