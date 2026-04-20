@@ -93,6 +93,10 @@
                                 <div class="chat-input-area p-3 border-top" id="chatInputArea" style="display: none;">
                                     <div class="input-group">
                                         <textarea class="form-control" id="messageInput" rows="2" placeholder="Écrivez votre message..."></textarea>
+                                        <label class="btn-file">
+                                            <i class="fas fa-paperclip"></i>
+                                            <input type="file" id="fileInput" style="display: none;">
+                                        </label>
                                         <div class="input-group-append">
                                             <button class="btn btn-primary" id="sendMessageBtn">
                                                 <i class="fas fa-paper-plane"></i> Envoyer
@@ -544,6 +548,33 @@
                 background: linear-gradient(135deg, #ffc107, #d39e00);
                 color: white;
             }
+
+            .btn-file {
+                background: linear-gradient(135deg, #5E548E, #9F86C0);
+                color: white;
+                border: none;
+                border-radius: 50%;
+                width: 40px;
+                height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                transition: all 0.3s;
+                margin: 0 5px;
+            }
+            .btn-file:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 12px rgba(94,84,142,0.3);
+            }
+            .input-group {
+                display: flex;
+                gap: 5px;
+                align-items: center;
+            }
+            .input-group .form-control {
+                flex: 1;
+            }
         }
     </style>
 
@@ -972,6 +1003,14 @@
                     })
                     .catch(error => console.error('Error deleting message:', error));
             }
+        }
+
+        const fileLabel = document.querySelector('.btn-file');
+        const fileInputElem = document.getElementById('fileInput');
+        if (fileLabel && fileInputElem) {
+            fileLabel.addEventListener('click', () => {
+                fileInputElem.click();
+            });
         }
 
         loadConversations();

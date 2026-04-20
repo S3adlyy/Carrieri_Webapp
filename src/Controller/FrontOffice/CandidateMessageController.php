@@ -136,7 +136,6 @@ class CandidateMessageController extends AbstractController
 
             $data = [];
             foreach ($messages as $message) {
-                // ✅ Vérification que l'expéditeur existe
                 $expediteur = $message->getExpediteur();
                 if (!$expediteur) {
                     continue;
@@ -150,6 +149,10 @@ class CandidateMessageController extends AbstractController
                     'date_envoi' => $message->getDateEnvoi()->format('H:i'),
                     'est_moi' => $estMoi,
                     'statut' => $message->getStatut(),
+                    'fileUrl' => $message->getFileUrl(),
+                    'fileName' => $message->getFileName(),
+                    'fileType' => $message->getFileType(),
+                    'fileSize' => $message->getFileSize(),
                 ];
             }
 
@@ -162,53 +165,96 @@ class CandidateMessageController extends AbstractController
     #[Route('/send-message', name: 'app_candidate_send_message', methods: ['POST'])]
     public function sendMessage(Request $request, EntityManagerInterface $em): JsonResponse
     {
-        $user = $this->getUser();
-        $conversationId = $request->request->get('conversation_id');
-        $content = $request->request->get('content');
+        try {
+            $user = $this->getUser();
+            $conversationId = $request->request->get('conversation_id');
+            $content = $request->request->get('content');
 
-        if (empty(trim($content))) {
-            return $this->json(['success' => false, 'error' => 'Le message ne peut pas être vide']);
+            if (!$user) {
+                return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            // Gestion du fichier
+            $uploadedFile = $request->files->get('file');
+            $fileUrl = null;
+            $fileName = null;
+            $fileType = null;
+            $fileSize = null;
+
+            if ($uploadedFile) {
+                $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $uploadedFile->guessExtension();
+
+                $uploadDir = __DIR__ . '/../../public/uploads/messages/';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                $destination = $uploadDir . $newFilename;
+
+                // Copier le fichier
+                if (copy($uploadedFile->getPathname(), $destination)) {
+                    $fileUrl = '/uploads/messages/' . $newFilename;
+                    $fileName = $uploadedFile->getClientOriginalName();
+                    $fileType = $uploadedFile->getClientMimeType();
+                    $fileSize = filesize($destination);
+                } else {
+                    return $this->json(['success' => false, 'error' => 'Erreur lors de la copie du fichier']);
+                }
+            }
+
+            // Validation
+            if (empty(trim($content)) && !$uploadedFile) {
+                return $this->json(['success' => false, 'error' => 'Message ou fichier requis']);
+            }
+
+            if ($content && !preg_match('/^[A-Z]/', trim($content))) {
+                return $this->json(['success' => false, 'error' => 'Le message doit commencer par une majuscule']);
+            }
+
+            $conversation = $em->getRepository(Conversation::class)->find($conversationId);
+            if (!$conversation) {
+                return $this->json(['success' => false, 'error' => 'Conversation introuvable']);
+            }
+
+            $destinataire = $conversation->getUser1()->getId() === $user->getId()
+                ? $conversation->getUser2()
+                : $conversation->getUser1();
+
+            if (!$destinataire) {
+                return $this->json(['success' => false, 'error' => 'Destinataire introuvable']);
+            }
+
+            $message = new Message();
+            $message->setContenu($content);
+            $message->setDateEnvoi(new \DateTime());
+            $message->setStatut('sent');
+            $message->setType($uploadedFile ? 'file' : 'text');
+            $message->setConversation($conversation);
+            $message->setExpediteur($user);
+            $message->setDestinataire($destinataire);
+
+            if ($uploadedFile) {
+                $message->setFileUrl($fileUrl);
+                $message->setFileName($fileName);
+                $message->setFileType($fileType);
+                $message->setFileSize($fileSize);
+            }
+
+            $em->persist($message);
+            $conversation->setDernierMessage($content ?: '[Fichier]');
+            $conversation->setDateCreation(new \DateTime());
+            $em->flush();
+
+            return $this->json([
+                'success' => true,
+                'message_id' => $message->getId(),
+            ]);
+        } catch (\Exception $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
-        if (strlen($content) < 2) {
-            return $this->json(['success' => false, 'error' => 'Le message doit contenir au moins 2 caractères']);
-        }
-        if (strlen($content) > 1000) {
-            return $this->json(['success' => false, 'error' => 'Le message ne peut pas dépasser 1000 caractères']);
-        }
-        if (!preg_match('/^[A-Z]/', trim($content))) {
-            return $this->json(['success' => false, 'error' => 'Le message doit commencer par une majuscule']);
-        }
-
-        $conversation = $em->getRepository(Conversation::class)->find($conversationId);
-
-        if (!$conversation) {
-            return $this->json(['success' => false, 'error' => 'Conversation introuvable']);
-        }
-
-        $destinataire = $conversation->getUser1()->getId() === $user->getId() ?
-            $conversation->getUser2() : $conversation->getUser1();
-
-        $message = new Message();
-        $message->setContenu($content);
-        $message->setDateEnvoi(new \DateTime());
-        $message->setStatut('sent');
-        $message->setType('text');
-        $message->setConversation($conversation);
-        $message->setExpediteur($user);
-        $message->setDestinataire($destinataire);
-
-        $em->persist($message);
-        $conversation->setDernierMessage($content);
-        $conversation->setDateCreation(new \DateTime());
-
-        $em->flush();
-
-        return $this->json([
-            'success' => true,
-            'message_id' => $message->getId(),
-        ]);
     }
-
     #[Route('/new-conversation', name: 'app_candidate_new_conversation', methods: ['POST'])]
     public function newConversation(Request $request, EntityManagerInterface $em): JsonResponse
     {
@@ -230,7 +276,6 @@ class CandidateMessageController extends AbstractController
         }
 
         $recruiter = $em->getRepository(User::class)->find($recruiterId);
-
         if (!$recruiter) {
             return $this->json(['success' => false, 'error' => 'Destinataire introuvable']);
         }
@@ -257,7 +302,6 @@ class CandidateMessageController extends AbstractController
             $em->persist($message);
             $existingConversation->setDernierMessage($content);
             $existingConversation->setDateCreation(new \DateTime());
-
             $em->flush();
 
             return $this->json(['success' => true, 'conversation_id' => $existingConversation->getId()]);

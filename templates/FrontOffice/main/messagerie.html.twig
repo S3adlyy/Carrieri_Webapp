@@ -51,6 +51,10 @@
                 <div class="chat-input-area" id="chatInputArea" style="display: none;">
                     <div class="chat-input-wrapper">
                         <textarea class="form-control" id="messageInput" rows="2" placeholder="Écrivez votre message..."></textarea>
+                        <label class="btn-file">
+                            <i class="fas fa-paperclip"></i>
+                            <input type="file" id="fileInput" style="display: none;">
+                        </label>
                         <button class="btn-send" id="sendMessageBtn">
                             <i class="fas fa-paper-plane me-1"></i> Envoyer
                         </button>
@@ -206,12 +210,27 @@
         .delete-btn:hover { background: #ef4444; color: white; }
         .edited-badge { font-size: 9px; opacity: 0.6; margin-left: 5px; }
         .chat-input-area { padding: 20px; background: white; border-top: 1px solid #e2e8f0; }
-        .chat-input-wrapper { display: flex; gap: 10px; }
+        .chat-input-wrapper { display: flex; gap: 10px; align-items: center; }
         .chat-input-wrapper .form-control { flex: 1; border-radius: 25px; border: 1px solid #e2e8f0; resize: none; }
+        .btn-file {
+            background: linear-gradient(135deg, #5E548E, #9F86C0);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn-file:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(94,84,142,0.3); }
         .btn-send {
             background: linear-gradient(135deg, #5E548E, #9F86C0);
             color: white; border: none; border-radius: 25px;
             padding: 0 25px; font-weight: 600; transition: all 0.3s;
+            height: 40px;
         }
         .btn-send:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(94,84,142,0.3); }
         .empty-chat { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8; text-align: center; }
@@ -219,6 +238,10 @@
         .invalid-feedback { display: none; font-size: 12px; color: #ef4444; }
         .invalid-feedback.d-none { display: none; }
         .invalid-feedback:not(.d-none) { display: block; }
+        .message-file { margin-top: 8px; padding-top: 5px; border-top: 1px solid rgba(255,255,255,0.2); }
+        .received .message-file { border-top-color: rgba(0,0,0,0.1); }
+        .message-file a { color: inherit; text-decoration: underline; }
+        .message-file-image img { border-radius: 8px; margin-top: 5px; max-width: 200px; max-height: 150px; }
         @media (max-width: 768px) {
             .messaging-container { flex-direction: column; }
             .messaging-sidebar { width: 100%; border-right: none; border-bottom: 1px solid #e2e8f0; }
@@ -252,9 +275,22 @@
 
             const container = document.getElementById('chatMessages');
             const editedBadge = data.statut === 'edited' ? '<span class="edited-badge">(modifié)</span>' : '';
+
+            let fileHtml = '';
+            if (data.fileUrl) {
+                if (data.fileType && data.fileType.startsWith('image/')) {
+                    fileHtml = `<div class="message-file-image"><img src="${data.fileUrl}" alt="${data.fileName}" style="max-width: 200px; max-height: 150px;"></div>`;
+                } else {
+                    fileHtml = `<div class="message-file"><i class="fas fa-paperclip"></i> <a href="${data.fileUrl}" download="${data.fileName}">${data.fileName}</a></div>`;
+                }
+            }
+
             const html = `
                 <div class="message received">
-                    <div class="bubble">${escapeHtml(data.contenu)}${editedBadge}</div>
+                    <div class="bubble">
+                        ${escapeHtml(data.contenu)}${editedBadge}
+                        ${fileHtml}
+                    </div>
                     <div class="message-time">${data.date_envoi}</div>
                 </div>
             `;
@@ -262,6 +298,13 @@
             scrollToBottom();
             loadConversations();
         });
+
+        function formatFileSize(bytes) {
+            if (!bytes) return '';
+            if (bytes < 1024) return bytes + ' o';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' Ko';
+            return (bytes / 1048576).toFixed(1) + ' Mo';
+        }
 
         function getInitials(name) {
             if (!name) return '?';
@@ -380,10 +423,21 @@
                     for (const msg of messages) {
                         const msgClass = msg.est_moi ? 'sent' : 'received';
                         const editedBadge = msg.statut === 'edited' ? '<span class="edited-badge">(modifié)</span>' : '';
+
+                        let fileHtml = '';
+                        if (msg.fileUrl) {
+                            if (msg.fileType && msg.fileType.startsWith('image/')) {
+                                fileHtml = `<div class="message-file-image"><img src="${msg.fileUrl}" alt="${msg.fileName}" style="max-width: 200px; max-height: 150px;"></div>`;
+                            } else {
+                                fileHtml = `<div class="message-file"><i class="fas fa-paperclip"></i> <a href="${msg.fileUrl}" download="${msg.fileName}">${msg.fileName}</a> ${formatFileSize(msg.fileSize)}</div>`;
+                            }
+                        }
+
                         html += `
                             <div class="message ${msgClass}" data-message-id="${msg.id}">
                                 <div class="bubble">
                                     ${escapeHtml(msg.contenu)}${editedBadge}
+                                    ${fileHtml}
                                 </div>
                                 <div class="message-time">${msg.date_envoi}</div>
                                 ${msg.est_moi ? `
@@ -416,30 +470,47 @@
             }
 
             const messageInput = document.getElementById('messageInput');
+            const fileInput = document.getElementById('fileInput');
             const errorDiv = document.getElementById('messageError');
+
             if (!messageInput) return;
 
             const content = messageInput.value;
+            const file = fileInput ? fileInput.files[0] : null;
 
-            if (!content.trim()) {
-                if (errorDiv) { errorDiv.textContent = 'Le message ne peut pas être vide'; errorDiv.classList.remove('d-none'); }
+            if (!content.trim() && !file) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Message ou fichier requis';
+                    errorDiv.classList.remove('d-none');
+                }
                 return;
             }
-            if (!/^[A-Z]/.test(content.trim())) {
-                if (errorDiv) { errorDiv.textContent = 'Le message doit commencer par une majuscule'; errorDiv.classList.remove('d-none'); }
+
+            if (content.trim() && !/^[A-Z]/.test(content.trim())) {
+                if (errorDiv) {
+                    errorDiv.textContent = 'Le message doit commencer par une majuscule';
+                    errorDiv.classList.remove('d-none');
+                }
                 return;
             }
+
             if (errorDiv) errorDiv.classList.add('d-none');
+
+            // Créer FormData pour l'envoi du fichier
+            const formData = new FormData();
+            formData.append('conversation_id', currentConversationId);
+            if (content.trim()) formData.append('content', content);
+            if (file) formData.append('file', file);
 
             fetch('/messagerie/send-message', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `conversation_id=${currentConversationId}&content=${encodeURIComponent(content)}`
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         messageInput.value = '';
+                        if (fileInput) fileInput.value = '';
 
                         // ✅ Émettre sur Socket.IO pour le temps réel
                         socket.emit('send-message', {
@@ -454,10 +525,22 @@
                         loadConversations();
                         scrollToBottom();
                     } else {
-                        if (errorDiv) { errorDiv.textContent = data.error; errorDiv.classList.remove('d-none'); }
+                        if (errorDiv) {
+                            errorDiv.textContent = data.error;
+                            errorDiv.classList.remove('d-none');
+                        }
                     }
                 })
                 .catch(error => console.error('Error sending message:', error));
+        }
+
+        // Déclencher le click sur l'input file quand on clique sur le bouton
+        const fileLabel = document.querySelector('.btn-file');
+        const fileInputElem = document.getElementById('fileInput');
+        if (fileLabel && fileInputElem) {
+            fileLabel.addEventListener('click', () => {
+                fileInputElem.click();
+            });
         }
 
         document.addEventListener('DOMContentLoaded', function() {

@@ -32,7 +32,7 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = 3001;
+const PORT = 3002;
 server.listen(PORT, () => {
     console.log(`🚀 Serveur Socket.io démarré sur http://localhost:${PORT}`);
 });

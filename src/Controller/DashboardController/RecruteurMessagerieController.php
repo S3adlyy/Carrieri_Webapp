@@ -35,7 +35,7 @@ class RecruteurMessagerieController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        // Récupérer tous les candidats (sans exclure l'utilisateur connecté d'abord)
+        // Récupérer tous les candidats
         $candidats = $em->getRepository(User::class)
             ->createQueryBuilder('u')
             ->where('u.type IN (:types)')
@@ -59,7 +59,6 @@ class RecruteurMessagerieController extends AbstractController
                 return $this->json(['error' => 'Utilisateur non connecté'], 401);
             }
 
-            // Nombre total de candidats
             $totalCandidats = $em->getRepository(User::class)
                 ->createQueryBuilder('u')
                 ->where('u.type IN (:types)')
@@ -68,7 +67,6 @@ class RecruteurMessagerieController extends AbstractController
                 ->getQuery()
                 ->getSingleScalarResult();
 
-            // Candidats avec qui le recruteur a une conversation
             $candidatsEnLigne = $em->getRepository(Conversation::class)
                 ->createQueryBuilder('c')
                 ->select('COUNT(DISTINCT CASE WHEN c.user1 = :recruteur THEN IDENTITY(c.user2) ELSE IDENTITY(c.user1) END)')
@@ -77,7 +75,6 @@ class RecruteurMessagerieController extends AbstractController
                 ->getQuery()
                 ->getSingleScalarResult();
 
-            // Messages reçus
             $messagesNonLus = $em->getRepository(Message::class)
                 ->createQueryBuilder('m')
                 ->where('m.destinataire = :recruteur')
@@ -121,7 +118,6 @@ class RecruteurMessagerieController extends AbstractController
 
             $data = [];
             foreach ($conversations as $conv) {
-                // ✅ Vérification de sécurité : quel est l'autre utilisateur ?
                 $otherUser = null;
                 if ($conv->getUser1() && $conv->getUser1()->getId() === $user->getId()) {
                     $otherUser = $conv->getUser2();
@@ -129,7 +125,6 @@ class RecruteurMessagerieController extends AbstractController
                     $otherUser = $conv->getUser1();
                 }
 
-                // ✅ Si l'autre utilisateur n'existe pas, on ignore cette conversation
                 if (!$otherUser) {
                     continue;
                 }
@@ -175,6 +170,10 @@ class RecruteurMessagerieController extends AbstractController
                     'date_envoi' => $message->getDateEnvoi()->format('H:i'),
                     'est_moi' => $message->getExpediteur() && $message->getExpediteur()->getId() === $user->getId(),
                     'statut' => $message->getStatut(),
+                    'fileUrl' => $message->getFileUrl(),
+                    'fileName' => $message->getFileName(),
+                    'fileType' => $message->getFileType(),
+                    'fileSize' => $message->getFileSize(),
                 ];
             }
 
@@ -184,7 +183,7 @@ class RecruteurMessagerieController extends AbstractController
         }
     }
 
-    #[Route('/send-message', name: 'app_recruteur_send_message', methods: ['POST'])]
+    #[Route('/send-message', name: 'app_candidate_send_message', methods: ['POST'])]
     public function sendMessage(Request $request, EntityManagerInterface $em): JsonResponse
     {
         try {
@@ -196,28 +195,53 @@ class RecruteurMessagerieController extends AbstractController
                 return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
             }
 
-            // Validations
-            if (empty(trim($content))) {
-                return $this->json(['success' => false, 'error' => 'Le message ne peut pas être vide']);
+            // Gestion du fichier
+            $uploadedFile = $request->files->get('file');
+            $fileUrl = null;
+            $fileName = null;
+            $fileType = null;
+            $fileSize = null;
+
+            if ($uploadedFile) {
+                $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = preg_replace('/[^a-zA-Z0-9_-]/', '_', $originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $uploadedFile->guessExtension();
+
+                $uploadDir = __DIR__ . '/../../public/uploads/messages/';
+                if (!file_exists($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                $destination = $uploadDir . $newFilename;
+
+                // Copier le fichier
+                if (copy($uploadedFile->getPathname(), $destination)) {
+                    $fileUrl = '/uploads/messages/' . $newFilename;
+                    $fileName = $uploadedFile->getClientOriginalName();
+                    $fileType = $uploadedFile->getClientMimeType();
+                    $fileSize = filesize($destination);
+                } else {
+                    return $this->json(['success' => false, 'error' => 'Erreur lors de la copie du fichier']);
+                }
             }
-            if (strlen($content) < 2) {
-                return $this->json(['success' => false, 'error' => 'Le message doit contenir au moins 2 caractères']);
+
+            // Validation
+            if (empty(trim($content)) && !$uploadedFile) {
+                return $this->json(['success' => false, 'error' => 'Message ou fichier requis']);
             }
-            if (strlen($content) > 1000) {
-                return $this->json(['success' => false, 'error' => 'Le message ne peut pas dépasser 1000 caractères']);
-            }
-            if (!preg_match('/^[A-Z]/', trim($content))) {
+
+            if ($content && !preg_match('/^[A-Z]/', trim($content))) {
                 return $this->json(['success' => false, 'error' => 'Le message doit commencer par une majuscule']);
             }
 
             $conversation = $em->getRepository(Conversation::class)->find($conversationId);
-
             if (!$conversation) {
                 return $this->json(['success' => false, 'error' => 'Conversation introuvable']);
             }
 
-            $destinataire = $conversation->getUser1()->getId() === $user->getId() ?
-                $conversation->getUser2() : $conversation->getUser1();
+            $destinataire = $conversation->getUser1()->getId() === $user->getId()
+                ? $conversation->getUser2()
+                : $conversation->getUser1();
 
             if (!$destinataire) {
                 return $this->json(['success' => false, 'error' => 'Destinataire introuvable']);
@@ -227,13 +251,20 @@ class RecruteurMessagerieController extends AbstractController
             $message->setContenu($content);
             $message->setDateEnvoi(new \DateTime());
             $message->setStatut('sent');
-            $message->setType('text');
+            $message->setType($uploadedFile ? 'file' : 'text');
             $message->setConversation($conversation);
             $message->setExpediteur($user);
             $message->setDestinataire($destinataire);
 
+            if ($uploadedFile) {
+                $message->setFileUrl($fileUrl);
+                $message->setFileName($fileName);
+                $message->setFileType($fileType);
+                $message->setFileSize($fileSize);
+            }
+
             $em->persist($message);
-            $conversation->setDernierMessage($content);
+            $conversation->setDernierMessage($content ?: '[Fichier]');
             $conversation->setDateCreation(new \DateTime());
             $em->flush();
 
@@ -245,7 +276,6 @@ class RecruteurMessagerieController extends AbstractController
             return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
     }
-
     #[Route('/new-conversation', name: 'app_recruteur_new_conversation', methods: ['POST'])]
     public function newConversation(Request $request, EntityManagerInterface $em): JsonResponse
     {
@@ -272,12 +302,10 @@ class RecruteurMessagerieController extends AbstractController
             }
 
             $candidat = $em->getRepository(User::class)->find($candidatId);
-
             if (!$candidat) {
                 return $this->json(['success' => false, 'error' => 'Candidat introuvable']);
             }
 
-            // Vérifier si une conversation existe déjà
             $existingConversation = $em->createQueryBuilder()
                 ->select('c')
                 ->from(Conversation::class, 'c')
