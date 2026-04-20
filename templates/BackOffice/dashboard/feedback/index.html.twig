@@ -10,11 +10,61 @@
 {% endblock %}
 
 {% block body %}
+    <!-- Cartes statistiques -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ stats.note_moyenne|default(0) }}</h3>
+                    <p>Note moyenne</p>
+                </div>
+                <div class="icon"><i class="fas fa-star"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-success">
+                <div class="inner">
+                    <h3>{{ stats.total_feedbacks|default(0) }}</h3>
+                    <p>Total feedbacks</p>
+                </div>
+                <div class="icon"><i class="fas fa-comment"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ stats.meilleure_note|default(0) }}</h3>
+                    <p>Meilleure note</p>
+                </div>
+                <div class="icon"><i class="fas fa-trophy"></i></div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3>{{ stats.pire_note|default(0) }}</h3>
+                    <p>Note la plus basse</p>
+                </div>
+                <div class="icon"><i class="fas fa-chart-line"></i></div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header">
             <h3 class="card-title">Liste de mes feedbacks</h3>
             <div class="card-tools">
-                <a href="{{ path('app_dashboard_feedback_rendus') }}" class="btn btn-primary btn-sm">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-success btn-sm dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-download"></i> Exporter
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{{ path('app_dashboard_export_feedbacks') }}">
+                            <i class="fas fa-file-csv text-success"></i> CSV (Excel)
+                        </a>
+                    </div>
+                </div>
+                <a href="{{ path('app_dashboard_feedback_rendus') }}" class="btn btn-primary btn-sm ml-1">
                     <i class="fas fa-tasks"></i> Voir les rendus
                 </a>
             </div>
@@ -37,8 +87,7 @@
                         {% for f in feedbacks %}
                             <tr>
                                 <td>{{ f.id }}</td>
-                                <td>{{ f.commentaire|slice(0, 80) }}...</td>
-                                <td>
+                                <td>{{ f.commentaire|slice(0, 80) }}...\n                                <td>
                                     {% for i in 1..5 %}
                                         {% if i <= f.note %}
                                             <i class="fas fa-star text-warning"></i>
@@ -71,7 +120,7 @@
                             </tr>
                         {% else %}
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Vous n'avez donné aucun feedback.</td>
+                                <td colspan="7" class="text-center text-muted">Vous n'avez donné aucun feedback.</table>
                             </tr>
                         {% endfor %}
                     </tbody>

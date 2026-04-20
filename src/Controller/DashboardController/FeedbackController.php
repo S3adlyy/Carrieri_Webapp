@@ -2,6 +2,9 @@
 
 namespace App\Controller\DashboardController;
 
+use App\Service\ExportService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
+use App\Service\FeedbackService;
 use App\Entity\Feedback;
 use App\Entity\RenduMission;
 use App\Form\FeedbackType;
@@ -81,18 +84,38 @@ class FeedbackController extends AbstractController
         ]);
     }
     
-    #[Route('/', name: 'app_dashboard_feedback_index', methods: ['GET'])]
-    public function index(FeedbackRepository $repository): Response
-    {
-        $this->checkRecruiter();
-        
-        $user = $this->getUser();
-        $feedbacks = $repository->findBy(['user' => $user], ['createdAt' => 'DESC']);
-        
-        return $this->render('BackOffice/dashboard/feedback/index.html.twig', [
-            'feedbacks' => $feedbacks,
-        ]);
-    }
+ #[Route('/', name: 'app_dashboard_feedback_index', methods: ['GET'])]
+public function index(FeedbackRepository $repository, FeedbackService $feedbackService): Response
+{
+    $this->checkRecruiter();
+    
+    $user = $this->getUser();
+    $feedbacks = $repository->findBy(['user' => $user], ['createdAt' => 'DESC']);
+    $stats = $feedbackService->getStats($user);
+    
+    return $this->render('BackOffice/dashboard/feedback/index.html.twig', [
+        'feedbacks' => $feedbacks,
+        'stats' => $stats,
+    ]);
+}
+#[Route('/export/excel', name: 'app_dashboard_export_feedbacks_excel', methods: ['GET'])]
+public function exportExcel(ExportService $exportService): BinaryFileResponse
+{
+    $this->checkRecruiter();
+    
+    $file = $exportService->exportFeedbacksToExcel();
+    
+    return $this->file($file, 'feedbacks_' . date('Y-m-d') . '.xls');
+}
+#[Route('/export', name: 'app_dashboard_export_feedbacks', methods: ['GET'])]
+public function export(ExportService $exportService): BinaryFileResponse
+{
+    $this->checkRecruiter();
+    
+    $file = $exportService->exportFeedbacksToCsv();
+    
+    return $this->file($file, 'feedbacks_' . date('Y-m-d') . '.csv');
+}
     
     #[Route('/{id}', name: 'app_dashboard_feedback_show', methods: ['GET'])]
     public function show(Feedback $feedback): Response
