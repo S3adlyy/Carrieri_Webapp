@@ -9,7 +9,9 @@ use App\Entity\User;
 use App\Form\OffreEmploiType;
 use App\Repository\OffreEmploiRepository;
 use App\Entity\Postulation;
+use App\Repository\PostulationRepository;
 use App\Service\OffreInsightService;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -29,6 +31,7 @@ class OffreEmploiController extends AbstractController
     public function __construct(
         private EntityManagerInterface $entityManager,
         private OffreEmploiRepository $offreEmploiRepository,
+        private PostulationRepository $postulationRepository,
         private OffreInsightService $offreInsightService,
     ) {
     }
@@ -54,6 +57,9 @@ class OffreEmploiController extends AbstractController
 
         // Utiliser la nouvelle méthode de recherche avancée
         $offres = $this->offreEmploiRepository->searchOffersWithFilters($user, $filters);
+        $offerIds = array_map(static fn (OffreEmploi $offre): ?int => $offre->getId(), $offres);
+        $offerIds = array_values(array_filter($offerIds, static fn (?int $id): bool => $id !== null));
+        $postulationCounts = $this->postulationRepository->countByOfferIds($offerIds);
         $stats = $this->getOffreStats($user);
 
         return $this->render('BackOffice/dashboard/offres_emploi/index.html.twig', [
@@ -61,6 +67,7 @@ class OffreEmploiController extends AbstractController
             'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
             'filters' => $filters,
             'stats' => $stats,
+            'postulation_counts' => $postulationCounts,
         ]);
     }
 
@@ -157,6 +164,29 @@ class OffreEmploiController extends AbstractController
         }
 
         if ($this->isCsrfTokenValid('delete' . $offre->getId(), $request->request->get('_token'))) {
+            $connection = $this->entityManager->getConnection();
+            $postulationIds = array_map(
+                'intval',
+                $connection->fetchFirstColumn(
+                    'SELECT id FROM postulation WHERE offre_id = ?',
+                    [$offre->getId()]
+                )
+            );
+
+            if ($postulationIds !== []) {
+                $connection->executeStatement(
+                    'DELETE FROM entretien WHERE postulation_id IN (?)',
+                    [$postulationIds],
+                    [ArrayParameterType::INTEGER]
+                );
+
+                $connection->executeStatement(
+                    'DELETE FROM postulation WHERE id IN (?)',
+                    [$postulationIds],
+                    [ArrayParameterType::INTEGER]
+                );
+            }
+
             $this->entityManager->remove($offre);
             $this->entityManager->flush();
             $this->addFlash('success', "L'offre a été supprimée avec succès.");
@@ -556,7 +586,11 @@ public function generateAi(Request $request): Response
             return $this->json(['error' => 'Veuillez renseigner un titre avant de demander une amélioration.'], 400);
         }
 
-        if ($mode !== 'title' && empty(trim((string) ($payload['keywords'] ?? '')))) {
+        if ($mode === 'description' && empty(trim((string) ($payload['titre'] ?? '')))) {
+            return $this->json(['error' => 'Veuillez renseigner le titre avant de générer la description.'], 400);
+        }
+
+        if (!in_array($mode, ['title', 'description'], true) && empty(trim((string) ($payload['keywords'] ?? '')))) {
             return $this->json(['error' => 'Aucun mot-clé fourni'], 400);
         }
 
@@ -577,14 +611,18 @@ public function generateAi(Request $request): Response
             $process->run();
 
             if (!$process->isSuccessful()) {
-                throw new \Exception($process->getErrorOutput());
+                $errorDetails = trim($process->getErrorOutput());
+                if ($errorDetails === '') {
+                    $errorDetails = trim($process->getOutput());
+                }
+                throw new \Exception($errorDetails !== '' ? $errorDetails : 'Échec du processus Python.');
             }
 
             $output = trim($process->getOutput());
             $result = json_decode($output, true);
 
             if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \Exception('Réponse JSON invalide');
+                throw new \Exception('Réponse JSON invalide: ' . $output);
             }
 
             return $this->json($result);

@@ -566,6 +566,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const titleInput = document.querySelector('[name="offre_emploi[titre]"]');
+            const descriptionInput = document.querySelector('[name="offre_emploi[description]"]');
             const titleButton = document.getElementById('generate-ai-title-btn');
             const descriptionButton = document.getElementById('generate-ai-description-btn');
             const modal = document.getElementById('aiTitleModal');
@@ -621,6 +622,20 @@
                 };
             }
 
+            function collectDescriptionPayload() {
+                return {
+                    titre: titleInput?.value.trim() || '',
+                    typeContrat: document.querySelector('[name="offre_emploi[typeContrat]"]')?.value || '',
+                    entreprise: document.querySelector('[name="offre_emploi[entreprise]"]')?.value.trim() || '',
+                    localisation: document.querySelector('[name="offre_emploi[localisation]"]')?.value.trim() || '',
+                    experienceRequise: document.querySelector('[name="offre_emploi[experienceRequise]"]')?.value.trim() || '',
+                    niveauQualification: document.querySelector('[name="offre_emploi[niveauQualification]"]')?.value.trim() || '',
+                    salaire: document.querySelector('[name="offre_emploi[salaire]"]')?.value.trim() || '',
+                    competencesRequises: document.querySelector('[name="offre_emploi[competencesRequises]"]')?.value.trim() || '',
+                    secteurActivite: document.querySelector('[name="offre_emploi[secteurActivite]"]')?.value || '',
+                };
+            }
+
             async function fetchAiTitleSuggestion() {
                 const response = await fetch('{{ path('app_admin_offres_generate_ai') }}', {
                     method: 'POST',
@@ -634,10 +649,32 @@
                     })
                 });
 
-                const data = await response.json();
+                const data = await response.json().catch(() => ({}));
 
                 if (!response.ok || data.error) {
-                    throw new Error(data.error || 'La génération du titre a échoué.');
+                    throw new Error(data.message || data.error || 'La génération du titre a échoué.');
+                }
+
+                return data;
+            }
+
+            async function fetchAiDescriptionSuggestion() {
+                const response = await fetch('{{ path('app_admin_offres_generate_ai') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        mode: 'description',
+                        payload: collectDescriptionPayload()
+                    })
+                });
+
+                const data = await response.json().catch(() => ({}));
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.message || data.error || 'La génération de la description a échoué.');
                 }
 
                 return data;
@@ -699,12 +736,32 @@
                 }
             });
 
-            descriptionButton?.addEventListener('click', function() {
-                openMessageModal(
-                    'Fonction en préparation',
-                    "Le popup du titre est prêt. L'étape suivante sera de brancher la génération IA de la description.",
-                    'warning'
-                );
+            descriptionButton?.addEventListener('click', async function() {
+                const originalLabel = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '🤖 Génération en cours...';
+
+                try {
+                    const data = await fetchAiDescriptionSuggestion();
+
+                    if (!data.description) {
+                        throw new Error('Aucune description n’a été retournée.');
+                    }
+
+                    if (descriptionInput) {
+                        descriptionInput.value = data.description;
+                        descriptionInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                } catch (error) {
+                    openMessageModal(
+                        'Génération impossible',
+                        error.message || 'La génération de la description a échoué.',
+                        'error'
+                    );
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalLabel;
+                }
             });
         });
     </script>

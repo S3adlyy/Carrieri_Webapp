@@ -32,6 +32,28 @@ class PostulationRepository extends ServiceEntityRepository
             ->getSingleScalarResult() > 0;
     }
 
+    public function countByOfferIds(array $offerIds): array
+    {
+        if ($offerIds === []) {
+            return [];
+        }
+
+        $rows = $this->createQueryBuilder('p')
+            ->select('IDENTITY(p.offreEmploi) AS offreId, COUNT(p.id) AS total')
+            ->andWhere('p.offreEmploi IN (:offerIds)')
+            ->setParameter('offerIds', $offerIds)
+            ->groupBy('p.offreEmploi')
+            ->getQuery()
+            ->getArrayResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[(int) $row['offreId']] = (int) $row['total'];
+        }
+
+        return $counts;
+    }
+
     public function findByCandidate(User $user): array
     {
         return $this->createQueryBuilder('p')

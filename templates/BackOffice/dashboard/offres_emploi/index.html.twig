@@ -247,6 +247,13 @@
                                             <div class="modal-body">
                                                 <p>Êtes-vous sûr de vouloir supprimer cette offre ?</p>
                                                 <p class="text-muted"><strong>{{ o.titre }}</strong> — {{ o.entreprise }}</p>
+                                                {% set linkedPostulations = postulation_counts[o.id]|default(0) %}
+                                                {% if linkedPostulations > 0 %}
+                                                    <div class="alert alert-warning mb-0">
+                                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                                        Cette suppression supprimera aussi les <strong>{{ linkedPostulations }} postulation(s)</strong> liées à cette offre.
+                                                    </div>
+                                                {% endif %}
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
