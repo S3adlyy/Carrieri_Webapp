@@ -210,13 +210,14 @@ class OffreEmploiType extends AbstractType
                     ]),
                 ],
             ]);
+
     }
 
     public function validateUniqueTitre($value, ExecutionContextInterface $context): void
     {
         $offre = $context->getRoot()->getData();
         $existingOffre = $this->offreEmploiRepository->findOneBy(['titre' => $value]);
-        
+
         if ($existingOffre && $existingOffre !== $offre) {
             $context->buildViolation('Ce titre d\'offre existe déjà. Veuillez choisir un titre unique.')
                 ->atPath('titre')

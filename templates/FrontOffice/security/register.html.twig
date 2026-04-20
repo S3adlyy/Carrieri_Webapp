@@ -101,6 +101,7 @@
                                             <input type="checkbox" class="form-check-input" id="enableFaceEnroll" style="width: 40px; height: 20px;">
                                             <label class="form-check-label" for="enableFaceEnroll">Enable Face Login</label>
                                         </div>
+                                        <input type="hidden" name="face_image_timestamp" id="faceImageTimestamp" value="">
                                     </div>
 
                                     <div id="faceEnrollSection" style="display: none;">
@@ -153,7 +154,6 @@
                             <p class="fo-login-switch mb-0">Already have an account? <a href="{{ path('app_login') }}">Sign in</a></p>
                         </div>
 
-                        <input type="hidden" name="face_image" id="faceImage" value="">
                         {{ form_end(form) }}
                     </div>
                 </div>
@@ -291,40 +291,24 @@
             canvas.height = videoEl.videoHeight;
             context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
 
-            // IMPORTANT: Convert to blob (raw bytes) instead of base64 data URL
-            canvas.toBlob(async (blob) => {
-                const formData = new FormData();
-                formData.append('image', blob, 'face.jpg');
+            // Convert to base64
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
 
-                statusDiv.innerHTML = '<div class="alert alert-info">Verifying face detection...</div>';
+            // Log for debugging
+            console.log('Image captured, length:', imageData.length);
 
-                try {
-                    const response = await fetch('{{ path('face_test_detect') }}', {
-                        method: 'POST',
-                        body: formData  // Send as multipart/form-data, not JSON
-                    });
+            // Store in the hidden input
+            const faceImageInput = document.getElementById('faceImage');
+            if (faceImageInput) {
+                faceImageInput.value = imageData;
+                console.log('Face image stored in hidden input, length:', faceImageInput.value.length);
+            }
 
-                    const result = await response.json();
-
-                    if (result.success) {
-                        // Convert blob to base64 for storing in hidden field
-                        const reader = new FileReader();
-                        reader.onloadend = function() {
-                            document.getElementById('faceImage').value = reader.result;
-                            statusDiv.innerHTML = '<div class="alert alert-success">Face detected! You can now submit the form.</div>';
-                            document.getElementById('captureFaceBtn').style.display = 'none';
-                            document.getElementById('retakeFaceBtn').style.display = 'inline-block';
-                            document.getElementById('faceEnrolledSuccess').style.display = 'block';
-                            stopCamera();
-                        };
-                        reader.readAsDataURL(blob);
-                    } else {
-                        statusDiv.innerHTML = '<div class="alert alert-danger">' + (result.error || 'No face detected') + '</div>';
-                    }
-                } catch (error) {
-                    statusDiv.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
-                }
-            }, 'image/jpeg', 0.9);
+            statusDiv.innerHTML = '<div class="alert alert-success">Face captured! Ready for registration.</div>';
+            document.getElementById('captureFaceBtn').style.display = 'none';
+            document.getElementById('retakeFaceBtn').style.display = 'inline-block';
+            document.getElementById('faceEnrolledSuccess').style.display = 'block';
+            stopCamera();
         });
         // Retake face
         document.getElementById('retakeFaceBtn').addEventListener('click', async () => {
@@ -357,6 +341,20 @@
         // Clean up when page unloads
         window.addEventListener('beforeunload', () => {
             stopCamera();
+        });
+
+        // Add this to see if the image is set before form submission
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const faceImage = document.getElementById('faceImage').value;
+            console.log('Submitting form with face image length:', faceImage.length);
+
+            if (faceImage.length === 0) {
+                const enableFace = document.getElementById('enableFaceEnroll').checked;
+                if (enableFace) {
+                    e.preventDefault();
+                    alert('Please capture your face first!');
+                }
+            }
         });
     </script>
 

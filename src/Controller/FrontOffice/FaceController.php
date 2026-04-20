@@ -59,7 +59,7 @@ class FaceController extends AbstractController
     {
         // Hardcode the working credentials from Java
         $endpoint = "https://carrieri-face-id.cognitiveservices.azure.com";
-        $key = "BjHMnlvGZug7CujVef7emHSKmpyudb5ZS1n52ZzHgOQhvG7y0a93JQQJ99CCAC5RqLJXJ3w3AAAKACOGQwxw";
+        $key = "FcapeG7PNXahx8qm1KeOodCgBbMWvUcptPFwf2ZIoZFZj9bVdbt1JQQJ99CDAC5RqLJXJ3w3AAAKACOGrm92";
 
         $results = [];
 
@@ -236,7 +236,7 @@ class FaceController extends AbstractController
             // Log image info for debugging
             $this->logger->info('Testing face detection', [
                 'image_size' => strlen($imageBytes),
-                'image_size_kb' => round(strlen($imageBytes) / 1024, 2)
+                'image_size_kb' => strlen($imageBytes) / 1024
             ]);
 
             // Call Azure Face API directly (bypass the client for testing)

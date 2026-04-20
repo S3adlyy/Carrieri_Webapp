@@ -7,7 +7,7 @@ namespace App\Controller\FrontOffice;
 use App\Entity\User;
 use App\Form\RegistrationFormType;
 use App\Service\EmailService;
-use App\Service\FaceRecognitionService;
+use App\Service\AwsFaceRecognitionService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -25,7 +25,7 @@ class RegistrationController extends AbstractController
         private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly SluggerInterface $slugger,
         private readonly EmailService $emailService,
-        private readonly FaceRecognitionService $faceRecognitionService,
+        private readonly AwsFaceRecognitionService $awsFaceService,
         private readonly LoggerInterface $logger,
     ) {
     }
@@ -33,26 +33,15 @@ class RegistrationController extends AbstractController
     #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
     public function register(Request $request, SessionInterface $session): Response
     {
-        // Create the form
         $form = $this->createForm(RegistrationFormType::class);
         $form->handleRequest($request);
 
-        // Allowed roles for display
         $allowedRoles = [
             'CANDIDATE' => 'Candidat',
             'RECRUITER' => 'Recruteur',
         ];
 
-        // Check if we have pending registration data in session
-        $pendingRegistration = $session->get('pending_registration');
-
-        if ($pendingRegistration && $request->get('verify')) {
-            // Handle verification
-            return $this->verifyCode($request, $session);
-        }
-
         if ($form->isSubmitted() && $form->isValid()) {
-            // Get form data
             $firstName = $form->get('firstName')->getData();
             $lastName = $form->get('lastName')->getData();
             $email = $form->get('email')->getData();
@@ -60,11 +49,20 @@ class RegistrationController extends AbstractController
             $role = $form->get('role')->getData();
             $phone = $form->get('phone')->getData();
 
-            // Get face image from form (if provided)
             $faceImage = $request->request->get('face_image');
-            $enableFaceEnroll = $request->request->get('enable_face_enroll') === 'on';
+            $this->logger->info('Registration data - RAW', [
+                'has_face_image' => $request->request->has('face_image'),
+                'face_image_length' => strlen($faceImage ?? ''),
+                'all_post_keys' => array_keys($request->request->all())
+            ]);
+            $enableFaceEnroll = $request->request->get('enable_face_enroll');
 
-            // Validate role is allowed
+            $this->logger->info('Registration data', [
+                'has_face_image' => !empty($faceImage),
+                'face_image_length' => strlen($faceImage ?? ''),
+                'enable_face_enroll' => $enableFaceEnroll
+            ]);
+
             if (!isset($allowedRoles[$role])) {
                 $this->addFlash('danger', 'Invalid account type selected.');
                 return $this->render('FrontOffice/security/register.html.twig', [
@@ -73,7 +71,6 @@ class RegistrationController extends AbstractController
                 ]);
             }
 
-            // Check if email already exists
             $existingUser = $this->entityManager->getRepository(User::class)->findOneBy(['email' => $email]);
             if ($existingUser) {
                 $this->addFlash('danger', 'This email is already registered.');
@@ -83,10 +80,21 @@ class RegistrationController extends AbstractController
                 ]);
             }
 
-            // Generate verification code
             $verificationCode = sprintf('%06d', random_int(0, 999999));
 
-            // Store registration data in session temporarily
+            // Save face image to temporary file instead of session
+            $tempFaceImagePath = null;
+            if ($enableFaceEnroll === '1' && !empty($faceImage)) {
+                $tempDir = $this->getParameter('kernel.project_dir') . '/public/uploads/temp_faces';
+                if (!file_exists($tempDir)) {
+                    mkdir($tempDir, 0777, true);
+                }
+                $tempFaceImagePath = $tempDir . '/face_' . uniqid() . '.txt';
+                file_put_contents($tempFaceImagePath, $faceImage);
+                $this->logger->info('Face image saved to temp file', ['path' => $tempFaceImagePath]);
+            }
+
+            // Store registration data in session (without the large face image)
             $session->set('pending_registration', [
                 'firstName' => $firstName,
                 'lastName' => $lastName,
@@ -96,8 +104,8 @@ class RegistrationController extends AbstractController
                 'phone' => $phone,
                 'verificationCode' => $verificationCode,
                 'profilePicture' => null,
-                'faceImage' => $faceImage,
                 'enableFaceEnroll' => $enableFaceEnroll,
+                'tempFaceImagePath' => $tempFaceImagePath, // Store file path instead of image data
             ]);
 
             // Store profile picture if uploaded
@@ -127,14 +135,12 @@ class RegistrationController extends AbstractController
                 ]);
             }
 
-            // Show verification form
             return $this->render('FrontOffice/security/verify_email.html.twig', [
                 'email' => $email,
                 'resendUrl' => $this->generateUrl('app_resend_verification'),
             ]);
         }
 
-        // For GET request or invalid form, show the form
         return $this->render('FrontOffice/security/register.html.twig', [
             'form' => $form->createView(),
             'allowed_roles' => $allowedRoles,
@@ -147,13 +153,18 @@ class RegistrationController extends AbstractController
         $verificationCode = $request->request->get('verification_code');
         $pendingData = $session->get('pending_registration');
 
+        $this->logger->info('Verification attempt', [
+            'code_submitted' => $verificationCode,
+            'has_session' => $pendingData !== null,
+            'session_keys' => $pendingData ? array_keys($pendingData) : []
+        ]);
+
         if (!$pendingData) {
             $this->addFlash('danger', 'No pending registration found. Please register again.');
             return $this->redirectToRoute('app_register');
         }
 
-        // Check if verification code matches
-        if ($pendingData['verificationCode'] !== $verificationCode) {
+        if ((string)$pendingData['verificationCode'] !== (string)$verificationCode) {
             $this->addFlash('danger', 'Invalid verification code. Please try again.');
             return $this->render('FrontOffice/security/verify_email.html.twig', [
                 'email' => $pendingData['email'],
@@ -161,7 +172,7 @@ class RegistrationController extends AbstractController
             ]);
         }
 
-        // Create the user account
+        // Create user
         $user = new User();
         $user->setFirstName($pendingData['firstName']);
         $user->setLastName($pendingData['lastName']);
@@ -171,13 +182,13 @@ class RegistrationController extends AbstractController
         $user->setIsActive(1);
         $user->setCreatedAt(new \DateTimeImmutable());
         $user->setFaceEnabled(0);
-        $user->setIsVerified(true); // Mark as verified
+        $user->setIsVerified(true);
 
-        if ($pendingData['phone']) {
+        if (!empty($pendingData['phone'])) {
             $user->setPhone($pendingData['phone']);
         }
 
-        // Set default values for required fields
+        // Set default values
         $user->setHeadline('');
         $user->setBio('');
         $user->setLocation('');
@@ -212,69 +223,68 @@ class RegistrationController extends AbstractController
                 rename($tempFile, $targetFile);
                 $user->setProfilePic('/uploads/profile-pictures/' . $pendingData['profilePicture']);
             }
-        } else {
-            $user->setProfilePic('');
         }
 
         // Hash password
         $hashedPassword = $this->passwordHasher->hashPassword($user, $pendingData['plainPassword']);
         $user->setPasswordHash($hashedPassword);
 
-        // Save user
         try {
             $this->entityManager->persist($user);
             $this->entityManager->flush();
 
-            $this->logger->info('User account created', ['userId' => $user->getId(), 'email' => $user->getEmail()]);
+            $this->logger->info('User saved', ['userId' => $user->getId()]);
 
-            // Handle face enrollment after user is saved
-            $faceEnrolled = false;
-            if (isset($pendingData['enableFaceEnroll']) && $pendingData['enableFaceEnroll'] && !empty($pendingData['faceImage'])) {
-                $this->logger->info('Attempting face enrollment for user', ['userId' => $user->getId()]);
+            // Handle face enrollment - read from temp file
+            $enableFaceEnroll = $pendingData['enableFaceEnroll'] ?? '0';
+            $faceImage = null;
 
-                try {
-                    $faceResult = $this->faceRecognitionService->enrollFace($user, $pendingData['faceImage']);
-
-                    if ($faceResult['success']) {
-                        $faceEnrolled = true;
-                        $this->logger->info('Face enrolled successfully during registration', [
-                            'userId' => $user->getId(),
-                            'personId' => $faceResult['personId'] ?? 'unknown'
-                        ]);
-                        $this->addFlash('success', 'Face ID has been successfully enrolled!');
-                    } else {
-                        $this->logger->warning('Face enrollment failed during registration', [
-                            'userId' => $user->getId(),
-                            'error' => $faceResult['error'] ?? 'Unknown error'
-                        ]);
-                        $this->addFlash('warning', 'Account created but face enrollment failed: ' . ($faceResult['error'] ?? 'Unknown error'));
-                    }
-                } catch (\Exception $e) {
-                    $this->logger->error('Exception during face enrollment', [
-                        'userId' => $user->getId(),
-                        'error' => $e->getMessage()
+            if ($enableFaceEnroll === '1' && isset($pendingData['tempFaceImagePath'])) {
+                $tempFacePath = $pendingData['tempFaceImagePath'];
+                if (file_exists($tempFacePath)) {
+                    $faceImage = file_get_contents($tempFacePath);
+                    $this->logger->info('Face image loaded from temp file', [
+                        'path' => $tempFacePath,
+                        'length' => strlen($faceImage)
                     ]);
-                    $this->addFlash('warning', 'Account created but face enrollment failed. You can set it up later from your profile.');
+                    // Clean up temp file
+                    unlink($tempFacePath);
+                } else {
+                    $this->logger->warning('Temp face file not found', ['path' => $tempFacePath]);
                 }
             }
 
-            // Clear pending registration data
+            $this->logger->info('Face enrollment check', [
+                'enable' => $enableFaceEnroll,
+                'has_image' => !empty($faceImage),
+                'image_length' => strlen($faceImage ?? '')
+            ]);
+
+            if ($enableFaceEnroll === '1' && !empty($faceImage)) {
+                $this->logger->info('Calling face enrollment', ['userId' => $user->getId()]);
+
+                // Clean the face image
+                $cleanFaceImage = preg_replace('/^data:image\/\w+;base64,/', '', $faceImage);
+                $faceResult = $this->awsFaceService->enrollFace($user, $cleanFaceImage);
+
+                if ($faceResult['success']) {
+                    $this->logger->info('Face enrollment SUCCESS', ['faceId' => $faceResult['faceId']]);
+                    $this->addFlash('success', 'Face ID has been enabled!');
+                } else {
+                    $this->logger->error('Face enrollment FAILED', ['error' => $faceResult['error']]);
+                    $this->addFlash('warning', 'Face enrollment failed: ' . $faceResult['error']);
+                }
+            }
+
+            // Clear session
             $session->remove('pending_registration');
 
-            $successMessage = 'Account created successfully! You can now log in.';
-            if ($faceEnrolled) {
-                $successMessage .= ' Face ID login has been enabled.';
-            }
-            $this->addFlash('success', $successMessage);
-
+            $this->addFlash('success', 'Account created successfully! You can now log in.');
             return $this->redirectToRoute('app_login');
 
         } catch (\Exception $e) {
-            $this->logger->error('User creation failed', [
-                'email' => $pendingData['email'],
-                'error' => $e->getMessage()
-            ]);
-            $this->addFlash('danger', 'An error occurred while creating your account. Please try again.');
+            $this->logger->error('User creation failed', ['error' => $e->getMessage()]);
+            $this->addFlash('danger', 'Error: ' . $e->getMessage());
             return $this->redirectToRoute('app_register');
         }
     }
@@ -289,12 +299,10 @@ class RegistrationController extends AbstractController
             return $this->redirectToRoute('app_register');
         }
 
-        // Generate new verification code
         $newCode = sprintf('%06d', random_int(0, 999999));
         $pendingData['verificationCode'] = $newCode;
         $session->set('pending_registration', $pendingData);
 
-        // Resend email
         $displayName = $pendingData['firstName'] . ' ' . $pendingData['lastName'];
         $emailSent = $this->emailService->sendVerificationCode($pendingData['email'], $displayName, $newCode);
 

@@ -19,6 +19,7 @@ services:
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
+
     App\:
         resource: '../src/'
         exclude:
@@ -52,6 +53,13 @@ services:
       arguments:
         $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
         $stripePublicKey: '%env(STRIPE_PUBLIC_KEY)%'
+
+
+    App\Service\SmsService:
+      arguments:
+        $twilioSid: '%env(TWILIO_SID)%'
+        $twilioAuthToken: '%env(TWILIO_AUTH_TOKEN)%'
+        $twilioPhoneNumber: '%env(TWILIO_PHONE_NUMBER)%'
   # add more service definitions when explicit configuration is needed
   # please note that last definitions always *replace* previous ones
   # add more service definitions when explicit configuration is needed

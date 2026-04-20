@@ -7,15 +7,17 @@
     "php": ">=8.1",
     "ext-ctype": "*",
     "ext-iconv": "*",
-    "aws/aws-sdk-php": "*",
+    "aws/aws-sdk-php": "^3.379",
     "doctrine/annotations": "^2.0",
     "doctrine/doctrine-bundle": "^2.18",
     "doctrine/doctrine-migrations-bundle": "^3.7",
     "doctrine/orm": "^3.6",
-    "dompdf/dompdf": "^2.0",
+    "dompdf/dompdf": "*",
+    "endroid/qr-code-bundle": "^6.0",
     "guzzlehttp/guzzle": "^7.10",
     "phpdocumentor/reflection-docblock": "^5.2",
     "phpmailer/phpmailer": "^7.0",
+    "phpoffice/phpspreadsheet": "^5.7",
     "phpstan/phpdoc-parser": "^2.3",
     "stripe/stripe-php": "*",
     "symfony/asset": "6.4.*",
@@ -50,10 +52,12 @@
     "symfony/webpack-encore-bundle": "^2.4",
     "symfony/yaml": "6.4.*",
     "twig/extra-bundle": "^2.12|^3.0",
-    "twig/twig": "^2.12|^3.0"
+    "twig/twig": "^2.12|^3.0",
+    "twilio/sdk": "^8.11"
   },
   "config": {
     "allow-plugins": {
+      "endroid/installer": true,
       "php-http/discovery": true,
       "symfony/flex": true,
       "symfony/runtime": true

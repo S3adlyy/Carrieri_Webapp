@@ -1,3 +1,12 @@
 framework:
-    mailer:
-        dsn: '%env(MAILER_DSN)%'
+  mailer:
+    # This is the main DSN - we will put it in .env
+    dsn: '%env(MAILER_DSN)%'
+
+    # Optional: Default sender (recommended)
+    envelope:
+      sender: '%env(SENDER_EMAIL)%'
+
+    # Headers that will be added to all emails
+    headers:
+      From: '%env(SENDER_EMAIL)%'

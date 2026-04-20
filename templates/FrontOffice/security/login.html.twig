@@ -134,7 +134,7 @@
             statusDiv.innerHTML = '<div class="spinner-border text-primary"></div> Recognizing face...<br><small>This may take a few seconds</small>';
 
             try {
-                const response = await fetch('{{ path('face_login') }}', {
+                const response = await fetch('{{ path('aws_face_login') }}', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ image: imageData })

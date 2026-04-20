@@ -97,7 +97,7 @@
                         </div>
                     </div>
                 </div>
-
+                
             </form>
         </div>
 
@@ -105,21 +105,21 @@
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0" id="offresTable">
                     <thead>
-                    <tr>
-                        <th>Titre</th>
-                        <th>Entreprise</th>
-                        <th>Localisation</th>
-                        <th>Contrat</th>
-                        <th>Salaire</th>
-                        <th>Niveau qualification</th>
-                        <th>Expérience requise</th>
-                        <th>Compétences</th>
-                        <th>Secteur activité</th>
-                        <th>Contact</th>
-                        <th>Date publication</th>
-                        <th>Date expiration</th>
-                        <th>Statut</th>
-                        <th>Actions</th>
+                        <tr>
+                            <th>Titre</th>
+                            <th>Entreprise</th>
+                            <th>Localisation</th>
+                            <th>Contrat</th>
+                            <th>Salaire</th>
+                            <th>Niveau qualification</th>
+                            <th>Expérience requise</th>
+                            <th>Compétences</th>
+                            <th>Secteur activité</th>
+                            <th>Contact</th>
+                            <th>Date publication</th>
+                            <th>Date expiration</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -207,6 +207,18 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm">
+                                    <a href="{{ path('app_admin_postulations_by_offre', {'id': o.id}) }}"
+                                       class="btn btn-info"
+                                       title="Voir les postulations liées à cette offre">
+                                        <i class="fas fa-users"></i>
+                                    </a>
+
+                                    <a href="{{ path('app_admin_offres_insights', {'id': o.id}) }}"
+                                    class="btn btn-dark"
+                                    title="Statistiques et recommandations">
+                                        <i class="fas fa-chart-line"></i>
+                                    </a>
+
                                     <a href="{{ path('app_admin_offres_edit', {'id': o.id}) }}"
                                        class="btn btn-warning" title="Modifier avec formulaire">
                                         <i class="fas fa-edit"></i>
@@ -235,6 +247,13 @@
                                             <div class="modal-body">
                                                 <p>Êtes-vous sûr de vouloir supprimer cette offre ?</p>
                                                 <p class="text-muted"><strong>{{ o.titre }}</strong> — {{ o.entreprise }}</p>
+                                                {% set linkedPostulations = postulation_counts[o.id]|default(0) %}
+                                                {% if linkedPostulations > 0 %}
+                                                    <div class="alert alert-warning mb-0">
+                                                        <i class="fas fa-exclamation-triangle mr-2"></i>
+                                                        Cette suppression supprimera aussi les <strong>{{ linkedPostulations }} postulation(s)</strong> liées à cette offre.
+                                                    </div>
+                                                {% endif %}
                                             </div>
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
@@ -315,37 +334,37 @@
             // Validation des champs
             function validateField(fieldElement, inputElement, fieldName, value, rules) {
                 let errors = [];
-
+                
                 // Règle: requis
                 if (rules.required && (!value || value.trim() === '')) {
                     errors.push(`Le champ "${fieldName}" est obligatoire.`);
                 }
-
+                
                 // Règle: longueur minimale
                 if (rules.minlength && value && value.length < rules.minlength) {
                     errors.push(`Le champ "${fieldName}" doit contenir au moins ${rules.minlength} caractères.`);
                 }
-
+                
                 // Règle: longueur maximale
                 if (rules.maxlength && value && value.length > rules.maxlength) {
                     errors.push(`Le champ "${fieldName}" ne doit pas dépasser ${rules.maxlength} caractères.`);
                 }
-
+                
                 // Règle: type number
                 if (rules.type === 'number' && value && (isNaN(parseFloat(value)) || !isFinite(value))) {
                     errors.push(`Le champ "${fieldName}" doit être un nombre valide.`);
                 }
-
+                
                 // Règle: min value
                 if (rules.min !== undefined && value && parseFloat(value) < rules.min) {
                     errors.push(`Le champ "${fieldName}" doit être supérieur ou égal à ${rules.min}.`);
                 }
-
+                
                 // Règle: email
                 if (rules.type === 'email' && value && !/^[^\s@]+@([^\s@.,]+\.)+[^\s@.,]{2,}$/.test(value)) {
                     errors.push(`Le champ "${fieldName}" doit être une adresse email valide.`);
                 }
-
+                
                 // Règle: date dans le futur
                 if (rules.future && value) {
                     const selectedDate = new Date(value);
@@ -354,7 +373,7 @@
                         errors.push(`La ${fieldName} doit être dans le futur.`);
                     }
                 }
-
+                
                 return errors;
             }
 
@@ -372,11 +391,11 @@
             function validateRow(row) {
                 let isValid = true;
                 const editableCells = row.querySelectorAll('.editable');
-
+                
                 editableCells.forEach(cell => {
                     const input = cell.querySelector('.edit-input');
                     if (!input) return;
-
+                    
                     let value = '';
                     if (input.tagName === 'SELECT') {
                         value = input.options[input.selectedIndex].value;
@@ -385,11 +404,11 @@
                     } else {
                         value = input.value;
                     }
-
+                    
                     const fieldName = input.dataset.fieldName || cell.dataset.field;
                     const rules = getValidationRules(cell);
                     const errors = validateField(cell, input, fieldName, value, rules);
-
+                    
                     const errorMsgSpan = cell.querySelector('.error-msg');
                     if (errors.length > 0) {
                         isValid = false;
@@ -408,7 +427,7 @@
                         }
                     }
                 });
-
+                
                 return isValid;
             }
 
@@ -431,11 +450,11 @@
                 cell.addEventListener('dblclick', function(e) {
                     e.stopPropagation();
                     const row = this.closest('tr');
-
+                    
                     if (currentlyEditingRow && currentlyEditingRow !== row) {
                         cancelEdit(currentlyEditingRow);
                     }
-
+                    
                     enableEditMode(row);
                 });
             });
@@ -443,13 +462,13 @@
             document.querySelectorAll('.save-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const row = this.closest('tr');
-
+                    
                     // Valider avant sauvegarde
                     if (!validateRow(row)) {
                         showToast('Veuillez corriger les erreurs avant de sauvegarder', 'danger');
                         return;
                     }
-
+                    
                     saveRow(row);
                 });
             });
@@ -474,11 +493,11 @@
                     }
                 });
             }
-
+            
             function validateInput(cell) {
                 const input = cell.querySelector('.edit-input');
                 if (!input) return;
-
+                
                 let value = '';
                 if (input.tagName === 'SELECT') {
                     value = input.options[input.selectedIndex].value;
@@ -487,11 +506,11 @@
                 } else {
                     value = input.value;
                 }
-
+                
                 const fieldName = input.dataset.fieldName || cell.dataset.field;
                 const rules = getValidationRules(cell);
                 const errors = validateField(cell, input, fieldName, value, rules);
-
+                
                 const errorMsgSpan = cell.querySelector('.error-msg');
                 if (errors.length > 0) {
                     cell.classList.add('has-error');
@@ -512,11 +531,11 @@
 
             function enableEditMode(row) {
                 if (currentlyEditingRow === row) return;
-
+                
                 currentlyEditingRow = row;
                 row.classList.add('editing-mode');
                 clearRowErrors(row);
-
+                
                 row.querySelectorAll('.editable-value').forEach(el => {
                     el.style.display = 'none';
                 });
@@ -528,7 +547,7 @@
 
                 const saveBtn = row.querySelector('.save-btn');
                 const cancelBtn = row.querySelector('.cancel-btn');
-
+                
                 saveBtn.style.display = 'inline-block';
                 cancelBtn.style.display = 'inline-block';
             }
@@ -538,170 +557,140 @@
                 editableCells.forEach(cell => {
                     const field = cell.dataset.field;
                     const originalValue = cell.dataset.value;
-                    const displaySpan = cell.querySelector('.editable-value');
                     const input = cell.querySelector('.edit-input');
-
-                    if (field === 'typeContrat') {
-                        let badgeHtml = '';
-                        if (originalValue === 'CDI') badgeHtml = '<span class="badge badge-success">CDI</span>';
-                        else if (originalValue === 'CDD') badgeHtml = '<span class="badge badge-warning">CDD</span>';
-                        else if (originalValue === 'Stage') badgeHtml = '<span class="badge badge-info">Stage</span>';
-                        else badgeHtml = '<span class="badge badge-secondary">' + (originalValue || '—') + '</span>';
-                        displaySpan.innerHTML = badgeHtml;
-                        if (input) input.value = originalValue || '';
-                    } else if (field === 'salaire') {
-                        displaySpan.textContent = originalValue ? originalValue + ' DT' : '—';
-                        if (input) input.value = originalValue || '';
-                    } else if (field === 'competencesRequises') {
-                        const text = originalValue || '—';
-                        displaySpan.textContent = text.length > 50 ? text.slice(0, 50) + '...' : text;
-                        if (input) input.value = originalValue || '';
-                    } else if (field === 'dateExpiration') {
-                        const date = originalValue ? new Date(originalValue) : null;
-                        displaySpan.textContent = date ? date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '—';
-                        if (input) input.value = originalValue || '';
+                    const valueSpan = cell.querySelector('.editable-value');
+                    
+                    if (input.tagName === 'SELECT') {
+                        input.value = originalValue;
+                    } else if (input.tagName === 'TEXTAREA') {
+                        input.value = originalValue;
                     } else {
-                        displaySpan.textContent = originalValue || '—';
-                        if (input) input.value = originalValue || '';
+                        input.value = originalValue;
                     }
+                    
+                    input.style.display = 'none';
+                    valueSpan.style.display = 'block';
                 });
-
-                row.querySelectorAll('.editable-value').forEach(el => {
-                    el.style.display = 'inline';
-                });
-                row.querySelectorAll('.edit-input').forEach(el => {
-                    el.style.display = 'none';
-                });
-
-                const saveBtn = row.querySelector('.save-btn');
-                const cancelBtn = row.querySelector('.cancel-btn');
-
-                saveBtn.style.display = 'none';
-                cancelBtn.style.display = 'none';
-
-                row.classList.remove('editing-mode');
-                row.classList.remove('edit-success');
+                
                 clearRowErrors(row);
-
+                row.classList.remove('editing-mode');
+                row.querySelector('.save-btn').style.display = 'none';
+                row.querySelector('.cancel-btn').style.display = 'none';
                 currentlyEditingRow = null;
             }
 
-            function saveRow(row) {
-                const offreId = row.dataset.id;
-                const updates = {};
+            async function saveRow(row) {
+                const id = row.dataset.id;
+                const saveBtn = row.querySelector('.save-btn');
+                const originalHtml = saveBtn.innerHTML;
+                
+                saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                row.classList.add('saving');
 
-                const editableCells = row.querySelectorAll('.editable');
-                editableCells.forEach(cell => {
+                const data = {};
+                row.querySelectorAll('.editable').forEach(cell => {
                     const field = cell.dataset.field;
                     const input = cell.querySelector('.edit-input');
-                    let newValue = '';
-
+                    
                     if (input.tagName === 'SELECT') {
-                        newValue = input.options[input.selectedIndex].value;
-                    } else if (input.type === 'datetime-local') {
-                        newValue = input.value;
+                        data[field] = input.options[input.selectedIndex].value;
                     } else if (input.tagName === 'TEXTAREA') {
-                        newValue = input.value;
+                        data[field] = input.value;
                     } else {
-                        newValue = input.value;
-                    }
-
-                    const originalValue = cell.dataset.value;
-
-                    if (newValue !== originalValue && newValue !== '') {
-                        updates[field] = newValue;
+                        data[field] = input.value;
                     }
                 });
 
-                if (Object.keys(updates).length === 0) {
-                    cancelEdit(row);
-                    return;
-                }
-
-                row.classList.add('saving');
-
-                fetch('{{ path('app_admin_offres_inline_edit') }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify({
-                        id: offreId,
-                        updates: updates
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        row.classList.remove('saving');
-
-                        if (data.success) {
-                            for (const [field, newValue] of Object.entries(updates)) {
-                                const cell = row.querySelector(`.editable[data-field="${field}"]`);
-                                if (cell) {
-                                    cell.dataset.value = newValue;
-                                    const displaySpan = cell.querySelector('.editable-value');
-                                    const input = cell.querySelector('.edit-input');
-
-                                    if (field === 'typeContrat') {
-                                        let badgeHtml = '';
-                                        if (newValue === 'CDI') badgeHtml = '<span class="badge badge-success">CDI</span>';
-                                        else if (newValue === 'CDD') badgeHtml = '<span class="badge badge-warning">CDD</span>';
-                                        else if (newValue === 'Stage') badgeHtml = '<span class="badge badge-info">Stage</span>';
-                                        else badgeHtml = '<span class="badge badge-secondary">' + (newValue || '—') + '</span>';
-                                        displaySpan.innerHTML = badgeHtml;
-                                    } else if (field === 'salaire') {
-                                        displaySpan.textContent = newValue ? newValue + ' DT' : '—';
-                                    } else if (field === 'competencesRequises') {
-                                        const text = newValue || '—';
-                                        displaySpan.textContent = text.length > 50 ? text.slice(0, 50) + '...' : text;
-                                    } else if (field === 'dateExpiration') {
-                                        const date = newValue ? new Date(newValue) : null;
-                                        displaySpan.textContent = date ? date.toLocaleDateString('fr-FR') + ' ' + date.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) : '—';
-                                    } else {
-                                        displaySpan.textContent = newValue || '—';
-                                    }
-
-                                    if (input) input.value = newValue;
-                                }
-                            }
-
-                            row.classList.add('edit-success');
-                            setTimeout(() => {
-                                row.classList.remove('edit-success');
-                            }, 1000);
-
-                            cancelEdit(row);
-                            showToast('Modification enregistrée avec succès', 'success');
-                        } else {
-                            showToast(data.error || 'Erreur lors de la modification', 'danger');
-                            cancelEdit(row);
-                        }
-                    })
-                    .catch(error => {
-                        row.classList.remove('saving');
-                        showToast('Erreur réseau', 'danger');
-                        cancelEdit(row);
+                try {
+                    const response = await fetch('{{ path('app_admin_offres_inline_edit') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            id: id,
+                            ...data
+                        })
                     });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        updateRowDisplay(row, result.data);
+                        row.classList.add('edit-success');
+                        setTimeout(() => row.classList.remove('edit-success'), 2000);
+                        showToast(result.message || 'Offre mise à jour avec succès', 'success');
+                        currentlyEditingRow = null;
+                    } else {
+                        showToast(result.message || 'Erreur lors de la sauvegarde', 'danger');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast('Erreur réseau lors de la sauvegarde', 'danger');
+                } finally {
+                    saveBtn.innerHTML = originalHtml;
+                    row.classList.remove('saving');
+                }
             }
 
-            function showToast(message, type) {
+            function updateRowDisplay(row, data) {
+                row.querySelectorAll('.editable').forEach(cell => {
+                    const field = cell.dataset.field;
+                    const input = cell.querySelector('.edit-input');
+                    const valueSpan = cell.querySelector('.editable-value');
+                    const value = data[field];
+
+                    cell.dataset.value = value ?? '';
+
+                    if (field === 'typeContrat') {
+                        let badgeClass = 'badge-secondary';
+                        if (value === 'CDI') badgeClass = 'badge-success';
+                        else if (value === 'CDD') badgeClass = 'badge-warning';
+                        else if (value === 'Stage') badgeClass = 'badge-info';
+                        valueSpan.innerHTML = `<span class="badge ${badgeClass}">${value || '—'}</span>`;
+                    } else if (field === 'salaire') {
+                        valueSpan.textContent = value ? value + ' DT' : '—';
+                    } else if (field === 'competencesRequises') {
+                        const text = value || '—';
+                        valueSpan.textContent = text.length > 50 ? text.slice(0, 50) + '...' : text;
+                    } else if (field === 'dateExpiration') {
+                        valueSpan.textContent = data.dateExpirationFormatted || '—';
+                    } else {
+                        valueSpan.textContent = value || '—';
+                    }
+
+                    input.style.display = 'none';
+                    valueSpan.style.display = 'block';
+                });
+
+                row.classList.remove('editing-mode');
+                row.querySelector('.save-btn').style.display = 'none';
+                row.querySelector('.cancel-btn').style.display = 'none';
+
+                const statutCell = row.children[12];
+                if (data.isActive) {
+                    statutCell.innerHTML = '<span class="badge badge-success">Active</span>';
+                } else {
+                    statutCell.innerHTML = '<span class="badge badge-danger">Expirée</span>';
+                }
+            }
+
+            function showToast(message, type = 'info') {
                 const toast = document.createElement('div');
-                toast.className = `alert alert-${type} alert-dismissible fade show`;
-                toast.style.position = 'fixed';
-                toast.style.top = '20px';
-                toast.style.right = '20px';
-                toast.style.zIndex = '9999';
-                toast.style.minWidth = '300px';
+                toast.className = `alert alert-${type} alert-dismissible position-fixed`;
+                toast.style.cssText = 'top:20px;right:20px;z-index:9999;min-width:300px;';
                 toast.innerHTML = `
                     ${message}
-                    <button type="button" class="close" data-dismiss="alert">&times;</button>
+                    <button type="button" class="close" onclick="this.parentElement.remove()">
+                        <span>&times;</span>
+                    </button>
                 `;
                 document.body.appendChild(toast);
 
                 setTimeout(() => {
-                    toast.remove();
-                }, 3000);
+                    if (toast.parentElement) toast.remove();
+                }, 4000);
             }
         });
     </script>

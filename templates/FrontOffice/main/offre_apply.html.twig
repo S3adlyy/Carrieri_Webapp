@@ -2,103 +2,241 @@
 
 {% block title %}Postuler{% endblock %}
 
-{% block stylesheets %}
-    {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260406-1">
-{% endblock %}
-
 {% block candidate_page_heading %}Postuler à une offre{% endblock %}
 
-{% block candidate_breadcrumb %} / <a href="{{ path('app_candidate_offres') }}">Offres</a> / <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}">{{ offre.titre }}</a> / Postuler{% endblock %}
-
-{% block candidate_content_container_class %}container-fluid px-3 px-md-4 px-lg-5{% endblock %}
-
-{% block candidate_content_row_class %}row justify-content-center{% endblock %}
-
-{% block candidate_content_col_class %}col-lg-8 col-md-10 col-12{% endblock %}
+{% block candidate_breadcrumb %} / Postuler{% endblock %}
 
 {% block candidate_content %}
-    <div class="w-100 text-start fo-charte-ui">
+    <div class="fo-apply-page">
+
         {% for message in app.flashes('success') %}
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="fo-alert fo-alert-success">
                 {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
             </div>
         {% endfor %}
 
         {% for message in app.flashes('error') %}
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="fo-alert fo-alert-danger">
                 {{ message }}
-                <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
             </div>
         {% endfor %}
 
-        <div class="card shadow-sm fo-charte-card">
-            <div class="card-header fo-charte-header">
-                <h5 class="mb-0">{{ offre.titre }}</h5>
-                <small>{{ offre.entreprise }}</small>
+        <div class="fo-apply-card">
+            <div class="fo-apply-card__header">
+                <h2 class="fo-apply-title">{{ offre.titre }}</h2>
+                <div class="fo-apply-company">{{ offre.entreprise }}</div>
             </div>
-            <div class="card-body">
-                <div class="row mb-4">
-                    <div class="col-md-4 mb-3">
-                        <div class="bg-light p-3 rounded text-center">
-                            <small class="text-muted d-block">📍 Localisation</small>
-                            <strong>{{ offre.localisation }}</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="bg-light p-3 rounded text-center">
-                            <small class="text-muted d-block">📄 Type de contrat</small>
-                            <strong>{{ offre.typeContrat }}</strong>
-                        </div>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <div class="bg-light p-3 rounded text-center">
-                            <small class="text-muted d-block">⏰ Date d'expiration</small>
-                            <strong>{{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y') : '—' }}</strong>
-                        </div>
-                    </div>
+
+            <div class="fo-apply-info">
+                <div class="fo-apply-info__item">
+                    <span>Localisation</span>
+                    <strong>{{ offre.localisation }}</strong>
+                </div>
+                <div class="fo-apply-info__item">
+                    <span>Type de contrat</span>
+                    <strong>{{ offre.typeContrat }}</strong>
+                </div>
+                <div class="fo-apply-info__item">
+                    <span>Expiration</span>
+                    <strong>{{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}</strong>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                <div class="fo-form-group">
+                    <label for="motivation">Motivation</label>
+                    <textarea
+                        id="motivation"
+                        name="motivation"
+                        class="fo-form-control"
+                        rows="6"
+                        placeholder="Écrivez ici votre motivation..."
+                    >{{ motivation|default('') }}</textarea>
+                    <small class="fo-help-text">Minimum 20 caractères, maximum 2000 caractères.</small>
                 </div>
 
-                <form method="post" enctype="multipart/form-data">
-                    <div class="form-group mb-4">
-                        <label class="font-weight-bold">Motivation</label>
-                        <textarea name="motivation" class="form-control" rows="6" placeholder="Écrivez ici votre motivation..." required>{{ motivation|default('') }}</textarea>
-                        <small class="text-muted">Minimum 20 caractères, maximum 2000 caractères.</small>
-                    </div>
+                <div class="fo-form-group">
+                    <label for="cv">CV</label>
+                    <input type="file" id="cv" name="cv" class="fo-form-control" accept=".pdf,.doc,.docx">
+                    <small class="fo-help-text">Formats autorisés : PDF, DOC, DOCX. Taille max : 2 Mo.</small>
+                </div>
 
-                    <div class="form-group mb-4">
-                        <label class="font-weight-bold">CV</label>
-                        <div class="custom-file">
-                            <input type="file" name="cv" class="custom-file-input" id="cvFile" accept=".pdf,.doc,.docx">
-                            <label class="custom-file-label" for="cvFile">Choisir un fichier...</label>
-                        </div>
-                        <small class="text-muted">Formats autorisés : PDF, DOC, DOCX. Taille max : 2 Mo.</small>
-                    </div>
+                <div class="fo-apply-actions">
+                    <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="fo-btn-secondary">
+                        Retour
+                    </a>
 
-                    <hr>
-                    <div class="d-flex justify-content-between flex-wrap">
-                        <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="btn btn-outline-secondary">
-                            Retour
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            Envoyer ma candidature
-                        </button>
-                    </div>
-                </form>
-            </div>
+                    <button type="submit" class="fo-btn-primary">
+                        Envoyer ma candidature
+                    </button>
+                </div>
+            </form>
         </div>
+
     </div>
 
-    <script>
-        document.querySelector('.custom-file-input')?.addEventListener('change', function(e) {
-            const fileName = e.target.files[0]?.name || 'Choisir un fichier...';
-            const label = e.target.nextElementSibling;
-            if (label) label.innerText = fileName;
-        });
-    </script>
+    <style>
+        .fo-candidate-content {
+            background: linear-gradient(90deg, #f7eef9 0%, #eef6ff 100%);
+        }
+
+        .fo-apply-page {
+            width: 100%;
+        }
+
+        .fo-alert {
+            border-radius: 14px;
+            padding: 14px 18px;
+            margin-bottom: 18px;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .fo-alert-success {
+            background: #dcfce7;
+            color: #166534;
+            border: 1px solid #bbf7d0;
+        }
+
+        .fo-alert-danger {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+
+        .fo-apply-card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 22px;
+            padding: 36px;
+            box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
+            text-align: left;
+        }
+
+        .fo-apply-card__header {
+            margin-bottom: 24px;
+        }
+
+        .fo-apply-title {
+            font-size: 32px;
+            font-weight: 800;
+            color: #1f3470;
+            margin-bottom: 8px;
+        }
+
+        .fo-apply-company {
+            font-size: 16px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .fo-apply-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .fo-apply-info__item {
+            background: #f8fbff;
+            border: 1px solid #e6eefc;
+            border-radius: 14px;
+            padding: 14px 16px;
+        }
+
+        .fo-apply-info__item span {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .fo-apply-info__item strong {
+            font-size: 15px;
+            color: #1f2937;
+        }
+
+        .fo-form-group {
+            margin-bottom: 22px;
+        }
+
+        .fo-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #223a7a;
+        }
+
+        .fo-form-control {
+            width: 100%;
+            border: 1px solid #dbe4f3;
+            border-radius: 14px;
+            padding: 14px 16px;
+            font-size: 15px;
+            background: #fff;
+            color: #1f2937;
+        }
+
+        textarea.fo-form-control {
+            resize: vertical;
+            min-height: 140px;
+        }
+
+        .fo-help-text {
+            display: block;
+            margin-top: 8px;
+            color: #6b7280;
+            font-size: 13px;
+        }
+
+        .fo-apply-actions {
+            margin-top: 28px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .fo-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .fo-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #e5e7eb;
+            color: #1f2937;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 24px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .fo-btn-primary:hover,
+        .fo-btn-secondary:hover {
+            text-decoration: none;
+        }
+
+        @media (max-width: 991px) {
+            .fo-apply-info {
+                grid-template-columns: 1fr;
+            }
+
+            .fo-apply-title {
+                font-size: 26px;
+            }
+        }
+    </style>
 {% endblock %}

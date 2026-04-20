@@ -1,0 +1,224 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Mes favoris{% endblock %}
+{% block candidate_page_heading %}Mes offres favorites{% endblock %}
+{% block candidate_breadcrumb %} / Favoris{% endblock %}
+
+{% block candidate_content %}
+<div class="fo-favorites-page">
+    {% if favorites is defined and favorites|length > 0 %}
+        <div class="row">
+            {% for favorite in favorites %}
+                {% set offre = favorite.offre %}
+
+                <div class="col-lg-6 col-md-12 mb-4">
+                    <div class="fo-favorite-card">
+                        <div class="fo-favorite-card__top">
+                            <div>
+                                <h3 class="fo-favorite-card__title">{{ offre.titre }}</h3>
+                                <div class="fo-favorite-card__company">{{ offre.entreprise }}</div>
+                            </div>
+
+                            <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}" class="m-0">
+                                <button type="submit" class="fo-remove-favorite-btn" title="Retirer des favoris">
+                                    <i class="fas fa-heart-broken"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <span class="fo-badge
+                            {% if offre.typeContrat == 'CDI' %}
+                                fo-badge-cdi
+                            {% elseif offre.typeContrat == 'CDD' %}
+                                fo-badge-cdd
+                            {% elseif offre.typeContrat == 'Stage' %}
+                                fo-badge-stage
+                            {% else %}
+                                fo-badge-other
+                            {% endif %}
+                        ">
+                            {{ offre.typeContrat }}
+                        </span>
+
+                        <div class="fo-favorite-meta">
+                            <div class="fo-meta-item">
+                                <span class="fo-meta-item__label">Localisation</span>
+                                <span class="fo-meta-item__value">{{ offre.localisation ?: '—' }}</span>
+                            </div>
+
+                            <div class="fo-meta-item">
+                                <span class="fo-meta-item__label">Salaire</span>
+                                <span class="fo-meta-item__value">{{ offre.salaire ? offre.salaire ~ ' DT' : '—' }}</span>
+                            </div>
+
+                            <div class="fo-meta-item">
+                                <span class="fo-meta-item__label">Qualification</span>
+                                <span class="fo-meta-item__value">{{ offre.niveauQualification ?: '—' }}</span>
+                            </div>
+
+                            <div class="fo-meta-item">
+                                <span class="fo-meta-item__label">Ajouté le</span>
+                                <span class="fo-meta-item__value">
+                                    {{ favorite.dateAjout ? favorite.dateAjout|date('d/m/Y H:i') : '—' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="fo-favorite-description">
+                            {{
+                                offre.description|length > 180
+                                    ? offre.description|slice(0, 180) ~ '...'
+                                    : offre.description
+                            }}
+                        </div>
+
+                        <div class="fo-favorite-actions">
+                            <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="fo-favorite-btn-main">
+                                Voir l'offre
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="fo-empty-box">
+            <h3>Aucune offre favorite</h3>
+            <p class="mb-0">Vous n'avez encore ajouté aucune offre à vos favoris.</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .fo-favorites-page {
+        width: 100%;
+    }
+
+    .fo-favorite-card {
+        height: 100%;
+        border-radius: 22px;
+        background: rgba(255,255,255,0.92);
+        box-shadow: 0 12px 35px rgba(31, 55, 120, 0.10);
+        transition: all 0.25s ease;
+        overflow: hidden;
+        padding: 28px;
+        text-align: left;
+    }
+
+    .fo-favorite-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 40px rgba(31, 55, 120, 0.16);
+    }
+
+    .fo-favorite-card__top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .fo-favorite-card__title {
+        font-size: 28px;
+        font-weight: 800;
+        color: #1f3470;
+        line-height: 1.2;
+        margin-bottom: 8px;
+    }
+
+    .fo-favorite-card__company {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        color: #6b7280;
+    }
+
+    .fo-remove-favorite-btn {
+        width: 48px;
+        height: 48px;
+        border: none;
+        border-radius: 50%;
+        background: rgba(239, 68, 68, 0.12);
+        color: #dc2626;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        cursor: pointer;
+        transition: all 0.25s ease;
+    }
+
+    .fo-remove-favorite-btn:hover {
+        transform: scale(1.08);
+        background: rgba(239, 68, 68, 0.20);
+    }
+
+    .fo-favorite-meta {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin: 20px 0 24px;
+    }
+
+    .fo-meta-item {
+        background: #f8fbff;
+        border: 1px solid #e6eefc;
+        border-radius: 14px;
+        padding: 14px 16px;
+    }
+
+    .fo-meta-item__label {
+        display: block;
+        font-size: 13px;
+        font-weight: 700;
+        color: #3b82f6;
+        margin-bottom: 4px;
+    }
+
+    .fo-meta-item__value {
+        display: block;
+        font-size: 15px;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .fo-favorite-description {
+        color: #5f6780;
+        font-size: 15px;
+        line-height: 1.7;
+        margin-bottom: 24px;
+    }
+
+    .fo-favorite-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .fo-favorite-btn-main {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 20px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        color: #fff;
+        text-decoration: none;
+        font-weight: 700;
+        transition: 0.25s ease;
+    }
+
+    .fo-favorite-btn-main:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.20);
+        color: #fff;
+    }
+
+    @media (max-width: 768px) {
+        .fo-favorite-meta {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
