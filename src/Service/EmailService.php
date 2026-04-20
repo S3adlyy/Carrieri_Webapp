@@ -27,6 +27,128 @@ class EmailService
         $this->logger = $logger;
     }
 
+    /**
+     * Send verification code email for registration
+     */
+    public function sendVerificationCode(string $toEmail, string $toName, string $verificationCode): bool
+    {
+        $mail = new PHPMailer(true);
+
+        try {
+            // Configuration SMTP Gmail
+            $mail->isSMTP();
+            $mail->Host       = 'smtp.gmail.com';
+            $mail->SMTPAuth   = true;
+            $mail->Username   = $this->senderEmail;
+            $mail->Password   = $this->gmailPassword;
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+            $mail->Port       = 587;
+
+            // Sender and recipient
+            $mail->setFrom($this->senderEmail, $this->senderName);
+            $mail->addAddress($toEmail, $toName);
+
+            // Content
+            $mail->isHTML(true);
+            $mail->Subject = "🔐 Verify Your Email - Carrieri";
+            $mail->Body    = $this->buildVerificationEmailHtml($toName, $verificationCode);
+            $mail->AltBody = $this->buildVerificationEmailText($toName, $verificationCode);
+
+            $mail->send();
+            $this->logger->info('Verification email sent successfully', ['to' => $toEmail]);
+            return true;
+
+        } catch (Exception $e) {
+            $this->logger->error('Failed to send verification email: ' . $mail->ErrorInfo);
+            return false;
+        }
+    }
+
+    /**
+     * Build HTML template for verification email
+     */
+    private function buildVerificationEmailHtml(string $name, string $code): string
+    {
+        return <<<HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification - Carrieri</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 30px auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+        .header p { margin: 10px 0 0; opacity: 0.9; }
+        .content { padding: 40px 30px; text-align: center; }
+        .code { font-size: 48px; font-weight: bold; color: #667eea; letter-spacing: 10px; margin: 30px 0; padding: 20px; background: #f8f9fa; border-radius: 12px; font-family: 'Courier New', monospace; }
+        .warning { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 8px; font-size: 14px; color: #856404; }
+        .footer { background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 12px; }
+        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; margin-top: 20px; }
+        .expiry { color: #ef4444; font-size: 13px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Carrieri</h1>
+            <p>Vérification de votre adresse email</p>
+        </div>
+        <div class="content">
+            <h2>Bonjour {$name} !</h2>
+            <p>Merci de vous être inscrit sur Carrieri. Pour finaliser votre inscription, veuillez utiliser le code de vérification ci-dessous :</p>
+            
+            <div class="code">{$code}</div>
+            
+            <p>Ce code est valable pendant <strong>15 minutes</strong>.</p>
+            
+            <div class="warning">
+                <strong>⚠️ Important :</strong> Ne partagez jamais ce code avec personne. Notre équipe ne vous le demandera jamais.
+            </div>
+            
+            <p>Si vous n'avez pas créé de compte sur Carrieri, veuillez ignorer cet email.</p>
+        </div>
+        <div class="footer">
+            <p>© 2024 Carrieri - Tous droits réservés</p>
+            <p>Cet email a été envoyé automatiquement, merci de ne pas y répondre.</p>
+        </div>
+    </div>
+</body>
+</html>
+HTML;
+    }
+
+    /**
+     * Build plain text template for verification email
+     */
+    private function buildVerificationEmailText(string $name, string $code): string
+    {
+        return "
+========================================
+      VÉRIFICATION EMAIL - CARRIERI
+========================================
+
+Bonjour $name,
+
+Merci de vous être inscrit sur Carrieri.
+
+Votre code de vérification est : $code
+
+Ce code expirera dans 15 minutes.
+
+⚠️ Important : Ne partagez jamais ce code avec personne.
+
+Si vous n'avez pas créé de compte sur Carrieri, veuillez ignorer cet email.
+
+Cordialement,
+L'équipe Carrieri
+========================================
+";
+    }
+
+    // Your existing sendInterviewNotification method remains here
     public function sendInterviewNotification(
         string $toEmail,
         string $candidateName,
@@ -69,6 +191,7 @@ class EmailService
         }
     }
 
+    // Your existing buildHtmlEmail and buildTextEmail methods remain here
     private function buildHtmlEmail(string $candidateName, string $missionTitle, float $score, string $interviewDate, string $jitsiLink, string $interviewType, string $recruiterName): string
     {
         $scorePercent = round($score);

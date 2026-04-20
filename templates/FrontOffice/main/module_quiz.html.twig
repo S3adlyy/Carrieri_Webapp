@@ -1,75 +1,75 @@
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
-{% block title %}Quiz module{% endblock %}
+{% block title %}{{ 'Quiz module'|trans_lang }}{% endblock %}
 
-{% block candidate_page_heading %}Quiz du module{% endblock %}
+{% block candidate_page_heading %}{{ 'Quiz du module'|trans_lang }}{% endblock %}
 
 {% block candidate_breadcrumb %}
-    / <a href="{{ path('app_candidate_cours') }}">Cours</a>
-    {% if cours %}/ <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}">{{ cours.titre|default('Cours') }}</a>{% endif %}
-    / Quiz module
+    / <a href="{{ path('app_candidate_cours') }}">{{ 'Cours'|trans_lang }}</a>
+    {% if cours %}/ <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}">{{ cours.titre|default('Cours')|trans_lang }}</a>{% endif %}
+    / {{ 'Quiz module'|trans_lang }}
 {% endblock %}
 
 {% block candidate_content %}
     <div class="w-100 text-start fo-charte-ui fo-anti-copy-page" id="module-quiz-page">
         {% if cours %}
-            <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}" class="btn btn-outline-secondary btn-sm mb-3">Retour au cours</a>
+            <a href="{{ path('app_candidate_cours_show', {id: cours.id}) }}" class="btn btn-outline-secondary btn-sm mb-3">{{ 'Retour au cours'|trans_lang }}</a>
         {% endif %}
 
         <div class="card shadow-sm fo-charte-card mb-4">
             <div class="card-body">
-                <h4 class="mb-1">{{ module.titre|default('Module') }}</h4>
-                <p class="text-muted mb-0">Quiz de {{ expected_count }} questions - Seuil de réussite: {{ pass_threshold }}%</p>
-                <p class="text-muted mb-0">Leçons lues: {{ module_lessons_viewed|default(0) }}/{{ module_lessons_total|default(0) }}</p>
+                <h4 class="mb-1">{{ module.titre|default('Module')|trans_lang }}</h4>
+                <p class="text-muted mb-0">{{ 'Quiz de'|trans_lang }} {{ expected_count }} {{ 'questions - Seuil de réussite:'|trans_lang }} {{ pass_threshold }}%</p>
+                <p class="text-muted mb-0">{{ 'Leçons lues:'|trans_lang }} {{ module_lessons_viewed|default(0) }}/{{ module_lessons_total|default(0) }}</p>
             </div>
         </div>
 
         {% if module_quiz_unlocked is defined and not module_quiz_unlocked %}
             <div class="alert alert-warning mb-4">
-                Vous devez lire toutes les leçons de ce module avant d'accéder au quiz.
+                {{ 'Vous devez lire toutes les leçons de ce module avant d\'accéder au quiz.'|trans_lang }}
             </div>
         {% endif %}
 
         {% if latest_result %}
             <div class="alert {{ latest_result.reussite ? 'alert-success' : 'alert-warning' }} mb-4">
-                Dernier résultat: {{ latest_result.score }}/{{ latest_result.totalPoints }}
+                {{ 'Dernier résultat:'|trans_lang }} {{ latest_result.score }}/{{ latest_result.totalPoints }}
                 ({{ latest_result.totalPoints > 0 ? ((latest_result.score / latest_result.totalPoints) * 100)|round : 0 }}%)
-                - {{ latest_result.reussite ? 'Réussi' : 'Non réussi' }}.
+                - {{ (latest_result.reussite ? 'Réussi' : 'Non réussi')|trans_lang }}.
             </div>
         {% endif %}
 
         {% if module_quiz_unlocked is defined and not module_quiz_unlocked %}
-            <div class="alert alert-light border">Terminez d'abord toutes les leçons du module pour débloquer ce quiz.</div>
+            <div class="alert alert-light border">{{ 'Terminez d\'abord toutes les leçons du module pour débloquer ce quiz.'|trans_lang }}</div>
         {% elseif questions is empty %}
-            <div class="alert alert-light border">Aucune question de quiz n'est disponible pour ce module.</div>
+            <div class="alert alert-light border">{{ 'Aucune question de quiz n\'est disponible pour ce module.'|trans_lang }}</div>
         {% else %}
             <form method="post" class="card shadow-sm fo-charte-card fo-anti-copy" id="module-quiz-form">
                 <div class="card-body">
                     {% for q in questions %}
                         <div class="mb-4 quiz-question-block {{ loop.first ? '' : 'd-none' }}" data-question-index="{{ loop.index0 }}">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <h5 class="mb-0">{{ loop.index }}. {{ q.text }}</h5>
+                                <h5 class="mb-0">{{ loop.index }}. {{ q.text|trans_lang }}</h5>
                                 <span class="badge badge-success">{{ q.points }} pt{{ q.points > 1 ? 's' : '' }}</span>
                             </div>
 
                             {% for answer in q.answers %}
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="radio" name="answers[{{ q.id }}]" id="q{{ q.id }}_a{{ answer.id }}" value="{{ answer.id }}">
-                                    <label class="form-check-label" for="q{{ q.id }}_a{{ answer.id }}">{{ answer.text }}</label>
+                                    <label class="form-check-label" for="q{{ q.id }}_a{{ answer.id }}">{{ answer.text|trans_lang }}</label>
                                 </div>
                             {% endfor %}
                         </div>
                     {% endfor %}
 
                     <div class="d-flex justify-content-between align-items-center mt-3">
-                        <button type="button" class="btn btn-outline-secondary" id="quiz-prev" disabled>Precedent</button>
-                        <small class="text-muted" id="quiz-progress">Question 1/{{ questions|length }}</small>
-                        <button type="button" class="btn btn-outline-primary" id="quiz-next">Suivant</button>
+                        <button type="button" class="btn btn-outline-secondary" id="quiz-prev" disabled>{{ 'Précédent'|trans_lang }}</button>
+                        <small class="text-muted" id="quiz-progress-text" data-base-text="{{ 'Question'|trans_lang }}">{{ 'Question'|trans_lang }} 1/{{ questions|length }}</small>
+                        <button type="button" class="btn btn-outline-primary" id="quiz-next">{{ 'Suivant'|trans_lang }}</button>
                     </div>
 
                     <hr>
                     <div class="text-end">
-                        <button type="submit" class="btn btn-primary" id="quiz-submit">Terminer le quiz</button>
+                        <button type="submit" class="btn btn-primary" id="quiz-submit">{{ 'Terminer le quiz'|trans_lang }}</button>
                     </div>
                 </div>
             </form>
@@ -80,7 +80,7 @@
                 <div class="card-body text-center">
                     <h4 class="mb-2">Score: {{ result.score }}/{{ result.total_points }} ({{ result.percentage|round }}%)</h4>
                     <p class="mb-0 {{ result.passed ? 'text-success' : 'text-danger' }} font-weight-bold">
-                        {{ result.passed ? 'Felicitations ! Quiz reussi.' : 'Quiz non reussi. Minimum ' ~ pass_threshold ~ '% requis.' }}
+                        {{ (result.passed ? 'Félicitations ! Quiz réussi.' : 'Quiz non réussi. Minimum ' ~ pass_threshold ~ '% requis.')|trans_lang }}
                     </p>
                 </div>
             </div>
@@ -101,7 +101,8 @@
             let currentIndex = 0;
             const prevBtn = document.getElementById('quiz-prev');
             const nextBtn = document.getElementById('quiz-next');
-            const progressLabel = document.getElementById('quiz-progress');
+            const progressLabelText = document.getElementById('quiz-progress-text');
+            const baseQuestionText = progressLabelText ? progressLabelText.getAttribute('data-base-text') : 'Question';
             const form = document.getElementById('module-quiz-form');
 
             const blockCopy = function (event) {
@@ -137,7 +138,9 @@
                 });
                 prevBtn.disabled = currentIndex === 0;
                 nextBtn.disabled = currentIndex === (blocks.length - 1);
-                progressLabel.textContent = 'Question ' + (currentIndex + 1) + '/' + blocks.length;
+                if (progressLabelText) {
+                    progressLabelText.textContent = baseQuestionText + ' ' + (currentIndex + 1) + '/' + blocks.length;
+                }
             };
 
             prevBtn?.addEventListener('click', function () {
@@ -166,7 +169,7 @@
 
                 if (answered < totalQuestions) {
                     event.preventDefault();
-                    alert('Veuillez repondre a toutes les questions avant de terminer.');
+                    alert("{{ 'Veuillez répondre à toutes les questions avant de terminer.'|trans_lang|escape('js') }}");
                 }
             });
 
@@ -174,4 +177,3 @@
         });
     </script>
 {% endblock %}
-

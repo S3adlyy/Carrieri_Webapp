@@ -1,8 +1,8 @@
-lu {# Shared left sidebar for cours_show and lecon_show (FXML-like: header + scroll list) #}
+{# Shared left sidebar for cours_show and lecon_show (FXML-like: header + scroll list) #}
 <div class="fo-player-sidebar card shadow-sm fo-charte-card position-sticky">
     <div class="card-header fo-charte-header fo-player-sidebar__header">
         <div class="d-flex justify-content-between align-items-center">
-            <span class="font-weight-bold">Modules du cours</span>
+            <span class="font-weight-bold">{{ 'Modules du cours'|trans_lang }}</span>
             <span class="badge badge-light">{{ modules|length }}</span>
         </div>
     </div>
@@ -21,8 +21,8 @@ lu {# Shared left sidebar for cours_show and lecon_show (FXML-like: header + scr
             <div class="fo-player-module">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div class="pr-2" style="min-width: 0;">
-                        <div class="fo-player-module__index">Module {{ module.ordre|default(loop.index) }}</div>
-                        <div class="fo-player-module__title">{{ module.titre|default('Sans titre') }}</div>
+                        <div class="fo-player-module__index">{{ 'Module'|trans_lang }} {{ module.ordre|default(loop.index) }}</div>
+                        <div class="fo-player-module__title">{{ module.titre|default('Sans titre')|trans_lang }}</div>
                     </div>
                     <span class="badge badge-light fo-player-module__count">{{ module_lessons|length }}</span>
                 </div>
@@ -31,7 +31,7 @@ lu {# Shared left sidebar for cours_show and lecon_show (FXML-like: header + scr
                     {% for lesson in module_lessons %}
                         <a href="{{ path('app_candidate_lecon_show', {cours: cours.id, id: lesson.id}) }}"
                            class="fo-player-lesson-link d-flex justify-content-between align-items-center {{ active_lesson_id is defined and active_lesson_id == lesson.id ? 'is-active text-white' : 'text-dark' }}">
-                            <span class="fo-player-lesson-link__title">{{ lesson.titre|default('Leçon') }}</span>
+                            <span class="fo-player-lesson-link__title">{{ lesson.titre|default('Leçon')|trans_lang }}</span>
                             {% if viewed_lesson_ids[lesson.id]|default(false) %}
                                 <span class="fo-player-lesson-link__check">✓</span>
                             {% endif %}
@@ -41,18 +41,16 @@ lu {# Shared left sidebar for cours_show and lecon_show (FXML-like: header + scr
 
                 {% if can_take_module_quiz %}
                     <a href="{{ path('app_candidate_module_quiz', {id: module.id}) }}" class="btn btn-sm btn-outline-primary btn-block fo-player-module__quiz-btn">
-                        Quiz module (5)
+                        {{ 'Quiz module'|trans_lang }} (5)
                     </a>
                 {% else %}
                     <button type="button" class="btn btn-sm btn-secondary btn-block fo-player-module__quiz-btn" disabled>
-                        Quiz verrouillé
+                        {{ 'Quiz verrouillé'|trans_lang }}
                     </button>
                 {% endif %}
             </div>
         {% else %}
-            <div class="p-3 text-muted">Aucun module disponible.</div>
+            <div class="p-3 text-muted">{{ 'Aucun module disponible.'|trans_lang }}</div>
         {% endfor %}
     </div>
 </div>
-
-

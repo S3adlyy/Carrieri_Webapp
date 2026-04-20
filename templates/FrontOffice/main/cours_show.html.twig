@@ -1,16 +1,16 @@
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
-{% block title %}{{ cours.titre|default('Détail du cours') }}{% endblock %}
+{% block title %}{{ cours.titre|default('Détail du cours')|trans_lang }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260409-1">
 {% endblock %}
 
-{% block candidate_page_heading %}Détail du cours{% endblock %}
+{% block candidate_page_heading %}{{ 'Détail du cours'|trans_lang }}{% endblock %}
 
 {% block candidate_breadcrumb %}
-    / <a href="{{ path('app_candidate_cours') }}">Cours</a> / {{ cours.titre|default('Détail') }}
+    / <a href="{{ path('app_candidate_cours') }}">{{ 'Cours'|trans_lang }}</a> / {{ cours.titre|default('Détail')|trans_lang }}
 {% endblock %}
 
 {% block candidate_content %}
@@ -26,8 +26,12 @@
 
     <div class="w-100 text-start fo-charte-ui">
         <div class="d-flex justify-content-between align-items-center flex-wrap mb-3">
-            <a href="{{ path('app_candidate_cours') }}" class="btn btn-outline-secondary btn-sm mb-2">Retour aux cours</a>
-            <div class="text-muted mb-2">Progression globale : <strong>{{ progress|default(0) }}%</strong></div>
+            <a href="{{ path('app_candidate_cours') }}" class="btn btn-outline-secondary btn-sm mb-2">
+                {{ 'Retour aux cours'|trans_lang }}
+            </a>
+            <div class="text-muted mb-2">
+                {{ 'Progression globale'|trans_lang }} : <strong>{{ progress|default(0) }}%</strong>
+            </div>
         </div>
 
         <div class="row g-4 fo-player-layout">
@@ -44,26 +48,40 @@
             <div class="col-lg-9">
                 <div class="card shadow-sm fo-charte-card mb-4">
                     {% if cours.imageCouverture %}
-                        <img src="{{ path('app_candidate_cours_image', {id: cours.id}) }}" class="card-img-top" alt="{{ cours.titre|default('Cours') }}" style="max-height: 260px; object-fit: cover;">
+                        <img src="{{ path('app_candidate_cours_image', {id: cours.id}) }}"
+                             class="card-img-top"
+                             alt="{{ cours.titre|default('Cours') }}"
+                             style="max-height: 260px; object-fit: cover;">
                     {% endif %}
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
                             <div>
-                                <h3 class="mb-1">{{ cours.titre|default('Cours') }}</h3>
-                                <p class="text-muted mb-0">{{ cours.description|default('Aucune description') }}</p>
+                                <h3 class="mb-1">{{ cours.titre|default('Cours')|trans_lang }}</h3>
+                                <p class="text-muted mb-0">{{ cours.description|default('Aucune description')|trans_lang }}</p>
                             </div>
-                            <span class="badge badge-{{ cours.niveau == 'Débutant' ? 'success' : (cours.niveau == 'Intermédiaire' ? 'warning' : 'danger') }}">{{ cours.niveau|default('—') }}</span>
+                            <span class="badge badge-{{ cours.niveau == 'Débutant' ? 'success' : (cours.niveau == 'Intermédiaire' ? 'warning' : 'danger') }}">
+                                {{ cours.niveau|default('—')|trans_lang }}
+                            </span>
                         </div>
 
                         <div class="row text-center">
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <div class="p-3 bg-light rounded"><small class="d-block text-muted">Durée</small><strong>{{ cours.duree|default('—') }} h</strong></div>
+                                <div class="p-3 bg-light rounded">
+                                    <small class="d-block text-muted">{{ 'Durée'|trans_lang }}</small>
+                                    <strong>{{ cours.duree|default('—') }} h</strong>
+                                </div>
                             </div>
                             <div class="col-md-4 mb-3 mb-md-0">
-                                <div class="p-3 bg-light rounded"><small class="d-block text-muted">Quiz validés</small><strong>{{ quiz_passed_count|default(0) }}/{{ quiz_total_count|default(0) }}</strong></div>
+                                <div class="p-3 bg-light rounded">
+                                    <small class="d-block text-muted">{{ 'Quiz validés'|trans_lang }}</small>
+                                    <strong>{{ quiz_passed_count|default(0) }}/{{ quiz_total_count|default(0) }}</strong>
+                                </div>
                             </div>
                             <div class="col-md-4">
-                                <div class="p-3 bg-light rounded"><small class="d-block text-muted">Test final</small><strong>{{ final_test_unlocked|default(false) ? 'Débloqué' : 'Bloqué' }}</strong></div>
+                                <div class="p-3 bg-light rounded">
+                                    <small class="d-block text-muted">{{ 'Test final'|trans_lang }}</small>
+                                    <strong>{{ (final_test_unlocked|default(false) ? 'Débloqué' : 'Bloqué')|trans_lang }}</strong>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -71,20 +89,22 @@
 
                 <div class="card shadow-sm fo-charte-card mb-4">
                     <div class="card-header fo-charte-header d-flex justify-content-between align-items-center flex-wrap">
-                        <strong>Leçon en cours</strong>
+                        <strong>{{ 'Leçon en cours'|trans_lang }}</strong>
                         {% if continue_lesson is defined and continue_lesson %}
-                            <small class="text-muted">Prochaine leçon: {{ continue_lesson.titre|default('—') }}</small>
+                            <small class="text-muted">
+                                {{ 'Prochaine leçon'|trans_lang }}: {{ continue_lesson.titre|default('—')|trans_lang }}
+                            </small>
                         {% endif %}
                     </div>
                     <div class="card-body">
                         {% if active_lesson %}
                             <div class="d-flex justify-content-between align-items-start flex-wrap mb-3">
                                 <div>
-                                    <h4 class="mb-1">{{ active_lesson.titre|default('Leçon') }}</h4>
-                                    <small class="text-muted">{{ active_lesson.module ? active_lesson.module.titre : '—' }}</small>
+                                    <h4 class="mb-1">{{ active_lesson.titre|default('Leçon')|trans_lang }}</h4>
+                                    <small class="text-muted">{{ active_lesson.module ? active_lesson.module.titre|trans_lang : '—' }}</small>
                                 </div>
                                 {% if viewed_lesson_ids[active_lesson.id]|default(false) %}
-                                    <span class="badge badge-success">Vue</span>
+                                    <span class="badge badge-success">{{ 'Vue'|trans_lang }}</span>
                                 {% endif %}
                             </div>
 
@@ -92,14 +112,14 @@
                                 <div class="mb-3">
                                     <video controls class="w-100" style="max-height: 460px;">
                                         <source src="{{ path('app_candidate_lecon_video', {cours: cours.id, id: active_lesson.id}) }}" type="video/mp4">
-                                        Votre navigateur ne supporte pas la lecture vidéo.
+                                        {{ 'Votre navigateur ne supporte pas la lecture vidéo.'|trans_lang }}
                                     </video>
                                 </div>
                             {% endif %}
 
                             <div class="p-3 bg-light rounded">{{ active_lesson.contenu|default('—')|nl2br }}</div>
                         {% else %}
-                            <div class="alert alert-light border mb-0">Aucune leçon à afficher pour le moment.</div>
+                            <div class="alert alert-light border mb-0">{{ 'Aucune leçon à afficher pour le moment.'|trans_lang }}</div>
                         {% endif %}
                     </div>
                 </div>
@@ -107,16 +127,23 @@
                 <div class="card shadow-sm fo-charte-card">
                     <div class="card-body d-flex justify-content-between align-items-center flex-wrap">
                         <div class="mb-2 mb-md-0">
-                            <strong>Progression globale :</strong> {{ progress|default(0) }}%
+                            <strong>{{ 'Progression globale'|trans_lang }} :</strong> {{ progress|default(0) }}%
                             <div class="progress mt-2" style="height: 10px; min-width: 260px;">
-                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress|default(0) }}%;" aria-valuenow="{{ progress|default(0) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                <div class="progress-bar bg-success" role="progressbar"
+                                     style="width: {{ progress|default(0) }}%;"
+                                     aria-valuenow="{{ progress|default(0) }}"
+                                     aria-valuemin="0" aria-valuemax="100"></div>
                             </div>
                         </div>
 
                         {% if final_test_unlocked|default(false) %}
-                            <a href="{{ path('app_candidate_cours_test_final', {id: cours.id}) }}" class="btn btn-primary">Passer le test final (15 questions)</a>
+                            <a href="{{ path('app_candidate_cours_test_final', {id: cours.id}) }}" class="btn btn-primary">
+                                {{ 'Passer le test final (15 questions)'|trans_lang }}
+                            </a>
                         {% else %}
-                            <button type="button" class="btn btn-secondary" disabled>Test final bloqué</button>
+                            <button type="button" class="btn btn-secondary" disabled>
+                                {{ 'Test final bloqué'|trans_lang }}
+                            </button>
                         {% endif %}
                     </div>
                 </div>

@@ -1,15 +1,15 @@
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
-{% block title %}Mes recommandations{% endblock %}
+{% block title %}{{ 'Mes recommandations'|trans_lang }}{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260410-1">
 {% endblock %}
 
-{% block candidate_page_heading %}Mes recommandations{% endblock %}
+{% block candidate_page_heading %}{{ 'Mes recommandations'|trans_lang }}{% endblock %}
 
-{% block candidate_breadcrumb %} / Mes recommandations{% endblock %}
+{% block candidate_breadcrumb %} / {{ 'Mes recommandations'|trans_lang }}{% endblock %}
 
 {% block candidate_content_container_class %}container-fluid px-3 px-md-4 px-lg-5{% endblock %}
 
@@ -29,39 +29,60 @@
         <div class="fo-catalog-header mb-3 position-relative">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
                 <div>
-                    <h3 class="mb-1">Recommandations personnalisées</h3>
-                    <p class="mb-0">Basees sur vos cours deja completes</p>
+                    <h3 class="mb-1">{{ 'Recommandations personnalisées'|trans_lang }}</h3>
+                    <p class="mb-0">{{ 'Basées sur vos cours déjà complétés'|trans_lang }}</p>
                 </div>
-                <a href="{{ path('app_candidate_cours') }}" class="btn fo-search-button mt-2 mt-md-0">Catalogue</a>
+                <a href="{{ path('app_candidate_cours') }}" class="btn fo-search-button mt-2 mt-md-0">
+                    {{ 'Catalogue'|trans_lang }}
+                </a>
             </div>
         </div>
 
         <div class="row text-center mb-3 position-relative">
-            <div class="col-md-3 col-6 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>Cours suivis</small><strong>{{ stats.followed }}</strong></div></div>
-            <div class="col-md-3 col-6 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>Cours completes</small><strong>{{ stats.completed }}</strong></div></div>
-            <div class="col-md-3 col-6 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>Catalogue explore</small><strong>{{ stats.explored_percent }}%</strong></div></div>
-            <div class="col-md-3 col-6"><div class="fo-charte-card fo-stat-card"><small>Disponibles</small><strong>{{ stats.available }}</strong></div></div>
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Cours suivis'|trans_lang }}</small><strong>{{ stats.followed }}</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Cours complétés'|trans_lang }}</small><strong>{{ stats.completed }}</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Catalogue exploré'|trans_lang }}</small><strong>{{ stats.explored_percent }}%</strong>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Disponibles'|trans_lang }}</small><strong>{{ stats.available }}</strong>
+                </div>
+            </div>
         </div>
 
         <div class="row position-relative">
             <div class="col-lg-4 mb-4">
                 <div class="fo-charte-card fo-reco-panel p-3 p-md-4 mb-3">
-                    <h5 class="mb-2">Votre profil</h5>
-                    <p class="mb-2">Niveau estime: <strong>{{ data.inferred_level|default('Debutant') }}</strong></p>
+                    <h5 class="mb-2">{{ 'Votre profil'|trans_lang }}</h5>
+                    <p class="mb-2">{{ 'Niveau estimé'|trans_lang }} : <strong>{{ data.inferred_level|default('Débutant')|trans_lang }}</strong></p>
                     <div class="progress fo-my-progress-bar mb-2">
-                        <div class="progress-bar" role="progressbar" style="width: {{ stats.explored_percent }}%" aria-valuenow="{{ stats.explored_percent }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar" role="progressbar"
+                             style="width: {{ stats.explored_percent }}%"
+                             aria-valuenow="{{ stats.explored_percent }}"
+                             aria-valuemin="0" aria-valuemax="100"></div>
                     </div>
-                    <small class="text-muted">{{ stats.explored_percent }}% du catalogue explore</small>
+                    <small class="text-muted">{{ stats.explored_percent }}% {{ 'du catalogue exploré'|trans_lang }}</small>
                 </div>
 
                 <div class="fo-charte-card fo-reco-panel p-3 p-md-4">
-                    <h5 class="mb-3">Cours deja suivis</h5>
+                    <h5 class="mb-3">{{ 'Cours déjà suivis'|trans_lang }}</h5>
                     {% if followed_courses is empty %}
-                        <div class="text-muted">Aucun cours suivi pour le moment.</div>
+                        <div class="text-muted">{{ 'Aucun cours suivi pour le moment.'|trans_lang }}</div>
                     {% else %}
                         <ul class="fo-reco-followed-list mb-0">
                             {% for c in followed_courses %}
-                                <li>✅ {{ c.titre|default('Cours') }}</li>
+                                <li>✅ {{ c.titre|default('Cours')|trans_lang }}</li>
                             {% endfor %}
                         </ul>
                     {% endif %}
@@ -70,58 +91,70 @@
 
             <div class="col-lg-8 mb-2">
                 <form method="get" class="fo-charte-card fo-glass-card p-3 p-md-4 mb-3">
-                    <div class="row align-items-end">
-                        <div class="col-md-8 mb-2 mb-md-0">
-                            <label for="reco-level" class="d-block mb-2 font-weight-bold">Filtrer par niveau</label>
+                    <div class="row align-items-end g-2">
+                        <div class="col-md-10 mb-2 mb-md-0">
+                            <label for="reco-level" class="d-block mb-1 fw-semibold">
+                                {{ 'Filtrer par niveau'|trans_lang }}
+                            </label>
                             <select id="reco-level" name="niveau" class="form-control fo-filter-combo" onchange="this.form.submit()">
                                 {% for n in levels %}
-                                    <option value="{{ n }}" {{ selected_level == n ? 'selected' : '' }}>{{ n }}</option>
+                                    <option value="{{ n }}" {{ selected_level == n ? 'selected' : '' }}>{{ n|trans_lang }}</option>
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-4 text-md-right">
-                            <a href="{{ path('app_candidate_mes_recommandations') }}" class="fo-reset-link">Reset</a>
+                        <div class="col-md-2 text-md-end">
+                            <a href="{{ path('app_candidate_mes_recommandations') }}" class="fo-reset-link d-inline-block mt-md-4">
+                                Reset
+                            </a>
                         </div>
                     </div>
                 </form>
 
                 {% if recommendations is empty %}
-                    <div class="alert alert-light border mb-0">Aucune recommandation pour ce filtre. Continuez vos cours pour enrichir votre profil.</div>
+                    <div class="alert alert-light border mb-0">
+                        {{ 'Aucune recommandation pour ce filtre. Continuez vos cours pour enrichir votre profil.'|trans_lang }}
+                    </div>
                 {% else %}
                     <div class="row">
                         {% for row in recommendations %}
                             {% set c = row.course %}
-                            {% set level_class = c.niveau in ['Debutant', 'Débutant'] ? 'fo-level-badge--beginner' : (c.niveau in ['Intermediaire', 'Intermédiaire'] ? 'fo-level-badge--intermediate' : 'fo-level-badge--advanced') %}
+                            {% set level_class = c.niveau in ['Debutant', 'Débutant'] ? 'fo-level-badge--beginner'
+                                : (c.niveau in ['Intermediaire', 'Intermédiaire'] ? 'fo-level-badge--intermediate'
+                                : 'fo-level-badge--advanced') %}
                             {% set category = c.competencesVisees ? (c.competencesVisees|split(',')|first|trim) : 'General' %}
                             <div class="col-xl-6 mb-4">
                                 <div class="card h-100 fo-charte-card fo-course-card fo-reco-card">
                                     <div class="fo-course-cover">
                                         {% if c.imageCouverture %}
-                                            <img src="{{ path('app_candidate_cours_image', {id: c.id}) }}" class="card-img-top" alt="{{ c.titre|default('Cours') }}">
+                                            <img src="{{ path('app_candidate_cours_image', {id: c.id}) }}"
+                                                 class="card-img-top" alt="{{ c.titre|default('Cours') }}">
                                         {% endif %}
                                     </div>
                                     <div class="card-body d-flex flex-column">
                                         <div class="mb-2 d-flex align-items-center justify-content-between flex-wrap fo-card-badges">
-                                            <span class="badge fo-level-badge {{ level_class }} mr-2">{{ c.niveau|default('Niveau') }}</span>
+                                            <span class="badge fo-level-badge {{ level_class }} mr-2">{{ c.niveau|default('Niveau')|trans_lang }}</span>
                                             <small class="text-muted">Score: {{ row.score|default(0) }}</small>
                                         </div>
-                                        <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours') }}</h5>
+                                        <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours')|trans_lang }}</h5>
                                         {% if row.reasons is defined and row.reasons is not empty %}
                                             <div class="mb-2">
-                                                <small class="d-block text-muted mb-1">Pourquoi ce cours ?</small>
+                                                <small class="d-block text-muted mb-1">{{ 'Pourquoi ce cours ?'|trans_lang }}</small>
                                                 <ul class="small text-muted mb-0 pl-3">
                                                     {% for reason in row.reasons|slice(0, 2) %}
-                                                        <li>{{ reason }}</li>
+                                                        <li>{{ reason|trans_lang }}</li>
                                                     {% endfor %}
                                                 </ul>
                                             </div>
                                         {% endif %}
                                         <div class="fo-meta-row mb-3">
-                                            <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} heures</small></div>
-                                            <div class="fo-meta-item"><span class="badge fo-category-badge">{{ category }}</span></div>
+                                            <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} {{ 'heures'|trans_lang }}</small></div>
+                                            <div class="fo-meta-item"><span class="badge fo-category-badge">{{ category|trans_lang }}</span></div>
                                         </div>
                                         <div class="mt-auto">
-                                            <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">Voir le cours</a>
+                                            <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}"
+                                               class="btn btn-primary btn-sm btn-block fo-btn-commencer">
+                                                {{ 'Voir le cours'|trans_lang }}
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
@@ -133,5 +166,3 @@
         </div>
     </div>
 {% endblock %}
-
-

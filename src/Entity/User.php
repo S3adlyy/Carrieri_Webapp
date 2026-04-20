@@ -110,6 +110,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column]
     private ?int $faceEnabled = null;
 
+    //hedha lel email verif code
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    private ?bool $isVerified = false;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $verificationCode = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
+    private ?\DateTimeImmutable $verificationCodeExpiresAt = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -228,7 +238,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return false;
     }
 
-    public function setRoles(?string $roles): self
+    public function setRoles(?String $roles): self
     {
         $this->roles = $roles;
 
@@ -539,5 +549,56 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         $this->faceEnabled = $faceEnabled;
         return $this;
+    }
+
+    public function getIsVerified(): ?bool
+    {
+        return $this->isVerified;
+    }
+
+    public function setIsVerified(?bool $isVerified): self
+    {
+        $this->isVerified = $isVerified;
+        return $this;
+    }
+
+    public function getVerificationCode(): ?string
+    {
+        return $this->verificationCode;
+    }
+
+    public function setVerificationCode(?string $verificationCode): self
+    {
+        $this->verificationCode = $verificationCode;
+        return $this;
+    }
+
+    public function getVerificationCodeExpiresAt(): ?\DateTimeImmutable
+    {
+        return $this->verificationCodeExpiresAt;
+    }
+
+    public function setVerificationCodeExpiresAt(?\DateTimeImmutable $verificationCodeExpiresAt): self
+    {
+        $this->verificationCodeExpiresAt = $verificationCodeExpiresAt;
+        return $this;
+    }
+
+    public function isVerificationCodeExpired(): bool
+    {
+        if ($this->verificationCodeExpiresAt === null) {
+            return true;
+        }
+
+        return new \DateTimeImmutable() > $this->verificationCodeExpiresAt;
+    }
+
+    public function generateVerificationCode(): string
+    {
+        $code = sprintf('%06d', random_int(0, 999999));
+        $this->verificationCode = $code;
+        $this->verificationCodeExpiresAt = new \DateTimeImmutable('+15 minutes');
+
+        return $code;
     }
 }

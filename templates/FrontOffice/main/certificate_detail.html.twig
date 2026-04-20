@@ -1,133 +1,129 @@
 {% extends "FrontOffice/main/base_candidate.html.twig" %}
 
-{% block title %}Détails du Certificat - Carrieri{% endblock %}
+{% block title %}{{ 'Détails du Certificat - Carrieri'|trans_lang }}{% endblock %}
 
-{% block candidate_page_heading %}Détails du Certificat{% endblock %}
+{% block candidate_page_heading %}{{ 'Détails du Certificat'|trans_lang }}{% endblock %}
 
-{% block candidate_breadcrumb %} / <a href="{{ path('app_candidate_certificates') }}">Mes Certificats</a> / Détails{% endblock %}
+{% block candidate_breadcrumb %} / <a href="{{ path('app_candidate_certificates') }}">{{ 'Mes Certificats'|trans_lang }}</a> / {{ 'Détails'|trans_lang }}{% endblock %}
 
 {% block candidate_content %}
-    <div class="container mt-5 mb-5">
-        <div class="row mb-4">
-            <div class="col-lg-8">
-                <a href="{{ path('app_candidate_certificates') }}" class="btn btn-sm btn-outline-secondary mb-3">
-                    <i class="fas fa-arrow-left"></i> Retour
-                </a>
-                <h1 class="display-5 fw-bold">Détails du Certificat</h1>
-            </div>
+<div class="container mt-5 mb-5">
+    <div class="row mb-4">
+        <div class="col-lg-8">
+            <a href="{{ path('app_candidate_certificates') }}" class="btn btn-sm btn-outline-secondary mb-3">
+                <i class="fas fa-arrow-left"></i> {{ 'Retour'|trans_lang }}
+            </a>
+            <h1 class="display-5 fw-bold">{{ 'Détails du Certificat'|trans_lang }}</h1>
         </div>
+    </div>
 
-        {% if certificate and course %}
-            <div class="row">
-                <div class="col-lg-8 mx-auto">
-                    <div class="card shadow-lg border-0">
-                        <!-- En-tête -->
-                        <div class="card-header bg-gradient p-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
-                            <h3 class="mb-2">🎓 CERTIFICAT D'ACHÈVEMENT</h3>
-                            <p class="mb-0 text-white-50">Plateforme de Formation Carrieri</p>
-                        </div>
+    {% if certificate and course %}
+        <div class="row">
+            <div class="col-lg-8 mx-auto">
+                <div class="card shadow-lg border-0">
+                    <!-- En-tête -->
+                    <div class="card-header bg-gradient p-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-align: center;">
+                        <h3 class="mb-2">🎓 {{ 'CERTIFICAT D\'ACHÈVEMENT'|trans_lang }}</h3>
+                        <p class="mb-0 text-white-50">{{ 'Plateforme de Formation Carrieri'|trans_lang }}</p>
+                    </div>
 
-                        <!-- Contenu -->
-                        <div class="card-body p-5 text-center">
-                            <p class="mb-4 fs-5">Certificat décerné à</p>
+                    <!-- Contenu -->
+                    <div class="card-body p-5 text-center">
+                        <p class="mb-4 fs-5">{{ 'Certificat décerné à'|trans_lang }}</p>
 
-                            <h2 class="mb-4" style="border-bottom: 3px solid #667eea; padding-bottom: 15px;">
-                                {{ certificate.user.firstName|default('') }} {{ certificate.user.lastName|default('') }}
-                            </h2>
+                        <h2 class="mb-4" style="border-bottom: 3px solid #667eea; padding-bottom: 15px;">
+                            {{ certificate.user.firstName|default('') }} {{ certificate.user.lastName|default('') }}
+                        </h2>
 
-                            <p class="mb-3 fs-5">Pour avoir complété avec succès le cours</p>
+                        <p class="mb-3 fs-5">{{ 'Pour avoir complété avec succès le cours'|trans_lang }}</p>
 
-                            <h3 class="mb-4" style="color: #667eea; font-weight: 600;">
-                                {{ course.titre }}
-                            </h3>
+                        <h3 class="mb-4" style="color: #667eea; font-weight: 600;">
+                            {{ course.titre|trans_lang }}
+                        </h3>
 
-                            <div class="mb-5" style="font-size: 48px;">✓</div>
+                        <div class="mb-5" style="font-size: 48px;">✓</div>
 
-                            <!-- Informations -->
-                            <div class="row mt-5 text-muted border-top pt-4">
-                                <div class="col-md-6">
-                                    <small class="d-block fw-bold text-uppercase mb-2">Date d'obtention</small>
-                                    <p>{{ certificate.dateObtention.format('d MMMM Y')|trans([], 'messages', app.request.locale) }}</p>
-                                </div>
-                                <div class="col-md-6">
-                                    <small class="d-block fw-bold text-uppercase mb-2">Numéro de certificat</small>
-                                    <p>CERT-{{ certificate.id }}</p>
-                                </div>
+                        <!-- Informations -->
+                        <div class="row mt-5 text-muted border-top pt-4">
+                            <div class="col-md-6">
+                                <small class="d-block fw-bold text-uppercase mb-2">{{ 'Date d\'obtention'|trans_lang }}</small>
+                                <p>{{ certificate.dateObtention.format('d MMMM Y') }}</p>
                             </div>
-
-                            <!-- Description du cours -->
-                            {% if course.description %}
-                                <div class="mt-5 text-start bg-light p-4 rounded">
-                                    <h6 class="mb-3">À propos du cours</h6>
-                                    <p class="text-muted">{{ course.description }}</p>
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Pied de page -->
-                        <div class="card-footer bg-light p-4 text-center text-muted">
-                            <small>Ce certificat atteste que le candidat a complété tous les modules et réussi les tests finaux du cours indiqué.</small>
-                        </div>
-
-                        <!-- Actions -->
-                        <div class="card-footer bg-white p-4">
-                            {% if certificate_is_invalid|default(false) %}
-                                <div class="alert alert-danger text-center mb-3" role="alert">
-                                    <strong>Certificat non valide</strong><br>
-                                    {{ certificate_moderation_reason|default('Fraude signalee par recruteur.') }}
-                                </div>
-                            {% endif %}
-                            <div class="row">
-                                <div class="col-md-6">
-                                    {% if certificate_is_invalid|default(false) %}
-                                        <button class="btn btn-outline-secondary w-100" disabled>
-                                            <i class="fas fa-eye-slash"></i> Visualisation bloquee
-                                        </button>
-                                    {% else %}
-                                        <a href="{{ path('app_candidate_certificate_view', { id: certificate.id }) }}"
-                                           class="btn btn-outline-primary w-100" target="_blank">
-                                            <i class="fas fa-eye"></i> Voir le PDF
-                                        </a>
-                                    {% endif %}
-                                </div>
-                                <div class="col-md-6">
-                                    {% if certificate_is_invalid|default(false) %}
-                                        <button class="btn btn-secondary w-100" disabled>
-                                            <i class="fas fa-ban"></i> Telechargement bloque
-                                        </button>
-                                    {% else %}
-                                        <a href="{{ path('app_candidate_certificate_download', { id: certificate.id }) }}"
-                                           class="btn btn-primary w-100">
-                                            <i class="fas fa-download"></i> Télécharger
-                                        </a>
-                                    {% endif %}
-                                </div>
+                            <div class="col-md-6">
+                                <small class="d-block fw-bold text-uppercase mb-2">{{ 'Numéro de certificat'|trans_lang }}</small>
+                                <p>CERT-{{ certificate.id }}</p>
                             </div>
-
-
-                            {% if verification_qr_url %}
-                                <div class="mt-3 text-center">
-                                    <img src="{{ verification_qr_url }}" alt="QR verification" style="width:140px;height:140px;border:1px solid #e5e7eb;border-radius:8px;">
-                                    <div class="text-muted mt-1" style="font-size:12px;">QR de vérification du certificat</div>
-                                </div>
-                            {% endif %}
                         </div>
+
+                        <!-- Description du cours -->
+                        {% if course.description %}
+                            <div class="mt-5 text-start bg-light p-4 rounded">
+                                <h6 class="mb-3">{{ 'À propos du cours'|trans_lang }}</h6>
+                                <p class="text-muted">{{ course.description|trans_lang }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Pied de page -->
+                    <div class="card-footer bg-light p-4 text-center text-muted">
+                        <small>{{ 'Ce certificat atteste que le candidat a complété tous les modules et réussi les tests finaux du cours indiqué.'|trans_lang }}</small>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="card-footer bg-white p-4">
+                        {% if certificate_is_invalid|default(false) %}
+                            <div class="alert alert-danger text-center mb-3" role="alert">
+                                <strong>{{ 'Certificat non valide'|trans_lang }}</strong><br>
+                                {{ certificate_moderation_reason|default('Fraude signalee par recruteur.')|trans_lang }}
+                            </div>
+                        {% endif %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                {% if certificate_is_invalid|default(false) %}
+                                    <button class="btn btn-outline-secondary w-100" disabled>
+                                        <i class="fas fa-eye-slash"></i> {{ 'Visualisation bloquée'|trans_lang }}
+                                    </button>
+                                {% else %}
+                                    <a href="{{ path('app_candidate_certificate_view', { id: certificate.id }) }}"
+                                       class="btn btn-outline-primary w-100" target="_blank">
+                                        <i class="fas fa-eye"></i> {{ 'Voir le PDF'|trans_lang }}
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {% if certificate_is_invalid|default(false) %}
+                                    <button class="btn btn-secondary w-100" disabled>
+                                        <i class="fas fa-ban"></i> {{ 'Téléchargement bloqué'|trans_lang }}
+                                    </button>
+                                {% else %}
+                                    <a href="{{ path('app_candidate_certificate_download', { id: certificate.id }) }}"
+                                       class="btn btn-primary w-100">
+                                        <i class="fas fa-download"></i> {{ 'Télécharger'|trans_lang }}
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if verification_qr_url %}
+                            <div class="mt-3 text-center">
+                                <img src="{{ verification_qr_url }}" alt="QR verification" style="width:140px;height:140px;border:1px solid #e5e7eb;border-radius:8px;">
+                                <div class="text-muted mt-1" style="font-size:12px;">{{ 'QR de vérification du certificat'|trans_lang }}</div>
+                            </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
-        {% else %}
-            <div class="alert alert-danger" role="alert">
-                <strong>Erreur!</strong> Le certificat ou le cours n'a pas pu être trouvé.
-            </div>
-        {% endif %}
-    </div>
+        </div>
+    {% else %}
+        <div class="alert alert-danger" role="alert">
+            <strong>{{ 'Erreur!'|trans_lang }}</strong> {{ 'Le certificat ou le cours n\'a pas pu être trouvé.'|trans_lang }}
+        </div>
+    {% endif %}
+</div>
 
-    <style>
-        .bg-gradient {
-            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-    </style>
+<style>
+    .bg-gradient {
+        background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+</style>
 {% endblock %}
-
-
-

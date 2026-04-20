@@ -3,90 +3,361 @@
 {% block title %}Create account{% endblock %}
 
 {% block body %}
-	<div class="preloaders">
-		<span class="loader">Loading</span>
-	</div>
+    <div class="preloaders">
+        <span class="loader">Loading</span>
+    </div>
 
-	<div class="top_header_banner">
-		{% include 'FrontOffice/partials/_logo_contact.html.twig' %}
-		{% include 'FrontOffice/partials/_navbar_landing.html.twig' with { show_back_nav: true, hide_login_cta: false } %}
-	</div>
+    <div class="top_header_banner">
+        {% include 'FrontOffice/partials/_logo_contact.html.twig' %}
+        {% include 'FrontOffice/partials/_navbar_landing.html.twig' with { show_back_nav: true, hide_login_cta: false } %}
+    </div>
 
-	<section class="fo-login-section section-padding">
-		<div class="container">
-			<div class="row justify-content-center">
-				<div class="col-12 col-lg-8 col-xl-7">
-					<div class="fo-login-card fo-register-card">
-						<h1 class="fo-login-card__title">Create your account</h1>
-						<p class="fo-login-card__lead">Enter your details. Your password must be at least 8 characters.</p>
+    <section class="fo-login-section section-padding">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-12 col-lg-8 col-xl-7">
+                    <div class="fo-login-card fo-register-card">
+                        <h1 class="fo-login-card__title">Create your account</h1>
+                        <p class="fo-login-card__lead">Enter your details. Your password must be at least 8 characters.</p>
 
-						{% for message in app.flashes('danger') %}
-							<div class="alert alert-danger fo-login-alert" role="alert">{{ message }}</div>
-						{% endfor %}
+                        {% for message in app.flashes('danger') %}
+                            <div class="alert alert-danger fo-login-alert" role="alert">{{ message }}</div>
+                        {% endfor %}
+                        {% for message in app.flashes('success') %}
+                            <div class="alert alert-success fo-login-alert" role="alert">{{ message }}</div>
+                        {% endfor %}
 
-						<form class="fo-login-form fo-register-form" method="post" action="{{ path('app_register') }}">
-							<input type="hidden" name="_token" value="{{ csrf_token('register') }}">
+                        {{ form_start(form, {'attr': {'class': 'fo-login-form fo-register-form', 'enctype': 'multipart/form-data', 'id': 'registerForm'}}) }}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="fo-field">
+                                    {{ form_label(form.firstName, 'First name', {'label_attr': {'class': 'fo-label'}}) }}
+                                    {{ form_widget(form.firstName, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'given-name'}}) }}
+                                    {{ form_errors(form.firstName) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="fo-field">
+                                    {{ form_label(form.lastName, 'Last name', {'label_attr': {'class': 'fo-label'}}) }}
+                                    {{ form_widget(form.lastName, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'family-name'}}) }}
+                                    {{ form_errors(form.lastName) }}
+                                </div>
+                            </div>
+                        </div>
 
-							<div class="row">
-								<div class="col-md-6">
-									<div class="fo-field">
-										<label class="fo-label" for="register-firstName">First name</label>
-										<input type="text" id="register-firstName" name="firstName" class="form-control fo-input" value="{{ form_data.firstName|default('') }}" autocomplete="given-name" required maxlength="255">
-									</div>
-								</div>
-								<div class="col-md-6">
-									<div class="fo-field">
-										<label class="fo-label" for="register-lastName">Last name</label>
-										<input type="text" id="register-lastName" name="lastName" class="form-control fo-input" value="{{ form_data.lastName|default('') }}" autocomplete="family-name" required maxlength="255">
-									</div>
-								</div>
-							</div>
+                        <div class="fo-field">
+                            {{ form_label(form.email, 'Email', {'label_attr': {'class': 'fo-label'}}) }}
+                            {{ form_widget(form.email, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'email', 'placeholder': 'you@example.com'}}) }}
+                            {{ form_errors(form.email) }}
+                        </div>
 
-							<div class="fo-field">
-								<label class="fo-label" for="register-email">Email</label>
-								<input type="email" id="register-email" name="email" class="form-control fo-input" value="{{ form_data.email|default('') }}" autocomplete="email" required placeholder="you@example.com">
-							</div>
+                        <div class="fo-field">
+                            {{ form_label(form.phone, 'Phone (optional)', {'label_attr': {'class': 'fo-label'}}) }}
+                            {{ form_widget(form.phone, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'tel', 'placeholder': '+216 …'}}) }}
+                            {{ form_errors(form.phone) }}
+                        </div>
 
-							<div class="fo-field">
-								<label class="fo-label" for="register-phone">Phone <span class="text-muted fw-normal">(optional)</span></label>
-								<input type="text" id="register-phone" name="phone" class="form-control fo-input" value="{{ form_data.phone|default('') }}" autocomplete="tel" maxlength="30" placeholder="+216 …">
-							</div>
+                        <div class="fo-field">
+                            {{ form_label(form.role, 'Account type', {'label_attr': {'class': 'fo-label'}}) }}
+                            {{ form_widget(form.role, {'attr': {'class': 'form-control fo-input fo-select'}}) }}
+                            {{ form_errors(form.role) }}
+                            <p class="fo-hint mb-0 mt-1">Candidat: job seeker · Recruteur: company / hiring</p>
+                        </div>
 
-							<div class="fo-field">
-								<label class="fo-label" for="register-role">Account type</label>
-								<select id="register-role" name="role" class="form-control fo-input fo-select" required>
-									{% for key, label in allowed_roles %}
-										<option value="{{ key }}" {% if (form_data.role|default('CANDIDATE')) == key %}selected{% endif %}>{{ label }}</option>
-									{% endfor %}
-								</select>
-								<p class="fo-hint mb-0 mt-1">Candidat: job seeker · Recruteur: company / hiring</p>
-							</div>
+                        <div class="fo-field">
+                            {{ form_label(form.profilePicture, 'Profile picture (optional)', {'label_attr': {'class': 'fo-label'}}) }}
+                            {{ form_widget(form.profilePicture, {'attr': {'class': 'form-control fo-input', 'accept': 'image/jpeg,image/png,image/jpg,image/webp'}}) }}
+                            {{ form_errors(form.profilePicture) }}
+                            <p class="fo-hint mb-0 mt-1">Max size: 5MB. Allowed formats: JPEG, PNG, WEBP</p>
+                        </div>
 
-							<div class="row">
-								<div class="col-md-6">
-									<div class="fo-field">
-										<label class="fo-label" for="register-password">Password</label>
-										<input type="password" id="register-password" name="password" class="form-control fo-input" autocomplete="new-password" required minlength="8" placeholder="••••••••">
-									</div>
-								</div>
-								<div class="col-md-6">
-									<div class="fo-field">
-										<label class="fo-label" for="register-password-confirm">Confirm password</label>
-										<input type="password" id="register-password-confirm" name="password_confirm" class="form-control fo-input" autocomplete="new-password" required minlength="8" placeholder="••••••••">
-									</div>
-								</div>
-							</div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="fo-field">
+                                    {{ form_label(form.plainPassword.first, 'Password', {'label_attr': {'class': 'fo-label'}}) }}
+                                    {{ form_widget(form.plainPassword.first, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'new-password', 'placeholder': '••••••••'}}) }}
+                                    {{ form_errors(form.plainPassword.first) }}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="fo-field">
+                                    {{ form_label(form.plainPassword.second, 'Confirm password', {'label_attr': {'class': 'fo-label'}}) }}
+                                    {{ form_widget(form.plainPassword.second, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'new-password', 'placeholder': '••••••••'}}) }}
+                                    {{ form_errors(form.plainPassword.second) }}
+                                </div>
+                            </div>
+                        </div>
 
-							<div class="fo-login-actions fo-login-actions--stack mt-2">
-								<button type="submit" class="btn_one fo-btn-primary">Create account</button>
-								<p class="fo-login-switch mb-0">Already have an account? <a href="{{ path('app_login') }}">Sign in</a></p>
-							</div>
-						</form>
-					</div>
-				</div>
-			</div>
-		</div>
-	</section>
+                        <!-- Face Enrollment Section -->
+                        <div class="fo-field mt-3">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-center justify-content-between mb-3">
+                                        <div>
+                                            <i class="fas fa-face-smile fs-4 me-2 text-primary"></i>
+                                            <strong>Face ID Login (Optional)</strong>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input type="checkbox" class="form-check-input" id="enableFaceEnroll" style="width: 40px; height: 20px;">
+                                            <label class="form-check-label" for="enableFaceEnroll">Enable Face Login</label>
+                                        </div>
+                                    </div>
 
-	{% include 'FrontOffice/partials/_footer_landing.html.twig' %}
+                                    <div id="faceEnrollSection" style="display: none;">
+                                        <p class="text-muted small mb-3">
+                                            <i class="fas fa-info-circle"></i>
+                                            Enable face recognition for faster login. You'll be able to log in using your camera after registration.
+                                        </p>
+
+                                        <div class="text-center">
+                                            <!-- Camera Preview -->
+                                            <div id="cameraContainer" style="position: relative; display: inline-block;">
+                                                <video id="faceVideo" width="400" height="300" autoplay playsinline muted style="background: #000; border-radius: 8px; transform: scaleX(-1);"></video>
+                                                <canvas id="faceCanvas" style="display: none;"></canvas>
+                                            </div>
+
+                                            <div id="cameraStatus" class="alert alert-info mt-2" style="display: none;"></div>
+                                            <div id="faceStatus" class="small mb-2"></div>
+
+                                            <div id="cameraButtons">
+                                                <button type="button" id="startCameraBtn" class="btn btn-primary btn-sm">
+                                                    <i class="fas fa-camera"></i> Start Camera
+                                                </button>
+                                                <button type="button" id="captureFaceBtn" class="btn btn-success btn-sm" style="display: none;">
+                                                    <i class="fas fa-camera"></i> Capture Face
+                                                </button>
+                                                <button type="button" id="retakeFaceBtn" class="btn btn-warning btn-sm" style="display: none;">
+                                                    <i class="fas fa-rotate-left"></i> Retake
+                                                </button>
+                                                <button type="button" id="stopCameraBtn" class="btn btn-danger btn-sm" style="display: none;">
+                                                    <i class="fas fa-stop"></i> Stop Camera
+                                                </button>
+                                            </div>
+
+                                            <div id="faceEnrolledSuccess" style="display: none;">
+                                                <div class="alert alert-success mt-2">
+                                                    <i class="fas fa-check-circle"></i> Face enrolled successfully!
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input type="hidden" name="face_image" id="faceImage" value="">
+                        <input type="hidden" name="enable_face_enroll" id="enableFaceEnrollHidden" value="0">
+
+                        <div class="fo-login-actions fo-login-actions--stack mt-2">
+                            <button type="submit" class="btn_one fo-btn-primary" id="submitBtn">Create account</button>
+                            <p class="fo-login-switch mb-0">Already have an account? <a href="{{ path('app_login') }}">Sign in</a></p>
+                        </div>
+
+                        <input type="hidden" name="face_image" id="faceImage" value="">
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {% include 'FrontOffice/partials/_footer_landing.html.twig' %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        let video = null;
+        let stream = null;
+        let capturedImage = null;
+
+        // Toggle face enrollment section
+        document.getElementById('enableFaceEnroll').addEventListener('change', function(e) {
+            const faceSection = document.getElementById('faceEnrollSection');
+            const hiddenInput = document.getElementById('enableFaceEnrollHidden');
+
+            if (e.target.checked) {
+                faceSection.style.display = 'block';
+                hiddenInput.value = '1';
+            } else {
+                faceSection.style.display = 'none';
+                hiddenInput.value = '0';
+                // Stop camera if open
+                stopCamera();
+            }
+        });
+
+        // Start camera button
+        document.getElementById('startCameraBtn').addEventListener('click', async () => {
+            await startCamera();
+        });
+
+        // Stop camera button
+        document.getElementById('stopCameraBtn').addEventListener('click', () => {
+            stopCamera();
+            document.getElementById('startCameraBtn').style.display = 'inline-block';
+            document.getElementById('captureFaceBtn').style.display = 'none';
+            document.getElementById('stopCameraBtn').style.display = 'none';
+            document.getElementById('cameraStatus').style.display = 'none';
+        });
+
+        // Function to start camera
+        async function startCamera() {
+            const statusDiv = document.getElementById('cameraStatus');
+            statusDiv.style.display = 'block';
+            statusDiv.className = 'alert alert-info mt-2';
+            statusDiv.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Requesting camera access...';
+
+            try {
+                // Request camera with specific constraints
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 },
+                        facingMode: 'user'
+                    }
+                });
+
+                video = document.getElementById('faceVideo');
+                video.srcObject = stream;
+
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    video.play();
+                    statusDiv.className = 'alert alert-success mt-2';
+                    statusDiv.innerHTML = '<i class="fas fa-check-circle"></i> Camera ready! Position your face in the center.';
+
+                    // Update button visibility
+                    document.getElementById('startCameraBtn').style.display = 'none';
+                    document.getElementById('captureFaceBtn').style.display = 'inline-block';
+                    document.getElementById('stopCameraBtn').style.display = 'inline-block';
+                };
+
+                video.onerror = (err) => {
+                    console.error('Video error:', err);
+                    statusDiv.className = 'alert alert-danger mt-2';
+                    statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Video error occurred. Please refresh and try again.';
+                };
+
+            } catch (err) {
+                console.error('Camera error:', err);
+                statusDiv.className = 'alert alert-danger mt-2';
+
+                let errorMessage = 'Unable to access camera. ';
+                if (err.name === 'NotAllowedError') {
+                    errorMessage += 'Please allow camera access in your browser settings.';
+                } else if (err.name === 'NotFoundError') {
+                    errorMessage += 'No camera found on your device.';
+                } else if (err.name === 'NotReadableError') {
+                    errorMessage += 'Camera is already in use by another application.';
+                } else {
+                    errorMessage += err.message;
+                }
+
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + errorMessage;
+                document.getElementById('startCameraBtn').style.display = 'inline-block';
+                document.getElementById('captureFaceBtn').style.display = 'none';
+                document.getElementById('stopCameraBtn').style.display = 'none';
+            }
+        }
+
+        // Function to stop camera
+        function stopCamera() {
+            if (stream) {
+                stream.getTracks().forEach(track => {
+                    track.stop();
+                });
+                stream = null;
+            }
+            if (video) {
+                video.srcObject = null;
+            }
+        }
+
+        // Capture face - FIXED VERSION
+        document.getElementById('captureFaceBtn').addEventListener('click', async () => {
+            const videoEl = document.getElementById('faceVideo');
+            const canvas = document.getElementById('faceCanvas');
+            const context = canvas.getContext('2d');
+            const statusDiv = document.getElementById('cameraStatus');
+
+            if (!videoEl.videoWidth || !videoEl.videoHeight) {
+                statusDiv.innerHTML = '<div class="alert alert-warning">Please wait for camera to initialize</div>';
+                return;
+            }
+
+            // Capture image
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+            // IMPORTANT: Convert to blob (raw bytes) instead of base64 data URL
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('image', blob, 'face.jpg');
+
+                statusDiv.innerHTML = '<div class="alert alert-info">Verifying face detection...</div>';
+
+                try {
+                    const response = await fetch('{{ path('face_test_detect') }}', {
+                        method: 'POST',
+                        body: formData  // Send as multipart/form-data, not JSON
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        // Convert blob to base64 for storing in hidden field
+                        const reader = new FileReader();
+                        reader.onloadend = function() {
+                            document.getElementById('faceImage').value = reader.result;
+                            statusDiv.innerHTML = '<div class="alert alert-success">Face detected! You can now submit the form.</div>';
+                            document.getElementById('captureFaceBtn').style.display = 'none';
+                            document.getElementById('retakeFaceBtn').style.display = 'inline-block';
+                            document.getElementById('faceEnrolledSuccess').style.display = 'block';
+                            stopCamera();
+                        };
+                        reader.readAsDataURL(blob);
+                    } else {
+                        statusDiv.innerHTML = '<div class="alert alert-danger">' + (result.error || 'No face detected') + '</div>';
+                    }
+                } catch (error) {
+                    statusDiv.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
+                }
+            }, 'image/jpeg', 0.9);
+        });
+        // Retake face
+        document.getElementById('retakeFaceBtn').addEventListener('click', async () => {
+            capturedImage = null;
+            document.getElementById('faceImage').value = '';
+            document.getElementById('faceEnrolledSuccess').style.display = 'none';
+            document.getElementById('captureFaceBtn').style.display = 'inline-block';
+            document.getElementById('retakeFaceBtn').style.display = 'none';
+            document.getElementById('startCameraBtn').style.display = 'none';
+            document.getElementById('stopCameraBtn').style.display = 'inline-block';
+
+            // Restart camera
+            await startCamera();
+        });
+
+        // Handle form submission
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            const enableFace = document.getElementById('enableFaceEnroll').checked;
+            const faceImage = document.getElementById('faceImage').value;
+
+            if (enableFace && !faceImage) {
+                e.preventDefault();
+                const statusDiv = document.getElementById('cameraStatus');
+                statusDiv.className = 'alert alert-warning mt-2';
+                statusDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Please capture your face first or disable Face ID option';
+                statusDiv.style.display = 'block';
+            }
+        });
+
+        // Clean up when page unloads
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
+    </script>
+
 {% endblock %}

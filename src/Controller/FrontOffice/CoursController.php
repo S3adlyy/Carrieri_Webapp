@@ -14,6 +14,7 @@ use App\Repository\ResultatTestCoursRepository;
 use App\Service\CandidateRecommendationService;
 use App\Service\CertificationService;
 use App\Service\PaiementService;
+use App\Service\TranslationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -38,6 +39,7 @@ class CoursController extends AbstractController
         private CertificationService $certificationService,
         private CandidateRecommendationService $candidateRecommendationService,
         private PaiementService $paiementService,
+        private TranslationService $translationService,
     ) {
     }
 
@@ -50,10 +52,17 @@ class CoursController extends AbstractController
         $viewedLessonIds = $this->getViewedLessonIds($request);
         $order = $request->query->get('order', 'recent');
 
-        $total = $this->coursRepository->countForCandidateFilters($query, $niveau);
+        // Translate the user's search query back to native language (French) to search in the Database
+        $dbQuery = $query;
+        $currentLang = (string) $request->getSession()->get('app_lang', 'fr');
+        if ($dbQuery !== '' && $currentLang !== 'fr' && TranslationService::isSupported($currentLang)) {
+            $dbQuery = $this->translationService->translate($dbQuery, 'fr', $currentLang);
+        }
+
+        $total = $this->coursRepository->countForCandidateFilters($dbQuery, $niveau);
         $totalPages = max(1, (int) ceil($total / self::COURSES_PER_PAGE));
         $page = min($page, $totalPages);
-        $courses = $this->coursRepository->searchForCandidate($query, $niveau, $page, self::COURSES_PER_PAGE, $order);
+        $courses = $this->coursRepository->searchForCandidate($dbQuery, $niveau, $page, self::COURSES_PER_PAGE, $order);
 
         $courseStates = [];
         $purchasedCourseIds = [];
@@ -362,7 +371,13 @@ class CoursController extends AbstractController
             $myStats['hours'] += (int) round(($duration * $progress) / 100);
         }
 
-        $myCourses = array_values(array_filter($myStartedCourses, static function (Cours $course) use ($allCourseStates, $myState, $myQuery): bool {
+        $dbMyQuery = mb_strtolower($myQuery);
+        $currentLang = (string) $request->getSession()->get('app_lang', 'fr');
+        if ($myQuery !== '' && $currentLang !== 'fr' && TranslationService::isSupported($currentLang)) {
+            $dbMyQuery = mb_strtolower($this->translationService->translate($myQuery, 'fr', $currentLang));
+        }
+
+        $myCourses = array_values(array_filter($myStartedCourses, static function (Cours $course) use ($allCourseStates, $myState, $dbMyQuery): bool {
             $courseId = $course->getId();
             if ($courseId === null) {
                 return false;
@@ -376,11 +391,11 @@ class CoursController extends AbstractController
                 return false;
             }
 
-            if ($myQuery === '') {
+            if ($dbMyQuery === '') {
                 return true;
             }
 
-            $needle = mb_strtolower($myQuery);
+            $needle = $dbMyQuery;
             $haystack = mb_strtolower(trim((string) $course->getTitre() . ' ' . (string) $course->getDescription()));
 
             return str_contains($haystack, $needle);

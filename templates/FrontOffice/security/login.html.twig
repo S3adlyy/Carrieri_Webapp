@@ -46,12 +46,123 @@
 								<button class="btn_one fo-btn-primary" type="submit" name="submit">Login</button>
 								<a href="{{ path('app_register') }}" class="btn_two fo-btn-secondary">Sign up</a>
 							</div>
+                            <div class="text-center mt-3">
+                                <hr class="my-3">
+                                <p class="text-muted">Or login with</p>
+
+                                <button type="button" id="faceLoginBtn" class="btn btn-outline-primary w-100">
+                                    <i class="fas fa-camera"></i> Login with Face ID
+                                </button>
+                            </div>
 						</form>
 					</div>
 				</div>
 			</div>
 		</div>
+        <!-- Face Login Modal -->
+        <div class="modal fade" id="faceModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Face Recognition Login</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body text-center">
+                        <video id="faceVideo" width="400" height="300" autoplay playsinline class="border rounded"></video>
+                        <canvas id="faceCanvas" style="display: none;"></canvas>
+                        <div id="faceStatus" class="mt-2"></div>
+                        <p class="text-muted small mt-2">Center your face in the frame</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" id="captureFaceBtn" class="btn btn-primary">Capture & Login</button>
+                    </div>
+                </div>
+            </div>
+        </div>
 	</section>
 
 	{% include 'FrontOffice/partials/_footer_landing.html.twig' %}
+{% endblock %}
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        let video = null;
+        let stream = null;
+
+        document.getElementById('faceLoginBtn')?.addEventListener('click', async () => {
+            const modal = new bootstrap.Modal(document.getElementById('faceModal'));
+            modal.show();
+
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                });
+                video = document.getElementById('faceVideo');
+                video.srcObject = stream;
+
+                // Wait for video to be ready
+                video.onloadedmetadata = () => {
+                    document.getElementById('faceStatus').innerHTML = '<div class="alert alert-success">Camera ready! Click "Capture & Login"</div>';
+                };
+            } catch (err) {
+                console.error('Camera error:', err);
+                document.getElementById('faceStatus').innerHTML = '<div class="alert alert-danger">Camera access denied: ' + err.message + '</div>';
+            }
+        });
+
+        document.getElementById('captureFaceBtn')?.addEventListener('click', async () => {
+            const videoEl = document.getElementById('faceVideo');
+            const canvas = document.getElementById('faceCanvas');
+            const context = canvas.getContext('2d');
+            const statusDiv = document.getElementById('faceStatus');
+
+            if (!videoEl.videoWidth || !videoEl.videoHeight) {
+                statusDiv.innerHTML = '<div class="alert alert-warning">Please wait for camera to initialize</div>';
+                return;
+            }
+
+            canvas.width = videoEl.videoWidth;
+            canvas.height = videoEl.videoHeight;
+            context.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+            statusDiv.innerHTML = '<div class="spinner-border text-primary"></div> Recognizing face...<br><small>This may take a few seconds</small>';
+
+            try {
+                const response = await fetch('{{ path('face_login') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    statusDiv.innerHTML = '<div class="alert alert-success">✓ Face recognized! Redirecting...</div>';
+                    if (stream) stream.getTracks().forEach(track => track.stop());
+                    setTimeout(() => {
+                        window.location.href = result.redirectUrl;
+                    }, 1000);
+                } else {
+                    statusDiv.innerHTML = '<div class="alert alert-danger">✗ ' + (result.error || 'Face not recognized') + '</div>';
+                }
+            } catch (error) {
+                console.error('Fetch error:', error);
+                statusDiv.innerHTML = '<div class="alert alert-danger">Connection error: ' + error.message + '</div>';
+            }
+        });
+
+        document.getElementById('faceModal')?.addEventListener('hidden.bs.modal', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            const statusDiv = document.getElementById('faceStatus');
+            if (statusDiv) statusDiv.innerHTML = '';
+        });
+    </script>
 {% endblock %}

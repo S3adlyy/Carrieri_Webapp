@@ -4,12 +4,12 @@
 
 {% block stylesheets %}
     {{ parent() }}
-    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260405-1">
+    <link rel="stylesheet" href="{{ asset('FrontOffice/css/front-overrides.css') }}?v=20260410-2">
 {% endblock %}
 
-{% block candidate_page_heading %}Cours{% endblock %}
+{% block candidate_page_heading %}{{ 'Cours'|trans_lang }}{% endblock %}
 
-{% block candidate_breadcrumb %} / Cours{% endblock %}
+{% block candidate_breadcrumb %} / {{ 'Cours'|trans_lang }}{% endblock %}
 
 {% block candidate_content_container_class %}container-fluid px-3 px-md-4 px-lg-5{% endblock %}
 
@@ -23,10 +23,22 @@
         <div class="fo-catalog-header mb-4 position-relative">
             <div class="d-flex flex-wrap align-items-center justify-content-between">
                 <div>
-                    <h3 class="mb-1">Catalogue de cours</h3>
-                    <p class="mb-0">{{ pagination.total|default(cours_list|length) }} cours disponibles</p>
+                    <h3 class="mb-1">{{ 'Catalogue de cours'|trans_lang }}</h3>
+                    <p class="mb-0">{{ pagination.total|default(cours_list|length) }} {{ 'cours disponibles'|trans_lang }}</p>
                 </div>
-                <a href="{{ path('app_candidate_mes_cours') }}" class="btn fo-search-button mt-2 mt-md-0">Mes cours</a>
+                <div class="d-flex align-items-center gap-2 mt-2 mt-md-0">
+                    {# ── Sélecteur de langue ── #}
+                    <select class="form-control fo-filter-combo"
+                            style="width:auto;"
+                            onchange="window.location.href='{{ path('app_set_lang', {lang: '__LANG__'}) }}'.replace('__LANG__', this.value)">
+                        {% for code, label in translation_languages() %}
+                            <option value="{{ code }}" {{ current_lang() == code ? 'selected' : '' }}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                    <a href="{{ path('app_candidate_mes_cours') }}" class="btn fo-search-button">
+                        {{ 'Mes cours'|trans_lang }}
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -34,28 +46,30 @@
             <div class="fo-charte-card fo-glass-card p-3 p-md-4 mb-3">
                 <div class="row align-items-end">
                     <div class="col-lg-3 col-md-6 mb-3 mb-lg-0">
-                        <label for="course-level" class="d-block mb-2 font-weight-bold">Niveau</label>
+                        <label for="course-level" class="d-block mb-2 font-weight-bold">{{ 'Niveau'|trans_lang }}</label>
                         <select id="course-level" name="niveau" class="form-control fo-filter-combo">
-                            <option value="">Tous les niveaux</option>
+                            <option value="">{{ 'Tous les niveaux'|trans_lang }}</option>
                             {% for n in niveaux %}
-                                <option value="{{ n }}" {{ filters.niveau == n ? 'selected' : '' }}>{{ n }}</option>
+                                <option value="{{ n }}" {{ filters.niveau == n ? 'selected' : '' }}>{{ n|trans_lang }}</option>
                             {% endfor %}
                         </select>
                     </div>
                     <div class="col-lg-5 col-md-6 mb-3 mb-lg-0">
-                        <label for="course-search" class="d-block mb-2 font-weight-bold">Rechercher un cours</label>
-                        <input id="course-search" type="text" name="q" class="form-control fo-search-input" placeholder="Rechercher un cours par titre ou description..." value="{{ filters.q }}">
+                        <label for="course-search" class="d-block mb-2 font-weight-bold">{{ 'Rechercher un cours'|trans_lang }}</label>
+                        <input id="course-search" type="text" name="q" class="form-control fo-search-input"
+                               placeholder="{{ 'Rechercher un cours par titre ou description...'|trans_lang }}"
+                               value="{{ filters.q }}">
                     </div>
                     <div class="col-lg-2 col-md-6 mb-3 mb-md-0">
-                        <label for="course-order" class="d-block mb-2 font-weight-bold">Tri</label>
+                        <label for="course-order" class="d-block mb-2 font-weight-bold">{{ 'Tri'|trans_lang }}</label>
                         <select id="course-order" name="order" class="form-control fo-filter-combo" onchange="this.form.submit()">
-                            <option value="recent" {{ filters.order == 'recent' ? 'selected' : '' }}>Plus récent</option>
-                            <option value="price_asc" {{ filters.order == 'price_asc' ? 'selected' : '' }}>Prix croissant</option>
-                            <option value="price_desc" {{ filters.order == 'price_desc' ? 'selected' : '' }}>Prix décroissant</option>
+                            <option value="recent" {{ filters.order == 'recent' ? 'selected' : '' }}>{{ 'Plus récent'|trans_lang }}</option>
+                            <option value="price_asc" {{ filters.order == 'price_asc' ? 'selected' : '' }}>{{ 'Prix croissant'|trans_lang }}</option>
+                            <option value="price_desc" {{ filters.order == 'price_desc' ? 'selected' : '' }}>{{ 'Prix décroissant'|trans_lang }}</option>
                         </select>
                     </div>
                     <div class="col-lg-2 col-md-6 d-flex align-items-end gap-2">
-                        <button type="submit" class="btn fo-search-button flex-grow-1">Rechercher</button>
+                        <button type="submit" class="btn fo-search-button flex-grow-1">{{ 'Rechercher'|trans_lang }}</button>
                         <a href="{{ path('app_candidate_cours') }}" class="fo-reset-link align-self-center text-nowrap">Reset</a>
                     </div>
                 </div>
@@ -74,13 +88,28 @@
         {% endfor %}
 
         <div class="row text-center mb-4 position-relative">
-            <div class="col-md-4 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>Cours disponibles</small><strong>{{ pagination.total|default(cours_list|length) }}</strong></div></div>
-            <div class="col-md-4 mb-3 mb-md-0"><div class="fo-charte-card fo-stat-card"><small>En cours</small><strong>{{ en_cours }}</strong></div></div>
-            <div class="col-md-4"><div class="fo-charte-card fo-stat-card"><small>Complétés</small><strong>{{ completes }}</strong></div></div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Cours disponibles'|trans_lang }}</small>
+                    <strong>{{ pagination.total|default(cours_list|length) }}</strong>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3 mb-md-0">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'En cours'|trans_lang }}</small>
+                    <strong>{{ en_cours }}</strong>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="fo-charte-card fo-stat-card">
+                    <small>{{ 'Complétés'|trans_lang }}</small>
+                    <strong>{{ completes }}</strong>
+                </div>
+            </div>
         </div>
 
         {% if cours_list is empty %}
-            <div class="alert alert-light border mb-0">Aucun cours n'est disponible pour le moment.</div>
+            <div class="alert alert-light border mb-0">{{ 'Aucun cours n\'est disponible pour le moment.'|trans_lang }}</div>
         {% else %}
             <div class="row position-relative fo-courses-grid">
                 {% for c in cours_list %}
@@ -96,29 +125,37 @@
                             </div>
                             <div class="card-body d-flex flex-column">
                                 <div class="mb-2 d-flex align-items-center flex-wrap fo-card-badges">
-                                    <span class="badge fo-level-badge {{ level_class }} mr-2">{{ c.niveau|default('Niveau') }}</span>
-                                    <span class="badge fo-category-badge">{{ category }}</span>
+                                    <span class="badge fo-level-badge {{ level_class }} mr-2">{{ c.niveau|default('Niveau')|trans_lang }}</span>
+                                    <span class="badge fo-category-badge">{{ category|trans_lang }}</span>
                                 </div>
-                                <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours') }}</h5>
+                                <h5 class="card-title mb-2 fo-course-title">{{ c.titre|default('Cours')|trans_lang }}</h5>
                                 <div class="fo-meta-row mb-3">
-                                    <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} heures</small></div>
+                                    <div class="fo-meta-item"><span class="mr-1">⏱</span><small>{{ c.duree|default('0') }} {{ 'heures'|trans_lang }}</small></div>
                                     {% if c.estPayant and c.prix and c.prix > 0 %}
                                         <div class="fo-meta-item"><span class="mr-1">🇹🇳</span><strong class="fo-price-label">{{ c.prix|number_format(2, '.', ' ') }} TND</strong></div>
                                     {% endif %}
                                     {% if c.estObligatoire %}
-                                        <div class="fo-meta-item"><span class="mr-1">📌</span><small>Obligatoire</small></div>
+                                        <div class="fo-meta-item"><span class="mr-1">📌</span><small>{{ 'Obligatoire'|trans_lang }}</small></div>
                                     {% endif %}
                                 </div>
                                 <div class="mt-auto">
                                     {% set est_achete = c.id in (purchased_course_ids|default([])) %}
                                     {% if c.estPayant and c.prix and c.prix > 0 and not est_achete %}
-                                        <a href="{{ path('paiement_cours', {id: c.id}) }}" class="btn btn-warning btn-sm btn-block fo-action-buy">Acheter {{ c.prix|number_format(2, '.', ' ') }} TND</a>
+                                        <a href="{{ path('paiement_cours', {id: c.id}) }}" class="btn btn-warning btn-sm btn-block fo-action-buy">
+                                            {{ 'Acheter'|trans_lang }} {{ c.prix|number_format(2, '.', ' ') }} TND
+                                        </a>
                                     {% elseif c.estPayant and c.prix and c.prix > 0 and est_achete %}
-                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-success btn-sm btn-block fo-btn-commencer">Deja achete - Acceder au cours</a>
+                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-success btn-sm btn-block fo-btn-commencer">
+                                            {{ 'Déjà acheté - Accéder au cours'|trans_lang }}
+                                        </a>
                                     {% elseif state.continue_lesson is defined and state.continue_lesson %}
-                                        <a href="{{ path('app_candidate_lecon_show', {cours: c.id, id: state.continue_lesson.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">Accéder au cours</a>
+                                        <a href="{{ path('app_candidate_lecon_show', {cours: c.id, id: state.continue_lesson.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">
+                                            {{ 'Accéder au cours'|trans_lang }}
+                                        </a>
                                     {% else %}
-                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">Commencer</a>
+                                        <a href="{{ path('app_candidate_cours_show', {id: c.id}) }}" class="btn btn-primary btn-sm btn-block fo-btn-commencer">
+                                            {{ 'Commencer'|trans_lang }}
+                                        </a>
                                     {% endif %}
                                 </div>
                             </div>
@@ -128,10 +165,12 @@
             </div>
 
             {% if pagination.total_pages > 1 %}
-                <nav aria-label="Pagination des cours" class="mt-2">
+                <nav aria-label="{{ 'Pagination des cours'|trans_lang }}" class="mt-2">
                     <ul class="pagination justify-content-center mb-0">
                         <li class="page-item {{ pagination.page <= 1 ? 'disabled' : '' }}">
-                            <a class="page-link" href="{{ path('app_candidate_cours', {page: pagination.page - 1, q: filters.q, niveau: filters.niveau, order: filters.order}) }}">Precedent</a>
+                            <a class="page-link" href="{{ path('app_candidate_cours', {page: pagination.page - 1, q: filters.q, niveau: filters.niveau, order: filters.order}) }}">
+                                {{ 'Précédent'|trans_lang }}
+                            </a>
                         </li>
                         {% for p in 1..pagination.total_pages %}
                             <li class="page-item {{ p == pagination.page ? 'active' : '' }}">
@@ -139,7 +178,9 @@
                             </li>
                         {% endfor %}
                         <li class="page-item {{ pagination.page >= pagination.total_pages ? 'disabled' : '' }}">
-                            <a class="page-link" href="{{ path('app_candidate_cours', {page: pagination.page + 1, q: filters.q, niveau: filters.niveau, order: filters.order}) }}">Suivant</a>
+                            <a class="page-link" href="{{ path('app_candidate_cours', {page: pagination.page + 1, q: filters.q, niveau: filters.niveau, order: filters.order}) }}">
+                                {{ 'Suivant'|trans_lang }}
+                            </a>
                         </li>
                     </ul>
                 </nav>

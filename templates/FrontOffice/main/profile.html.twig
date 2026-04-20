@@ -601,6 +601,49 @@
                             </div>
                         </div>
                     </div>
+                    {# Add to profile page - Face ID section #}
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h3>Face ID Login</h3>
+                        </div>
+                        <div class="card-body text-center">
+                            {% if user.faceEnabled %}
+                                <div class="alert alert-success">
+                                    <i class="fas fa-check-circle"></i> Face ID is enabled
+                                </div>
+                                <button id="reenrollFaceBtn" class="btn btn-warning">Re-enroll Face</button>
+                                <button id="disableFaceBtn" class="btn btn-danger">Disable Face ID</button>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Enable Face ID for faster login
+                                </div>
+                                <button id="enrollFaceBtn" class="btn btn-primary">Enroll Face</button>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Face Enrollment Modal -->
+                    <div class="modal fade" id="enrollFaceModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">Enroll Your Face</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <video id="enrollVideo" width="400" height="300" autoplay playsinline></video>
+                                    <canvas id="enrollCanvas" style="display: none;"></canvas>
+                                    <div id="enrollStatus" class="mt-2"></div>
+                                    <p class="text-muted mt-2">Center your face in the frame and ensure good lighting</p>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" id="enrollCaptureBtn" class="btn btn-primary">Capture & Enroll</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
 
                     <!-- Contact Information -->
                     <div class="fo-profile-section">
@@ -1062,5 +1105,66 @@
             console.log('Show all suggestions');
             alert('All suggestions feature coming soon!');
         }
+
+        let enrollVideo = null;
+        let enrollStream = null;
+
+        function startEnrollCamera() {
+            return navigator.mediaDevices.getUserMedia({ video: true });
+        }
+
+        document.getElementById('enrollFaceBtn')?.addEventListener('click', async () => {
+            const modal = new bootstrap.Modal(document.getElementById('enrollFaceModal'));
+            modal.show();
+
+            try {
+                enrollStream = await startEnrollCamera();
+                enrollVideo = document.getElementById('enrollVideo');
+                enrollVideo.srcObject = enrollStream;
+            } catch (err) {
+                document.getElementById('enrollStatus').innerHTML = '<div class="alert alert-danger">Camera access denied</div>';
+            }
+        });
+
+        document.getElementById('enrollCaptureBtn')?.addEventListener('click', async () => {
+            const video = document.getElementById('enrollVideo');
+            const canvas = document.getElementById('enrollCanvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const imageData = canvas.toDataURL('image/jpeg', 0.8);
+
+            document.getElementById('enrollStatus').innerHTML = '<div class="spinner-border text-primary"></div> Enrolling face...';
+
+            const response = await fetch('{{ path('face_enroll') }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                document.getElementById('enrollStatus').innerHTML = '<div class="alert alert-success">Face enrolled successfully!</div>';
+                if (enrollStream) enrollStream.getTracks().forEach(track => track.stop());
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                document.getElementById('enrollStatus').innerHTML = '<div class="alert alert-danger">' + result.error + '</div>';
+            }
+        });
+
+        document.getElementById('disableFaceBtn')?.addEventListener('click', async () => {
+            if (confirm('Are you sure you want to disable Face ID login?')) {
+                const response = await fetch('{{ path('face_disable') }}', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await response.json();
+                if (result.success) location.reload();
+            }
+        });
     </script>
 {% endblock %}

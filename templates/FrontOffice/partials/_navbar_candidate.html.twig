@@ -174,6 +174,22 @@
         font-size: 48px;
         margin-bottom: 10px;
     }
+
+    /* Make user pill clickable */
+    .fo-user-pill-link {
+        text-decoration: none;
+        transition: opacity 0.2s;
+        display: inline-flex;
+    }
+
+    .fo-user-pill-link:hover {
+        opacity: 0.85;
+        text-decoration: none;
+    }
+
+    .fo-user-pill-link .fo-user-pill {
+        cursor: pointer;
+    }
 </style>
 
 <div id="navigation" class="navbar-light bg-faded site-navigation">
@@ -222,13 +238,17 @@
                         </div>
                     </div>
 
-                    <div class="fo-user-pill me-2" title="{{ display }}">
-                        <span class="fo-user-pill__avatar" aria-hidden="true">{{ initials }}</span>
-                        <span class="fo-user-pill__meta">
-							<span class="fo-user-pill__name">{{ display }}</span>
-							<span class="fo-user-pill__role">Candidat</span>
-						</span>
-                    </div>
+                    <!-- Clickable profile link - Updated to use app_my_profile route -->
+                    <a href="{{ path('app_my_profile') }}" class="fo-user-pill-link me-2" title="{{ display }}">
+                        <div class="fo-user-pill">
+                            <span class="fo-user-pill__avatar" aria-hidden="true">{{ initials }}</span>
+                            <span class="fo-user-pill__meta">
+                                <span class="fo-user-pill__name">{{ display }}</span>
+                                <span class="fo-user-pill__role">Candidat</span>
+                            </span>
+                        </div>
+                    </a>
+
                     <div class="call_to_action">
                         <a class="btn_two fo-candidate-logout" href="{{ path('app_logout') }}">Déconnexion</a>
                     </div>
@@ -236,13 +256,15 @@
             </div>
             <ul class="mobile_menu">
                 <li class="fo-mobile-user-pill-wrap d-xl-none">
-					<span class="fo-user-pill fo-user-pill--mobile" title="{{ display }}">
-						<span class="fo-user-pill__avatar" aria-hidden="true">{{ initials }}</span>
-						<span class="fo-user-pill__meta">
-							<span class="fo-user-pill__name">{{ display }}</span>
-							<span class="fo-user-pill__role">Candidat</span>
-						</span>
-					</span>
+                    <a href="{{ path('app_my_profile') }}" class="text-decoration-none">
+                        <span class="fo-user-pill fo-user-pill--mobile" title="{{ display }}">
+                            <span class="fo-user-pill__avatar" aria-hidden="true">{{ initials }}</span>
+                            <span class="fo-user-pill__meta">
+                                <span class="fo-user-pill__name">{{ display }}</span>
+                                <span class="fo-user-pill__role">Candidat</span>
+                            </span>
+                        </span>
+                    </a>
                 </li>
                 <li><a href="{{ path('app_candidate_cours') }}">Cours</a></li>
                 <li><a href="{{ path('app_candidate_offres') }}">Offre d'emploi</a></li>

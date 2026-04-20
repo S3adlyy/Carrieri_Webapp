@@ -945,3 +945,69 @@ ul.mobile_menu li.fo-mobile-user-pill-wrap {
 	}
 }
 
+/* Face enrollment styles */
+#faceVideo {
+    background-color: #000;
+    border-radius: 8px;
+    transform: scaleX(-1); /* Mirror effect for natural selfie view */
+}
+
+.form-check-input:checked {
+    background-color: #667eea;
+    border-color: #667eea;
+}
+
+#faceEnrollSection .card {
+    transition: all 0.3s ease;
+}
+
+#faceEnrollSection .card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+#faceStatus .alert {
+    padding: 8px 12px;
+    margin-bottom: 10px;
+    font-size: 13px;
+}
+
+#faceEnrolledSuccess .alert {
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+ #faceVideo {
+     background-color: #000;
+     border-radius: 8px;
+     object-fit: cover;
+     width: 100%;
+     max-width: 400px;
+     height: auto;
+     min-height: 300px;
+ }
+
+#cameraContainer {
+    background: #000;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.btn-sm {
+    margin: 5px;
+}
+
+.alert {
+    font-size: 14px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.fa-spin {
+    animation: spin 1s linear infinite;
+}
