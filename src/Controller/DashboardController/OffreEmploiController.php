@@ -21,6 +21,7 @@ use Dompdf\Options;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Symfony\Component\Process\Process;
 
 #[Route('/admin/offres')]
 class OffreEmploiController extends AbstractController
@@ -534,5 +535,66 @@ class OffreEmploiController extends AbstractController
         return $response;
     }
 
+    #[Route('/generate-ai', name: 'app_admin_offres_generate_ai', methods: ['POST'])]
+    #[IsGranted('ROLE_RECRUITER')]
+public function generateAi(Request $request): Response
+    {
+        $data = json_decode($request->getContent(), true);
+        $mode = $data['mode'] ?? 'full';
+        $payload = $data['payload'] ?? [];
+        $keywords = $data['keywords'] ?? '';
 
+        if (!is_array($payload)) {
+            $payload = [];
+        }
+
+        if ($keywords !== '') {
+            $payload['keywords'] = $keywords;
+        }
+
+        if ($mode === 'title' && empty(trim((string) ($payload['titre'] ?? '')))) {
+            return $this->json(['error' => 'Veuillez renseigner un titre avant de demander une amélioration.'], 400);
+        }
+
+        if ($mode !== 'title' && empty(trim((string) ($payload['keywords'] ?? '')))) {
+            return $this->json(['error' => 'Aucun mot-clé fourni'], 400);
+        }
+
+        $pythonPath = $this->getParameter('kernel.project_dir') . '/scripts/generate_offer.py';
+
+        if (!file_exists($pythonPath)) {
+            return $this->json(['error' => 'Script Python non trouvé'], 500);
+        }
+
+        try {
+            $process = new \Symfony\Component\Process\Process([
+                'python',
+                $pythonPath,
+                $mode,
+                json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            ]);
+            $process->setTimeout(30);
+            $process->run();
+
+            if (!$process->isSuccessful()) {
+                throw new \Exception($process->getErrorOutput());
+            }
+
+            $output = trim($process->getOutput());
+            $result = json_decode($output, true);
+
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Réponse JSON invalide');
+            }
+
+            return $this->json($result);
+
+        } catch (\Exception $e) {
+            return $this->json([
+                'error' => 'Erreur lors de la génération IA',
+                'message' => $e->getMessage()
+            ], 500);
+        }
+    }
+    
 }

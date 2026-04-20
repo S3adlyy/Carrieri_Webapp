@@ -25,9 +25,15 @@
             {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'class': 'offre-form', 'id': 'offreForm'}}) }}
 
             <div class="row">
+
                 <div class="col-md-8">
                     <div class="form-group">
-                        {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        <div class="field-label-row">
+                            {{ form_label(form.titre, null, {'label_attr': {'class': 'form-label fw-bold mb-0'}}) }}
+                            <button type="button" id="generate-ai-title-btn" class="btn btn-success btn-sm ai-inline-btn">
+                                🤖 Améliorer le titre
+                            </button>
+                        </div>
                         {{ form_widget(form.titre, {'attr': {
                             'class': 'form-control',
                             'data-required': 'true',
@@ -42,21 +48,15 @@
                         <div class="invalid-feedback" style="display: none;"></div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        {{ form_label(form.typeContrat, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
-                        {{ form_widget(form.typeContrat, {'attr': {
-                            'class': 'form-control',
-                            'data-required': 'true',
-                            'data-field-name': 'Type contrat'
-                        }}) }}
-                        <div class="invalid-feedback" style="display: none;"></div>
-                    </div>
-                </div>
             </div>
 
             <div class="form-group">
-                {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                <div class="field-label-row">
+                    {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-bold mb-0'}}) }}
+                    <button type="button" id="generate-ai-description-btn" class="btn btn-success btn-sm ai-inline-btn">
+                        🤖 Générer la description
+                    </button>
+                </div>
                 {{ form_widget(form.description, {'attr': {
                     'class': 'form-control',
                     'rows': 5,
@@ -95,6 +95,17 @@
             </div>
 
             <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        {{ form_label(form.typeContrat, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
+                        {{ form_widget(form.typeContrat, {'attr': {
+                            'class': 'form-control',
+                            'data-required': 'true',
+                            'data-field-name': 'Type contrat'
+                        }}) }}
+                        <div class="invalid-feedback" style="display: none;"></div>
+                    </div>
+                </div>
                 <div class="col-md-4">
                     <div class="form-group">
                         {{ form_label(form.salaire, null, {'label_attr': {'class': 'form-label fw-bold'}}) }}
@@ -196,6 +207,30 @@
         </div>
     </div>
 
+    <div id="aiTitleModal" class="ai-modal-overlay" hidden>
+        <div class="ai-modal-card" role="dialog" aria-modal="true" aria-labelledby="aiTitleModalLabel">
+            <div class="ai-modal-badge">🤖 Suggestion IA</div>
+            <h4 id="aiTitleModalLabel" class="ai-modal-title">Conserver ce titre proposé ?</h4>
+            <p class="ai-modal-text">L'IA a préparé une amélioration du titre actuel. Vous pouvez l'accepter ou garder votre version.</p>
+            <div class="ai-modal-suggestion" id="aiTitleSuggestion"></div>
+            <div class="ai-modal-actions">
+                <button type="button" class="btn btn-light ai-modal-cancel" id="aiTitleCancelBtn">Garder mon titre</button>
+                <button type="button" class="btn btn-success ai-modal-confirm" id="aiTitleConfirmBtn">Utiliser ce titre</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="appMessageModal" class="ai-modal-overlay" hidden>
+        <div class="ai-modal-card ai-message-card" role="alertdialog" aria-modal="true" aria-labelledby="appMessageTitle">
+            <div id="appMessageBadge" class="ai-modal-badge ai-message-badge">Information</div>
+            <h4 id="appMessageTitle" class="ai-modal-title">Message</h4>
+            <p id="appMessageText" class="ai-modal-text mb-0"></p>
+            <div class="ai-modal-actions">
+                <button type="button" class="btn btn-success ai-modal-confirm" id="appMessageOkBtn">OK</button>
+            </div>
+        </div>
+    </div>
+
     <style>
         .form-control.is-invalid {
             border-color: #dc2626 !important;
@@ -216,6 +251,146 @@
         }
         .form-label {
             margin-bottom: 0.5rem;
+        }
+        .field-label-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+        .ai-inline-btn {
+            white-space: nowrap;
+            border-radius: 999px;
+            padding: 0.45rem 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.16);
+        }
+        .ai-modal-overlay {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            background: rgba(15, 23, 42, 0.52);
+            backdrop-filter: blur(4px);
+            z-index: 1050;
+        }
+        .ai-modal-card {
+            width: min(100%, 520px);
+            padding: 1.5rem;
+            border-radius: 18px;
+            background: #ffffff;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.22);
+        }
+        .ai-modal-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.35rem 0.7rem;
+            margin-bottom: 0.9rem;
+            border-radius: 999px;
+            background: #e8f7ec;
+            color: #1f7a35;
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+        .ai-modal-title {
+            margin-bottom: 0.5rem;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: #102a43;
+        }
+        .ai-modal-text {
+            margin-bottom: 1rem;
+            color: #52606d;
+            line-height: 1.6;
+        }
+        .ai-modal-suggestion {
+            padding: 1rem 1.1rem;
+            margin-bottom: 1.15rem;
+            border: 1px solid #cfe8d6;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #f8fff9 0%, #eefaf1 100%);
+            color: #163a24;
+            font-size: 1.02rem;
+            font-weight: 600;
+            line-height: 1.5;
+        }
+        .ai-modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.75rem;
+        }
+        .ai-modal-cancel,
+        .ai-modal-confirm {
+            min-width: 150px;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+        .ai-message-card {
+            width: min(100%, 460px);
+        }
+        .ai-message-badge.is-warning {
+            background: #fff4db;
+            color: #9a6700;
+        }
+        .ai-message-badge.is-error {
+            background: #fde8e8;
+            color: #b42318;
+        }
+        .ai-generator-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 1rem 1.25rem;
+            border: 1px solid #dbe7f3;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #f8fbff 0%, #f3f9f4 100%);
+        }
+        .ai-generator-copy {
+            flex: 0 0 260px;
+        }
+        .ai-generator-title {
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        .ai-generator-controls {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .ai-generate-btn {
+            white-space: nowrap;
+            border-radius: 10px;
+            padding: 0.75rem 1.1rem;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(40, 167, 69, 0.18);
+        }
+        @media (max-width: 767.98px) {
+            .field-label-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .ai-modal-actions {
+                flex-direction: column-reverse;
+            }
+            .ai-modal-cancel,
+            .ai-modal-confirm {
+                width: 100%;
+            }
+            .ai-generator-card,
+            .ai-generator-controls {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .ai-generator-copy,
+            .ai-generate-btn {
+                width: 100%;
+            }
         }
     </style>
 
@@ -373,20 +548,13 @@
                         firstInvalid.focus();
                     }
                     
-                    // Afficher un toast d'erreur
-                    const toast = document.createElement('div');
-                    toast.className = 'alert alert-danger alert-dismissible fade show';
-                    toast.style.position = 'fixed';
-                    toast.style.top = '20px';
-                    toast.style.right = '20px';
-                    toast.style.zIndex = '9999';
-                    toast.style.minWidth = '300px';
-                    toast.innerHTML = `
-                        Veuillez corriger les erreurs avant de soumettre le formulaire
-                        <button type="button" class="close" data-dismiss="alert">&times;</button>
-                    `;
-                    document.body.appendChild(toast);
-                    setTimeout(() => toast.remove(), 3000);
+                    if (typeof window.showAppMessage === 'function') {
+                        window.showAppMessage(
+                            'Erreurs de validation',
+                            'Veuillez corriger les erreurs avant de soumettre le formulaire.',
+                            'error'
+                        );
+                    }
                 } else {
                     // Si tout est valide, soumettre le formulaire
                     form.submit();
@@ -394,4 +562,152 @@
             });
         });
     </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const titleInput = document.querySelector('[name="offre_emploi[titre]"]');
+            const titleButton = document.getElementById('generate-ai-title-btn');
+            const descriptionButton = document.getElementById('generate-ai-description-btn');
+            const modal = document.getElementById('aiTitleModal');
+            const suggestionBox = document.getElementById('aiTitleSuggestion');
+            const confirmBtn = document.getElementById('aiTitleConfirmBtn');
+            const cancelBtn = document.getElementById('aiTitleCancelBtn');
+            const messageModal = document.getElementById('appMessageModal');
+            const messageBadge = document.getElementById('appMessageBadge');
+            const messageTitle = document.getElementById('appMessageTitle');
+            const messageText = document.getElementById('appMessageText');
+            const messageOkBtn = document.getElementById('appMessageOkBtn');
+
+            let pendingSuggestedTitle = '';
+
+            function openTitleModal(suggestedTitle) {
+                pendingSuggestedTitle = suggestedTitle;
+                suggestionBox.textContent = suggestedTitle;
+                modal.hidden = false;
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeTitleModal() {
+                modal.hidden = true;
+                document.body.style.overflow = '';
+                pendingSuggestedTitle = '';
+            }
+
+            function openMessageModal(title, text, tone = 'warning') {
+                messageTitle.textContent = title;
+                messageText.textContent = text;
+                messageBadge.textContent = tone === 'error' ? 'Erreur' : 'Attention';
+                messageBadge.classList.remove('is-warning', 'is-error');
+                messageBadge.classList.add(tone === 'error' ? 'is-error' : 'is-warning');
+                messageModal.hidden = false;
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeMessageModal() {
+                messageModal.hidden = true;
+                document.body.style.overflow = '';
+            }
+
+            window.showAppMessage = openMessageModal;
+
+            function collectTitlePayload() {
+                return {
+                    titre: titleInput?.value.trim() || '',
+                    typeContrat: document.querySelector('[name="offre_emploi[typeContrat]"]')?.value || '',
+                    entreprise: document.querySelector('[name="offre_emploi[entreprise]"]')?.value.trim() || '',
+                    localisation: document.querySelector('[name="offre_emploi[localisation]"]')?.value.trim() || '',
+                    experienceRequise: document.querySelector('[name="offre_emploi[experienceRequise]"]')?.value.trim() || '',
+                    niveauQualification: document.querySelector('[name="offre_emploi[niveauQualification]"]')?.value.trim() || '',
+                };
+            }
+
+            async function fetchAiTitleSuggestion() {
+                const response = await fetch('{{ path('app_admin_offres_generate_ai') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        mode: 'title',
+                        payload: collectTitlePayload()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'La génération du titre a échoué.');
+                }
+
+                return data;
+            }
+
+            titleButton?.addEventListener('click', async function() {
+                const originalLabel = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '🤖 Analyse du titre...';
+
+                try {
+                    const data = await fetchAiTitleSuggestion();
+
+                    if (!data.titre) {
+                        throw new Error('Aucune suggestion de titre n’a été retournée.');
+                    }
+
+                    openTitleModal(data.titre);
+                } catch (error) {
+                    openMessageModal(
+                        'Génération impossible',
+                        error.message || 'La génération du titre a échoué.',
+                        'error'
+                    );
+                } finally {
+                    this.disabled = false;
+                    this.innerHTML = originalLabel;
+                }
+            });
+
+            confirmBtn?.addEventListener('click', function() {
+                if (titleInput && pendingSuggestedTitle) {
+                    titleInput.value = pendingSuggestedTitle;
+                    titleInput.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+                closeTitleModal();
+            });
+
+            cancelBtn?.addEventListener('click', closeTitleModal);
+            messageOkBtn?.addEventListener('click', closeMessageModal);
+
+            modal?.addEventListener('click', function(event) {
+                if (event.target === modal) {
+                    closeTitleModal();
+                }
+            });
+            messageModal?.addEventListener('click', function(event) {
+                if (event.target === messageModal) {
+                    closeMessageModal();
+                }
+            });
+
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape' && modal && !modal.hidden) {
+                    closeTitleModal();
+                }
+                if (event.key === 'Escape' && messageModal && !messageModal.hidden) {
+                    closeMessageModal();
+                }
+            });
+
+            descriptionButton?.addEventListener('click', function() {
+                openMessageModal(
+                    'Fonction en préparation',
+                    "Le popup du titre est prêt. L'étape suivante sera de brancher la génération IA de la description.",
+                    'warning'
+                );
+            });
+        });
+    </script>
+
+
 {% endblock %}
