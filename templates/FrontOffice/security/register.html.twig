@@ -27,8 +27,7 @@
                             <div class="alert alert-success fo-login-alert" role="alert">{{ message }}</div>
                         {% endfor %}
 
-                        {{ form_start(form, {'attr': {'class': 'fo-login-form fo-register-form', 'enctype': 'multipart/form-data', 'id': 'registerForm'}}) }}
-                        <div class="row">
+                        {{ form_start(form, {'attr': {'class': 'fo-login-form fo-register-form', 'enctype': 'multipart/form-data', 'id': 'registerForm', 'novalidate': 'novalidate'}}) }}                        <div class="row">
                             <div class="col-md-6">
                                 <div class="fo-field">
                                     {{ form_label(form.firstName, 'First name', {'label_attr': {'class': 'fo-label'}}) }}
@@ -47,13 +46,13 @@
 
                         <div class="fo-field">
                             {{ form_label(form.email, 'Email', {'label_attr': {'class': 'fo-label'}}) }}
-                            {{ form_widget(form.email, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'email', 'placeholder': 'you@example.com'}}) }}
+                            {{ form_widget(form.email, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'email', 'placeholder': 'you@example.com', 'novalidate': 'novalidate'}}) }}
                             {{ form_errors(form.email) }}
                         </div>
 
                         <div class="fo-field">
                             {{ form_label(form.phone, 'Phone (optional)', {'label_attr': {'class': 'fo-label'}}) }}
-                            {{ form_widget(form.phone, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'tel', 'placeholder': '+216 …'}}) }}
+                            {{ form_widget(form.phone, {'attr': {'class': 'form-control fo-input', 'autocomplete': 'tel', 'placeholder': '+216 …', 'novalidate': 'novalidate'}}) }}
                             {{ form_errors(form.phone) }}
                         </div>
 
@@ -355,6 +354,13 @@
                     alert('Please capture your face first!');
                 }
             }
+        });
+
+        // Add this right before the form submission handler
+        document.getElementById('registerForm').addEventListener('submit', function(e) {
+            console.log('Form is being submitted');
+            console.log('First name value:', document.querySelector('[name="registration_form[firstName]"]')?.value);
+            console.log('Last name value:', document.querySelector('[name="registration_form[lastName]"]')?.value);
         });
     </script>
 

@@ -33,13 +33,35 @@ class RegistrationController extends AbstractController
     #[Route('/register', name: 'app_register', methods: ['GET', 'POST'])]
     public function register(Request $request, SessionInterface $session): Response
     {
-        $form = $this->createForm(RegistrationFormType::class);
+        $user = new User();
+        $form = $this->createForm(RegistrationFormType::class, $user);
         $form->handleRequest($request);
 
         $allowedRoles = [
             'CANDIDATE' => 'Candidat',
             'RECRUITER' => 'Recruteur',
         ];
+
+        // Debug logging - moved to correct location
+        if ($form->isSubmitted()) {
+            $this->logger->debug('Form was submitted');
+
+            if (!$form->isValid()) {
+                $this->logger->debug('Form validation FAILED');
+                // Log all form errors
+                foreach ($form->getErrors(true) as $error) {
+                    $this->logger->debug('Form error: ' . $error->getMessage());
+                }
+                // Log field errors
+                foreach ($form->all() as $child) {
+                    foreach ($child->getErrors() as $error) {
+                        $this->logger->debug('Field ' . $child->getName() . ' error: ' . $error->getMessage());
+                    }
+                }
+            } else {
+                $this->logger->debug('Form validation PASSED');
+            }
+        }
 
         if ($form->isSubmitted() && $form->isValid()) {
             $firstName = $form->get('firstName')->getData();
@@ -105,7 +127,7 @@ class RegistrationController extends AbstractController
                 'verificationCode' => $verificationCode,
                 'profilePicture' => null,
                 'enableFaceEnroll' => $enableFaceEnroll,
-                'tempFaceImagePath' => $tempFaceImagePath, // Store file path instead of image data
+                'tempFaceImagePath' => $tempFaceImagePath,
             ]);
 
             // Store profile picture if uploaded
@@ -141,6 +163,7 @@ class RegistrationController extends AbstractController
             ]);
         }
 
+        // If form is submitted but invalid, or just displaying the form
         return $this->render('FrontOffice/security/register.html.twig', [
             'form' => $form->createView(),
             'allowed_roles' => $allowedRoles,
