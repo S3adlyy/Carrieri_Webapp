@@ -9,11 +9,80 @@
 {% endblock %}
 
 {% block body %}
+    <!-- Cartes statistiques d'urgence -->
+    <div class="row mb-4">
+        <div class="col-md-2">
+            <div class="small-box bg-danger">
+                <div class="inner">
+                    <h3>{{ urgency_stats.critique }}</h3>
+                    <p>Critique</p>
+                </div>
+                <div class="icon"><i class="fas fa-skull-crosswalk"></i></div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="small-box bg-warning">
+                <div class="inner">
+                    <h3>{{ urgency_stats.elevee }}</h3>
+                    <p>Élevée</p>
+                </div>
+                <div class="icon"><i class="fas fa-arrow-up"></i></div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="small-box bg-info">
+                <div class="inner">
+                    <h3>{{ urgency_stats.moyenne }}</h3>
+                    <p>Moyenne</p>
+                </div>
+                <div class="icon"><i class="fas fa-minus"></i></div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="small-box bg-secondary">
+                <div class="inner">
+                    <h3>{{ urgency_stats.faible }}</h3>
+                    <p>Faible</p>
+                </div>
+                <div class="icon"><i class="fas fa-arrow-down"></i></div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="small-box bg-light">
+                <div class="inner">
+                    <h3>{{ urgency_stats.minimale }}</h3>
+                    <p>Minimale</p>
+                </div>
+                <div class="icon"><i class="fas fa-check"></i></div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="small-box bg-dark">
+                <div class="inner">
+                    <h3>{{ total }}</h3>
+                    <p>Total</p>
+                </div>
+                <div class="icon"><i class="fas fa-list"></i></div>
+            </div>
+        </div>
+    </div>
+
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">Liste des réclamations en attente</h3>
+            <h3 class="card-title">Liste des réclamations (classées par urgence)</h3>
             <div class="card-tools">
-                <a href="{{ path('app_dashboard_traitement_index') }}" class="btn btn-info btn-sm">
+                <!-- Bouton Ré-entraîner l'IA avec compteur de corrections -->
+                <a href="{{ path('app_dashboard_ai_train') }}" class="btn btn-info btn-sm" onclick="return confirm('Ré-entraîner l\'IA avec les données réelles ? Cela peut prendre quelques secondes.')">
+                    <i class="fas fa-brain"></i> Ré-entraîner l'IA
+                    {% if corrections_count is defined and corrections_count > 0 %}
+                        <span class="badge badge-light">{{ corrections_count }}</span>
+                    {% endif %}
+                </a>
+                <!-- Bouton Exporter CSV -->
+                <a href="{{ path('app_dashboard_export_reclamations') }}" class="btn btn-success btn-sm ml-1">
+                    <i class="fas fa-file-csv"></i> Exporter CSV
+                </a>
+                <a href="{{ path('app_dashboard_traitement_index') }}" class="btn btn-primary btn-sm ml-1">
                     <i class="fas fa-list"></i> Mes traitements
                 </a>
             </div>
@@ -22,34 +91,57 @@
             <div class="table-responsive">
                 <table class="table table-hover table-striped mb-0">
                     <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Objet</th>
-                            <th>Cours</th>
-                            <th>Candidat</th>
-                            <th>Description</th>
-                            <th>Date</th>
-                            <th>Action</th>
-                        </tr>
+                    <tr>
+                        <th>Urgence</th>
+                        <th>ID</th>
+                        <th>Objet</th>
+                        <th>Cours</th>
+                        <th>Candidat</th>
+                        <th>Description</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
                     </thead>
                     <tbody>
-                        {% for r in reclamations %}
-                            <tr>
-                                <td>{{ r.id }}</td>
-                                <td>{{ r.objet|slice(0, 50) }}...\n                                <td>{{ r.cours ? r.cours.titre : '—' }}</td>
-                                <td>{{ r.user ? r.user.firstName ~ ' ' ~ r.user.lastName : '—' }}</td>
-                                <td>{{ r.description|slice(0, 80) }}...\n                                <td>{{ r.dateCreation ? r.dateCreation|date('d/m/Y H:i') : '—' }}</td>
-                                <td>
-                                    <a href="{{ path('app_dashboard_traitement_traiter', {'id': r.id}) }}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-check"></i> Traiter
-                                    </a>
-                                </td>
-                            </tr>
+                    {% for item in reclamations_analyzed %}
+                        {% set r = item.reclamation %}
+                        {% set score = item.urgency_score %}
+                        {% set niveau = item.urgency_level %}
+
+                        {% if niveau == 'Critique' %}
+                            {% set badge_class = 'danger' %}
+                        {% elseif niveau == 'Élevée' %}
+                            {% set badge_class = 'warning' %}
+                        {% elseif niveau == 'Moyenne' %}
+                            {% set badge_class = 'info' %}
+                        {% elseif niveau == 'Faible' %}
+                            {% set badge_class = 'secondary' %}
                         {% else %}
-                            <tr>
-                                <td colspan="7" class="text-center text-muted">Aucune réclamation en attente.</td>
-                            </tr>
-                        {% endfor %}
+                            {% set badge_class = 'light' %}
+                        {% endif %}
+
+                        <tr>
+                            <td>
+                                    <span class="badge badge-{{ badge_class }} p-2">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        {{ niveau }} ({{ score }}%)
+                                    </span>
+                            </td>
+                            <td>{{ r.id }}</td>
+                            <td>{{ r.objet|slice(0, 50) }}...\n                                <td>{{ r.cours ? r.cours.titre : '—' }}</td>
+                            <td>{{ r.user ? r.user.firstName ~ ' ' ~ r.user.lastName : '—' }}</td>
+                            <td>{{ r.description|slice(0, 60) }}...\n                                <td>{{ r.dateCreation ? r.dateCreation|date('d/m/Y H:i') : '—' }}</td>
+                            <td>
+                                <a href="{{ path('app_dashboard_traitement_traiter', {'id': r.id}) }}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-check"></i> Traiter
+                                </a>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">Aucune réclamation en attente.</td>
+                        </tr>
+                    {% endfor %}
                     </tbody>
                 </table>
             </div>

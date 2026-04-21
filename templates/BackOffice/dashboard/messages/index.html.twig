@@ -45,8 +45,6 @@
         </div>
     </div>
 
-
-
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -93,8 +91,12 @@
                                     </div>
                                 </div>
                                 <div class="chat-input-area p-3 border-top" id="chatInputArea" style="display: none;">
-                                    <div class="input-group">
+                                    <div class="chat-input-wrapper" style="position: relative;">
                                         <textarea class="form-control" id="messageInput" rows="2" placeholder="Écrivez votre message..."></textarea>
+                                        <button type="button" class="btn-emoji" id="emojiBtn">😊</button>
+                                        <div class="emoji-picker" id="emojiPicker">
+                                            <div class="emoji-grid" id="emojiGrid"></div>
+                                        </div>
                                         <div class="input-group-append">
                                             <button class="btn btn-primary" id="sendMessageBtn">
                                                 <i class="fas fa-paper-plane"></i> Envoyer
@@ -113,9 +115,6 @@
             </div>
         </div>
     </div>
-
-
-
 
     <!-- Modal Nouvelle conversation -->
     <div class="modal fade" id="newConversationModal" tabindex="-1">
@@ -179,6 +178,33 @@
             </div>
         </div>
     </div>
+
+    <!-- Ajoute ce bouton dans l'en-tête de la messagerie -->
+    <div class="notification-settings">
+        <button id="enableNotificationsBtn" class="btn-notification">
+            <i class="fas fa-bell"></i> Activer les notifications
+        </button>
+        <button id="testNotificationBtn" class="btn-notification" style="display: none;">
+            <i class="fas fa-volume-up"></i> Tester le son
+        </button>
+    </div>
+
+    <style>
+        .btn-notification {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-left: 10px;
+        }
+        .btn-notification:hover {
+            background: #e0e0e0;
+            transform: scale(1.02);
+        }
+    </style>
 
     <style>
         .messaging-area {
@@ -430,6 +456,8 @@
         .chat-input-wrapper {
             display: flex;
             gap: 10px;
+            align-items: center;
+            position: relative;
         }
 
         .chat-input-wrapper .form-control {
@@ -482,6 +510,62 @@
 
         .invalid-feedback:not(.d-none) {
             display: block;
+        }
+
+        /* Emoji Picker Styles */
+        .btn-emoji {
+            background: linear-gradient(135deg, #5E548E, #9F86C0);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 20px;
+        }
+
+        .btn-emoji:hover {
+            transform: scale(1.05);
+        }
+
+        .emoji-picker {
+            display: none;
+            position: absolute;
+            bottom: 50px;
+            left: 0;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+            padding: 10px;
+            width: 280px;
+            z-index: 1000;
+        }
+
+        .emoji-picker.show {
+            display: block;
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .emoji-item {
+            cursor: pointer;
+            font-size: 24px;
+            text-align: center;
+            padding: 5px;
+            transition: transform 0.2s;
+        }
+
+        .emoji-item:hover {
+            transform: scale(1.2);
+            background: #f0f0f0;
+            border-radius: 8px;
         }
 
         /* Responsive */
@@ -549,16 +633,180 @@
                 background: linear-gradient(135deg, #ffc107, #d39e00);
                 color: white;
             }
-
-
         }
     </style>
 
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script>
         let currentConversationId = null;
         let refreshInterval = null;
         let currentEditMessageId = null;
 
+        const socket = io('http://localhost:3001');
+        let socketConversationId = null;
+
+        function joinSocketConversation(id) {
+            if (socketConversationId) {
+                socket.emit('leave-conversation', socketConversationId);
+            }
+            socketConversationId = id;
+            socket.emit('join-conversation', id);
+        }
+
+        // ========== NOTIFICATIONS AVEC SON ==========
+
+        let notificationPermission = false;
+        let lastNotificationTime = 0;
+        const NOTIFICATION_DELAY = 3000;
+        let unreadCount = 0;
+
+        // ✅ JOUE LE SON (sans fichier MP3)
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.value = 880;
+                gainNode.gain.value = 0.3;
+
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.5);
+                oscillator.stop(audioContext.currentTime + 0.5);
+
+                audioContext.resume();
+            } catch (e) {
+                console.log('Son non disponible:', e);
+            }
+        }
+
+        function requestNotificationPermission() {
+            if ('Notification' in window) {
+                Notification.requestPermission().then(permission => {
+                    notificationPermission = permission === 'granted';
+                    console.log('Permission notification:', notificationPermission ? 'accordée' : 'refusée');
+                });
+            }
+        }
+
+        function showPushNotification(title, body, icon = '/favicon.ico') {
+            if (!notificationPermission) return;
+
+            const now = Date.now();
+            if (now - lastNotificationTime < NOTIFICATION_DELAY) return;
+            lastNotificationTime = now;
+
+            const notification = new Notification(title, {
+                body: body,
+                icon: icon,
+                tag: 'new-message',
+                requireInteraction: false
+            });
+
+            notification.onclick = function() {
+                window.focus();
+                notification.close();
+            };
+        }
+
+        function notifyNewMessage(data) {
+            const title = '📩 Nouveau message';
+            const body = `${data.expediteur_nom || 'Quelqu\'un'} : ${data.contenu.substring(0, 50)}`;
+
+            showPushNotification(title, body);
+            updateTabBadge();
+
+            if ('vibrate' in navigator) {
+                navigator.vibrate(200);
+            }
+        }
+
+        function updateTabBadge() {
+            unreadCount++;
+            const title = document.title;
+            if (!title.startsWith('(')) {
+                document.title = `(${unreadCount}) ${title}`;
+            } else {
+                document.title = title.replace(/\([0-9]+\)/, `(${unreadCount})`);
+            }
+        }
+
+        function resetUnreadCount() {
+            unreadCount = 0;
+            const title = document.title;
+            document.title = title.replace(/\([0-9]+\)\s*/, '');
+        }
+
+        // ========== SOCKET RECEPTION MESSAGE AVEC SON ==========
+        socket.on('new-message', (data) => {
+            console.log('📩 Nouveau message reçu:', data);
+
+            if (data.est_moi === true) return;
+
+            // ✅ JOUE LE SON À CHAQUE MESSAGE REÇU
+            playNotificationSound();
+
+            if (currentConversationId == data.conversation_id) {
+                const container = document.getElementById('chatMessages');
+                const editedBadge = data.statut === 'edited' ? '<span class="edited-badge">(modifié)</span>' : '';
+                const html = `
+                <div class="message received">
+                    <div class="bubble">
+                        ${escapeHtml(data.contenu)}${editedBadge}
+                    </div>
+                    <div class="message-time">${data.date_envoi}</div>
+                </div>
+            `;
+                container.insertAdjacentHTML('beforeend', html);
+                scrollToBottom();
+                loadConversations();
+                return;
+            }
+
+            notifyNewMessage(data);
+        });
+
+        // ========== BOUTONS DE NOTIFICATION ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            const enableBtn = document.getElementById('enableNotificationsBtn');
+            const testBtn = document.getElementById('testNotificationBtn');
+
+            if (enableBtn) {
+                enableBtn.addEventListener('click', () => {
+                    requestNotificationPermission();
+                    if (notificationPermission) {
+                        enableBtn.style.display = 'none';
+                        if (testBtn) testBtn.style.display = 'inline-block';
+                        showPushNotification('✅ Notifications activées', 'Vous recevrez des alertes pour les nouveaux messages');
+                        playNotificationSound();
+                    }
+                });
+            }
+
+            if (testBtn) {
+                testBtn.addEventListener('click', () => {
+                    playNotificationSound();
+                    showPushNotification('🔔 Test', 'Le son fonctionne !');
+                });
+            }
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                notificationPermission = true;
+                if (enableBtn) enableBtn.style.display = 'none';
+                if (testBtn) testBtn.style.display = 'inline-block';
+            }
+        });
+
+        setTimeout(() => {
+            if ('Notification' in window && Notification.permission === 'default') {
+                requestNotificationPermission();
+            }
+        }, 5000);
+
+        // ========== FONCTIONS EXISTANTES ==========
         function getInitials(name) {
             if (!name) return '?';
             return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -579,41 +827,49 @@
             if (container) container.scrollTop = container.scrollHeight;
         }
 
+        function loadStats() {
+            fetch('/recruteur/messagerie/stats')
+                .then(response => response.json())
+                .then(data => {
+                    const totalCandidats = document.getElementById('totalCandidats');
+                    const candidatsEnLigne = document.getElementById('candidatsEnLigne');
+                    const messagesNonLus = document.getElementById('messagesNonLus');
+                    if (totalCandidats) totalCandidats.innerText = data.total_candidats;
+                    if (candidatsEnLigne) candidatsEnLigne.innerText = data.candidats_en_ligne;
+                    if (messagesNonLus) messagesNonLus.innerText = data.messages_non_lus;
+                })
+                .catch(error => console.error('Error loading stats:', error));
+        }
+
         function loadConversations() {
             fetch('/recruteur/messagerie/conversations')
                 .then(response => response.json())
                 .then(conversations => {
                     const container = document.getElementById('conversationsList');
                     if (!container) return;
-
                     if (conversations.length === 0) {
                         container.innerHTML = '<div class="text-center text-muted p-4"><i class="fas fa-inbox fa-2x mb-2 d-block"></i>Aucune conversation</div>';
                         return;
                     }
-
                     let html = '';
                     for (const conv of conversations) {
                         const activeClass = currentConversationId == conv.id ? 'active' : '';
-                        const unreadBadge = conv.unread_count > 0 ? `<span class="badge badge-danger float-right">${conv.unread_count}</span>` : '';
                         html += `
-                    <div class="conv-item ${activeClass}" data-id="${conv.id}" data-name="${escapeHtml(conv.other_user_name)}">
-                        <div class="d-flex">
-                            <div class="conv-avatar mr-3">${getInitials(conv.other_user_name)}</div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between">
-                                    <strong>${escapeHtml(conv.other_user_name)}</strong>
-                                    <small class="text-muted">${conv.date || ''}</small>
+                        <div class="conv-item ${activeClass}" data-id="${conv.id}" data-name="${escapeHtml(conv.other_user_name)}">
+                            <div class="d-flex">
+                                <div class="conv-avatar mr-3">${getInitials(conv.other_user_name)}</div>
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between">
+                                        <strong>${escapeHtml(conv.other_user_name)}</strong>
+                                        <small class="text-muted">${conv.date || ''}</small>
+                                    </div>
+                                    <div class="small text-muted text-truncate">${escapeHtml(conv.last_message ? conv.last_message.substring(0, 50) : 'Aucun message')}</div>
                                 </div>
-                                <div class="small text-muted text-truncate">${escapeHtml(conv.last_message ? conv.last_message.substring(0, 50) : 'Aucun message')}</div>
                             </div>
-                            ${unreadBadge}
                         </div>
-                    </div>
-                `;
+                    `;
                     }
                     container.innerHTML = html;
-
-                    // Attacher les événements click
                     document.querySelectorAll('.conv-item').forEach(item => {
                         item.addEventListener('click', function(e) {
                             const id = parseInt(this.dataset.id);
@@ -627,26 +883,24 @@
 
         function selectConversation(id, name) {
             currentConversationId = id;
-
+            resetUnreadCount();
+            joinSocketConversation(id);
             document.querySelectorAll('.conv-item').forEach(item => {
                 item.classList.remove('active');
                 if (parseInt(item.dataset.id) === id) {
                     item.classList.add('active');
                 }
             });
-
             const chatHeader = document.getElementById('chatHeader');
             const chatInputArea = document.getElementById('chatInputArea');
             const emptyChat = document.getElementById('emptyChat');
             const chatName = document.getElementById('chatName');
             const chatAvatar = document.getElementById('chatAvatar');
-
             if (chatHeader) chatHeader.style.display = 'block';
             if (chatInputArea) chatInputArea.style.display = 'block';
             if (emptyChat) emptyChat.style.display = 'none';
             if (chatName) chatName.innerHTML = escapeHtml(name);
             if (chatAvatar) chatAvatar.innerHTML = getInitials(name);
-
             loadMessages(id);
         }
 
@@ -656,132 +910,43 @@
                 .then(messages => {
                     const container = document.getElementById('chatMessages');
                     if (!container) return;
-
                     if (!messages || messages.length === 0) {
                         container.innerHTML = '<div class="text-center text-muted py-5"><i class="fas fa-comment-dots fa-2x mb-2"></i><p>Aucun message</p></div>';
                         return;
                     }
-
                     let html = '';
                     for (const msg of messages) {
                         const msgClass = msg.est_moi ? 'sent' : 'received';
                         const editedBadge = msg.statut === 'edited' ? '<span class="edited-badge">(modifié)</span>' : '';
-
                         html += `
-                    <div class="message ${msgClass}">
-                        <div class="bubble">
-                            ${escapeHtml(msg.contenu)}${editedBadge}
-                        </div>
-                        <div class="message-time">${msg.date_envoi}</div>
-                        ${msg.est_moi ? `
-                            <div class="message-actions">
-                                <button class="edit-btn" onclick="openEditModal(${msg.id}, '${escapeHtml(msg.contenu).replace(/'/g, "\\'")}')">
-                                    <i class="fas fa-pencil-alt"></i>
-                                </button>
-                                <button class="delete-btn" onclick="deleteMessage(${msg.id})">
-                                    <i class="fas fa-trash"></i>
-                                </button>
+                        <div class="message ${msgClass}" data-message-id="${msg.id}">
+                            <div class="bubble">
+                                ${escapeHtml(msg.contenu)}${editedBadge}
                             </div>
-                        ` : ''}
-                    </div>
-                `;
+                            <div class="message-time">${msg.date_envoi}</div>
+                            ${msg.est_moi ? `
+                                <div class="message-actions">
+                                    <button class="edit-btn" onclick="openEditModal(${msg.id}, '${escapeHtml(msg.contenu).replace(/'/g, "\\'")}')">
+                                        <i class="fas fa-pencil-alt"></i> Modifier
+                                    </button>
+                                    <button class="delete-btn" onclick="deleteMessage(${msg.id})">
+                                        <i class="fas fa-trash"></i> Supprimer
+                                    </button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
                     }
-
                     container.innerHTML = html;
                     scrollToBottom();
-                    // Ne pas rappeler loadConversations() ici pour éviter la boucle
                 })
                 .catch(error => console.error('Error loading messages:', error));
         }
-        document.getElementById('sendNewMessageBtn')?.addEventListener('click', function() {
-            console.log('Clic sur le bouton envoyer nouveau message');
 
-            const candidatSelect = document.getElementById('candidatSelect');
-            const newMessageContent = document.getElementById('newMessageContent');
-            const errorDiv = document.getElementById('newMessageError');
-
-            if (!candidatSelect || !newMessageContent) {
-                console.error('Elements non trouvés');
-                return;
-            }
-
-            const candidatId = candidatSelect.value;
-            const content = newMessageContent.value;
-
-            console.log('candidatId:', candidatId);
-            console.log('content:', content);
-
-            if (!candidatId) {
-                console.log('Pas de candidat sélectionné');
-                if (errorDiv) {
-                    errorDiv.textContent = 'Veuillez sélectionner un candidat';
-                    errorDiv.classList.remove('d-none');
-                }
-                return;
-            }
-
-            if (!content.trim()) {
-                console.log('Message vide');
-                if (errorDiv) {
-                    errorDiv.textContent = 'Veuillez écrire un message';
-                    errorDiv.classList.remove('d-none');
-                }
-                return;
-            }
-
-            if (!/^[A-Z]/.test(content.trim())) {
-                console.log('Pas de majuscule');
-                if (errorDiv) {
-                    errorDiv.textContent = 'Le message doit commencer par une majuscule';
-                    errorDiv.classList.remove('d-none');
-                }
-                return;
-            }
-
-            if (errorDiv) errorDiv.classList.add('d-none');
-
-            console.log('Envoi de la requête...');
-
-            fetch('/recruteur/messagerie/new-conversation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `candidat_id=${candidatId}&content=${encodeURIComponent(content)}`
-            })
-                .then(response => {
-                    console.log('Réponse status:', response.status);
-                    return response.json();
-                })
-                .then(data => {
-                    console.log('Données reçues:', data);
-                    if (data.success) {
-                        console.log('Conversation créée avec ID:', data.conversation_id);
-                        $('#newConversationModal').modal('hide');
-                        loadConversations();
-                        setTimeout(() => {
-                            selectConversation(data.conversation_id, '');
-                        }, 500);
-                        newMessageContent.value = '';
-                    } else {
-                        console.log('Erreur:', data.error);
-                        if (errorDiv) {
-                            errorDiv.textContent = data.error;
-                            errorDiv.classList.remove('d-none');
-                        }
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur fetch:', error);
-                    if (errorDiv) {
-                        errorDiv.textContent = 'Erreur de connexion: ' + error.message;
-                        errorDiv.classList.remove('d-none');
-                    }
-                });
-        });
-
+        // ========== ENVOI DE MESSAGE AVEC SON ==========
         function sendMessage() {
             console.log('sendMessage appelé');
             console.log('currentConversationId:', currentConversationId);
-
             if (!currentConversationId) {
                 console.error('No conversation selected');
                 const errorDiv = document.getElementById('messageError');
@@ -791,18 +956,14 @@
                 }
                 return;
             }
-
             const messageInput = document.getElementById('messageInput');
             const errorDiv = document.getElementById('messageError');
-
             if (!messageInput) {
                 console.error('messageInput non trouvé');
                 return;
             }
-
             const content = messageInput.value;
             console.log('Contenu du message:', content);
-
             if (!content.trim()) {
                 console.log('Message vide');
                 if (errorDiv) {
@@ -811,7 +972,6 @@
                 }
                 return;
             }
-
             if (!/^[A-Z]/.test(content.trim())) {
                 console.log('Pas de majuscule');
                 if (errorDiv) {
@@ -820,11 +980,31 @@
                 }
                 return;
             }
-
             if (errorDiv) errorDiv.classList.add('d-none');
-
+            const now = new Date();
+            const timeStr = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
+            const tempMessageHtml = `
+            <div class="message sent" data-temp="true">
+                <div class="bubble">
+                    ${escapeHtml(content)}
+                </div>
+                <div class="message-time">${timeStr}</div>
+                <div class="message-actions">
+                    <button class="edit-btn" onclick="alert('Attendez la confirmation')">
+                        <i class="fas fa-pencil-alt"></i> Modifier
+                    </button>
+                    <button class="delete-btn" onclick="alert('Attendez la confirmation')">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </button>
+                </div>
+            </div>
+        `;
+            const container = document.getElementById('chatMessages');
+            container.insertAdjacentHTML('beforeend', tempMessageHtml);
+            scrollToBottom();
+            const sentContent = content;
+            messageInput.value = '';
             console.log('Envoi de la requête...');
-
             fetch('/recruteur/messagerie/send-message', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -838,12 +1018,20 @@
                     console.log('Données reçues:', data);
                     if (data.success) {
                         console.log('Message envoyé avec succès');
-                        messageInput.value = '';
+                        const tempMessage = document.querySelector('.message[data-temp="true"]');
+                        if (tempMessage) tempMessage.remove();
+
+                        // ✅ JOUE LE SON QUAND ON ENVOIE UN MESSAGE
+                        playNotificationSound();
+
                         loadMessages(currentConversationId);
                         loadConversations();
                         scrollToBottom();
                     } else {
                         console.log('Erreur:', data.error);
+                        const tempMessage = document.querySelector('.message[data-temp="true"]');
+                        if (tempMessage) tempMessage.remove();
+                        messageInput.value = sentContent;
                         if (errorDiv) {
                             errorDiv.textContent = data.error;
                             errorDiv.classList.remove('d-none');
@@ -852,6 +1040,9 @@
                 })
                 .catch(error => {
                     console.error('Erreur fetch:', error);
+                    const tempMessage = document.querySelector('.message[data-temp="true"]');
+                    if (tempMessage) tempMessage.remove();
+                    messageInput.value = sentContent;
                     if (errorDiv) {
                         errorDiv.textContent = 'Erreur de connexion: ' + error.message;
                         errorDiv.classList.remove('d-none');
@@ -859,11 +1050,46 @@
                 });
         }
 
-        // Initialisation des event listeners
+        // ========== EMOJI PICKER ==========
+        const emojis = ['😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇', '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '💀', '👻', '👽', '🤖', '💩', '😺', '😸', '😹', '😻', '😼', '😽', '🙀', '😿', '😾', '🙈', '🙉', '🙊', '💋', '💌', '💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣️', '💔', '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '💯', '💢', '💥', '💫', '💦', '💨', '🕳️', '💣', '💬', '🗯️', '💭', '💤', '👋', '🤚', '🖐️', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾', '🦿', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁️'];
+
+        function generateEmojiGrid() {
+            const grid = document.getElementById('emojiGrid');
+            if (!grid) return;
+            emojis.forEach(emoji => {
+                const span = document.createElement('span');
+                span.className = 'emoji-item';
+                span.textContent = emoji;
+                span.onclick = () => {
+                    const input = document.getElementById('messageInput');
+                    input.value += emoji;
+                    input.focus();
+                    document.getElementById('emojiPicker').classList.remove('show');
+                };
+                grid.appendChild(span);
+            });
+        }
+
+        const emojiBtn = document.getElementById('emojiBtn');
+        const emojiPicker = document.getElementById('emojiPicker');
+        if (emojiBtn && emojiPicker) {
+            emojiBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                emojiPicker.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!emojiPicker.contains(e.target) && e.target !== emojiBtn) {
+                    emojiPicker.classList.remove('show');
+                }
+            });
+        }
+        generateEmojiGrid();
+
+        // ========== EVENT LISTENERS ==========
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM chargé');
             const sendBtn = document.getElementById('sendMessageBtn');
             if (sendBtn) sendBtn.addEventListener('click', sendMessage);
-
             const messageInput = document.getElementById('messageInput');
             if (messageInput) {
                 messageInput.addEventListener('keypress', function(e) {
@@ -873,19 +1099,15 @@
                     }
                 });
             }
-
             const sendNewBtn = document.getElementById('sendNewMessageBtn');
             if (sendNewBtn) {
                 sendNewBtn.addEventListener('click', function() {
                     const candidatSelect = document.getElementById('candidatSelect');
                     const newMessageContent = document.getElementById('newMessageContent');
                     const errorDiv = document.getElementById('newMessageError');
-
                     if (!candidatSelect || !newMessageContent) return;
-
                     const candidatId = candidatSelect.value;
                     const content = newMessageContent.value;
-
                     if (!candidatId) {
                         if (errorDiv) {
                             errorDiv.textContent = 'Veuillez sélectionner un candidat';
@@ -893,7 +1115,6 @@
                         }
                         return;
                     }
-
                     if (!content.trim()) {
                         if (errorDiv) {
                             errorDiv.textContent = 'Veuillez écrire un message';
@@ -901,7 +1122,6 @@
                         }
                         return;
                     }
-
                     if (!/^[A-Z]/.test(content.trim())) {
                         if (errorDiv) {
                             errorDiv.textContent = 'Le message doit commencer par une majuscule';
@@ -909,9 +1129,7 @@
                         }
                         return;
                     }
-
                     if (errorDiv) errorDiv.classList.add('d-none');
-
                     fetch('/recruteur/messagerie/new-conversation', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -936,16 +1154,13 @@
                         .catch(error => console.error('Error creating conversation:', error));
                 });
             }
-
             const saveEditBtn = document.getElementById('saveEditMessageBtn');
             if (saveEditBtn) {
                 saveEditBtn.addEventListener('click', function() {
                     const editContent = document.getElementById('editMessageContent');
                     const errorDiv = document.getElementById('editMessageError');
-
                     if (!editContent) return;
                     const newContent = editContent.value;
-
                     if (!newContent.trim()) {
                         if (errorDiv) {
                             errorDiv.textContent = 'Le message ne peut pas être vide';
@@ -953,7 +1168,6 @@
                         }
                         return;
                     }
-
                     if (!/^[A-Z]/.test(newContent.trim())) {
                         if (errorDiv) {
                             errorDiv.textContent = 'Le message doit commencer par une majuscule';
@@ -961,7 +1175,6 @@
                         }
                         return;
                     }
-
                     fetch(`/recruteur/messagerie/edit-message/${currentEditMessageId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -982,7 +1195,6 @@
                         });
                 });
             }
-
             const searchInput = document.getElementById('searchConversation');
             if (searchInput) {
                 searchInput.addEventListener('keyup', function() {
@@ -999,10 +1211,8 @@
             currentEditMessageId = messageId;
             const editContent = document.getElementById('editMessageContent');
             const errorDiv = document.getElementById('editMessageError');
-
             if (editContent) editContent.value = content;
             if (errorDiv) errorDiv.classList.add('d-none');
-
             $('#editMessageModal').modal('show');
         }
 
@@ -1025,15 +1235,14 @@
             }
         }
 
-        // Chargement initial
         loadConversations();
-
-        // Rafraîchissement périodique (toutes les 5 secondes)
+        loadStats();
         refreshInterval = setInterval(() => {
             if (currentConversationId) {
                 loadMessages(currentConversationId);
                 loadConversations();
             }
-        }, 5000);
+            loadStats();
+        }, 1000);
     </script>
 {% endblock %}

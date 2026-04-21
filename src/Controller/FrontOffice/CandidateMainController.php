@@ -146,15 +146,16 @@ class CandidateMainController extends AbstractController
     #[Route('/reclamation', name: 'app_candidate_reclamation')]
     public function reclamation(): Response
     {
-        return $this->render('FrontOffice/main/reclamation.html.twig');
+        // Rediriger vers le vrai contrôleur des réclamations
+        return $this->redirectToRoute('app_candidat_reclamation_index');
     }
 
-    #[Route('/messagerie', name: 'app_candidate_messagerie')]
+    //nahineha khater ken nkhaliwha twali mochkla f routes w tekhdemch
+    /*#[Route('/messagerie', name: 'app_candidate_messagerie')]
     public function messagerie(): Response
     {
         return $this->render('FrontOffice/main/messagerie.html.twig');
-    }
-
+    }*/
     #[Route('/offres/{id}/postuler', name: 'app_candidate_offre_apply', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function applyOffre(
         OffreEmploi $offre,

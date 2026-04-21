@@ -668,6 +668,57 @@
                             <div class="fo-info-value">{{ user.location|default('—') }}</div>
                         </div>
                     </div>
+                    {# About Section - Modified to work without modal #}
+                    <div class="fo-profile-section">
+                        <div class="fo-section-title">
+                            <span><i class="fas fa-address-card"></i> About</span>
+                            {% if isOwner %}
+                                <div>
+                                    <button class="fo-edit-btn me-2" onclick="openEditModal('about')">
+                                        <i class="fas fa-pencil-alt"></i> Edit
+                                    </button>
+                                    <button class="fo-edit-btn" id="improveBioBtn" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 6px 12px;">
+                                        <i class="fas fa-magic"></i> Improve with AI
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Current bio display -->
+                        <div id="bioDisplay">
+                            {% if user.bio|default(false) %}
+                                <p id="currentBioText" style="color: #6b7280; line-height: 1.6; white-space: pre-wrap;">{{ user.bio|nl2br }}</p>
+                            {% else %}
+                                <p id="currentBioText" class="text-muted">No bio yet. Click edit to add one.</p>
+                            {% endif %}
+                        </div>
+
+                        <!-- AI Suggestion Area (hidden by default) -->
+                        <div id="aiSuggestionArea" style="display: none;" class="mt-3">
+                            <div class="alert alert-info">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div style="flex: 1;">
+                                        <i class="fas fa-robot"></i> <strong>AI Suggestion:</strong>
+                                        <div id="aiSuggestionText" class="mt-2" style="white-space: pre-wrap;"></div>
+                                    </div>
+                                    <div class="ms-3">
+                                        <button type="button" class="btn btn-sm btn-success me-2" id="applyAiSuggestionBtn">
+                                            Apply
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary" id="dismissAiSuggestionBtn">
+                                            Dismiss
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="aiLoading" style="display: none;" class="mt-3">
+                            <div class="alert alert-secondary">
+                                <i class="fas fa-spinner fa-spin"></i> AI is analyzing and improving your bio...
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Basic Information -->
                     <div class="fo-profile-section">
@@ -688,6 +739,7 @@
                             <div class="fo-info-value">{{ user.lastName|default('—') }}</div>
                         </div>
                     </div>
+
 
                     <!-- Education -->
                     <div class="fo-profile-section">
@@ -905,6 +957,49 @@
                                         <div class="form-error">{{ form_errors.headline }}</div>
                                     {% endif %}
                                 </div>
+                            </div>
+                            <div class="fo-modal-actions">
+                                <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
+                                <button type="submit" class="fo-btn-primary">Save</button>
+                            </div>
+                        </form>
+                    {% endif %}
+                    {# ABOUT FORM - Inside the modal backdrop div #}
+                    {% if currentEdit == 'about' %}
+                        <div class="fo-modal-title" id="fo-edit-modal-title">
+                            <span><i class="fas fa-address-card"></i> Edit About / Bio</span>
+                            <button type="button" class="fo-edit-btn" onclick="closeEditModal()"><i class="fas fa-times"></i></button>
+                        </div>
+
+                        <div id="aiImprovementAlert" style="display: none;" class="mb-3">
+                            <div class="alert alert-info">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <i class="fas fa-robot"></i> <strong>AI Suggestion:</strong>
+                                        <div id="aiSuggestionText" class="mt-2" style="white-space: pre-wrap;"></div>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-success" id="applyAiSuggestionBtn">
+                                        Apply
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="aiLoading" style="display: none;" class="mb-3">
+                            <div class="alert alert-secondary">
+                                <i class="fas fa-spinner fa-spin"></i> AI is improving your bio...
+                            </div>
+                        </div>
+
+                        <form method="post" action="{{ path('app_profile_about_save') }}" id="about-form" onsubmit="return true;">
+                            <input type="hidden" name="_token" value="{{ csrf_token('about_form') }}">
+                            <div class="fo-form-group">
+                                <label class="fo-form-label">Bio / About</label>
+                                <textarea class="fo-form-control" name="bio" id="bioTextarea" rows="8"
+                                          placeholder="Write something about yourself...">{{ user.bio|default('') }}</textarea>
+                                <small class="text-muted mt-2 d-block">
+                                    <i class="fas fa-info-circle"></i> Pro tip: Use the AI Improve button to enhance your bio!
+                                </small>
                             </div>
                             <div class="fo-modal-actions">
                                 <button type="button" class="fo-btn-secondary" onclick="closeEditModal()">Cancel</button>
@@ -1156,7 +1251,7 @@
             }
         });
 
-        document.getElementById('disableFaceBtn')?.addEveantListener('click', async () => {
+        document.getElementById('disableFaceBtn')?.addEventListener('click', async () => {
             if (confirm('Are you sure you want to disable Face ID login?')) {
                 const response = await fetch('{{ path('face_disable') }}', {
                     method: 'POST',
@@ -1166,5 +1261,178 @@
                 if (result.success) location.reload();
             }
         });
+
+        // AI Bio Improvement - Simplified Version (No Modal)
+        document.addEventListener('DOMContentLoaded', function() {
+            const improveBioBtn = document.getElementById('improveBioBtn');
+
+            if (improveBioBtn) {
+                improveBioBtn.addEventListener('click', async function(e) {
+                    e.preventDefault();
+
+                    // Get current bio text from the display
+                    const currentBioElement = document.getElementById('currentBioText');
+                    let currentBio = '';
+
+                    if (currentBioElement) {
+                        // Get text without HTML tags
+                        currentBio = currentBioElement.innerText || currentBioElement.textContent;
+                    }
+
+                    if (!currentBio.trim() || currentBio === 'No bio yet. Click edit to add one.') {
+                        showToast('Please add a bio first using the Edit button.', 'warning');
+                        return;
+                    }
+
+                    // Show loading
+                    const aiLoading = document.getElementById('aiLoading');
+                    const aiSuggestionArea = document.getElementById('aiSuggestionArea');
+
+                    if (aiLoading) aiLoading.style.display = 'block';
+                    if (aiSuggestionArea) aiSuggestionArea.style.display = 'none';
+
+                    try {
+                        const response = await fetch('{{ path('app_profile_about_improve') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({
+                                bio: currentBio
+                            })
+                        });
+
+                        const data = await response.json();
+
+                        if (aiLoading) aiLoading.style.display = 'none';
+
+                        if (data.success) {
+                            const aiSuggestionText = document.getElementById('aiSuggestionText');
+                            if (aiSuggestionText) {
+                                aiSuggestionText.innerHTML = data.improved_bio.replace(/\n/g, '<br>');
+                            }
+                            if (aiSuggestionArea) aiSuggestionArea.style.display = 'block';
+                            window.improvedBio = data.improved_bio;
+                            window.originalBio = currentBio;
+
+                            // Scroll to suggestion
+                            aiSuggestionArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            showToast('AI suggestion generated! Click "Apply" to save it to your profile.', 'success');
+                        } else {
+                            showToast('Error: ' + (data.error || 'Failed to improve bio'), 'danger');
+                        }
+                    } catch (error) {
+                        if (aiLoading) aiLoading.style.display = 'none';
+                        console.error('Error:', error);
+                        showToast('An error occurred while trying to improve your bio. Please try again.', 'danger');
+                    }
+                });
+            }
+
+            // Apply AI suggestion - Save directly to database
+            const applyBtn = document.getElementById('applyAiSuggestionBtn');
+            if (applyBtn) {
+                applyBtn.addEventListener('click', async function() {
+                    if (!window.improvedBio) return;
+
+                    // Show saving indicator
+                    const applyBtn = this;
+                    const originalText = applyBtn.innerHTML;
+                    applyBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+                    applyBtn.disabled = true;
+
+                    try {
+                        // Save the improved bio via AJAX
+                        const response = await fetch('{{ path('app_profile_about_save') }}', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: 'bio=' + encodeURIComponent(window.improvedBio) + '&_token=' + encodeURIComponent('{{ csrf_token('about_form') }}')
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Update the displayed bio
+                            const currentBioElement = document.getElementById('currentBioText');
+                            if (currentBioElement) {
+                                currentBioElement.innerHTML = window.improvedBio.replace(/\n/g, '<br>');
+                            }
+
+                            // Hide suggestion area
+                            const aiSuggestionArea = document.getElementById('aiSuggestionArea');
+                            if (aiSuggestionArea) aiSuggestionArea.style.display = 'none';
+
+                            showToast('Bio updated successfully!', 'success');
+
+                            // Clear stored improved bio
+                            window.improvedBio = null;
+                        } else {
+                            showToast('Error: ' + (data.error || 'Failed to save bio'), 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showToast('An error occurred while saving your bio. Please try again.', 'danger');
+                    } finally {
+                        applyBtn.innerHTML = originalText;
+                        applyBtn.disabled = false;
+                    }
+                });
+            }
+
+            // Dismiss AI suggestion
+            const dismissBtn = document.getElementById('dismissAiSuggestionBtn');
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', function() {
+                    const aiSuggestionArea = document.getElementById('aiSuggestionArea');
+                    if (aiSuggestionArea) aiSuggestionArea.style.display = 'none';
+                    window.improvedBio = null;
+                });
+            }
+        });
+
+        // Update saveAbout method to handle AJAX requests
+        function showToast(message, type = 'info') {
+            // Remove existing toast
+            const existingToast = document.querySelector('.ai-toast');
+            if (existingToast) existingToast.remove();
+
+            // Create toast element
+            const toast = document.createElement('div');
+            toast.className = `ai-toast alert alert-${type} alert-dismissible fade show position-fixed`;
+            toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; animation: slideIn 0.3s ease; z-index: 10000;';
+            toast.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            document.body.appendChild(toast);
+
+            // Remove after 4 seconds
+            setTimeout(() => {
+                if (toast.parentElement) toast.remove();
+            }, 4000);
+        }
+
+        // Add animation style if not exists
+        if (!document.querySelector('#ai-style')) {
+            const style = document.createElement('style');
+            style.id = 'ai-style';
+            style.textContent = `
+                @keyframes slideIn {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
     </script>
 {% endblock %}

@@ -24,6 +24,7 @@
 
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
+                {% if 'ROLE_ADMIN' in logged_user.roles %}
                 <li class="nav-item">
                     <a href="{{ path('app_admin_dashboard') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_admin_dashboard' %}active{% endif %}">
                         <i class="nav-icon fas fa-tachometer-alt"></i>
@@ -36,6 +37,8 @@
                         <p>Utilisateurs</p>
                     </a>
                 </li>
+                {% endif %}
+
                 <li class="nav-item">
                     <a href="{{ path('app_recruteur_messages') }}" class="nav-link {% if app.request.attributes.get('_route') == 'app_recruteur_messages' %}active{% endif %}">
                         <i class="nav-icon fas fa-comment-dots"></i>

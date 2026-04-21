@@ -21,54 +21,54 @@
             {% for message in app.flashes('danger') %}
                 <div class="alert alert-danger">{{ message }}</div>
             {% endfor %}
-            
+
             {% if reclamations|length > 0 %}
                 <div class="table-responsive">
                     <table class="table table-hover">
                         <thead class="table-light">
-                            <tr>
-                                <th>ID</th>
-                                <th>Objet</th>
-                                <th>Cours</th>
-                                <th>Statut</th>
-                                <th>Date</th>
-                                <th>Actions</th>
-                            </tr>
+                        <tr>
+                            <th>ID</th>
+                            <th>Objet</th>
+                            <th>Cours</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            {% for r in reclamations %}
-                                <tr>
-                                    <td>{{ r.id }}</td>
-                                    <td>{{ r.objet|slice(0, 50) }}...</td>
-                                    <td>{{ r.cours ? r.cours.titre : '—' }}</td>
-                                    <td>
-                                        {% if r.statut == 'En attente' %}
-                                            <span class="badge bg-warning">En attente</span>
-                                        {% elseif r.statut == 'En cours' %}
-                                            <span class="badge bg-info">En cours</span>
-                                        {% else %}
-                                            <span class="badge bg-success">Traité</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ r.dateCreation|date('d/m/Y') }}</td>
-                                    <td>
-                                        <a href="{{ path('app_candidat_reclamation_show', {'id': r.id}) }}" class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i>
+                        {% for r in reclamations %}
+                            <tr>
+                                <td>{{ r.id }}</td>
+                                <td>{{ r.objet|slice(0, 50) }}...</td>
+                                <td>{{ r.cours ? r.cours.titre : '—' }}</td>
+                                <td>
+                                    {% if r.statut == 'En attente' %}
+                                        <span class="badge bg-warning">En attente</span>
+                                    {% elseif r.statut == 'En cours' %}
+                                        <span class="badge bg-info">En cours</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Traité</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ r.dateCreation|date('d/m/Y') }}</td>
+                                <td>
+                                    <a href="{{ path('app_candidat_reclamation_show', {'id': r.id}) }}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if r.statut != 'Traité' %}
+                                        <a href="{{ path('app_candidat_reclamation_edit', {'id': r.id}) }}" class="btn btn-sm btn-warning">
+                                            <i class="fas fa-edit"></i>
                                         </a>
-                                        {% if r.statut != 'Traité' %}
-                                            <a href="{{ path('app_candidat_reclamation_edit', {'id': r.id}) }}" class="btn btn-sm btn-warning">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form method="post" action="{{ path('app_candidat_reclamation_delete', {'id': r.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette réclamation ?')">
-                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ r.id) }}">
-                                                <button class="btn btn-sm btn-danger">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
+                                        <form method="post" action="{{ path('app_candidat_reclamation_delete', {'id': r.id}) }}" style="display:inline-block" onsubmit="return confirm('Supprimer cette réclamation ?')">
+                                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ r.id) }}">
+                                            <button class="btn btn-sm btn-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
                         </tbody>
                     </table>
                 </div>

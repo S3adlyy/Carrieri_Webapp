@@ -14,6 +14,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
+use App\Service\GeminiAIService;
+
 
 #[Route('/profile')]
 #[IsGranted('ROLE_USER')]
@@ -22,6 +24,8 @@ final class ProfileController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ProfileService $profileService,
+        private readonly GeminiAIService $geminiAIService, // Add this
+
     ) {
     }
 
@@ -48,6 +52,54 @@ final class ProfileController extends AbstractController
             'public_profile_url' => sprintf('carrieri.app/in/%s', $this->profileService->slugifyDisplayName($targetUser)),
             'edit_section' => $this->normalizeEditSection((string) $this->getRequestEditSection()),
         ]);
+    }
+    #[Route('/about/improve', name: 'app_profile_about_improve', methods: ['POST'])]
+    public function improveAbout(Request $request): Response
+    {
+        $user = $this->requireCurrentUser();
+
+        try {
+            // Get current bio
+            $currentBio = $user->getBio() ?? '';
+
+            if (empty(trim($currentBio))) {
+                return $this->json([
+                    'success' => false,
+                    'error' => 'Please write something in your bio first before using AI improvement.'
+                ], 400);
+            }
+
+            // Collect user data for context
+            $userData = [
+                'firstName' => $user->getFirstName(),
+                'lastName' => $user->getLastName(),
+                'headline' => $user->getHeadline(),
+                'hardSkills' => $user->getHardSkills(),
+                'softSkills' => $user->getSoftSkills(),
+                'school' => $user->getSchool(),
+                'degree' => $user->getDegree(),
+                'fieldOfStudy' => $user->getFieldOfStudy(),
+                'orgName' => $user->getOrgName(),
+                'type' => $user->getType(),
+            ];
+
+            // Call AI service
+            $improvedBio = $this->geminiAIService->improveBio($currentBio, $userData);
+
+            return $this->json([
+                'success' => true,
+                'improved_bio' => $improvedBio,
+                'original_bio' => $currentBio
+            ]);
+
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'AI improvement failed: ' . $e->getMessage());
+
+            return $this->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 
     #[Route('/basic/save', name: 'app_profile_basic_save', methods: ['POST'])]
@@ -142,42 +194,46 @@ final class ProfileController extends AbstractController
     {
         $user = $this->requireCurrentUser();
 
-        $form = $this->createForm(ProfileForm::class, $user, [
-            'csrf_protection' => false,
-        ]);
+        // Check if it's an AJAX request
+        $isAjax = $request->isXmlHttpRequest();
 
-        $form->handleRequest($request);
+        // Verify CSRF token
+        $submittedToken = $request->request->get('_token');
+        if (!$this->isCsrfTokenValid('about_form', $submittedToken)) {
+            if ($isAjax) {
+                return $this->json(['success' => false, 'error' => 'Invalid CSRF token.'], 400);
+            }
+            $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToProfileSection('about');
+        }
 
-        if ($form->isSubmitted() && $form->isValid()) {
+        $bio = $request->request->get('bio');
+
+        if ($bio !== null) {
             try {
-                $user->setBio($form->get('bio')->getData());
+                $user->setBio(trim($bio));
                 $this->entityManager->flush();
+
+                if ($isAjax) {
+                    return $this->json(['success' => true, 'message' => 'About section updated successfully.']);
+                }
+
                 $this->addFlash('success', 'About section updated successfully.');
                 return $this->redirectToProfileSection('about');
             } catch (\Throwable $e) {
+                if ($isAjax) {
+                    return $this->json(['success' => false, 'error' => $e->getMessage()], 500);
+                }
                 $this->addFlash('error', $e->getMessage());
             }
+        } else {
+            if ($isAjax) {
+                return $this->json(['success' => false, 'error' => 'No bio data received.'], 400);
+            }
+            $this->addFlash('error', 'No bio data received.');
         }
 
-        // Return with errors
-        $forms = [
-            'basic' => $this->createForm(ProfileForm::class, $user, ['csrf_protection' => false]),
-            'education' => $this->createForm(ProfileForm::class, $user, ['csrf_protection' => false]),
-            'skills' => $this->createForm(ProfileForm::class, $user, ['csrf_protection' => false]),
-            'links' => $this->createForm(ProfileForm::class, $user, ['csrf_protection' => false]),
-            'organization' => $this->createForm(ProfileForm::class, $user, ['csrf_protection' => false]),
-        ];
-
-        return $this->render('FrontOffice/main/profile.html.twig', [
-            'user' => $user,
-            'forms' => $forms,
-            'is_owner' => true,
-            'is_candidate' => $this->profileService->isCandidate($user),
-            'is_recruiter' => $this->profileService->isRecruiter($user),
-            'suggestions' => $this->profileService->suggestPeopleYouMayKnow($user, 5),
-            'public_profile_url' => sprintf('carrieri.app/in/%s', $this->profileService->slugifyDisplayName($user)),
-            'edit_section' => 'about',
-        ]);
+        return $this->redirectToProfileSection('about');
     }
     private function renderWithErrors(User $user, string $section, array $errors = [], array $oldInput = []): Response
     {

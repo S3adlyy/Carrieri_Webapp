@@ -1,8 +1,6 @@
-{# templates/BackOffice/dashboard/utilisateurs/index.html.twig #}
 {% extends 'BackOffice/base.html.twig' %}
 
 {% block title %}Gestion des utilisateurs{% endblock %}
-
 {% block page_title %}Utilisateurs{% endblock %}
 
 {% block breadcrumbs %}
@@ -10,41 +8,116 @@
 {% endblock %}
 
 {% block body %}
-    {% if is_admin_view is defined and not is_admin_view %}
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> Liste des <strong>candidats</strong> inscrits sur la plateforme.
-        </div>
-    {% endif %}
-
     <div class="card">
         <div class="card-header">
-            <h3 class="card-title">{% if is_admin_view|default(true) %}Tous les utilisateurs{% else %}Candidats{% endif %}</h3>
-            <span class="badge badge-info">{{ users|length }} ligne(s)</span>
+            <h3 class="card-title">Liste des utilisateurs</h3>
+            <div class="card-tools">
+                <span class="badge badge-info">{{ users|length }} utilisateur(s)</span>
+            </div>
         </div>
+
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover table-striped mb-0">
+                <table class="table table-hover table-striped" id="usersTable">
                     <thead>
                     <tr>
-                        <th>ID</th>
+                        <th>Prénom</th>
                         <th>Nom</th>
                         <th>Email</th>
+                        <th>Téléphone</th>
                         <th>Type</th>
-                        <th>Actif</th>
+                        <th>Localisation</th>
+                        <th>Statut</th>
+                        <th>Date d'inscription</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {% for u in users %}
+                    {% for user in users %}
                         <tr>
-                            <td>{{ u.id }}</td>
-                            <td>{{ (u.firstName ~ ' ' ~ u.lastName)|trim ?: '—' }}</td>
-                            <td>{{ u.email|default('—') }}</td>
-                            <td>{{ u.type|default('—') }}</td>
-                            <td>{{ u.isActive ? 'Oui' : 'Non' }}</td>
+                            <td>{{ user.firstName|default('—') }}</td>
+                            <td>{{ user.lastName|default('—') }}</td>
+                            <td>{{ user.email|default('—') }}</td>
+                            <td>{{ user.phone|default('—') }}</td>
+                            <td>
+                                {% if user.type == 'ADMIN' %}
+                                    <span class="badge badge-danger">Admin</span>
+                                {% elseif user.type == 'RECRUITER' %}
+                                    <span class="badge badge-primary">Recruteur</span>
+                                {% elseif user.type == 'CANDIDATE' %}
+                                    <span class="badge badge-success">Candidat</span>
+                                {% else %}
+                                    <span class="badge badge-secondary">{{ user.type|default('—') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.location|default('—') }}</td>
+                            <td>
+                                {% if user.isActive == 1 %}
+                                    <span class="badge badge-success">Actif</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.createdAt ? user.createdAt|date('d/m/Y') : '—' }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{{ path('app_admin_utilisateur_edit', {'id': user.id}) }}"
+                                       class="btn btn-warning"
+                                       title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if app.user.id != user.id %}
+                                        <button type="button"
+                                                class="btn btn-danger"
+                                                data-toggle="modal"
+                                                data-target="#deleteModal{{ user.id }}"
+                                                title="Supprimer">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+
+                                {% if app.user.id != user.id %}
+                                    <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <h5 class="modal-title">Confirmer la suppression</h5>
+                                                    <button type="button" class="close" data-dismiss="modal">
+                                                        <span>&times;</span>
+                                                    </button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <p>Êtes-vous sûr de vouloir supprimer cet utilisateur ?</p>
+                                                    <p class="text-muted">
+                                                        <strong>{{ user.firstName }} {{ user.lastName }}</strong><br>
+                                                        Email: {{ user.email }}<br>
+                                                        Type: {{ user.type }}
+                                                    </p>
+                                                    <div class="alert alert-warning">
+                                                        <i class="fas fa-exclamation-triangle"></i>
+                                                        Cette action est irréversible.
+                                                    </div>
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Annuler</button>
+                                                    <form method="post" action="{{ path('app_admin_utilisateur_delete', {'id': user.id}) }}">
+                                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ user.id) }}">
+                                                        <button type="submit" class="btn btn-danger">Supprimer</button>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </td>
                         </tr>
                     {% else %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted">Aucun utilisateur.</td>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                <i class="fas fa-users fa-2x mb-2"></i>
+                                <p>Aucun utilisateur trouvé.</p>
+                            </td>
                         </tr>
                     {% endfor %}
                     </tbody>
@@ -52,4 +125,25 @@
             </div>
         </div>
     </div>
+
+    <style>
+        .table td {
+            vertical-align: middle;
+        }
+        .btn-group-sm .btn {
+            margin: 0 2px;
+        }
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            $('#usersTable').DataTable({
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/fr-FR.json'
+                },
+                pageLength: 25,
+                order: [[7, 'desc']] // Order by registration date desc
+            });
+        });
+    </script>
 {% endblock %}

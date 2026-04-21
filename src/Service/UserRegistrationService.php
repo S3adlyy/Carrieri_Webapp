@@ -38,7 +38,7 @@ class UserRegistrationService
     ): array {
         $errors = [];
 
-        $firstName = $firstName !== null ? trim($firstName) : '';
+        /*$firstName = $firstName !== null ? trim($firstName) : '';
         $lastName = $lastName !== null ? trim($lastName) : '';
         $email = $email !== null ? trim(strtolower($email)) : '';
         $roleKey = $roleKey !== null ? strtoupper(trim($roleKey)) : '';
@@ -72,7 +72,7 @@ class UserRegistrationService
         if ($errors !== []) {
             return ['user' => null, 'errors' => $errors];
         }
-
+*/
         $user = new User();
         $user->setFirstName($firstName);
         $user->setLastName($lastName);

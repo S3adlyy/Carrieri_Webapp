@@ -13,25 +13,25 @@
         </div>
         <div class="card-body">
             {{ form_start(form) }}
-                <div class="row">
-                    <div class="col-12">
-                        {{ form_row(form.objet) }}
-                    </div>
-                    <div class="col-12">
-                        {{ form_row(form.description) }}
-                    </div>
-                    <div class="col-12">
-                        {{ form_row(form.cours) }}
-                    </div>
+            <div class="row">
+                <div class="col-12">
+                    {{ form_row(form.objet) }}
                 </div>
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-warning">
-                        <i class="fas fa-save"></i> Enregistrer les modifications
-                    </button>
-                    <a href="{{ path('app_candidat_reclamation_index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i> Retour
-                    </a>
+                <div class="col-12">
+                    {{ form_row(form.description) }}
                 </div>
+                <div class="col-12">
+                    {{ form_row(form.cours) }}
+                </div>
+            </div>
+            <div class="mt-4">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-save"></i> Enregistrer les modifications
+                </button>
+                <a href="{{ path('app_candidat_reclamation_index') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Retour
+                </a>
+            </div>
             {{ form_end(form) }}
         </div>
     </div>

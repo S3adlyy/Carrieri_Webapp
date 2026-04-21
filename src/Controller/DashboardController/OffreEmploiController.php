@@ -37,7 +37,7 @@ class OffreEmploiController extends AbstractController
     }
 
     #[Route('/', name: 'app_admin_offres_list')]
-    #[IsGranted('ROLE_RECRUITER')]
+    /*#[IsGranted('ROLE_RECRUITER')]*/
     public function index(Request $request): Response
     {
         $user = $this->getUser();
@@ -61,7 +61,6 @@ class OffreEmploiController extends AbstractController
         $offerIds = array_values(array_filter($offerIds, static fn (?int $id): bool => $id !== null));
         $postulationCounts = $this->postulationRepository->countByOfferIds($offerIds);
         $stats = $this->getOffreStats($user);
-
         return $this->render('BackOffice/dashboard/offres_emploi/index.html.twig', [
             'offres' => $offres,
             'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
