@@ -23,6 +23,11 @@ class CandidateOfferMatchService
         'gestion_projet' => ['scrum', 'agile'],
     ];
 
+    public function __construct(
+        private readonly CandidateOfferAiScoringService $candidateOfferAiScoringService,
+    ) {
+    }
+
     public function match(User $candidate, OffreEmploi $offre): array
     {
         $offerTitleKeywords = $this->extractKeywords((string) $offre->getTitre(), 2, 8);
@@ -72,7 +77,7 @@ class CandidateOfferMatchService
             $candidateKeywords
         ));
 
-        $globalScore = (int) round(
+        $ruleBasedScore = (int) round(
             ($titleScore * 0.30) +
             ($skillsScore * 0.30) +
             ($descriptionScore * 0.15) +
@@ -80,6 +85,7 @@ class CandidateOfferMatchService
             ($locationScore * 0.15) +
             ($experienceScore * 0.10)
         );
+        $globalScore = $ruleBasedScore;
 
         $reasons = $this->buildReasons(
             $matchedTitleKeywords,
@@ -93,6 +99,13 @@ class CandidateOfferMatchService
             $experienceScore
         );
 
+        $aiScoring = $this->candidateOfferAiScoringService->score($candidate, $offre);
+        if (is_array($aiScoring) && isset($aiScoring['score_global']) && is_int($aiScoring['score_global'])) {
+            $globalScore = (int) round(($ruleBasedScore * 0.65) + ($aiScoring['score_global'] * 0.35));
+            $reasons = $this->mergeAiReasons($reasons, $aiScoring);
+            $missingSkills = $this->mergeAiMissingSkills($missingSkills, $aiScoring);
+        }
+
         return [
             'score' => $this->clamp($globalScore),
             'label' => $this->buildLabel($globalScore),
@@ -100,6 +113,8 @@ class CandidateOfferMatchService
             'reasons' => $reasons,
             'missing_skills' => array_slice($missingSkills, 0, 5),
             'breakdown' => [
+                'rule_based' => $ruleBasedScore,
+                'ai' => is_array($aiScoring) && isset($aiScoring['score_global']) ? (int) $aiScoring['score_global'] : null,
                 'title' => $titleScore,
                 'skills' => $skillsScore,
                 'description' => $descriptionScore,
@@ -108,6 +123,40 @@ class CandidateOfferMatchService
                 'experience' => $experienceScore,
             ],
         ];
+    }
+
+    private function mergeAiReasons(array $reasons, array $aiScoring): array
+    {
+        $merged = $reasons;
+
+        if (!empty($aiScoring['summary']) && is_string($aiScoring['summary'])) {
+            $merged[] = $aiScoring['summary'];
+        }
+
+        if (!empty($aiScoring['strengths']) && is_array($aiScoring['strengths'])) {
+            foreach ($aiScoring['strengths'] as $strength) {
+                if (is_string($strength) && trim($strength) !== '') {
+                    $merged[] = trim($strength);
+                }
+            }
+        }
+
+        return array_slice(array_values(array_unique($merged)), 0, 4);
+    }
+
+    private function mergeAiMissingSkills(array $missingSkills, array $aiScoring): array
+    {
+        $merged = $missingSkills;
+
+        if (!empty($aiScoring['missing']) && is_array($aiScoring['missing'])) {
+            foreach ($aiScoring['missing'] as $missing) {
+                if (is_string($missing) && trim($missing) !== '') {
+                    $merged[] = trim($missing);
+                }
+            }
+        }
+
+        return array_values(array_unique($merged));
     }
 
     private function calculateRatioScore(array $sourceKeywords, array $matchedKeywords, int $fallback): int

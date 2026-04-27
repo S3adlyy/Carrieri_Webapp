@@ -65,11 +65,7 @@
                         <div class="smart-actions">
                             <button type="button" class="smart-action smart-action--skip" data-smart-next>Passer</button>
                             <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="smart-action smart-action--details">Details</a>
-                            <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}">
-                                <button type="submit" class="smart-action smart-action--like">
-                                    {% if offre.id in favoriteIds %}Favori deja ajoute{% else %}J'aime{% endif %}
-                                </button>
-                            </form>
+                            <button type="button" class="smart-action smart-action--like" data-smart-next>J'aime</button>
                         </div>
                     </article>
                 {% endfor %}

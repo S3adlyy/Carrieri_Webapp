@@ -116,8 +116,7 @@ class CandidateMainController extends AbstractController
     public function smartOffres(
         Request $request,
         OffreEmploiRepository $offreEmploiRepository,
-        CandidateOfferMatchService $candidateOfferMatchService,
-        FavoritesOffresRepository $favoritesRepo
+        CandidateOfferMatchService $candidateOfferMatchService
     ): Response {
         $user = $this->getUser();
         if (!$user instanceof User) {
@@ -138,7 +137,6 @@ class CandidateMainController extends AbstractController
 
         return $this->render('FrontOffice/main/offres_smart.html.twig', [
             'rankedOffres' => $rankedOffres,
-            'favoriteIds' => $favoritesRepo->getFavoriteOfferIdsByCandidat($user->getId()),
         ]);
     }
 

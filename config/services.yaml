@@ -28,3 +28,7 @@ services:
             $twilioSid: '%env(TWILIO_SID)%'
             $twilioAuthToken: '%env(TWILIO_AUTH_TOKEN)%'
             $twilioPhoneNumber: '%env(TWILIO_PHONE_NUMBER)%'
+
+    App\Service\CandidateOfferAiScoringService:
+        arguments:
+            $projectDir: '%kernel.project_dir%'
