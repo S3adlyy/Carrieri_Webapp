@@ -36,6 +36,21 @@
                             </div>
                         </div>
 
+                        <div class="smart-breakdown">
+                            <div class="smart-breakdown__item">
+                                <span class="smart-breakdown__name">Rule-based</span>
+                                <span class="smart-breakdown__value">{{ match.breakdown.rule_based }}</span>
+                            </div>
+                            <div class="smart-breakdown__item">
+                                <span class="smart-breakdown__name">AI analysis</span>
+                                <span class="smart-breakdown__value">{{ match.breakdown.ai ?? '—' }}</span>
+                            </div>
+                            <div class="smart-breakdown__item smart-breakdown__item--final">
+                                <span class="smart-breakdown__name">Final score</span>
+                                <span class="smart-breakdown__value">{{ match.score }}</span>
+                            </div>
+                        </div>
+
                         <div class="smart-meta">
                             <span>{{ offre.typeContrat }}</span>
                             <span>{{ offre.localisation }}</span>
@@ -55,10 +70,32 @@
                             </div>
                         </div>
 
+                        {% if match.ai_analysis and match.ai_analysis.summary %}
+                            <div class="smart-section">
+                                <div class="smart-section__title">Vue d'ensemble</div>
+                                <div class="smart-note">{{ match.ai_analysis.summary }}</div>
+                            </div>
+                        {% endif %}
+
+                        {% if match.ai_analysis and match.ai_analysis.strengths is not empty %}
+                            <div class="smart-section">
+                                <div class="smart-section__title">Remarques</div>
+                                <div class="smart-remarks">
+                                    {% for strength in match.ai_analysis.strengths %}
+                                        <div class="smart-remark">{{ strength }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
                         {% if match.missing_skills is not empty %}
                             <div class="smart-section">
                                 <div class="smart-section__title">A renforcer</div>
-                                <div class="smart-missing">{{ match.missing_skills|join(', ') }}</div>
+                                <div class="smart-remarks">
+                                    {% for missing in match.missing_skills %}
+                                        <div class="smart-remark smart-remark--muted">{{ missing }}</div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         {% endif %}
 
@@ -212,6 +249,43 @@
             text-transform: uppercase;
         }
 
+        .smart-breakdown {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .smart-breakdown__item {
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.88);
+            border: 1px solid rgba(59,130,246,0.10);
+            text-align: center;
+        }
+
+        .smart-breakdown__item--final {
+            background: rgba(59,130,246,0.08);
+        }
+
+        .smart-breakdown__name {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .smart-breakdown__value {
+            display: block;
+            margin-top: 6px;
+            font-size: 22px;
+            font-weight: 900;
+            color: #1f3470;
+            line-height: 1;
+        }
+
         .smart-meta {
             display: flex;
             flex-wrap: wrap;
@@ -278,6 +352,32 @@
             color: #475569;
             line-height: 1.7;
             font-weight: 600;
+        }
+
+        .smart-note {
+            color: #475569;
+            line-height: 1.8;
+            background: rgba(255,255,255,0.85);
+            border-radius: 18px;
+            padding: 16px 18px;
+        }
+
+        .smart-remarks {
+            display: grid;
+            gap: 10px;
+        }
+
+        .smart-remark {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.88);
+            color: #475569;
+            line-height: 1.75;
+            border: 1px solid rgba(59,130,246,0.10);
+        }
+
+        .smart-remark--muted {
+            color: #5f6780;
         }
 
         .smart-actions {
@@ -350,6 +450,10 @@
 
             .smart-score {
                 width: 100%;
+            }
+
+            .smart-breakdown {
+                grid-template-columns: 1fr;
             }
 
             .smart-title {

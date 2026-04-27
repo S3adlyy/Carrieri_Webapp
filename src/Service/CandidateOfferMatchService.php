@@ -111,7 +111,13 @@ class CandidateOfferMatchService
             'label' => $this->buildLabel($globalScore),
             'tone' => $this->buildTone($globalScore),
             'reasons' => $reasons,
+            'short_reasons' => $this->buildShortReasons($reasons),
             'missing_skills' => array_slice($missingSkills, 0, 5),
+            'ai_analysis' => is_array($aiScoring) ? [
+                'summary' => isset($aiScoring['summary']) ? (string) $aiScoring['summary'] : '',
+                'strengths' => isset($aiScoring['strengths']) && is_array($aiScoring['strengths']) ? array_values($aiScoring['strengths']) : [],
+                'missing' => isset($aiScoring['missing']) && is_array($aiScoring['missing']) ? array_values($aiScoring['missing']) : [],
+            ] : null,
             'breakdown' => [
                 'rule_based' => $ruleBasedScore,
                 'ai' => is_array($aiScoring) && isset($aiScoring['score_global']) ? (int) $aiScoring['score_global'] : null,
@@ -128,10 +134,6 @@ class CandidateOfferMatchService
     private function mergeAiReasons(array $reasons, array $aiScoring): array
     {
         $merged = $reasons;
-
-        if (!empty($aiScoring['summary']) && is_string($aiScoring['summary'])) {
-            $merged[] = $aiScoring['summary'];
-        }
 
         if (!empty($aiScoring['strengths']) && is_array($aiScoring['strengths'])) {
             foreach ($aiScoring['strengths'] as $strength) {
@@ -157,6 +159,37 @@ class CandidateOfferMatchService
         }
 
         return array_values(array_unique($merged));
+    }
+
+    private function buildShortReasons(array $reasons): array
+    {
+        $shortReasons = [];
+
+        foreach ($reasons as $reason) {
+            if (!is_string($reason)) {
+                continue;
+            }
+
+            $cleanReason = trim($reason);
+            if ($cleanReason === '') {
+                continue;
+            }
+
+            if (mb_strlen($cleanReason) > 70) {
+                continue;
+            }
+
+            $shortReasons[] = $cleanReason;
+        }
+
+        if ($shortReasons === [] && $reasons !== []) {
+            $firstReason = trim((string) $reasons[0]);
+            if ($firstReason !== '') {
+                $shortReasons[] = $firstReason;
+            }
+        }
+
+        return array_slice(array_values(array_unique($shortReasons)), 0, 3);
     }
 
     private function calculateRatioScore(array $sourceKeywords, array $matchedKeywords, int $fallback): int

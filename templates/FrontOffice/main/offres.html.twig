@@ -49,10 +49,7 @@
                value="{{ app.request.get('localisation') }}">
         <input type="number" name="salaire" placeholder="Salaire min"
                value="{{ app.request.get('salaire') }}">
-        <select name="sort">
-            <option value="smart" {{ currentSort == 'smart' ? 'selected' : '' }}>Tri intelligent</option>
-            <option value="date" {{ currentSort == 'date' ? 'selected' : '' }}>Plus recentes</option>
-        </select>
+        
         <div class="fo-filter-actions">
             <button type="submit">Filtrer</button>
             <a href="{{ path('app_candidate_offres') }}" class="fo-reset-btn">Reinitialiser</a>
@@ -140,13 +137,18 @@
                                 <div class="fo-match-box">
                                     <div class="fo-match-box__title">Pourquoi cette offre vous correspond</div>
                                     <div class="fo-match-reasons">
-                                        {% for reason in match.reasons %}
+                                        {% for reason in match.short_reasons|slice(0, 2) %}
                                             <span class="fo-match-chip">{{ reason }}</span>
                                         {% endfor %}
                                     </div>
+                                    {% if match.ai_analysis and match.ai_analysis.summary %}
+                                        <div class="fo-match-summary">{{ match.ai_analysis.summary }}</div>
+                                    {% endif %}
                                     {% if match.missing_skills is not empty %}
                                         <div class="fo-match-missing">
-                                            Competences a renforcer : {{ match.missing_skills|join(', ') }}
+                                            {% set lightMissing = match.missing_skills|first %}
+                                            A renforcer :
+                                            {{ lightMissing|length > 90 ? lightMissing|slice(0, 90) ~ '...' : lightMissing }}
                                         </div>
                                     {% endif %}
                                 </div>
@@ -268,6 +270,7 @@
         .fo-match-box__title { font-size: 14px; font-weight: 800; color: #134e4a; margin-bottom: 12px; }
         .fo-match-reasons { display: flex; flex-wrap: wrap; gap: 8px; }
         .fo-match-chip { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; background: #fff; color: #155e75; font-size: 13px; font-weight: 700; }
+        .fo-match-summary { margin-top: 12px; color: #475569; font-size: 14px; line-height: 1.7; }
         .fo-match-missing { margin-top: 12px; color: #6b7280; font-size: 13px; line-height: 1.6; }
 
         .fo-offre-card__actions { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
