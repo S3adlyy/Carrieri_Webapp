@@ -10,6 +10,7 @@ use App\Entity\User;
 use App\Repository\OffreEmploiRepository;
 use App\Repository\PostulationRepository;
 use App\Repository\MissionRepository;
+use App\Service\CandidateOfferMatchService;
 use App\Service\SmsService;
 use App\Repository\FavoritesOffresRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -48,12 +49,14 @@ class CandidateMainController extends AbstractController
     public function offres(
         Request $request,
         OffreEmploiRepository $offreEmploiRepository,
-        FavoritesOffresRepository $favoritesRepo
+        FavoritesOffresRepository $favoritesRepo,
+        CandidateOfferMatchService $candidateOfferMatchService
     ): Response {
         $keyword = $request->query->get('keyword');
         $type = $request->query->get('type');
         $localisation = $request->query->get('localisation');
         $salaireMin = $request->query->get('salaire');
+        $sort = (string) $request->query->get('sort', 'smart');
 
         $offres = $offreEmploiRepository->searchAndFilter(
             $keyword,
@@ -74,15 +77,68 @@ class CandidateMainController extends AbstractController
 
         $user = $this->getUser();
         $favoriteIds = [];
+        $rankedOffres = [];
 
         if ($user instanceof User) {
             $favoriteIds = $favoritesRepo->getFavoriteOfferIdsByCandidat($user->getId());
+            $rankedOffres = $this->buildRankedOffers($offres, $user, $candidateOfferMatchService);
+
+            if ($sort === 'date') {
+                usort($rankedOffres, static function (array $left, array $right): int {
+                    $leftDate = $left['offre']->getDatePublication()?->getTimestamp() ?? 0;
+                    $rightDate = $right['offre']->getDatePublication()?->getTimestamp() ?? 0;
+
+                    return $rightDate <=> $leftDate;
+                });
+            } else {
+                usort($rankedOffres, static function (array $left, array $right): int {
+                    return $right['match']['score'] <=> $left['match']['score'];
+                });
+            }
+        } else {
+            foreach ($offres as $offre) {
+                $rankedOffres[] = [
+                    'offre' => $offre,
+                    'match' => null,
+                ];
+            }
         }
 
         return $this->render('FrontOffice/main/offres.html.twig', [
-            'offres' => $offres,
+            'rankedOffres' => $rankedOffres,
             'stats' => $stats,
             'favoriteIds' => $favoriteIds,
+            'currentSort' => $sort,
+        ]);
+    }
+
+    #[Route('/offres/smart', name: 'app_candidate_offres_smart')]
+    public function smartOffres(
+        Request $request,
+        OffreEmploiRepository $offreEmploiRepository,
+        CandidateOfferMatchService $candidateOfferMatchService,
+        FavoritesOffresRepository $favoritesRepo
+    ): Response {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $offres = $offreEmploiRepository->searchAndFilter(
+            $request->query->get('keyword'),
+            $request->query->get('type'),
+            $request->query->get('localisation'),
+            $request->query->get('salaire') ? (float) $request->query->get('salaire') : null
+        );
+
+        $rankedOffres = $this->buildRankedOffers($offres, $user, $candidateOfferMatchService);
+        usort($rankedOffres, static function (array $left, array $right): int {
+            return $right['match']['score'] <=> $left['match']['score'];
+        });
+
+        return $this->render('FrontOffice/main/offres_smart.html.twig', [
+            'rankedOffres' => $rankedOffres,
+            'favoriteIds' => $favoritesRepo->getFavoriteOfferIdsByCandidat($user->getId()),
         ]);
     }
 
@@ -374,5 +430,25 @@ class CandidateMainController extends AbstractController
 
         $referer = $request->headers->get('referer');
         return $this->redirect($referer ?: $this->generateUrl('app_candidate_offres'));
+    }
+
+    /**
+     * @param OffreEmploi[] $offres
+     */
+    private function buildRankedOffers(
+        array $offres,
+        User $user,
+        CandidateOfferMatchService $candidateOfferMatchService
+    ): array {
+        $rankedOffres = [];
+
+        foreach ($offres as $offre) {
+            $rankedOffres[] = [
+                'offre' => $offre,
+                'match' => $candidateOfferMatchService->match($user, $offre),
+            ];
+        }
+
+        return $rankedOffres;
     }
 }
