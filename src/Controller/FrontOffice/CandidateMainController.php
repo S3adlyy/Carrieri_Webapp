@@ -116,6 +116,7 @@ class CandidateMainController extends AbstractController
     public function smartOffres(
         Request $request,
         OffreEmploiRepository $offreEmploiRepository,
+        FavoritesOffresRepository $favoritesRepo,
         CandidateOfferMatchService $candidateOfferMatchService
     ): Response {
         $user = $this->getUser();
@@ -137,6 +138,7 @@ class CandidateMainController extends AbstractController
 
         return $this->render('FrontOffice/main/offres_smart.html.twig', [
             'rankedOffres' => $rankedOffres,
+            'favoriteIds' => $favoritesRepo->getFavoriteOfferIdsByCandidat($user->getId()),
         ]);
     }
 
@@ -416,12 +418,19 @@ class CandidateMainController extends AbstractController
 
         $isFavorite = $favoritesRepo->isFavorite($user->getId(), $id);
 
-        if ($isFavorite) {
+        if ($isFavorite && $request->request->get('_favorite_action') === 'add') {
+            $success = true;
+            $message = 'Offre déjà dans vos favoris.';
+        } elseif ($isFavorite) {
             $success = $favoritesRepo->removeFavorite($user->getId(), $id);
             $message = $success ? 'Offre retirée des favoris.' : 'Impossible de retirer cette offre des favoris.';
         } else {
             $success = $favoritesRepo->addFavorite($user->getId(), $id);
             $message = $success ? 'Offre ajoutée aux favoris.' : 'Impossible d’ajouter cette offre aux favoris.';
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return new Response('', $success ? Response::HTTP_NO_CONTENT : Response::HTTP_BAD_REQUEST);
         }
 
         $this->addFlash($success ? 'success' : 'error', $message);
