@@ -4,426 +4,690 @@
 {% block title %}ASL Interview — Sign Language{% endblock %}
 
 {% block stylesheets %}
-{{ parent() }}
-<style>
-    /* Your existing styles remain the same */
-    :root {
-        --asl-primary: #6366f1;
-        --asl-success: #10b981;
-        --asl-danger:  #ef4444;
-        --asl-dark:    #0f172a;
-        --asl-card:    #1e293b;
-    }
+    {{ parent() }}
+    <style>
+        /* Reset and fullscreen setup */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-    .asl-wrapper {
-        min-height: 100vh;
-        background: var(--asl-dark);
-        color: #e2e8f0;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        padding: 2rem 1rem;
-    }
+        body {
+            overflow-x: hidden;
+            background: #000;
+        }
 
-    .asl-header {
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .asl-header h1 {
-        font-size: 2rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #6366f1, #10b981);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    .asl-header p { color: #94a3b8; margin-top: .4rem; }
+        /* Spline 3D Background Container */
+        .spline-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
 
-    /* Server status banner */
-    .status-banner {
-        display: flex;
-        align-items: center;
-        gap: .6rem;
-        padding: .75rem 1.25rem;
-        border-radius: .75rem;
-        margin-bottom: 1.5rem;
-        font-size: .9rem;
-        font-weight: 500;
-    }
-    .status-banner.online  { background: #064e3b; color: #6ee7b7; border: 1px solid #10b981; }
-    .status-banner.offline { background: #450a0a; color: #fca5a5; border: 1px solid #ef4444; }
-    .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-    .online  .status-dot { background: #10b981; animation: pulse-green 1.5s infinite; }
-    .offline .status-dot { background: #ef4444; }
-    @keyframes pulse-green {
-        0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
-        50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
-    }
+        spline-viewer {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
 
-    /* Layout */
-    .asl-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 1.5rem;
-        max-width: 1100px;
-        margin: 0 auto;
-    }
-    @media(max-width: 768px) { .asl-grid { grid-template-columns: 1fr; } }
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease;
+        }
 
-    .asl-card {
-        background: var(--asl-card);
-        border-radius: 1rem;
-        padding: 1.5rem;
-        border: 1px solid #334155;
-    }
-    .asl-card h3 {
-        font-size: 1rem;
-        font-weight: 600;
-        color: #cbd5e1;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-    }
+        .loading-content {
+            text-align: center;
+            color: white;
+        }
 
-    /* Camera feed */
-    .camera-container {
-        position: relative;
-        border-radius: .75rem;
-        overflow: hidden;
-        background: #000;
-        aspect-ratio: 4/3;
-    }
-    .camera-container img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-    .camera-offline {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
-        color: #64748b;
-        gap: .75rem;
-    }
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
 
-    /* Gesture display */
-    .gesture-display {
-        text-align: center;
-        padding: 1.5rem 0;
-    }
-    .gesture-letter {
-        font-size: 5rem;
-        font-weight: 800;
-        line-height: 1;
-        color: var(--asl-primary);
-        transition: all .15s ease;
-        min-height: 6rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .gesture-letter.detected { color: var(--asl-success); transform: scale(1.05); }
-    .gesture-letter.none     { color: #334155; font-size: 2rem; }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
 
-    .confidence-bar-wrap {
-        margin-top: .75rem;
-        background: #0f172a;
-        border-radius: 999px;
-        height: 8px;
-        overflow: hidden;
-    }
-    .confidence-bar {
-        height: 100%;
-        border-radius: 999px;
-        background: linear-gradient(90deg, var(--asl-primary), var(--asl-success));
-        transition: width .2s ease;
-    }
-    .confidence-label {
-        font-size: .8rem;
-        color: #64748b;
-        margin-top: .4rem;
-    }
+        .loading-text {
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #6366f1, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
 
-    /* Text output */
-    .text-output {
-        background: #0f172a;
-        border-radius: .75rem;
-        border: 1px solid #334155;
-        padding: 1rem 1.25rem;
-        min-height: 100px;
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: #f1f5f9;
-        letter-spacing: .08em;
-        word-break: break-all;
-        position: relative;
-    }
-    .text-cursor {
-        display: inline-block;
-        width: 2px;
-        height: 1.4em;
-        background: var(--asl-primary);
-        vertical-align: text-bottom;
-        margin-left: 2px;
-        animation: blink .8s step-end infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        /* Main ASL Interface - Hidden initially */
+        .asl-wrapper {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            color: #e2e8f0;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 2rem 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 1s ease;
+        }
 
-    /* Controls */
-    .asl-controls {
-        display: flex;
-        gap: .75rem;
-        flex-wrap: wrap;
-        margin-top: 1rem;
-    }
-    .btn-asl {
-        flex: 1;
-        min-width: 100px;
-        padding: .6rem 1rem;
-        border-radius: .6rem;
-        border: none;
-        font-size: .875rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all .15s ease;
-    }
-    .btn-asl:hover { filter: brightness(1.15); transform: translateY(-1px); }
-    .btn-asl:active { transform: translateY(0); }
-    .btn-primary { background: var(--asl-primary); color: #fff; }
-    .btn-danger  { background: var(--asl-danger);  color: #fff; }
-    .btn-neutral { background: #334155; color: #e2e8f0; }
+        .asl-wrapper.visible {
+            opacity: 1;
+            visibility: visible;
+        }
 
-    /* History log */
-    .gesture-log {
-        max-height: 140px;
-        overflow-y: auto;
-        display: flex;
-        flex-direction: column-reverse;
-        gap: .3rem;
-    }
-    .log-entry {
-        display: flex;
-        align-items: center;
-        gap: .5rem;
-        font-size: .8rem;
-        color: #94a3b8;
-        padding: .25rem .5rem;
-        border-radius: .4rem;
-        background: #0f172a;
-    }
-    .log-letter {
-        font-weight: 700;
-        color: var(--asl-success);
-        font-size: 1rem;
-        min-width: 1.4rem;
-    }
+        :root {
+            --asl-primary: #6366f1;
+            --asl-success: #10b981;
+            --asl-danger:  #ef4444;
+            --asl-card:    rgba(30, 41, 59, 0.85);
+        }
 
-    /* Tips panel */
-    .tips-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-        gap: .5rem;
-    }
-    .tip-badge {
-        background: #0f172a;
-        border: 1px solid #334155;
-        border-radius: .5rem;
-        padding: .5rem .25rem;
-        text-align: center;
-        font-size: .75rem;
-        color: #94a3b8;
-        transition: border-color .15s;
-    }
-    .tip-badge strong { display: block; font-size: 1.2rem; color: var(--asl-primary); }
-    .tip-badge.active { border-color: var(--asl-success); background: #064e3b22; }
-</style>
+        .asl-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: slideDown 0.8s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .asl-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #6366f1, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .asl-header p { color: #94a3b8; margin-top: .4rem; }
+
+        /* Server status banner */
+        .status-banner {
+            display: flex;
+            align-items: center;
+            gap: .6rem;
+            padding: .75rem 1.25rem;
+            border-radius: .75rem;
+            margin-bottom: 1.5rem;
+            font-size: .9rem;
+            font-weight: 500;
+            animation: fadeIn 0.8s ease 0.3s both;
+            max-width: 1100px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .status-banner.online  { background: rgba(6, 78, 59, 0.95); color: #6ee7b7; border: 1px solid #10b981; }
+        .status-banner.offline { background: rgba(69, 10, 10, 0.95); color: #fca5a5; border: 1px solid #ef4444; }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+        .online  .status-dot { background: #10b981; animation: pulse-green 1.5s infinite; }
+        .offline .status-dot { background: #ef4444; }
+
+        @keyframes pulse-green {
+            0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
+            50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+        }
+
+        /* Layout */
+        .asl-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        @media(max-width: 768px) {
+            .asl-grid { grid-template-columns: 1fr; }
+        }
+
+        .asl-card {
+            background: var(--asl-card);
+            border-radius: 1rem;
+            padding: 1.5rem;
+            border: 1px solid rgba(51, 65, 85, 0.5);
+            animation: slideUp 0.8s ease 0.5s both;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .asl-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .asl-card h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+        }
+
+        /* Camera feed */
+        .camera-container {
+            position: relative;
+            border-radius: .75rem;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 4/3;
+            border: 2px solid rgba(99, 102, 241, 0.5);
+            transition: border-color 0.3s ease;
+        }
+
+        .camera-container:hover {
+            border-color: var(--asl-primary);
+        }
+
+        .camera-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .camera-offline {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #64748b;
+            gap: .75rem;
+        }
+
+        /* Gesture display */
+        .gesture-display {
+            text-align: center;
+            padding: 1.5rem 0;
+        }
+
+        .gesture-letter {
+            font-size: 5rem;
+            font-weight: 800;
+            line-height: 1;
+            color: var(--asl-primary);
+            transition: all .15s ease;
+            min-height: 6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .gesture-letter.detected {
+            color: var(--asl-success);
+            transform: scale(1.05);
+            text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+        }
+
+        .gesture-letter.none {
+            color: #334155;
+            font-size: 2rem;
+        }
+
+        .confidence-bar-wrap {
+            margin-top: .75rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 999px;
+            height: 8px;
+            overflow: hidden;
+        }
+
+        .confidence-bar {
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--asl-primary), var(--asl-success));
+            transition: width .2s ease;
+        }
+
+        .confidence-label {
+            font-size: .8rem;
+            color: #64748b;
+            margin-top: .4rem;
+        }
+
+        /* Text output */
+        .text-output {
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: .75rem;
+            border: 1px solid #334155;
+            padding: 1rem 1.25rem;
+            min-height: 100px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            letter-spacing: .08em;
+            word-break: break-all;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .text-output:hover {
+            border-color: var(--asl-primary);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        .text-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1.4em;
+            background: var(--asl-primary);
+            vertical-align: text-bottom;
+            margin-left: 2px;
+            animation: blink .8s step-end infinite;
+        }
+
+        @keyframes blink {
+            0%,100%{opacity:1}
+            50%{opacity:0}
+        }
+
+        /* Controls */
+        .asl-controls {
+            display: flex;
+            gap: .75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn-asl {
+            flex: 1;
+            min-width: 100px;
+            padding: .6rem 1rem;
+            border-radius: .6rem;
+            border: none;
+            font-size: .875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-asl:hover {
+            filter: brightness(1.15);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-asl:active { transform: translateY(0); }
+        .btn-primary { background: var(--asl-primary); color: #fff; }
+        .btn-danger  { background: var(--asl-danger);  color: #fff; }
+        .btn-neutral { background: #334155; color: #e2e8f0; }
+
+        /* History log */
+        .gesture-log {
+            max-height: 140px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column-reverse;
+            gap: .3rem;
+        }
+
+        .log-entry {
+            display: flex;
+            align-items: center;
+            gap: .5rem;
+            font-size: .8rem;
+            color: #94a3b8;
+            padding: .25rem .5rem;
+            border-radius: .4rem;
+            background: rgba(15, 23, 42, 0.7);
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .log-letter {
+            font-weight: 700;
+            color: var(--asl-success);
+            font-size: 1rem;
+            min-width: 1.4rem;
+        }
+
+        /* Tips panel */
+        .tips-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: .5rem;
+        }
+
+        .tip-badge {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid #334155;
+            border-radius: .5rem;
+            padding: .5rem .25rem;
+            text-align: center;
+            font-size: .75rem;
+            color: #94a3b8;
+            transition: all 0.2s ease;
+        }
+
+        .tip-badge strong {
+            display: block;
+            font-size: 1.2rem;
+            color: var(--asl-primary);
+        }
+
+        .tip-badge.active {
+            border-color: var(--asl-success);
+            background: rgba(6, 78, 59, 0.5);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--asl-primary);
+            border-radius: 10px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--asl-success);
+        }
+    </style>
+
+    <!-- Spline Viewer Script -->
+    <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 {% endblock %}
 
 {% block body %}
-<div class="asl-wrapper">
-    <div class="asl-header">
-        <h1>🤟 ASL Sign Language Interview</h1>
-        <p>Show ASL signs to the camera — hold each letter to type</p>
+    <!-- Spline 3D Background -->
+    <div class="spline-container">
+        <spline-viewer url="https://prod.spline.design/1JBcpFmDb6Q3FNrb/scene.splinecode"></spline-viewer>
     </div>
 
-    {# Server status banner #}
-    <div id="serverStatus" class="status-banner offline mx-auto mb-4" style="max-width:1100px">
-        <div class="status-dot"></div>
-        <span id="statusText">Checking ASL server...</span>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Loading ASL Experience...</div>
+        </div>
     </div>
 
-    <div class="asl-grid">
-        {# LEFT: Camera + gesture #}
-        <div>
-            <div class="asl-card">
-                <h3>📷 Camera Feed</h3>
-                <div class="camera-container" id="cameraBox">
-                    <img id="videoFeed"
-                         src="http://localhost:5001/video_feed"
-                         alt="ASL Camera Feed"
-                         style="width:100%;height:100%;object-fit:cover" />
-                </div>
+    <!-- Main ASL Interface -->
+    <div class="asl-wrapper" id="aslWrapper">
+        <div class="asl-header">
+            <h1>🤟 ASL Sign Language Interview</h1>
+            <p>Show ASL signs to the camera — hold each letter to type</p>
+        </div>
 
-                <div class="gesture-display">
-                    <div class="gesture-letter none" id="gestureLetter">—</div>
-                    <div class="confidence-bar-wrap">
-                        <div class="confidence-bar" id="confidenceBar" style="width:0%"></div>
+        {# Server status banner #}
+        <div id="serverStatus" class="status-banner offline">
+            <div class="status-dot"></div>
+            <span id="statusText">Checking ASL server...</span>
+        </div>
+
+        <div class="asl-grid">
+            {# LEFT: Camera + gesture #}
+            <div>
+                <div class="asl-card">
+                    <h3>📷 Camera Feed</h3>
+                    <div class="camera-container" id="cameraBox">
+                        <img id="videoFeed"
+                             src="http://localhost:5001/video_feed"
+                             alt="ASL Camera Feed"
+                             style="width:100%;height:100%;object-fit:cover" />
                     </div>
-                    <div class="confidence-label" id="confidenceLabel">Show a sign to begin</div>
-                </div>
-            </div>
-        </div>
 
-        {# RIGHT: Text + controls + log #}
-        <div style="display:flex;flex-direction:column;gap:1.5rem">
-            <div class="asl-card">
-                <h3>📝 Recognized Text</h3>
-                <div class="text-output" id="textOutput">
-                    <span id="textContent"></span><span class="text-cursor"></span>
-                </div>
-                <div class="asl-controls">
-                    <button class="btn-asl btn-primary" onclick="addSpace()">SPACE</button>
-                    <button class="btn-asl btn-neutral" onclick="deleteChar()">⌫ Delete</button>
-                    <button class="btn-asl btn-danger"  onclick="clearText()">✕ Clear</button>
-                </div>
-            </div>
-
-            <div class="asl-card">
-                <h3>📋 Recent Gestures</h3>
-                <div class="gesture-log" id="gestureLog"></div>
-            </div>
-
-            <div class="asl-card">
-                <h3>💡 Quick Reference</h3>
-                <div class="tips-grid" id="tipsGrid">
-                    {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'|split('') %}
-                        <div class="tip-badge" id="tip-{{ letter }}">
-                            <strong>{{ letter }}</strong>
+                    <div class="gesture-display">
+                        <div class="gesture-letter none" id="gestureLetter">—</div>
+                        <div class="confidence-bar-wrap">
+                            <div class="confidence-bar" id="confidenceBar" style="width:0%"></div>
                         </div>
-                    {% endfor %}
+                        <div class="confidence-label" id="confidenceLabel">Show a sign to begin</div>
+                    </div>
+                </div>
+            </div>
+
+            {# RIGHT: Text + controls + log #}
+            <div style="display:flex;flex-direction:column;gap:1.5rem">
+                <div class="asl-card">
+                    <h3>📝 Recognized Text</h3>
+                    <div class="text-output" id="textOutput">
+                        <span id="textContent"></span><span class="text-cursor"></span>
+                    </div>
+                    <div class="asl-controls">
+                        <button class="btn-asl btn-primary" onclick="addSpace()">SPACE</button>
+                        <button class="btn-asl btn-neutral" onclick="deleteChar()">⌫ Delete</button>
+                        <button class="btn-asl btn-danger"  onclick="clearText()">✕ Clear</button>
+                    </div>
+                </div>
+
+                <div class="asl-card">
+                    <h3>📋 Recent Gestures</h3>
+                    <div class="gesture-log" id="gestureLog"></div>
+                </div>
+
+                <div class="asl-card">
+                    <h3>💡 Quick Reference</h3>
+                    <div class="tips-grid" id="tipsGrid">
+                        {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'|split('') %}
+                            <div class="tip-badge" id="tip-{{ letter }}">
+                                <strong>{{ letter }}</strong>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 {% endblock %}
 
 {% block javascripts %}
-{{ parent() }}
-<script>
-const ASL_SERVER = "http://localhost:5001";
-let recognizedText = '';
-let lastGesture = null;
+    {{ parent() }}
+    <script>
+        const ASL_SERVER = "http://localhost:5001";
+        let recognizedText = '';
+        let lastGesture = null;
 
-// ── Poll the gesture API ──────────────────────────────────────
-function pollGesture() {
-    fetch(`${ASL_SERVER}/api/gesture`)
-        .then(r => r.json())
-        .then(data => {
-            updateUI(data);
-            updateServerStatus(true);
-        })
-        .catch(() => {
-            updateServerStatus(false);
-        });
-}
+        // Show interface after 3 seconds (changed from 4 to 3)
+        setTimeout(() => {
+            const loadingOverlay = document.getElementById('loadingOverlay');
+            const aslWrapper = document.getElementById('aslWrapper');
 
-function updateUI(data) {
-    const letterEl   = document.getElementById('gestureLetter');
-    const barEl      = document.getElementById('confidenceBar');
-    const labelEl    = document.getElementById('confidenceLabel');
-    const textContent = document.getElementById('textContent');
+            // Fade out loading overlay
+            loadingOverlay.style.opacity = '0';
 
-    // Update recognized text
-    if (data.recognized_text !== undefined) {
-        recognizedText = data.recognized_text;
-        textContent.textContent = recognizedText;
-    }
+            // Show ASL interface
+            aslWrapper.classList.add('visible');
 
-    // Highlight tip badge
-    document.querySelectorAll('.tip-badge').forEach(b => b.classList.remove('active'));
-    if (data.gesture && data.gesture.length === 1) {
-        const tip = document.getElementById('tip-' + data.gesture);
-        if (tip) tip.classList.add('active');
-    }
+            // Remove loading overlay from DOM after animation
+            setTimeout(() => {
+                loadingOverlay.style.display = 'none';
+            }, 1000);
+        }, 3000); // Changed to 3 seconds delay
 
-    // Update gesture display
-    if (data.gesture) {
-        letterEl.textContent = data.gesture;
-        letterEl.className   = 'gesture-letter detected';
-        barEl.style.width    = (data.confidence * 100).toFixed(0) + '%';
-        labelEl.textContent  = `Detected: ${data.gesture} (${(data.confidence * 100).toFixed(0)}% confidence)`;
-
-        // Add to log if new gesture
-        if (data.gesture !== lastGesture) {
-            addToLog(data.gesture);
-            lastGesture = data.gesture;
+        // ── Poll the gesture API ──────────────────────────────────────
+        function pollGesture() {
+            fetch(`${ASL_SERVER}/api/gesture`)
+                .then(r => r.json())
+                .then(data => {
+                    updateUI(data);
+                    updateServerStatus(true);
+                })
+                .catch(() => {
+                    updateServerStatus(false);
+                });
         }
-    } else {
-        letterEl.className = 'gesture-letter none';
-        if (data.hand_detected) {
-            letterEl.textContent = '...';
-            labelEl.textContent = 'Analyzing hand position...';
-        } else {
-            letterEl.textContent = '—';
-            labelEl.textContent = 'Show your hand to the camera';
+
+        function updateUI(data) {
+            const letterEl   = document.getElementById('gestureLetter');
+            const barEl      = document.getElementById('confidenceBar');
+            const labelEl    = document.getElementById('confidenceLabel');
+            const textContent = document.getElementById('textContent');
+
+            // Update recognized text
+            if (data.recognized_text !== undefined) {
+                recognizedText = data.recognized_text;
+                textContent.textContent = recognizedText;
+            }
+
+            // Highlight tip badge
+            document.querySelectorAll('.tip-badge').forEach(b => b.classList.remove('active'));
+            if (data.gesture && data.gesture.length === 1) {
+                const tip = document.getElementById('tip-' + data.gesture);
+                if (tip) tip.classList.add('active');
+
+                // Add pulse animation to detected letter
+                letterEl.style.animation = 'none';
+                setTimeout(() => {
+                    letterEl.style.animation = '';
+                }, 10);
+            }
+
+            // Update gesture display
+            if (data.gesture) {
+                letterEl.textContent = data.gesture;
+                letterEl.className   = 'gesture-letter detected';
+                barEl.style.width    = (data.confidence * 100).toFixed(0) + '%';
+                labelEl.textContent  = `Detected: ${data.gesture} (${(data.confidence * 100).toFixed(0)}% confidence)`;
+
+                // Add to log if new gesture
+                if (data.gesture !== lastGesture) {
+                    addToLog(data.gesture);
+                    lastGesture = data.gesture;
+                }
+            } else {
+                letterEl.className = 'gesture-letter none';
+                if (data.hand_detected) {
+                    letterEl.textContent = '...';
+                    labelEl.textContent = 'Analyzing hand position...';
+                } else {
+                    letterEl.textContent = '—';
+                    labelEl.textContent = 'Show your hand to the camera';
+                }
+                barEl.style.width = '0%';
+
+                if (!data.hand_detected) {
+                    lastGesture = null;
+                }
+            }
         }
-        barEl.style.width = '0%';
 
-        if (!data.hand_detected) {
-            lastGesture = null;
+        function addToLog(gesture) {
+            const log = document.getElementById('gestureLog');
+            const time = new Date().toLocaleTimeString();
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = `<span class="log-letter">${gesture}</span><span>${time}</span>`;
+            log.prepend(div);
+
+            // Keep only last 20 entries
+            while (log.children.length > 20) {
+                log.removeChild(log.lastChild);
+            }
         }
-    }
-}
 
-function addToLog(gesture) {
-    const log = document.getElementById('gestureLog');
-    const time = new Date().toLocaleTimeString();
-    const div = document.createElement('div');
-    div.className = 'log-entry';
-    div.innerHTML = `<span class="log-letter">${gesture}</span><span>${time}</span>`;
-    log.prepend(div);
+        function updateServerStatus(isOnline) {
+            const statusDiv = document.getElementById('serverStatus');
+            const statusText = document.getElementById('statusText');
 
-    // Keep only last 20 entries
-    while (log.children.length > 20) {
-        log.removeChild(log.lastChild);
-    }
-}
+            if (isOnline) {
+                statusDiv.className = 'status-banner online';
+                statusText.textContent = 'ASL recognition server is online and ready';
+            } else {
+                statusDiv.className = 'status-banner offline';
+                statusText.innerHTML = 'ASL server is offline — run: <code style="background:#1e1e1e;padding:2px 8px;border-radius:4px;margin-left:6px">python asl_web_server.py</code>';
+            }
+        }
 
-function updateServerStatus(isOnline) {
-    const statusDiv = document.getElementById('serverStatus');
-    const statusText = document.getElementById('statusText');
+        // Manual controls
+        function addSpace() {
+            fetch(`${ASL_SERVER}/api/add-space`, { method: 'POST' })
+                .then(() => pollGesture());
+        }
 
-    if (isOnline) {
-        statusDiv.className = 'status-banner online mx-auto mb-4';
-        statusDiv.style.maxWidth = '1100px';
-        statusText.textContent = 'ASL recognition server is online and ready';
-    } else {
-        statusDiv.className = 'status-banner offline mx-auto mb-4';
-        statusDiv.style.maxWidth = '1100px';
-        statusText.innerHTML = 'ASL server is offline — run: <code style="background:#1e1e1e;padding:2px 8px;border-radius:4px;margin-left:6px">python asl_web_server.py</code>';
-    }
-}
+        function deleteChar() {
+            fetch(`${ASL_SERVER}/api/delete-last`, { method: 'POST' })
+                .then(() => pollGesture());
+        }
 
-// Manual controls
-function addSpace() {
-    fetch(`${ASL_SERVER}/api/add-space`, { method: 'POST' })
-        .then(() => pollGesture());
-}
+        function clearText() {
+            fetch(`${ASL_SERVER}/api/clear-text`, { method: 'POST' })
+                .then(() => pollGesture());
+        }
 
-function deleteChar() {
-    fetch(`${ASL_SERVER}/api/delete-last`, { method: 'POST' })
-        .then(() => pollGesture());
-}
+        // Start polling every 200ms after interface is shown
+        setTimeout(() => {
+            setInterval(pollGesture, 200);
+            pollGesture(); // Initial call
+        }, 3000);
 
-function clearText() {
-    fetch(`${ASL_SERVER}/api/clear-text`, { method: 'POST' })
-        .then(() => pollGesture());
-}
-
-// Start polling every 200ms
-setInterval(pollGesture, 200);
-pollGesture(); // Initial call
-</script>
+        window.onload = function() {
+            const shadowRoot = document.querySelector('spline-viewer').shadowRoot;
+            if (shadowRoot) {
+                const logo = shadowRoot.querySelector('#logo');
+                if (logo) logo.remove();
+            }
+        }
+    </script>
 {% endblock %}
