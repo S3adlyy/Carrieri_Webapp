@@ -1,0 +1,485 @@
+{# templates/FrontOffice/ai_interview/interview_v2.html.twig #}
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Entretien IA - Agent Vocal Intelligent{% endblock %}
+
+{% block body %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-header bg-gradient-primary text-white rounded-top-4 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">
+                                <i class="fas fa-robot me-2"></i>
+                                Agent IA Recruteur v2.0
+                            </h3>
+                            <div class="status-indicator">
+                            <span id="wsStatus" class="badge bg-warning">
+                                <i class="fas fa-plug me-1"></i> Connexion...
+                            </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <!-- Visualisation audio -->
+                        <div class="text-center mb-4">
+                            <div class="audio-visualizer" id="visualizer">
+                                <canvas id="audioCanvas" width="400" height="60" style="width:100%; height:60px; background:#1a1a2e; border-radius:30px;"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Avatar IA -->
+                        <div class="text-center mb-4">
+                            <div class="avatar-circle" id="avatarCircle">
+                                <i class="fas fa-microphone-alt fa-3x text-white"></i>
+                            </div>
+                            <div class="mt-2">
+                            <span id="statusBadge" class="badge bg-secondary px-3 py-2">
+                                <i class="fas fa-circle me-1" style="font-size: 8px;"></i>
+                                Initialisation
+                            </span>
+                            </div>
+                        </div>
+
+                        <!-- Zone de conversation -->
+                        <div class="chat-container mb-4">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="message ai-message">
+                                    <div class="message-avatar"><i class="fas fa-robot"></i></div>
+                                    <div class="message-bubble">
+                                        Connexion au serveur IA en cours...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Contrôles -->
+                        <div class="recording-controls text-center">
+                            <div class="d-flex justify-content-center gap-3">
+                                <button id="recordBtn" class="btn btn-danger btn-lg rounded-circle shadow" style="width: 90px; height: 90px;" disabled>
+                                    <i class="fas fa-microphone fa-3x"></i>
+                                </button>
+                                <button id="stopBtn" class="btn btn-secondary btn-lg rounded-circle" style="width: 90px; height: 90px; display: none;">
+                                    <i class="fas fa-stop fa-3x"></i>
+                                </button>
+                            </div>
+                            <div id="recordingStatus" class="mt-3">
+                            <span class="badge bg-secondary p-2">
+                                <i class="fas fa-microphone-slash me-1"></i>
+                                En attente de connexion...
+                            </span>
+                            </div>
+                        </div>
+
+                        <!-- Mode texte (fallback) -->
+                        <div class="alert alert-info mt-4">
+                            <i class="fas fa-keyboard me-2"></i>
+                            <strong>Mode texte alternatif :</strong> Si le microphone ne fonctionne pas, utilisez cette zone.
+                            <div class="input-group mt-2">
+                                <input type="text" id="textAnswer" class="form-control" placeholder="Tapez votre réponse ici...">
+                                <button id="sendTextBtn" class="btn btn-primary">Envoyer</button>
+                            </div>
+                        </div>
+
+                        <!-- Progression -->
+                        <div class="progress-section mt-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Progression</span>
+                                <span id="progressText">Question 0 / 6</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div id="progressBar" class="progress-bar bg-gradient-primary" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Résultat -->
+    <div class="modal fade" id="resultModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Résultat de l'entretien
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="resultContent"></div>
+                <div class="modal-footer">
+                    <a href="/ai-interview" class="btn btn-primary">Nouvel entretien</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .bg-gradient-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .avatar-circle {
+            width: 100px; height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s;
+        }
+        .recording-active { animation: pulse 0.5s infinite; background: #dc3545 !important; }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .chat-container {
+            background: #f8f9fa; border-radius: 20px; padding: 20px;
+            height: 350px; overflow-y: auto;
+        }
+        .chat-messages { display: flex; flex-direction: column; gap: 15px; }
+        .message { display: flex; gap: 12px; animation: fadeIn 0.3s ease; }
+        .ai-message { justify-content: flex-start; }
+        .user-message { justify-content: flex-end; }
+        .message-avatar {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: white; flex-shrink: 0;
+        }
+        .user-message .message-avatar { background: #28a745; order: 2; }
+        .message-bubble {
+            max-width: 70%; padding: 12px 18px; border-radius: 20px;
+            background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .ai-message .message-bubble { background: white; border-left: 4px solid #667eea; }
+        .user-message .message-bubble { background: #667eea; color: white; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-bar { transition: width 0.5s ease; }
+        #recordBtn { transition: transform 0.2s; }
+        #recordBtn:hover:not(:disabled) { transform: scale(1.05); }
+        #recordBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .audio-visualizer canvas { width: 100%; height: 60px; background: #1a1a2e; border-radius: 30px; }
+    </style>
+
+    <script>
+        // ============================================
+        # CONFIGURATION
+        # ============================================
+        let ws = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let isRecording = false;
+        let currentQuestionIndex = 0;
+        let totalQuestions = 6;
+        let audioContext = null;
+        let analyser = null;
+        let animationId = null;
+
+        // Éléments DOM
+        const chatMessages = document.getElementById('chatMessages');
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const statusBadge = document.getElementById('statusBadge');
+        const avatarCircle = document.getElementById('avatarCircle');
+        const wsStatus = document.getElementById('wsStatus');
+        const audioCanvas = document.getElementById('audioCanvas');
+        const textAnswer = document.getElementById('textAnswer');
+        const sendTextBtn = document.getElementById('sendTextBtn');
+
+        // ============================================
+        # WEBSOCKET CONNEXION
+        # ============================================
+        function connectWebSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+            const wsUrl = `${protocol}://${window.location.hostname}:3002`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = () => {
+                console.log('✅ WebSocket connecté');
+                wsStatus.className = 'badge bg-success';
+                wsStatus.innerHTML = '<i class="fas fa-check-circle me-1"></i> Connecté';
+                recordingStatus.innerHTML = '<span class="badge bg-success p-2"><i class="fas fa-microphone me-1"></i> Connecté - Prêt pour l\'entretien</span>';
+                recordBtn.disabled = false;
+            };
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                handleWebSocketMessage(data);
+            };
+
+            ws.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                wsStatus.className = 'badge bg-danger';
+                wsStatus.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i> Erreur';
+                recordingStatus.innerHTML = '<span class="badge bg-danger p-2"><i class="fas fa-exclamation-triangle me-1"></i> Erreur de connexion</span>';
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket déconnecté');
+                wsStatus.className = 'badge bg-secondary';
+                wsStatus.innerHTML = '<i class="fas fa-plug me-1"></i> Déconnecté';
+                setTimeout(() => connectWebSocket(), 3000);
+            };
+        }
+
+        // ============================================
+        # GESTION DES MESSAGES WEBSOCKET
+        # ============================================
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'init':
+                    totalQuestions = data.totalQuestions;
+                    addAIMessage(data.firstQuestion);
+                    updateProgress(0);
+                    break;
+
+                case 'next-question':
+                    addAIMessage(`✅ Réponse enregistrée. Passons à la question suivante.`);
+                    setTimeout(() => {
+                        addAIMessage(data.question);
+                        updateProgress(data.progress);
+                    }, 1500);
+                    break;
+
+                case 'evaluation':
+                    addAIMessage(`📊 Score: ${data.currentScore}% - ${data.feedback}`);
+                    break;
+
+                case 'transcription':
+                    addUserMessage(data.text);
+                    statusBadge.innerHTML = `<i class="fas fa-chart-line me-1"></i> Score: ${data.evaluation.score}%`;
+                    break;
+
+                case 'complete':
+                    showResults(data);
+                    break;
+
+                case 'error':
+                    addAIMessage(`⚠️ Erreur: ${data.message}`);
+                    break;
+            }
+        }
+
+        // ============================================
+        # AUDIO CAPTURE ET STREAMING
+        # ============================================
+        async function startRecording() {
+            if (isRecording) return;
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                // Configurer le visualiseur audio
+                setupAudioVisualizer(stream);
+
+                mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        audioChunks.push(event.data);
+                    }
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    const arrayBuffer = await audioBlob.arrayBuffer();
+
+                    // Envoyer l'audio via WebSocket (binaire)
+                    if (ws && ws.readyState === WebSocket.OPEN) {
+                        ws.send(arrayBuffer);
+                        recordingStatus.innerHTML = '<span class="badge bg-info p-2"><i class="fas fa-spinner fa-spin me-1"></i> Analyse en cours...</span>';
+                    }
+
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start(250); // Envoi toutes les 250ms
+                isRecording = true;
+
+                recordBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                recordingStatus.innerHTML = '<span class="badge bg-danger p-2"><i class="fas fa-microphone me-1"></i> 🎤 Enregistrement en cours... Parlez</span>';
+                statusBadge.innerHTML = '<i class="fas fa-circle me-1 text-danger"></i> Enregistrement...';
+                avatarCircle.classList.add('recording-active');
+
+            } catch (error) {
+                console.error('Erreur microphone:', error);
+                recordingStatus.innerHTML = '<span class="badge bg-danger p-2"><i class="fas fa-exclamation-triangle me-1"></i> Erreur: ' + error.message + '</span>';
+                recordBtn.disabled = false;
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                isRecording = false;
+                recordBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                avatarCircle.classList.remove('recording-active');
+
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                    animationId = null;
+                }
+            }
+        }
+
+        // ============================================
+        # VISUALISEUR AUDIO
+        # ============================================
+        async function setupAudioVisualizer(stream) {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 256;
+
+                const source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                audioContext.resume();
+            }
+
+            drawVisualizer();
+        }
+
+        function drawVisualizer() {
+            if (!analyser) return;
+
+            const canvas = audioCanvas;
+            const ctx = canvas.getContext('2d');
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                animationId = requestAnimationFrame(draw);
+                analyser.getByteFrequencyData(dataArray);
+
+                ctx.fillStyle = '#1a1a2e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                const barWidth = (canvas.width / bufferLength) * 2;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = dataArray[i] / 2;
+                    const gradient = ctx.createLinearGradient(x, canvas.height - barHeight, x, canvas.height);
+                    gradient.addColorStop(0, '#667eea');
+                    gradient.addColorStop(1, '#764ba2');
+
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(x, canvas.height - barHeight, barWidth - 1, barHeight);
+                    x += barWidth;
+                }
+            }
+
+            draw();
+        }
+
+        // ============================================
+        # FONCTIONS CHAT
+        # ============================================
+        function addAIMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai-message';
+            messageDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-robot"></i></div>
+            <div class="message-bubble">${text}</div>
+        `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message';
+            messageDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-user"></i></div>
+            <div class="message-bubble">${text}</div>
+        `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateProgress(progress) {
+            const percent = progress * 100;
+            progressBar.style.width = percent + '%';
+            progressText.innerHTML = `Question ${Math.floor(progress * totalQuestions)} / ${totalQuestions}`;
+        }
+
+        function showResults(data) {
+            const finalScore = data.finalScore;
+            const resultContent = document.getElementById('resultContent');
+
+            let gradeColor = '#dc3545';
+            let gradeText = 'À améliorer';
+            let icon = '😔';
+
+            if (finalScore >= 80) {
+                gradeColor = '#28a745';
+                gradeText = 'Excellent';
+                icon = '🏆';
+            } else if (finalScore >= 60) {
+                gradeColor = '#f59e0b';
+                gradeText = 'Très bien';
+                icon = '👍';
+            } else if (finalScore >= 40) {
+                gradeColor = '#fd7e14';
+                gradeText = 'Bon';
+                icon = '👌';
+            }
+
+            resultContent.innerHTML = `
+            <div class="text-center">
+                <div class="mb-4">
+                    <div style="width: 150px; height: 150px; border-radius: 50%; background: conic-gradient(${gradeColor} ${finalScore * 3.6}deg, #e9ecef 0deg); margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 32px; font-weight: bold;">${finalScore}%</span>
+                    </div>
+                </div>
+                <h3>${icon} ${gradeText}</h3>
+                ${data.answers.map((ans, i) => `
+                    <div class="mt-3 p-3 border rounded text-start">
+                        <strong>Question ${i+1}</strong>
+                        <div class="progress mt-1" style="height: 5px;">
+                            <div class="progress-bar bg-${ans.evaluation.score >= 70 ? 'success' : (ans.evaluation.score >= 50 ? 'warning' : 'danger')}" style="width: ${ans.evaluation.score}%"></div>
+                        </div>
+                        <small class="text-muted">${ans.evaluation.feedback}</small>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+        }
+
+        // ============================================
+        # MODE TEXTE (FALLBACK)
+        # ============================================
+        function sendTextAnswer() {
+            const text = textAnswer.value.trim();
+            if (text && ws && ws.readyState === WebSocket.OPEN) {
+                addUserMessage(text);
+                ws.send(JSON.stringify({ type: 'answer', text: text }));
+                textAnswer.value = '';
+            }
+        }
+
+        // ============================================
+        # INITIALISATION
+        # ============================================
+        recordBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+        sendTextBtn.addEventListener('click', sendTextAnswer);
+        textAnswer.addEventListener('keypress', (e) => { if (e.key === 'Enter') sendTextAnswer(); });
+
+        connectWebSocket();
+    </script>
+{% endblock %}

@@ -1,0 +1,128 @@
+{# templates/FrontOffice/ai_interview/index.html.twig #}
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Entretien IA - Simulation d'entretien{% endblock %}
+
+{% block body %}
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-header bg-primary text-white text-center rounded-top-4">
+                        <h2 class="mb-0">
+                            <i class="fas fa-robot me-2"></i>
+                            Entretien avec l'Assistant IA
+                        </h2>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <div class="avatar-circle bg-gradient-primary mx-auto mb-3">
+                                <i class="fas fa-microphone-alt fa-3x text-white"></i>
+                            </div>
+                            <h4>Préparez-vous à passer un entretien vocal</h4>
+                            <p class="text-muted">
+                                L'IA vous posera 6 questions. Répondez vocalement à chacune d'elles.
+                                L'entretien dure environ 5 minutes.
+                            </p>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <strong>Informations importantes :</strong>
+                            <ul class="mb-0 mt-2">
+                                <li>🎤 Utilisez un micro fonctionnel</li>
+                                <li>🗣️ Parlez clairement et distinctement</li>
+                                <li>⏱️ Vous avez 1 minute maximum par question</li>
+                                <li>📊 Un score détaillé vous sera donné à la fin</li>
+                            </ul>
+                        </div>
+
+                        <form id="startForm" class="mt-4">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Nom complet <span class="text-danger">*</span></label>
+                                    <input type="text" id="candidateName" class="form-control" required placeholder="Jean Dupont">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Email <span class="text-danger">*</span></label>
+                                    <input type="email" id="candidateEmail" class="form-control" required placeholder="jean@example.com">
+                                </div>
+                                <div class="col-md-12 mb-3">
+                                    <label class="form-label">Poste visé <span class="text-danger">*</span></label>
+                                    <select id="position" class="form-select" required>
+                                        <option value="">Sélectionnez un poste</option>
+                                        <option value="Développeur Symfony">Développeur Symfony</option>
+                                        <option value="Développeur Full Stack">Développeur Full Stack</option>
+                                        <option value="Chef de Projet">Chef de Projet</option>
+                                        <option value="Data Scientist">Data Scientist</option>
+                                        <option value="DevOps Engineer">DevOps Engineer</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-lg w-100 mt-3">
+                                <i class="fas fa-play me-2"></i> Démarrer l'entretien
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card {
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            transition: transform 0.3s;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+
+    <script>
+        document.getElementById('startForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const name = document.getElementById('candidateName').value;
+            const email = document.getElementById('candidateEmail').value;
+            const position = document.getElementById('position').value;
+
+            if (!name || !email || !position) {
+                alert('Veuillez remplir tous les champs');
+                return;
+            }
+
+            const response = await fetch('/ai-interview/api/session/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, position })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                localStorage.setItem('interviewSessionId', data.sessionId);
+                window.location.href = '/ai-interview/interview';
+            } else {
+                alert('Erreur: ' + (data.error || 'Impossible de démarrer l\'entretien'));
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,627 @@
+{# templates/FrontOffice/ai_interview/interview.html.twig #}
+{% extends 'FrontOffice/base.html.twig' %}
+
+{% block title %}Entretien IA - Vocal{% endblock %}
+
+{% block body %}
+    <div class="container py-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-10">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-header bg-gradient-primary text-white rounded-top-4 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h3 class="mb-0">
+                                <i class="fas fa-robot me-2"></i>
+                                Assistant IA Recruteur
+                            </h3>
+                            <div class="timer-box bg-white text-dark rounded-pill px-4 py-2">
+                                <i class="fas fa-hourglass-half me-2 text-warning"></i>
+                                <span id="timer" class="fw-bold">05:00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+                        <!-- Test microphone -->
+                        <div id="microphoneTest" class="alert alert-warning mb-3">
+                            <i class="fas fa-microphone-alt me-2"></i>
+                            <strong>Test du microphone</strong>
+                            <button id="testMicrophoneBtn" class="btn btn-warning btn-sm ms-3">
+                                <i class="fas fa-play me-1"></i> Tester mon micro
+                            </button>
+                            <div id="testResult" class="mt-2 d-none"></div>
+                        </div>
+
+                        <!-- Avatar IA -->
+                        <div class="text-center mb-4">
+                            <div class="avatar-container mx-auto">
+                                <div class="avatar-circle" id="avatarCircle">
+                                    <i class="fas fa-microphone-alt fa-3x text-white"></i>
+                                </div>
+                                <div class="status-badge mt-2">
+                                <span id="statusBadge" class="badge bg-secondary px-3 py-2">
+                                    <i class="fas fa-circle me-1" style="font-size: 8px;"></i>
+                                    Initialisation
+                                </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Zone de conversation -->
+                        <div class="chat-container mb-4">
+                            <div class="chat-messages" id="chatMessages">
+                                <div class="message ai-message fade-in">
+                                    <div class="message-avatar">
+                                        <i class="fas fa-robot"></i>
+                                    </div>
+                                    <div class="message-bubble">
+                                        Cliquez sur "Tester mon micro" pour vérifier que tout fonctionne.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- INPUT TEXTE DE SECOURS (si le micro ne fonctionne pas) -->
+                        <div class="alert alert-info mb-3">
+                            <i class="fas fa-keyboard me-2"></i>
+                            <strong>Mode texte alternatif :</strong> Si le micro ne fonctionne pas, vous pouvez taper vos réponses.
+                            <div class="input-group mt-2">
+                                <input type="text" id="textAnswer" class="form-control" placeholder="Tapez votre réponse ici...">
+                                <button id="sendTextBtn" class="btn btn-primary">Envoyer</button>
+                            </div>
+                        </div>
+
+                        <!-- Zone d'enregistrement -->
+                        <div class="recording-controls text-center mt-4">
+                            <div class="d-flex justify-content-center gap-3">
+                                <button id="recordBtn" class="btn btn-danger btn-lg rounded-circle shadow microphone-btn" style="width: 90px; height: 90px;" disabled>
+                                    <i class="fas fa-microphone fa-3x"></i>
+                                </button>
+                                <button id="stopBtn" class="btn btn-secondary btn-lg rounded-circle" style="width: 90px; height: 90px; display: none;">
+                                    <i class="fas fa-stop fa-3x"></i>
+                                </button>
+                            </div>
+                            <div id="recordingStatus" class="mt-3">
+                            <span class="badge bg-secondary p-2">
+                                <i class="fas fa-microphone-slash me-1"></i>
+                                Testez votre micro d'abord
+                            </span>
+                            </div>
+                        </div>
+
+                        <!-- Progression -->
+                        <div class="progress-section mt-4">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Progression</span>
+                                <span id="progressText">Question 0 / 6</span>
+                            </div>
+                            <div class="progress" style="height: 10px;">
+                                <div id="progressBar" class="progress-bar bg-gradient-primary" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de fin -->
+    <div class="modal fade" id="resultModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-gradient-primary text-white">
+                    <h5 class="modal-title">
+                        <i class="fas fa-chart-line me-2"></i>
+                        Résultat de l'entretien
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="resultContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Chargement...</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="/ai-interview" class="btn btn-primary">Nouvel entretien</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .avatar-circle {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .recording-active {
+            animation: pulse 0.5s infinite;
+            background: #dc3545 !important;
+        }
+        .test-success {
+            background: #28a745 !important;
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .chat-container {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        .chat-messages {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease;
+        }
+        .ai-message {
+            justify-content: flex-start;
+        }
+        .user-message {
+            justify-content: flex-end;
+        }
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            flex-shrink: 0;
+        }
+        .user-message .message-avatar {
+            background: #28a745;
+            order: 2;
+        }
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .ai-message .message-bubble {
+            background: white;
+            border-left: 4px solid #667eea;
+        }
+        .user-message .message-bubble {
+            background: #667eea;
+            color: white;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .timer-box {
+            font-family: monospace;
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+        }
+        .progress-bar {
+            transition: width 0.5s ease;
+        }
+        .microphone-btn {
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .microphone-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+        }
+        .microphone-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+
+    <script>
+        // ============================================
+        // VARIABLES
+        // ============================================
+        let sessionId = localStorage.getItem('interviewSessionId');
+        let currentQuestionIndex = 0;
+        let questions = [];
+        let totalQuestions = 0;
+        let timerInterval = null;
+        let timeLeft = 300;
+        let evaluationResults = [];
+        let microphoneAllowed = false;
+
+        // Éléments DOM
+        const chatMessages = document.getElementById('chatMessages');
+        const recordBtn = document.getElementById('recordBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const recordingStatus = document.getElementById('recordingStatus');
+        const timerElement = document.getElementById('timer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        const statusBadge = document.getElementById('statusBadge');
+        const avatarCircle = document.getElementById('avatarCircle');
+        const testMicrophoneBtn = document.getElementById('testMicrophoneBtn');
+        const testResult = document.getElementById('testResult');
+        const textAnswer = document.getElementById('textAnswer');
+        const sendTextBtn = document.getElementById('sendTextBtn');
+        const microphoneTestDiv = document.getElementById('microphoneTest');
+
+        // ============================================
+        // TEST DU MICROPHONE
+        // ============================================
+        async function testMicrophone() {
+            testResult.classList.remove('d-none');
+            testResult.innerHTML = '<div class="spinner-border spinner-border-sm text-warning me-2"></div> Test en cours...';
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                stream.getTracks().forEach(track => track.stop());
+
+                testResult.innerHTML = '<i class="fas fa-check-circle text-success me-2"></i> ✅ Microphone fonctionne parfaitement !';
+                testResult.className = 'mt-2 alert alert-success';
+                microphoneAllowed = true;
+
+                microphoneTestDiv.classList.remove('alert-warning');
+                microphoneTestDiv.classList.add('alert-success');
+                microphoneTestDiv.innerHTML = '<i class="fas fa-check-circle me-2"></i> <strong>Microphone OK</strong> - Vous pouvez commencer l\'entretien !';
+
+                recordBtn.disabled = false;
+                recordingStatus.innerHTML = '<span class="badge bg-success p-2"><i class="fas fa-microphone me-1"></i> Micro OK - Cliquez pour répondre</span>';
+
+                // Initialiser la reconnaissance vocale
+                initSpeechRecognition();
+
+                // Démarrer l'entretien si ce n'est pas déjà fait
+                if (!sessionId) {
+                    startInterviewSession();
+                } else {
+                    loadSession();
+                }
+
+            } catch (error) {
+                console.error('Erreur microphone:', error);
+                testResult.innerHTML = '<i class="fas fa-exclamation-triangle text-danger me-2"></i> ❌ Microphone non trouvé ou permission refusée. Vérifiez vos paramètres.';
+                testResult.className = 'mt-2 alert alert-danger';
+                microphoneAllowed = false;
+                recordBtn.disabled = true;
+            }
+        }
+
+        // ============================================
+        // RECONNAISSANCE VOCALE
+        // ============================================
+        let recognition = null;
+        let isRecording = false;
+
+        function initSpeechRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                recordingStatus.innerHTML = '<span class="badge bg-danger p-2"><i class="fas fa-exclamation-triangle me-1"></i> Chrome requis pour la reconnaissance vocale</span>';
+                return;
+            }
+
+            const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'fr-FR';
+
+            recognition.onstart = () => {
+                isRecording = true;
+                recordBtn.style.display = 'none';
+                stopBtn.style.display = 'inline-block';
+                statusBadge.innerHTML = '<i class="fas fa-circle me-1 text-danger" style="font-size: 8px;"></i> Écoute...';
+                statusBadge.classList.remove('bg-secondary');
+                statusBadge.classList.add('bg-danger');
+                avatarCircle.classList.add('recording-active');
+                recordingStatus.innerHTML = '<span class="badge bg-danger p-2"><i class="fas fa-microphone me-1"></i> 🎤 Parlez maintenant...</span>';
+            };
+
+            recognition.onresult = (event) => {
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    recordingStatus.innerHTML = `<span class="badge bg-success p-2"><i class="fas fa-check-circle me-1"></i> ✓ "${finalTranscript}"</span>`;
+                    addUserMessage(finalTranscript);
+                    recognition.stop();
+                    submitAnswer(finalTranscript);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Erreur:', event.error);
+                recordingStatus.innerHTML = `<span class="badge bg-warning p-2"><i class="fas fa-exclamation-triangle me-1"></i> Erreur: ${event.error}. Réessayez.</span>`;
+                stopRecording();
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                recordBtn.style.display = 'inline-block';
+                stopBtn.style.display = 'none';
+                setTimeout(() => {
+                    statusBadge.innerHTML = '<i class="fas fa-circle me-1" style="font-size: 8px;"></i> Prêt';
+                    statusBadge.classList.remove('bg-danger', 'bg-success');
+                    statusBadge.classList.add('bg-secondary');
+                    avatarCircle.classList.remove('recording-active');
+                }, 500);
+            };
+        }
+
+        function startRecording() {
+            if (!microphoneAllowed) {
+                alert('Veuillez d\'abord tester votre microphone');
+                return;
+            }
+
+            if (recognition && !isRecording) {
+                try {
+                    recognition.start();
+                } catch(e) {
+                    console.log('Erreur start:', e);
+                    recordingStatus.innerHTML = '<span class="badge bg-danger p-2"><i class="fas fa-bug me-1"></i> Erreur. Rechargez la page.</span>';
+                }
+            }
+        }
+
+        function stopRecording() {
+            if (recognition && isRecording) {
+                recognition.stop();
+            }
+        }
+
+        // ============================================
+        // SYNTHÈSE VOCALE
+        // ============================================
+        function speak(text, callback) {
+            if (!window.speechSynthesis) {
+                addAIMessage(text);
+                if (callback) callback();
+                return;
+            }
+
+            window.speechSynthesis.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'fr-FR';
+            utterance.rate = 0.9;
+
+            utterance.onend = () => {
+                recordBtn.disabled = false;
+                recordingStatus.innerHTML = '<span class="badge bg-success p-2"><i class="fas fa-microphone me-1"></i> Cliquez sur le micro pour répondre</span>';
+                if (callback) callback();
+            };
+
+            utterance.onstart = () => {
+                recordBtn.disabled = true;
+                statusBadge.innerHTML = '<i class="fas fa-volume-up me-1"></i> L\'IA parle...';
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
+
+        // ============================================
+        // FONCTIONS CHAT
+        // ============================================
+        function addAIMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message ai-message fade-in';
+            messageDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-robot"></i></div>
+            <div class="message-bubble">${text}</div>
+        `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message user-message fade-in';
+            messageDiv.innerHTML = `
+            <div class="message-avatar"><i class="fas fa-user"></i></div>
+            <div class="message-bubble">${text}</div>
+        `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // ============================================
+        // LOGIQUE MÉTIER
+        // ============================================
+        async function startInterviewSession() {
+            const name = localStorage.getItem('candidateName') || prompt('Votre nom:');
+            const email = localStorage.getItem('candidateEmail') || prompt('Votre email:');
+            const position = localStorage.getItem('candidatePosition') || 'Développeur';
+
+            localStorage.setItem('candidateName', name);
+            localStorage.setItem('candidateEmail', email);
+
+            const response = await fetch('/ai-interview/api/session/start', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, position })
+            });
+
+            const data = await response.json();
+            sessionId = data.sessionId;
+            localStorage.setItem('interviewSessionId', sessionId);
+            questions = data.questions;
+            totalQuestions = questions.length;
+            startInterview();
+        }
+
+        async function loadSession() {
+            const response = await fetch(`/ai-interview/api/session/${sessionId}`);
+            const data = await response.json();
+
+            if (data.success && data.questions && data.questions.length > 0) {
+                questions = data.questions;
+                totalQuestions = questions.length;
+                startInterview();
+            }
+        }
+
+        function startInterview() {
+            startTimer();
+            setTimeout(() => askQuestion(0), 500);
+        }
+
+        function askQuestion(index) {
+            if (index >= totalQuestions) {
+                endInterview();
+                return;
+            }
+
+            currentQuestionIndex = index;
+            const question = questions[index].text;
+
+            addAIMessage(question);
+            updateProgress();
+            speak(question);
+        }
+
+        async function submitAnswer(answer) {
+            recordBtn.disabled = true;
+
+            const response = await fetch('/ai-interview/api/session/evaluate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sessionId: sessionId,
+                    questionId: currentQuestionIndex + 1,
+                    response: answer
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                evaluationResults.push(data.evaluation);
+                addAIMessage(`📊 Score: ${data.evaluation.score}% - ${data.evaluation.feedback}`);
+                setTimeout(() => {
+                    askQuestion(currentQuestionIndex + 1);
+                }, 2000);
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestionIndex) / totalQuestions) * 100;
+            progressBar.style.width = progress + '%';
+            progressText.innerHTML = `Question ${currentQuestionIndex + 1} / ${totalQuestions}`;
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    endInterview();
+                } else {
+                    timeLeft--;
+                    const minutes = Math.floor(timeLeft / 60);
+                    const seconds = timeLeft % 60;
+                    timerElement.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        async function endInterview() {
+            if (timerInterval) clearInterval(timerInterval);
+            recordBtn.disabled = true;
+
+            const response = await fetch(`/ai-interview/api/session/complete/${sessionId}`, {
+                method: 'POST'
+            });
+
+            const data = await response.json();
+            showResults(data);
+        }
+
+        function showResults(data) {
+            const finalScore = Math.round(data.finalScore);
+            const resultContent = document.getElementById('resultContent');
+
+            let gradeColor = '#dc3545';
+            let gradeText = 'À améliorer';
+
+            if (finalScore >= 80) {
+                gradeColor = '#28a745';
+                gradeText = 'Excellent';
+            } else if (finalScore >= 60) {
+                gradeColor = '#f59e0b';
+                gradeText = 'Très bien';
+            } else if (finalScore >= 40) {
+                gradeColor = '#fd7e14';
+                gradeText = 'Bon';
+            }
+
+            resultContent.innerHTML = `
+            <div class="text-center">
+                <div class="mb-4">
+                    <div style="width: 120px; height: 120px; border-radius: 50%; background: conic-gradient(${gradeColor} ${finalScore * 3.6}deg, #e9ecef ${finalScore * 3.6}deg); margin: 0 auto; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 28px; font-weight: bold;">${finalScore}%</span>
+                    </div>
+                </div>
+                <div class="alert alert-light">
+                    <h5>📝 Bilan</h5>
+                    <p>${data.feedback.replace(/\n/g, '<br>')}</p>
+                </div>
+                ${evaluationResults.map((eval, i) => `
+                    <div class="mb-2 p-2 border rounded">
+                        <strong>Question ${i+1}</strong>
+                        <span class="badge ${eval.score >= 70 ? 'bg-success' : (eval.score >= 50 ? 'bg-warning' : 'bg-danger')} float-end">${eval.score}%</span>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+
+            const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+            resultModal.show();
+            localStorage.removeItem('interviewSessionId');
+        }
+
+        // ============================================
+        // MODE TEXTE (SECOURS)
+        // ============================================
+        sendTextBtn.addEventListener('click', () => {
+            const answer = textAnswer.value.trim();
+            if (answer && currentQuestionIndex < totalQuestions) {
+                addUserMessage(answer);
+                submitAnswer(answer);
+                textAnswer.value = '';
+            }
+        });
+
+        textAnswer.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendTextBtn.click();
+            }
+        });
+
+        // ============================================
+        // INITIALISATION
+        // ============================================
+        testMicrophoneBtn.addEventListener('click', testMicrophone);
+        recordBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+    </script>
+{% endblock %}
