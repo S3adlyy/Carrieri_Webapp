@@ -47,6 +47,7 @@
             --shadow-sm:    0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
             --shadow-md:    0 4px 16px rgba(0,0,0,.08);
             --shadow-lg:    0 12px 40px rgba(79,70,229,.14);
+            --asl-gradient: linear-gradient(135deg, #6366f1, #10b981);
         }
 
         .s-page {
@@ -155,8 +156,11 @@
             padding: 14px 20px;
             background: #f8fafc;
             border-bottom: 1px solid var(--border);
-            display: flex; align-items: center; gap: 9px;
-            font-size: 13px; font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-size: 13px;
+            font-weight: 700;
             color: var(--text-primary);
             text-transform: uppercase; letter-spacing: .5px;
         }
@@ -316,6 +320,68 @@
             box-shadow: var(--shadow-lg);
             transform: scale(1.02);
             color: #fff; text-decoration: none;
+        }
+
+        /* ASL Interview Button Styles */
+        .btn-asl-interview {
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 14px 28px; width: 100%; justify-content: center;
+            background: var(--asl-gradient);
+            color: #fff;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            transition: all .3s ease;
+            margin-top: 16px;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-asl-interview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .btn-asl-interview:hover::before {
+            left: 100%;
+        }
+        .btn-asl-interview:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
+            color: #fff;
+            text-decoration: none;
+        }
+        .btn-asl-interview i {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        .btn-asl-interview:hover i {
+            transform: translateX(5px);
+        }
+
+        .asl-info-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(16, 185, 129, 0.1));
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            margin-top: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+        }
+        .asl-info-badge i {
+            font-size: 20px;
+            color: var(--indigo);
         }
 
         .s-notes-box {
@@ -677,6 +743,22 @@
                             <button class="btn-calendar" onclick="addToCalendar({{ entretien.id }})">
                                 <i class="fas fa-calendar-plus"></i> Ajouter à mon calendrier
                             </button>
+
+                            <!-- ASL INTERVIEW BUTTON - Added here -->
+                            <a href="{{ path('app_asl_interview') }}" class="btn-asl-interview">
+                                <i class="fas fa-hands"></i>
+                                🤟 Passer l'entretien en langue des signes (ASL)
+                                <i class="fas fa-arrow-right"></i>
+                            </a>
+
+                            <div class="asl-info-badge">
+                                <i class="fas fa-info-circle"></i>
+                                <div>
+                                    <strong>Entretien accessible</strong><br>
+                                    Utilisez la caméra pour répondre aux questions en langue des signes.
+                                    Vos réponses seront reconnues automatiquement.
+                                </div>
+                            </div>
 
                         </div>
                     </div>
