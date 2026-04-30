@@ -123,8 +123,8 @@ class SignLanguageRecognizer:
         self.predicted_text = ""
         self.last_prediction = ""
         self.prediction_counter = 0
-        self.confidence_threshold = 0.6
-        self.stable_frame_count = 5  # Frames needed for stable prediction
+        self.confidence_threshold = 0.35
+        self.stable_frame_count = 3  # Frames needed for stable prediction
 
         # Gesture mapping (ASL alphabet)
         self.gesture_labels = {
@@ -722,14 +722,20 @@ class DataCollectorGUI:
 
     @staticmethod
     def collect_all_gestures():
-        """Guided collection for all gestures"""
+        """Guided auto-collection for all gestures A-Z.
+        Hold each sign steady — samples collect automatically.
+        SPACE = collect one sample manually
+        ENTER = skip to next letter
+        ESC   = quit
+        """
+        import time
         recognizer = SignLanguageRecognizer()
 
         print("\n" + "=" * 60)
-        print("GUIDED GESTURE DATA COLLECTION")
+        print("GUIDED GESTURE DATA COLLECTION  (A → Z)")
         print("=" * 60)
-        print("\nYou will be guided through collecting samples for each gesture.")
-        print("Follow the instructions on screen.\n")
+        print("Hold each ASL sign steady — samples auto-collect.")
+        print("SPACE = manual sample  |  ENTER = skip letter  |  ESC = quit\n")
 
         cam_src, cam_backend = find_camera()
         cap = cv2.VideoCapture(cam_src) if isinstance(cam_src, str) else cv2.VideoCapture(cam_src, cam_backend)
@@ -738,95 +744,132 @@ class DataCollectorGUI:
 
         if not cap.isOpened():
             print("Error: Could not open camera!")
-            print("Make sure DroidCam is running on your iPhone AND the PC app.")
-            print("Then try again — or manually set cam_index to 1, 2, or 3.")
             return
 
-        # Warm up camera — discard first 30 frames so DroidCam exposure settles
+        # Warm up
         print("  Warming up camera...")
         for _ in range(30):
             cap.read()
-        print("  Camera ready!")
+        print("  Camera ready!\n")
 
-        # Collect for each gesture
-        for gesture_id in range(26):  # A-Z only for guided collection
+        SAMPLES_NEEDED = 50      # samples per letter
+        HOLD_SECONDS   = 3.0     # seconds to hold before auto-collect starts
+        COLLECT_INTERVAL = 0.08  # seconds between auto-samples (~12/sec)
+
+        gesture_id = 0
+        key = 0
+
+        while gesture_id < 26:
             gesture_char = recognizer.gesture_labels[gesture_id]
-            samples_needed = 30
             samples_collected = 0
+            hold_start = None
+            last_collect_time = 0
+            collecting_active = False
 
-            print(f"\n📝 Gesture: {gesture_char} (ID: {gesture_id})")
-            print(f"   Collecting {samples_needed} samples...")
+            print(f"📝  [{gesture_id+1}/26]  Letter: {gesture_char}  — make the ASL sign and hold still")
 
-            while samples_collected < samples_needed:
+            while samples_collected < SAMPLES_NEEDED:
                 success, frame = cap.read()
                 if not success:
-                    break
+                    continue
 
-                # Debug: print frame info once to diagnose green screen
-                if not hasattr(recognizer, '_frame_debug_done'):
-                    print(f"[DEBUG] frame shape={frame.shape} dtype={frame.dtype} min={frame.min()} max={frame.max()}")
-                    # Check green channel dominance
-                    b, g, r = cv2.split(frame) if frame.ndim==3 and frame.shape[2]==3 else (frame,frame,frame)
-                    print(f"[DEBUG] channel means: B={b.mean():.1f} G={g.mean():.1f} R={r.mean():.1f}")
-                    recognizer._frame_debug_done = True
-                # Fix green frame: try all known conversions
-                if frame is not None and frame.ndim == 3 and frame.shape[2] == 3:
-                    b, g, r = cv2.split(frame)
-                    # If green channel is massively dominant -> NV12 misread as BGR
-                    if g.mean() > 150 and b.mean() < 50 and r.mean() < 50:
-                        # Try interpreting as YUV NV12 by reshaping height
-                        h, w = frame.shape[:2]
-                        yuv = frame.reshape(h * 3 // 2, w) if h % 3 == 0 else None
-                        if yuv is not None:
-                            try:
-                                frame = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR_NV12)
-                            except Exception:
-                                pass
                 frame = cv2.flip(frame, 1)
                 frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                # New Tasks API: wrap in mp.Image and call detect_for_video
                 recognizer._frame_timestamp_ms += 33
                 mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame_rgb)
                 results = recognizer.hands.detect_for_video(mp_image, recognizer._frame_timestamp_ms)
 
-                # Draw semi-transparent overlay so video stays visible
-                overlay = frame.copy()
-                cv2.rectangle(overlay, (0, 0), (frame.shape[1], 150), (0, 0, 0), -1)
-                cv2.addWeighted(overlay, 0.5, frame, 0.5, 0, frame)
-                cv2.putText(frame, f"Collecting: {gesture_char}", (10, 40),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                cv2.putText(frame, f"Samples: {samples_collected}/{samples_needed}",
-                            (10, 80), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-                cv2.putText(frame, "Press SPACE to save sample | ESC to skip",
-                            (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1)
-
                 landmarks = None
-                if results.hand_landmarks:
+                hand_detected = bool(results.hand_landmarks)
+
+                if hand_detected:
                     recognizer.draw_hand_landmarks(frame, results)
                     landmarks = recognizer.extract_hand_landmarks(results.hand_landmarks[0])
 
-                    if landmarks is not None:
-                        cv2.putText(frame, "✓ Hand detected", (10, frame.shape[0] - 20),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+                now = time.time()
+
+                # Auto-collect logic
+                if landmarks is not None:
+                    if hold_start is None:
+                        hold_start = now
+                    held = now - hold_start
+                    if held >= HOLD_SECONDS:
+                        collecting_active = True
+                    if collecting_active and (now - last_collect_time) >= COLLECT_INTERVAL:
+                        if recognizer.save_gesture_data(gesture_id, landmarks):
+                            samples_collected += 1
+                            last_collect_time = now
+                else:
+                    hold_start = None
+                    collecting_active = False
+
+                # ── UI ──────────────────────────────────────────────
+                h, w = frame.shape[:2]
+
+                # Top overlay
+                overlay = frame.copy()
+                cv2.rectangle(overlay, (0, 0), (w, 155), (0, 0, 0), -1)
+                cv2.addWeighted(overlay, 0.55, frame, 0.45, 0, frame)
+
+                # Letter + progress
+                progress_ratio = samples_collected / SAMPLES_NEEDED
+                bar_w = int(progress_ratio * (w - 30))
+                cv2.rectangle(frame, (15, 105), (w-15, 130), (60, 60, 60), -1)
+                cv2.rectangle(frame, (15, 105), (15 + bar_w, 130), (0, 210, 80), -1)
+
+                cv2.putText(frame, f"Letter: {gesture_char}  [{gesture_id+1}/26]",
+                            (15, 42), cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 255, 120), 2)
+                cv2.putText(frame, f"Samples: {samples_collected}/{SAMPLES_NEEDED}",
+                            (15, 78), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 120), 2)
+                cv2.putText(frame, "SPACE=manual  ENTER=skip  ESC=quit",
+                            (15, 148), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (200, 200, 200), 1)
+
+                # Status bar bottom
+                if not hand_detected:
+                    status_txt = "Show your hand to the camera"
+                    status_col = (0, 120, 255)
+                elif not collecting_active:
+                    held_pct = int(min((now - hold_start) / HOLD_SECONDS * 100, 100)) if hold_start else 0
+                    status_txt = f"Hold still... {held_pct}%"
+                    status_col = (0, 200, 255)
+                else:
+                    status_txt = f"Collecting! Keep holding {gesture_char}"
+                    status_col = (0, 255, 80)
+
+                cv2.rectangle(frame, (0, h-40), (w, h), (0,0,0), -1)
+                cv2.putText(frame, status_txt, (15, h-12),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.65, status_col, 2)
 
                 cv2.imshow('Data Collection', frame)
-
                 key = cv2.waitKey(1) & 0xFF
+
                 if key == ord(' ') and landmarks is not None:
+                    # Manual single sample
                     if recognizer.save_gesture_data(gesture_id, landmarks):
                         samples_collected += 1
-                elif key == 27:  # ESC
-                    print(f"   Skipped {gesture_char}")
+                elif key == 13 or key == 27:  # ENTER or ESC
                     break
 
-            if key == 27:
-                continue
+            # Letter done
+            if samples_collected > 0:
+                print(f"   ✓ {gesture_char}: {samples_collected} samples saved")
+            else:
+                print(f"   — {gesture_char}: skipped")
+
+            if key == 27:  # ESC = full quit
+                break
+
+            gesture_id += 1
 
         cap.release()
         cv2.destroyAllWindows()
 
-        print("\n" + "=" * 60)
-        print("✓ Data collection complete!")
+        collected = sum(1 for i in range(26)
+                        if os.path.exists(f"gestures_data/gesture_{i}.json"))
+        print(f"\n{'='*60}")
+        print(f"✓ Collection complete! {collected}/26 letters have data.")
+        if collected >= 5:
+            print("→ Now choose option 4 (Retrain Model) to train with your data.")
         print("=" * 60)
 
         # Train model after collection
