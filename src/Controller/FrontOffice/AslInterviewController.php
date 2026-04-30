@@ -60,6 +60,53 @@ class AslInterviewController extends AbstractController
     }
 
     /**
+     * Save answer for a question
+     */
+    #[Route('/api/save-answer', name: 'app_asl_save_answer', methods: ['POST'])]
+    public function saveAnswer(Request $request): JsonResponse
+    {
+        $data = json_decode($request->getContent(), true);
+
+        $question = $data['question'] ?? '';
+        $answer = $data['answer'] ?? '';
+        $questionNumber = $data['questionNumber'] ?? 0;
+        $user = $this->getUser();
+
+        // Log the answer (you can store in database here)
+        $logMessage = sprintf(
+            "[Interview] User: %s | Q%d: %s | Answer: %s | Time: %s\n",
+            $user->getUserIdentifier() ?? 'Anonymous',
+            $questionNumber,
+            $question,
+            $answer,
+            date('Y-m-d H:i:s')
+        );
+
+        // Write to log file
+        file_put_contents(
+            $this->getParameter('kernel.project_dir') . '/var/log/asl_interview.log',
+            $logMessage,
+            FILE_APPEND
+        );
+
+        // TODO: Save to database if you have an entity
+        // $interviewAnswer = new AslInterviewAnswer();
+        // $interviewAnswer->setUser($user);
+        // $interviewAnswer->setQuestion($question);
+        // $interviewAnswer->setAnswer($answer);
+        // $interviewAnswer->setQuestionNumber($questionNumber);
+        // $em->persist($interviewAnswer);
+        // $em->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Answer saved successfully',
+            'question' => $question,
+            'answer' => $answer
+        ]);
+    }
+
+    /**
      * Save a completed ASL interview session to the database (optional)
      */
     #[Route('/api/save-session', name: 'app_asl_save_session', methods: ['POST'])]

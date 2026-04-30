@@ -247,6 +247,17 @@ def get_gesture():
             'recent_gestures': recent[-5:]  # Last 5 gestures
         })
 
+@app.route('/api/update-text', methods=['POST'])
+def update_text():
+    """Update the recognized text from frontend"""
+    data = request.get_json()
+    text = data.get('text', '')
+    with state_lock:
+        current_state['recognized_text'] = text
+    if recognizer_instance.recognizer:
+        recognizer_instance.recognizer.predicted_text = text
+    return jsonify({'success': True})
+
 
 @app.route('/video_feed')
 def video_feed():

@@ -1,7 +1,7 @@
 {# templates/FrontOffice/asl_interview/index.html.twig #}
 {% extends 'FrontOffice/base.html.twig' %}
 
-{% block title %}ASL Interview — Sign Language{% endblock %}
+{% block title %}ASL Interview — Interactive Sign Language Interview{% endblock %}
 
 {% block stylesheets %}
     {{ parent() }}
@@ -101,24 +101,13 @@
             --asl-card:    rgba(30, 41, 59, 0.85);
         }
 
-        .asl-header {
+        /* Interview Header */
+        .interview-header {
             text-align: center;
             margin-bottom: 2rem;
-            animation: slideDown 0.8s ease;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .asl-header h1 {
+        .interview-header h1 {
             font-size: 2rem;
             font-weight: 700;
             background: linear-gradient(135deg, #6366f1, #10b981);
@@ -127,7 +116,66 @@
             text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
         }
 
-        .asl-header p { color: #94a3b8; margin-top: .4rem; }
+        .interview-header p {
+            color: #94a3b8;
+            margin-top: .4rem;
+        }
+
+        /* Question Container */
+        .question-container {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(16, 185, 129, 0.2));
+            border: 2px solid var(--asl-primary);
+            border-radius: 1rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
+            }
+            50% {
+                box-shadow: 0 0 0 20px rgba(99, 102, 241, 0);
+            }
+        }
+
+        .agent-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--asl-primary), var(--asl-success));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 2rem;
+        }
+
+        .question-text {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 1rem;
+            line-height: 1.3;
+        }
+
+        .question-meta {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #94a3b8;
+        }
+
+        .question-counter {
+            background: var(--asl-primary);
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
 
         /* Server status banner */
         .status-banner {
@@ -185,24 +233,12 @@
             border-radius: 1rem;
             padding: 1.5rem;
             border: 1px solid rgba(51, 65, 85, 0.5);
-            animation: slideUp 0.8s ease 0.5s both;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
         .asl-card:hover {
             transform: translateY(-5px);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
         }
 
         .asl-card h3 {
@@ -235,16 +271,6 @@
             height: 100%;
             object-fit: cover;
             display: block;
-        }
-
-        .camera-offline {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            color: #64748b;
-            gap: .75rem;
         }
 
         /* Gesture display */
@@ -298,33 +324,42 @@
             margin-top: .4rem;
         }
 
-        /* Text output */
-        .text-output {
+        /* Text output - Answer area */
+        .answer-area {
             background: rgba(15, 23, 42, 0.85);
             border-radius: .75rem;
             border: 1px solid #334155;
             padding: 1rem 1.25rem;
-            min-height: 100px;
-            font-size: 1.5rem;
-            font-weight: 600;
+            min-height: 120px;
+            font-size: 1.2rem;
+            font-weight: 500;
             color: #f1f5f9;
-            letter-spacing: .08em;
             word-break: break-all;
             position: relative;
-            transition: all 0.3s ease;
+            margin-bottom: 1rem;
         }
 
-        .text-output:hover {
-            border-color: var(--asl-primary);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        .answer-label {
+            font-size: 0.8rem;
+            color: var(--asl-primary);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .answer-content {
+            font-size: 1.1rem;
+            line-height: 1.5;
+            min-height: 60px;
         }
 
         .text-cursor {
             display: inline-block;
             width: 2px;
-            height: 1.4em;
+            height: 1.2em;
             background: var(--asl-primary);
-            vertical-align: text-bottom;
+            vertical-align: middle;
             margin-left: 2px;
             animation: blink .8s step-end infinite;
         }
@@ -362,6 +397,7 @@
 
         .btn-asl:active { transform: translateY(0); }
         .btn-primary { background: var(--asl-primary); color: #fff; }
+        .btn-success { background: var(--asl-success); color: #fff; }
         .btn-danger  { background: var(--asl-danger);  color: #fff; }
         .btn-neutral { background: #334155; color: #e2e8f0; }
 
@@ -404,35 +440,29 @@
             min-width: 1.4rem;
         }
 
-        /* Tips panel */
-        .tips-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-            gap: .5rem;
+        /* Feedback message */
+        .feedback-message {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem;
+            animation: slideInLeft 0.3s ease;
+            z-index: 1000;
+            font-weight: 500;
         }
 
-        .tip-badge {
-            background: rgba(15, 23, 42, 0.7);
-            border: 1px solid #334155;
-            border-radius: .5rem;
-            padding: .5rem .25rem;
-            text-align: center;
-            font-size: .75rem;
-            color: #94a3b8;
-            transition: all 0.2s ease;
-        }
-
-        .tip-badge strong {
-            display: block;
-            font-size: 1.2rem;
-            color: var(--asl-primary);
-        }
-
-        .tip-badge.active {
-            border-color: var(--asl-success);
-            background: rgba(6, 78, 59, 0.5);
-            transform: scale(1.05);
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         /* Scrollbar styling */
@@ -469,21 +499,31 @@
     <div class="loading-overlay" id="loadingOverlay">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <div class="loading-text">Loading ASL Experience...</div>
+            <div class="loading-text">Loading ASL Interview Experience...</div>
         </div>
     </div>
 
     <!-- Main ASL Interface -->
     <div class="asl-wrapper" id="aslWrapper">
-        <div class="asl-header">
-            <h1>🤟 ASL Sign Language Interview</h1>
-            <p>Show ASL signs to the camera — hold each letter to type</p>
+        <div class="interview-header">
+            <h1>🤟 ASL Interview Experience</h1>
+            <p>Answer questions using American Sign Language</p>
         </div>
 
         {# Server status banner #}
         <div id="serverStatus" class="status-banner offline">
             <div class="status-dot"></div>
             <span id="statusText">Checking ASL server...</span>
+        </div>
+
+        <!-- Question Container -->
+        <div class="question-container" id="questionContainer">
+            <div class="agent-avatar">🤖</div>
+            <div class="question-text" id="questionText">Loading interview questions...</div>
+            <div class="question-meta">
+                <span>Question <span id="currentQuestionNum">1</span>/<span id="totalQuestions">5</span></span>
+                <span class="question-counter" id="statusBadge">Waiting for answer...</span>
+            </div>
         </div>
 
         <div class="asl-grid">
@@ -503,39 +543,34 @@
                         <div class="confidence-bar-wrap">
                             <div class="confidence-bar" id="confidenceBar" style="width:0%"></div>
                         </div>
-                        <div class="confidence-label" id="confidenceLabel">Show a sign to begin</div>
+                        <div class="confidence-label" id="confidenceLabel">Sign your answer letter by letter</div>
                     </div>
                 </div>
             </div>
 
-            {# RIGHT: Text + controls + log #}
+            {# RIGHT: Answer + controls #}
             <div style="display:flex;flex-direction:column;gap:1.5rem">
                 <div class="asl-card">
-                    <h3>📝 Recognized Text</h3>
-                    <div class="text-output" id="textOutput">
-                        <span id="textContent"></span><span class="text-cursor"></span>
+                    <h3>✍️ Your Answer</h3>
+                    <div class="answer-area">
+                        <div class="answer-label">
+                            <span>Current answer:</span>
+                        </div>
+                        <div class="answer-content" id="answerContent">
+                            <span id="currentAnswer"></span><span class="text-cursor"></span>
+                        </div>
                     </div>
                     <div class="asl-controls">
-                        <button class="btn-asl btn-primary" onclick="addSpace()">SPACE</button>
+                        <button class="btn-asl btn-primary" onclick="addSpace()">␣ SPACE</button>
                         <button class="btn-asl btn-neutral" onclick="deleteChar()">⌫ Delete</button>
-                        <button class="btn-asl btn-danger"  onclick="clearText()">✕ Clear</button>
+                        <button class="btn-asl btn-danger"  onclick="clearAnswer()">✕ Clear</button>
+                        <button class="btn-asl btn-success"  onclick="submitAnswer()">✓ Submit Answer</button>
                     </div>
                 </div>
 
                 <div class="asl-card">
-                    <h3>📋 Recent Gestures</h3>
+                    <h3>📋 Recent Signs</h3>
                     <div class="gesture-log" id="gestureLog"></div>
-                </div>
-
-                <div class="asl-card">
-                    <h3>💡 Quick Reference</h3>
-                    <div class="tips-grid" id="tipsGrid">
-                        {% for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'|split('') %}
-                            <div class="tip-badge" id="tip-{{ letter }}">
-                                <strong>{{ letter }}</strong>
-                            </div>
-                        {% endfor %}
-                    </div>
                 </div>
             </div>
         </div>
@@ -546,25 +581,142 @@
     {{ parent() }}
     <script>
         const ASL_SERVER = "http://localhost:5001";
-        let recognizedText = '';
+        let currentAnswer = '';
+        let currentQuestionIndex = 0;
+        let questions = [];
+        let interviewActive = true;
         let lastGesture = null;
 
-        // Show interface after 3 seconds (changed from 4 to 3)
+        // Interview questions
+        const interviewQuestions = [
+            "What is your name?",
+            "Where are you from?",
+            "What is your favorite hobby?",
+            "Why do you want to learn sign language?",
+            "What are your career goals?",
+            "Describe yourself in three words",
+            "What motivates you?",
+            "How do you handle challenges?",
+            "What is your greatest achievement?",
+            "Where do you see yourself in 5 years?"
+        ];
+
+        // Initialize interview with first 5 questions
+        function initInterview() {
+            questions = interviewQuestions.slice(0, 5);
+            document.getElementById('totalQuestions').textContent = questions.length;
+            loadQuestion(0);
+        }
+
+        function loadQuestion(index) {
+            if (index < questions.length) {
+                const questionText = document.getElementById('questionText');
+                questionText.style.opacity = '0';
+                setTimeout(() => {
+                    questionText.textContent = questions[index];
+                    questionText.style.opacity = '1';
+                }, 200);
+
+                document.getElementById('currentQuestionNum').textContent = index + 1;
+                document.getElementById('statusBadge').textContent = 'Sign your answer...';
+                document.getElementById('statusBadge').style.background = '#6366f1';
+
+                // Clear current answer for new question
+                clearAnswer();
+            } else {
+                endInterview();
+            }
+        }
+
+        function submitAnswer() {
+            if (!currentAnswer.trim()) {
+                showFeedback('Please sign your answer before submitting!', 'warning');
+                return;
+            }
+
+            // Save the answer
+            const answer = currentAnswer;
+            const question = questions[currentQuestionIndex];
+
+            console.log(`Question: ${question}`);
+            console.log(`Answer: ${answer}`);
+
+            showFeedback(`✓ Answer submitted for question ${currentQuestionIndex + 1}!`, 'success');
+
+            // Send to backend
+            fetch('/candidat/asl-interview/api/save-answer', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    question: question,
+                    answer: answer,
+                    questionNumber: currentQuestionIndex + 1
+                })
+            }).catch(err => console.log('Save error:', err));
+
+            // Move to next question after short delay
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < questions.length) {
+                    loadQuestion(currentQuestionIndex);
+                } else {
+                    endInterview();
+                }
+            }, 1500);
+        }
+
+        function endInterview() {
+            interviewActive = false;
+            document.getElementById('questionText').textContent = "🎉 Interview Complete! Thank you for using ASL! 🎉";
+            document.getElementById('statusBadge').textContent = 'Completed!';
+            document.getElementById('statusBadge').style.background = '#10b981';
+            showFeedback('Interview completed! Great job! 🎉', 'success');
+
+            // Option to restart
+            setTimeout(() => {
+                if (confirm('Interview completed! Would you like to restart?')) {
+                    restartInterview();
+                }
+            }, 2000);
+        }
+
+        function restartInterview() {
+            currentQuestionIndex = 0;
+            currentAnswer = '';
+            interviewActive = true;
+            document.getElementById('currentAnswer').textContent = '';
+            initInterview();
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.createElement('div');
+            feedback.className = 'feedback-message';
+            feedback.textContent = message;
+            if (type === 'success') {
+                feedback.style.background = 'rgba(16, 185, 129, 0.95)';
+            } else if (type === 'warning') {
+                feedback.style.background = 'rgba(245, 158, 11, 0.95)';
+            } else {
+                feedback.style.background = 'rgba(239, 68, 68, 0.95)';
+            }
+            document.body.appendChild(feedback);
+            setTimeout(() => {
+                feedback.remove();
+            }, 3000);
+        }
+
+        // Show interface after 3 seconds
         setTimeout(() => {
             const loadingOverlay = document.getElementById('loadingOverlay');
             const aslWrapper = document.getElementById('aslWrapper');
 
-            // Fade out loading overlay
             loadingOverlay.style.opacity = '0';
-
-            // Show ASL interface
             aslWrapper.classList.add('visible');
 
-            // Remove loading overlay from DOM after animation
             setTimeout(() => {
                 loadingOverlay.style.display = 'none';
             }, 1000);
-        }, 3000); // Changed to 3 seconds delay
+        }, 3000);
 
         // ── Poll the gesture API ──────────────────────────────────────
         function pollGesture() {
@@ -580,41 +732,39 @@
         }
 
         function updateUI(data) {
-            const letterEl   = document.getElementById('gestureLetter');
-            const barEl      = document.getElementById('confidenceBar');
-            const labelEl    = document.getElementById('confidenceLabel');
-            const textContent = document.getElementById('textContent');
-
-            // Update recognized text
-            if (data.recognized_text !== undefined) {
-                recognizedText = data.recognized_text;
-                textContent.textContent = recognizedText;
-            }
-
-            // Highlight tip badge
-            document.querySelectorAll('.tip-badge').forEach(b => b.classList.remove('active'));
-            if (data.gesture && data.gesture.length === 1) {
-                const tip = document.getElementById('tip-' + data.gesture);
-                if (tip) tip.classList.add('active');
-
-                // Add pulse animation to detected letter
-                letterEl.style.animation = 'none';
-                setTimeout(() => {
-                    letterEl.style.animation = '';
-                }, 10);
-            }
+            const letterEl = document.getElementById('gestureLetter');
+            const barEl = document.getElementById('confidenceBar');
+            const labelEl = document.getElementById('confidenceLabel');
 
             // Update gesture display
             if (data.gesture) {
                 letterEl.textContent = data.gesture;
-                letterEl.className   = 'gesture-letter detected';
-                barEl.style.width    = (data.confidence * 100).toFixed(0) + '%';
-                labelEl.textContent  = `Detected: ${data.gesture} (${(data.confidence * 100).toFixed(0)}% confidence)`;
+                letterEl.className = 'gesture-letter detected';
+                barEl.style.width = (data.confidence * 100).toFixed(0) + '%';
+                labelEl.textContent = `Sign detected: ${data.gesture} (${(data.confidence * 100).toFixed(0)}% confidence)`;
 
-                // Add to log if new gesture
-                if (data.gesture !== lastGesture) {
-                    addToLog(data.gesture);
+                // Auto-add letters to answer (with debounce)
+                if (data.gesture !== lastGesture && interviewActive) {
+                    // Handle special gestures
+                    if (data.gesture === 'SPACE') {
+                        addSpace();
+                    } else if (data.gesture === 'DELETE') {
+                        deleteChar();
+                    } else if (data.gesture === 'CLEAR') {
+                        clearAnswer();
+                    } else if (data.gesture.length === 1 && /[A-Z]/i.test(data.gesture)) {
+                        // Add letter to answer
+                        addLetter(data.gesture);
+                        addToLog(data.gesture);
+                    }
                     lastGesture = data.gesture;
+
+                    // Reset after 1 second to allow same letter again
+                    setTimeout(() => {
+                        if (lastGesture === data.gesture) {
+                            lastGesture = null;
+                        }
+                    }, 1000);
                 }
             } else {
                 letterEl.className = 'gesture-letter none';
@@ -623,14 +773,37 @@
                     labelEl.textContent = 'Analyzing hand position...';
                 } else {
                     letterEl.textContent = '—';
-                    labelEl.textContent = 'Show your hand to the camera';
+                    labelEl.textContent = 'Show your hand to sign your answer';
                 }
                 barEl.style.width = '0%';
-
-                if (!data.hand_detected) {
-                    lastGesture = null;
-                }
             }
+        }
+
+        function addLetter(letter) {
+            currentAnswer += letter;
+            document.getElementById('currentAnswer').textContent = currentAnswer;
+            // Also update the recognizer's text for consistency
+            fetch(`${ASL_SERVER}/api/update-text`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: currentAnswer })
+            }).catch(err => console.log('Update error:', err));
+        }
+
+        function addSpace() {
+            currentAnswer += ' ';
+            document.getElementById('currentAnswer').textContent = currentAnswer;
+        }
+
+        function deleteChar() {
+            currentAnswer = currentAnswer.slice(0, -1);
+            document.getElementById('currentAnswer').textContent = currentAnswer;
+        }
+
+        function clearAnswer() {
+            currentAnswer = '';
+            document.getElementById('currentAnswer').textContent = '';
+            showFeedback('Answer cleared', 'info');
         }
 
         function addToLog(gesture) {
@@ -641,7 +814,6 @@
             div.innerHTML = `<span class="log-letter">${gesture}</span><span>${time}</span>`;
             log.prepend(div);
 
-            // Keep only last 20 entries
             while (log.children.length > 20) {
                 log.removeChild(log.lastChild);
             }
@@ -654,40 +826,18 @@
             if (isOnline) {
                 statusDiv.className = 'status-banner online';
                 statusText.textContent = 'ASL recognition server is online and ready';
+                // Start interview when server is online
+                if (questions.length === 0) {
+                    initInterview();
+                }
             } else {
                 statusDiv.className = 'status-banner offline';
                 statusText.innerHTML = 'ASL server is offline — run: <code style="background:#1e1e1e;padding:2px 8px;border-radius:4px;margin-left:6px">python asl_web_server.py</code>';
             }
         }
 
-        // Manual controls
-        function addSpace() {
-            fetch(`${ASL_SERVER}/api/add-space`, { method: 'POST' })
-                .then(() => pollGesture());
-        }
-
-        function deleteChar() {
-            fetch(`${ASL_SERVER}/api/delete-last`, { method: 'POST' })
-                .then(() => pollGesture());
-        }
-
-        function clearText() {
-            fetch(`${ASL_SERVER}/api/clear-text`, { method: 'POST' })
-                .then(() => pollGesture());
-        }
-
-        // Start polling every 200ms after interface is shown
-        setTimeout(() => {
-            setInterval(pollGesture, 200);
-            pollGesture(); // Initial call
-        }, 3000);
-
-        window.onload = function() {
-            const shadowRoot = document.querySelector('spline-viewer').shadowRoot;
-            if (shadowRoot) {
-                const logo = shadowRoot.querySelector('#logo');
-                if (logo) logo.remove();
-            }
-        }
+        // Start polling
+        setInterval(pollGesture, 200);
+        pollGesture();
     </script>
 {% endblock %}
