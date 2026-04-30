@@ -13,7 +13,7 @@ from collections import deque
 import sys
 import os
 
-# Import mediapipe (this was missing!)
+# Import mediapipe
 import mediapipe as mp
 
 # Import your working recognizer
@@ -40,6 +40,8 @@ class WebRecognizer:
         self.recognizer = SignLanguageRecognizer()
         self.cap = None
         self.running = False
+        self.last_added_letter = ""
+        self.last_added_time = 0
 
     def initialize_camera(self):
         """Use the same camera finding logic as the original"""
@@ -71,6 +73,7 @@ class WebRecognizer:
         fps_time = time.time()
 
         print("Web recognizer started - using DroidCam")
+        print("Auto-add mode: Letters will be added automatically when recognized")
 
         while self.running:
             success, frame = self.cap.read()
@@ -103,9 +106,39 @@ class WebRecognizer:
                 gesture_char = None
                 if gesture_id is not None:
                     gesture_char = self.recognizer.gesture_labels[gesture_id]
-                    self.recognizer.update_text_output(gesture_id)
 
-                    # Update state
+                    # Auto-add logic: add letter immediately when recognized
+                    current_time = time.time()
+
+                    # Only add if confidence is high enough
+                    if confidence > 0.35:
+                        # Check if this is a new gesture or we've waited enough time
+                        if gesture_char != self.last_added_letter or (current_time - self.last_added_time) > 1.5:
+                            # Special handling for special gestures
+                            if gesture_char == 'DELETE':
+                                if self.recognizer.predicted_text:
+                                    self.recognizer.predicted_text = self.recognizer.predicted_text[:-1]
+                                print(f"🗑️ DELETE: '{self.recognizer.predicted_text}'")
+                            elif gesture_char == 'SPACE':
+                                self.recognizer.predicted_text += " "
+                                print(f"␣ SPACE: '{self.recognizer.predicted_text}'")
+                            elif gesture_char == 'CLEAR':
+                                self.recognizer.predicted_text = ""
+                                print(f"🧹 CLEAR: Text cleared")
+                            else:
+                                # Add regular letter
+                                self.recognizer.predicted_text += gesture_char
+                                print(f"➕ Added '{gesture_char}': '{self.recognizer.predicted_text}'")
+
+                            # Update state
+                            with state_lock:
+                                current_state['recognized_text'] = self.recognizer.predicted_text
+
+                            # Update tracking
+                            self.last_added_letter = gesture_char
+                            self.last_added_time = current_time
+
+                    # Update current gesture state
                     with state_lock:
                         current_state['gesture'] = gesture_char
                         current_state['confidence'] = confidence
@@ -121,11 +154,13 @@ class WebRecognizer:
                         if current_state['gesture'] is not None:
                             current_state['gesture'] = None
                         current_state['hand_detected'] = True
+                        current_state['recognized_text'] = self.recognizer.predicted_text
             else:
                 with state_lock:
                     if current_state['gesture'] is not None:
                         current_state['gesture'] = None
                     current_state['hand_detected'] = False
+                    current_state['recognized_text'] = self.recognizer.predicted_text
 
             # Add overlay text for web display
             with state_lock:
@@ -135,7 +170,7 @@ class WebRecognizer:
 
             # Draw overlay (similar to original but cleaner for web)
             h, w = frame.shape[:2]
-            cv2.rectangle(frame, (0, 0), (w, 80), (0, 0, 0), -1)
+            cv2.rectangle(frame, (0, 0), (w, 100), (0, 0, 0), -1)
 
             if gesture_char:
                 cv2.putText(frame, f"Gesture: {gesture_char} ({confidence:.2f})",
@@ -149,12 +184,13 @@ class WebRecognizer:
 
             # Show recognized text
             if recognized_text:
-                lines = self.wrap_text(recognized_text, 40)
-                y = 65
-                for line in lines[:2]:
-                    cv2.putText(frame, line, (10, y),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 1)
-                    y += 25
+                display_text = recognized_text[-60:] if len(recognized_text) > 60 else recognized_text
+                cv2.putText(frame, f"Text: {display_text}", (10, 70),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 1)
+
+                # Show instruction for auto-add
+                cv2.putText(frame, "Auto-add mode: Letters added automatically", (10, 95),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 200), 1)
 
             # Encode frame for streaming
             _, jpg = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 70])
@@ -276,10 +312,18 @@ if __name__ == '__main__':
     recognizer_thread.start()
 
     print("\n" + "=" * 50)
-    print("ASL Web Server Started!")
+    print("ASL Web Server Started! (Auto-Add Mode)")
     print("=" * 50)
     print("Server running on: http://localhost:5001")
-    print("Available endpoints:")
+    print("\n📝 How it works:")
+    print("  - Show an ASL sign to the camera")
+    print("  - Letter is automatically added to text")
+    print("  - Hold the sign for 1.5 seconds to add multiple letters")
+    print("\n🔧 Special gestures:")
+    print("  - SPACE gesture → adds a space")
+    print("  - DELETE gesture → removes last character")
+    print("  - CLEAR gesture → clears all text")
+    print("\nAvailable endpoints:")
     print("  - GET  /api/gesture     → Current gesture state")
     print("  - GET  /video_feed      → Camera stream")
     print("  - GET  /health          → Health check")
