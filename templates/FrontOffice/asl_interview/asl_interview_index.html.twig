@@ -5,572 +5,200 @@
 
 {% block stylesheets %}
     {{ parent() }}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
     <style>
-        /* Reset and fullscreen setup */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+        :root{
+            --v:#7c6fff;--v2:#9f96ff;--cy:#3ef0d0;--cy0:rgba(62,240,208,.15);
+            --pk:#f472b6;--wh:#ffffff;
+            --gb:rgba(8,8,20,.45);--gb2:rgba(255,255,255,.06);
+            --gb3:rgba(255,255,255,.12);--gba:rgba(124,111,255,.45);
+            --tp:rgba(200,196,255,.55);--r:18px;--rs:10px;
+            --fh:'Syne',sans-serif;--fb:'Inter',sans-serif;
         }
-
-        body {
-            overflow-x: hidden;
-            background: #000;
+        html,body{font-family:var(--fb);background:#000;color:#f0eeff;overflow-x:hidden;min-height:100vh}
+        .spline-container{position:fixed;inset:0;z-index:0}
+        spline-viewer{width:100%;height:100%;display:block}
+        .vignette{
+            position:fixed;inset:0;z-index:1;pointer-events:none;
+            background:
+                    radial-gradient(ellipse 80% 60% at 50% 0%,rgba(0,0,0,0) 0%,rgba(0,0,0,.35) 100%),
+                    radial-gradient(ellipse 100% 50% at 50% 100%,rgba(0,0,0,.55) 0%,rgba(0,0,0,0) 70%);
         }
-
-        /* Spline 3D Background Container */
-        .spline-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 0;
+        .loading-overlay{
+            position:fixed;inset:0;background:#000;
+            display:flex;flex-direction:column;align-items:center;justify-content:center;
+            gap:1.5rem;z-index:1000;transition:opacity 1s ease;
         }
-
-        spline-viewer {
-            width: 100%;
-            height: 100%;
-            display: block;
+        .loading-glyph{
+            font-family:var(--fh);font-size:2.2rem;font-weight:800;
+            background:linear-gradient(135deg,var(--v),var(--cy));
+            -webkit-background-clip:text;-webkit-text-fill-color:transparent;
         }
-
-        /* Loading Overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            transition: opacity 1s ease;
+        .loading-track{width:160px;height:2px;background:rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+        .loading-fill{height:100%;background:linear-gradient(90deg,var(--v),var(--cy));border-radius:999px;animation:lf 2.8s ease forwards}
+        @keyframes lf{0%{width:0%}60%{width:65%}100%{width:100%}}
+        .asl-wrapper{position:relative;z-index:2;min-height:100vh;padding:1.75rem 1.25rem 3rem;opacity:0;visibility:hidden;transition:opacity .9s ease}
+        .asl-wrapper.visible{opacity:1;visibility:visible}
+        .asl-inner{max-width:1080px;margin:0 auto;width:100%}
+        .top-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+        .top-logo{font-family:var(--fh);font-size:.9rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;display:flex;align-items:center;gap:.6rem}
+        .logo-pill{background:linear-gradient(135deg,var(--v),var(--cy));width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+        .progress-dots{display:flex;gap:6px;align-items:center}
+        .pdot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15);transition:background .3s,transform .3s}
+        .pdot.done{background:var(--cy)}
+        .pdot.active{background:var(--v);transform:scale(1.3)}
+        .q-counter{font-family:var(--fh);font-size:.75rem;font-weight:600;color:var(--tp);letter-spacing:.08em}
+        .status-banner{display:flex;align-items:center;gap:.6rem;padding:.55rem 1rem;border-radius:999px;margin-bottom:1.4rem;font-size:.78rem;font-weight:500;width:fit-content;border:1px solid transparent}
+        .status-banner.online{background:rgba(62,240,208,.08);border-color:rgba(62,240,208,.25);color:var(--cy)}
+        .status-banner.offline{background:rgba(244,114,182,.08);border-color:rgba(244,114,182,.2);color:var(--pk)}
+        .sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+        .online .sdot{background:var(--cy);animation:pc 1.5s infinite}
+        .offline .sdot{background:var(--pk)}
+        @keyframes pc{0%,100%{box-shadow:0 0 0 0 rgba(62,240,208,.5)}50%{box-shadow:0 0 0 5px rgba(62,240,208,0)}}
+        .question-strip{
+            position:relative;margin-bottom:1.5rem;border-radius:var(--r);padding:2rem 2.5rem;overflow:hidden;
+            background:rgba(10,8,30,.72);
+            border:1px solid var(--gba);
         }
-
-        .loading-content {
-            text-align: center;
-            color: white;
+        .question-strip::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--v),var(--cy),transparent)}
+        .question-strip::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,111,255,.3),transparent)}
+        .qs-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem}
+        .agent-tag{display:flex;align-items:center;gap:.45rem;font-size:.72rem;font-weight:500;color:var(--tp);letter-spacing:.06em;text-transform:uppercase}
+        .agent-tag .sdot{background:var(--cy);animation:pc 1.5s infinite}
+        .status-badge{font-size:.68rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--v2);background:rgba(124,111,255,.12);border:1px solid rgba(124,111,255,.25);border-radius:999px;padding:.25rem .8rem}
+        .question-text{font-family:var(--fh);font-size:2rem;font-weight:700;color:#fff;line-height:1.25;letter-spacing:-.01em;transition:opacity .2s}
+        .question-sub{margin-top:.75rem;font-size:.8rem;color:var(--tp);font-weight:300}
+        .asl-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+        @media(max-width:780px){.asl-grid{grid-template-columns:1fr}.question-text{font-size:1.5rem}}
+        .glass-card{
+            background:rgba(10,8,28,.68);
+            border-radius:var(--r);border:1px solid var(--gb3);padding:1.4rem;position:relative;overflow:hidden;
         }
-
-        .loading-spinner {
-            width: 50px;
-            height: 50px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-top-color: #6366f1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .loading-text {
-            font-size: 1.2rem;
-            letter-spacing: 2px;
-            background: linear-gradient(135deg, #6366f1, #10b981);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        /* Main ASL Interface - Hidden initially */
-        .asl-wrapper {
-            position: relative;
-            z-index: 1;
-            min-height: 100vh;
-            color: #e2e8f0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            padding: 2rem 1rem;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 1s ease;
-        }
-
-        .asl-wrapper.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        :root {
-            --asl-primary: #6366f1;
-            --asl-success: #10b981;
-            --asl-danger:  #ef4444;
-            --asl-card:    rgba(30, 41, 59, 0.85);
-        }
-
-        /* Interview Header */
-        .interview-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .interview-header h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #6366f1, #10b981);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
-        }
-
-        .interview-header p {
-            color: #94a3b8;
-            margin-top: .4rem;
-        }
-
-        /* Question Container */
-        .question-container {
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(16, 185, 129, 0.2));
-            border: 2px solid var(--asl-primary);
-            border-radius: 1rem;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            text-align: center;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% {
-                box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4);
-            }
-            50% {
-                box-shadow: 0 0 0 20px rgba(99, 102, 241, 0);
-            }
-        }
-
-        .agent-avatar {
-            width: 60px;
-            height: 60px;
-            background: linear-gradient(135deg, var(--asl-primary), var(--asl-success));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 2rem;
-        }
-
-        .question-text {
-            font-size: 1.8rem;
-            font-weight: 600;
-            color: white;
-            margin-bottom: 1rem;
-            line-height: 1.3;
-        }
-
-        .question-meta {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #94a3b8;
-        }
-
-        .question-counter {
-            background: var(--asl-primary);
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-        }
-
-        /* Server status banner */
-        .status-banner {
-            display: flex;
-            align-items: center;
-            gap: .6rem;
-            padding: .75rem 1.25rem;
-            border-radius: .75rem;
-            margin-bottom: 1.5rem;
-            font-size: .9rem;
-            font-weight: 500;
-            animation: fadeIn 0.8s ease 0.3s both;
-            max-width: 1100px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .status-banner.online  { background: rgba(6, 78, 59, 0.95); color: #6ee7b7; border: 1px solid #10b981; }
-        .status-banner.offline { background: rgba(69, 10, 10, 0.95); color: #fca5a5; border: 1px solid #ef4444; }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-        .online  .status-dot { background: #10b981; animation: pulse-green 1.5s infinite; }
-        .offline .status-dot { background: #ef4444; }
-
-        @keyframes pulse-green {
-            0%,100% { box-shadow: 0 0 0 0 rgba(16,185,129,.5); }
-            50%      { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
-        }
-
-        /* Layout */
-        .asl-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 1.5rem;
-            max-width: 1100px;
-            margin: 0 auto;
-        }
-
-        @media(max-width: 768px) {
-            .asl-grid { grid-template-columns: 1fr; }
-        }
-
-        .asl-card {
-            background: var(--asl-card);
-            border-radius: 1rem;
-            padding: 1.5rem;
-            border: 1px solid rgba(51, 65, 85, 0.5);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .asl-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-        }
-
-        .asl-card h3 {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #cbd5e1;
-            margin-bottom: 1rem;
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-        }
-
-        /* Camera feed */
-        .camera-container {
-            position: relative;
-            border-radius: .75rem;
-            overflow: hidden;
-            background: #000;
-            aspect-ratio: 4/3;
-            border: 2px solid rgba(99, 102, 241, 0.5);
-            transition: border-color 0.3s ease;
-        }
-
-        .camera-container:hover {
-            border-color: var(--asl-primary);
-        }
-
-        .camera-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        /* Gesture display */
-        .gesture-display {
-            text-align: center;
-            padding: 1.5rem 0;
-        }
-
-        .gesture-letter {
-            font-size: 5rem;
-            font-weight: 800;
-            line-height: 1;
-            color: var(--asl-primary);
-            transition: all .15s ease;
-            min-height: 6rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
-        }
-
-        .gesture-letter.detected {
-            color: var(--asl-success);
-            transform: scale(1.05);
-            text-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
-        }
-
-        .gesture-letter.none {
-            color: #334155;
-            font-size: 2rem;
-        }
-
-        .confidence-bar-wrap {
-            margin-top: .75rem;
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 999px;
-            height: 8px;
-            overflow: hidden;
-        }
-
-        .confidence-bar {
-            height: 100%;
-            border-radius: 999px;
-            background: linear-gradient(90deg, var(--asl-primary), var(--asl-success));
-            transition: width .2s ease;
-        }
-
-        .confidence-label {
-            font-size: .8rem;
-            color: #64748b;
-            margin-top: .4rem;
-        }
-
-        /* Text output - Answer area */
-        .answer-area {
-            background: rgba(15, 23, 42, 0.85);
-            border-radius: .75rem;
-            border: 1px solid #334155;
-            padding: 1rem 1.25rem;
-            min-height: 120px;
-            font-size: 1.2rem;
-            font-weight: 500;
-            color: #f1f5f9;
-            word-break: break-all;
-            position: relative;
-            margin-bottom: 1rem;
-        }
-
-        .answer-label {
-            font-size: 0.8rem;
-            color: var(--asl-primary);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .answer-content {
-            font-size: 1.1rem;
-            line-height: 1.5;
-            min-height: 60px;
-        }
-
-        .text-cursor {
-            display: inline-block;
-            width: 2px;
-            height: 1.2em;
-            background: var(--asl-primary);
-            vertical-align: middle;
-            margin-left: 2px;
-            animation: blink .8s step-end infinite;
-        }
-
-        @keyframes blink {
-            0%,100%{opacity:1}
-            50%{opacity:0}
-        }
-
-        /* Controls */
-        .asl-controls {
-            display: flex;
-            gap: .75rem;
-            flex-wrap: wrap;
-            margin-top: 1rem;
-        }
-
-        .btn-asl {
-            flex: 1;
-            min-width: 100px;
-            padding: .6rem 1rem;
-            border-radius: .6rem;
-            border: none;
-            font-size: .875rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .btn-asl:hover {
-            filter: brightness(1.15);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .btn-asl:active { transform: translateY(0); }
-        .btn-primary { background: var(--asl-primary); color: #fff; }
-        .btn-success { background: var(--asl-success); color: #fff; }
-        .btn-danger  { background: var(--asl-danger);  color: #fff; }
-        .btn-neutral { background: #334155; color: #e2e8f0; }
-
-        /* History log */
-        .gesture-log {
-            max-height: 140px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column-reverse;
-            gap: .3rem;
-        }
-
-        .log-entry {
-            display: flex;
-            align-items: center;
-            gap: .5rem;
-            font-size: .8rem;
-            color: #94a3b8;
-            padding: .25rem .5rem;
-            border-radius: .4rem;
-            background: rgba(15, 23, 42, 0.7);
-            animation: slideInRight 0.3s ease;
-        }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        .log-letter {
-            font-weight: 700;
-            color: var(--asl-success);
-            font-size: 1rem;
-            min-width: 1.4rem;
-        }
-
-        /* Feedback message */
-        .feedback-message {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background: rgba(16, 185, 129, 0.95);
-            color: white;
-            padding: 1rem 1.5rem;
-            border-radius: 0.5rem;
-            animation: slideInLeft 0.3s ease;
-            z-index: 1000;
-            font-weight: 500;
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: rgba(15, 23, 42, 0.5);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--asl-primary);
-            border-radius: 10px;
-        }
-
-        ::-webkit-scrollbar-thumb:hover {
-            background: var(--asl-success);
-        }
+        .glass-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.15),transparent)}
+        .card-label{font-size:.68rem;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--tp);margin-bottom:1rem;display:flex;align-items:center;gap:.4rem}
+        .card-label-dot{width:5px;height:5px;border-radius:50%;background:var(--v)}
+        .cam-frame{position:relative;border-radius:var(--rs);overflow:hidden;background:rgba(0,0,0,.6);aspect-ratio:4/3;border:1px solid rgba(255,255,255,.08)}
+        .cam-frame img{width:100%;height:100%;object-fit:cover;display:block}
+        .cam-live-badge{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.65);border:1px solid rgba(255,255,255,.1);border-radius:999px;padding:3px 10px;font-size:.62rem;font-weight:600;letter-spacing:.1em;color:rgba(255,255,255,.7)}
+        .cam-rec{width:5px;height:5px;border-radius:50%;background:#f87171;animation:pc 1s infinite}
+        .gesture-row{display:flex;align-items:center;gap:1rem;margin-top:1.1rem}
+        .gesture-box{width:76px;height:76px;flex-shrink:0;border-radius:var(--rs);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-size:2.8rem;font-weight:800;background:rgba(124,111,255,.1);border:1.5px solid rgba(124,111,255,.3);color:var(--v2);transition:all .15s ease}
+        .gesture-box.detected{color:var(--cy);background:rgba(62,240,208,.1);border-color:rgba(62,240,208,.4);transform:scale(1.05);box-shadow:0 0 20px rgba(62,240,208,.15)}
+        .gesture-box.none{color:rgba(255,255,255,.15);border-color:rgba(255,255,255,.07)}
+        .gesture-meta{flex:1}
+        .gesture-status{font-size:.8rem;color:var(--tp);margin-bottom:.6rem}
+        .conf-track{height:4px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden}
+        .conf-fill{height:100%;background:linear-gradient(90deg,var(--v),var(--cy));border-radius:999px;transition:width .2s ease;width:0%}
+        .conf-pct{font-size:.68rem;color:var(--tp);margin-top:.35rem;font-weight:500;letter-spacing:.04em}
+        .answer-box{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.09);border-radius:var(--rs);padding:1rem 1.15rem;min-height:96px;margin-bottom:1rem;transition:border-color .2s}
+        .answer-box:focus-within{border-color:rgba(124,111,255,.45)}
+        .ans-micro{font-size:.65rem;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--tp);margin-bottom:.5rem}
+        .ans-content{font-size:1.15rem;font-weight:500;color:#fff;line-height:1.5;word-break:break-all;min-height:34px}
+        .text-cursor{display:inline-block;width:2px;height:1.1em;background:var(--v);vertical-align:middle;margin-left:2px;animation:bl .8s step-end infinite}
+        @keyframes bl{0%,100%{opacity:1}50%{opacity:0}}
+        .ctrl-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.55rem}
+        .btn-c{padding:.55rem .4rem;border-radius:var(--rs);font-size:.72rem;font-weight:700;font-family:var(--fh);letter-spacing:.04em;cursor:pointer;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);color:rgba(255,255,255,.75);transition:all .15s ease;text-align:center}
+        .btn-c:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+        .btn-c:active{transform:translateY(0)}
+        .btn-c.bv{background:rgba(124,111,255,.25);border-color:rgba(124,111,255,.5);color:var(--v2)}
+        .btn-c.bv:hover{background:rgba(124,111,255,.4)}
+        .btn-c.br{background:rgba(244,114,182,.15);border-color:rgba(244,114,182,.35);color:var(--pk)}
+        .btn-c.br:hover{background:rgba(244,114,182,.25)}
+        .btn-c.bg{background:rgba(62,240,208,.15);border-color:rgba(62,240,208,.35);color:var(--cy)}
+        .btn-c.bg:hover{background:rgba(62,240,208,.25)}
+        .sign-log{display:flex;flex-wrap:wrap;gap:.4rem;max-height:120px;overflow-y:auto}
+        .sign-chip{display:flex;align-items:center;gap:.3rem;background:rgba(124,111,255,.1);border:1px solid rgba(124,111,255,.2);border-radius:6px;padding:.22rem .6rem;font-family:var(--fh);font-size:.85rem;font-weight:700;color:var(--v2);animation:pi .2s ease}
+        @keyframes pi{from{transform:scale(.6);opacity:0}to{transform:scale(1);opacity:1}}
+        .chip-t{font-size:.6rem;color:var(--tp);font-family:var(--fb);font-weight:400}
+        .log-empty{font-size:.75rem;color:var(--tp)}
+        .toast{position:fixed;bottom:24px;right:24px;padding:.8rem 1.2rem;border-radius:var(--rs);font-size:.82rem;font-weight:500;z-index:9000;backdrop-filter:blur(20px);animation:ti .3s ease;max-width:300px;border-left:2px solid transparent}
+        .toast.success{background:rgba(10,8,28,.85);border-color:var(--cy);color:var(--cy)}
+        .toast.warning{background:rgba(10,8,28,.85);border-color:var(--v);color:var(--v2)}
+        .toast.error{background:rgba(10,8,28,.85);border-color:var(--pk);color:var(--pk)}
+        @keyframes ti{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
+        ::-webkit-scrollbar{width:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:rgba(124,111,255,.3);border-radius:999px}
     </style>
-
-    <!-- Spline Viewer Script -->
     <script type="module" src="https://unpkg.com/@splinetool/viewer@1.12.90/build/spline-viewer.js"></script>
 {% endblock %}
 
 {% block body %}
-    <!-- Spline 3D Background -->
     <div class="spline-container">
         <spline-viewer url="https://prod.spline.design/1JBcpFmDb6Q3FNrb/scene.splinecode"></spline-viewer>
     </div>
+    <div class="vignette"></div>
 
-    <!-- Loading Overlay -->
     <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Loading ASL Interview Experience...</div>
-        </div>
+        <div class="loading-glyph">ASL ✦</div>
+        <div class="loading-track"><div class="loading-fill"></div></div>
     </div>
 
-    <!-- Main ASL Interface -->
     <div class="asl-wrapper" id="aslWrapper">
-        <div class="interview-header">
-            <h1>🤟 ASL Interview Experience</h1>
-            <p>Answer questions using American Sign Language</p>
-        </div>
+        <div class="asl-inner">
 
-        {# Server status banner #}
-        <div id="serverStatus" class="status-banner offline">
-            <div class="status-dot"></div>
-            <span id="statusText">Checking ASL server...</span>
-        </div>
-
-        <!-- Question Container -->
-        <div class="question-container" id="questionContainer">
-            <div class="agent-avatar">🤖</div>
-            <div class="question-text" id="questionText">Loading interview questions...</div>
-            <div class="question-meta">
-                <span>Question <span id="currentQuestionNum">1</span>/<span id="totalQuestions">5</span></span>
-                <span class="question-counter" id="statusBadge">Waiting for answer...</span>
-            </div>
-        </div>
-
-        <div class="asl-grid">
-            {# LEFT: Camera + gesture #}
-            <div>
-                <div class="asl-card">
-                    <h3>📷 Camera Feed</h3>
-                    <div class="camera-container" id="cameraBox">
-                        <img id="videoFeed"
-                             src="http://localhost:5001/video_feed"
-                             alt="ASL Camera Feed"
-                             style="width:100%;height:100%;object-fit:cover" />
-                    </div>
-
-                    <div class="gesture-display">
-                        <div class="gesture-letter none" id="gestureLetter">—</div>
-                        <div class="confidence-bar-wrap">
-                            <div class="confidence-bar" id="confidenceBar" style="width:0%"></div>
-                        </div>
-                        <div class="confidence-label" id="confidenceLabel">Sign your answer letter by letter</div>
-                    </div>
+            <div class="top-bar">
+                <div class="top-logo">
+                    <div class="logo-pill">🤟</div>
+                    ASL Interview
+                </div>
+                <div style="display:flex;align-items:center;gap:1rem">
+                    <span class="q-counter">Q&nbsp;<span id="currentQuestionNum">1</span>&nbsp;/&nbsp;<span id="totalQuestions">5</span></span>
+                    <div class="progress-dots" id="progressDots"></div>
                 </div>
             </div>
 
-            {# RIGHT: Answer + controls #}
-            <div style="display:flex;flex-direction:column;gap:1.5rem">
-                <div class="asl-card">
-                    <h3>✍️ Your Answer</h3>
-                    <div class="answer-area">
-                        <div class="answer-label">
-                            <span>Current answer:</span>
-                        </div>
-                        <div class="answer-content" id="answerContent">
-                            <span id="currentAnswer"></span><span class="text-cursor"></span>
-                        </div>
+            <div id="serverStatus" class="status-banner offline">
+                <div class="sdot"></div>
+                <span id="statusText">Connecting to ASL server…</span>
+            </div>
+
+            <div class="question-strip">
+                <div class="qs-top">
+                    <div class="agent-tag"><span class="sdot"></span>AI Interviewer</div>
+                    <span class="status-badge" id="statusBadge">Waiting…</span>
+                </div>
+                <div class="question-text" id="questionText">Loading questions…</div>
+                <div class="question-sub">Sign your answer letter by letter — hold each sign until detected</div>
+            </div>
+
+            <div class="asl-grid">
+                <div class="glass-card">
+                    <div class="card-label"><span class="card-label-dot"></span>Camera Feed</div>
+                    <div class="cam-frame">
+                        <img id="videoFeed" src="http://localhost:5001/video_feed" alt="ASL Camera Feed"/>
+                        <span class="cam-live-badge"><span class="cam-rec"></span>LIVE</span>
                     </div>
-                    <div class="asl-controls">
-                        <button class="btn-asl btn-primary" onclick="addSpace()">␣ SPACE</button>
-                        <button class="btn-asl btn-neutral" onclick="deleteChar()">⌫ Delete</button>
-                        <button class="btn-asl btn-danger"  onclick="clearAnswer()">✕ Clear</button>
-                        <button class="btn-asl btn-success"  onclick="submitAnswer()">✓ Submit Answer</button>
+                    <div class="gesture-row">
+                        <div class="gesture-box none" id="gestureLetter">—</div>
+                        <div class="gesture-meta">
+                            <div class="gesture-status" id="confidenceLabel">Show your hand to begin</div>
+                            <div class="conf-track"><div class="conf-fill" id="confidenceBar"></div></div>
+                            <div class="conf-pct" id="confidencePct">0%</div>
+                        </div>
                     </div>
                 </div>
 
-                <div class="asl-card">
-                    <h3>📋 Recent Signs</h3>
-                    <div class="gesture-log" id="gestureLog"></div>
+                <div style="display:flex;flex-direction:column;gap:1.25rem">
+                    <div class="glass-card">
+                        <div class="card-label"><span class="card-label-dot" style="background:var(--cy)"></span>Your Answer</div>
+                        <div class="answer-box">
+                            <div class="ans-micro">Signed so far</div>
+                            <div class="ans-content"><span id="currentAnswer"></span><span class="text-cursor"></span></div>
+                        </div>
+                        <div class="ctrl-grid">
+                            <button class="btn-c bv" onclick="addSpace()">SPACE</button>
+                            <button class="btn-c"    onclick="deleteChar()">⌫ DEL</button>
+                            <button class="btn-c br" onclick="clearAnswer()">CLEAR</button>
+                            <button class="btn-c bg" onclick="submitAnswer()">SUBMIT ↑</button>
+                        </div>
+                    </div>
+                    <div class="glass-card">
+                        <div class="card-label"><span class="card-label-dot" style="background:var(--pk)"></span>Recent Signs</div>
+                        <div class="sign-log" id="gestureLog"><span class="log-empty">Signs will appear here…</span></div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -580,272 +208,92 @@
 {% block javascripts %}
     {{ parent() }}
     <script>
-        const ASL_SERVER = "http://localhost:5001";
-        let currentAnswer = '';
-        let currentQuestionIndex = 0;
-        let questions = [];
-        let interviewActive = true;
-        let lastGesture = null;
+        const ASL_SERVER="http://localhost:5001";
+        let currentAnswer='',currentQuestionIndex=0,questions=[],interviewActive=true,lastGesture=null;
+        const interviewQuestions=["What is your name?","Where are you from?","What is your favorite hobby?","Why do you want to learn sign language?","What are your career goals?","Describe yourself in three words","What motivates you?","How do you handle challenges?","What is your greatest achievement?","Where do you see yourself in 5 years?"];
 
-        // Interview questions
-        const interviewQuestions = [
-            "What is your name?",
-            "Where are you from?",
-            "What is your favorite hobby?",
-            "Why do you want to learn sign language?",
-            "What are your career goals?",
-            "Describe yourself in three words",
-            "What motivates you?",
-            "How do you handle challenges?",
-            "What is your greatest achievement?",
-            "Where do you see yourself in 5 years?"
-        ];
-
-        // Initialize interview with first 5 questions
-        function initInterview() {
-            questions = interviewQuestions.slice(0, 5);
-            document.getElementById('totalQuestions').textContent = questions.length;
-            loadQuestion(0);
+        function initInterview(){
+            questions=interviewQuestions.slice(0,5);
+            document.getElementById('totalQuestions').textContent=questions.length;
+            buildDots(questions.length);loadQuestion(0);
         }
-
-        function loadQuestion(index) {
-            if (index < questions.length) {
-                const questionText = document.getElementById('questionText');
-                questionText.style.opacity = '0';
-                setTimeout(() => {
-                    questionText.textContent = questions[index];
-                    questionText.style.opacity = '1';
-                }, 200);
-
-                document.getElementById('currentQuestionNum').textContent = index + 1;
-                document.getElementById('statusBadge').textContent = 'Sign your answer...';
-                document.getElementById('statusBadge').style.background = '#6366f1';
-
-                // Clear current answer for new question
-                clearAnswer();
-            } else {
-                endInterview();
-            }
+        function buildDots(n){
+            const w=document.getElementById('progressDots');w.innerHTML='';
+            for(let i=0;i<n;i++){const d=document.createElement('div');d.className='pdot';d.id=`pdot-${i}`;w.appendChild(d);}
         }
-
-        function submitAnswer() {
-            if (!currentAnswer.trim()) {
-                showFeedback('Please sign your answer before submitting!', 'warning');
-                return;
-            }
-
-            // Save the answer
-            const answer = currentAnswer;
-            const question = questions[currentQuestionIndex];
-
-            console.log(`Question: ${question}`);
-            console.log(`Answer: ${answer}`);
-
-            showFeedback(`✓ Answer submitted for question ${currentQuestionIndex + 1}!`, 'success');
-
-            // Send to backend
-            fetch('/candidat/asl-interview/api/save-answer', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    question: question,
-                    answer: answer,
-                    questionNumber: currentQuestionIndex + 1
-                })
-            }).catch(err => console.log('Save error:', err));
-
-            // Move to next question after short delay
-            setTimeout(() => {
-                currentQuestionIndex++;
-                if (currentQuestionIndex < questions.length) {
-                    loadQuestion(currentQuestionIndex);
-                } else {
-                    endInterview();
-                }
-            }, 1500);
+        function updateDots(a){
+            for(let i=0;i<questions.length;i++){const d=document.getElementById(`pdot-${i}`);if(!d)continue;d.className='pdot'+(i<a?' done':i===a?' active':'');}
         }
-
-        function endInterview() {
-            interviewActive = false;
-            document.getElementById('questionText').textContent = "🎉 Interview Complete! Thank you for using ASL! 🎉";
-            document.getElementById('statusBadge').textContent = 'Completed!';
-            document.getElementById('statusBadge').style.background = '#10b981';
-            showFeedback('Interview completed! Great job! 🎉', 'success');
-
-            // Option to restart
-            setTimeout(() => {
-                if (confirm('Interview completed! Would you like to restart?')) {
-                    restartInterview();
-                }
-            }, 2000);
+        function loadQuestion(i){
+            if(i<questions.length){
+                const el=document.getElementById('questionText');
+                el.style.opacity='0';
+                setTimeout(()=>{el.textContent=questions[i];el.style.opacity='1';},200);
+                document.getElementById('currentQuestionNum').textContent=i+1;
+                document.getElementById('statusBadge').textContent='Sign your answer';
+                updateDots(i);clearAnswer(true);
+            } else endInterview();
         }
-
-        function restartInterview() {
-            currentQuestionIndex = 0;
-            currentAnswer = '';
-            interviewActive = true;
-            document.getElementById('currentAnswer').textContent = '';
-            initInterview();
+        function submitAnswer(){
+            if(!currentAnswer.trim()){showToast('Please sign your answer first.','warning');return;}
+            const answer=currentAnswer,question=questions[currentQuestionIndex];
+            document.getElementById('statusBadge').textContent='Submitted ✓';
+            showToast(`Answer ${currentQuestionIndex+1} submitted`,'success');
+            fetch('/candidat/asl-interview/api/save-answer',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({question,answer,questionNumber:currentQuestionIndex+1})}).catch(()=>{});
+            setTimeout(()=>{currentQuestionIndex++;if(currentQuestionIndex<questions.length)loadQuestion(currentQuestionIndex);else endInterview();},1500);
         }
-
-        function showFeedback(message, type) {
-            const feedback = document.createElement('div');
-            feedback.className = 'feedback-message';
-            feedback.textContent = message;
-            if (type === 'success') {
-                feedback.style.background = 'rgba(16, 185, 129, 0.95)';
-            } else if (type === 'warning') {
-                feedback.style.background = 'rgba(245, 158, 11, 0.95)';
-            } else {
-                feedback.style.background = 'rgba(239, 68, 68, 0.95)';
-            }
-            document.body.appendChild(feedback);
-            setTimeout(() => {
-                feedback.remove();
-            }, 3000);
+        function endInterview(){
+            interviewActive=false;
+            document.getElementById('questionText').textContent='Interview complete — great work!';
+            document.getElementById('statusBadge').textContent='Completed ✦';
+            updateDots(questions.length);showToast('Interview finished!','success');
+            setTimeout(()=>{if(confirm('Restart the interview?'))restartInterview();},2000);
         }
+        function restartInterview(){currentQuestionIndex=0;currentAnswer='';interviewActive=true;document.getElementById('currentAnswer').textContent='';initInterview();}
+        function showToast(msg,type){const t=document.createElement('div');t.className=`toast ${type||'success'}`;t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3200);}
 
-        // Show interface after 3 seconds
-        setTimeout(() => {
-            const loadingOverlay = document.getElementById('loadingOverlay');
-            const aslWrapper = document.getElementById('aslWrapper');
+        setTimeout(()=>{
+            const ol=document.getElementById('loadingOverlay'),wr=document.getElementById('aslWrapper');
+            ol.style.opacity='0';wr.classList.add('visible');setTimeout(()=>ol.style.display='none',1000);
+        },3000);
 
-            loadingOverlay.style.opacity = '0';
-            aslWrapper.classList.add('visible');
-
-            setTimeout(() => {
-                loadingOverlay.style.display = 'none';
-            }, 1000);
-        }, 3000);
-
-        // ── Poll the gesture API ──────────────────────────────────────
-        function pollGesture() {
-            fetch(`${ASL_SERVER}/api/gesture`)
-                .then(r => r.json())
-                .then(data => {
-                    updateUI(data);
-                    updateServerStatus(true);
-                })
-                .catch(() => {
-                    updateServerStatus(false);
-                });
+        function pollGesture(){
+            fetch(`${ASL_SERVER}/api/gesture`).then(r=>r.json()).then(d=>{updateUI(d);updateServerStatus(true);}).catch(()=>updateServerStatus(false));
         }
-
-        function updateUI(data) {
-            const letterEl = document.getElementById('gestureLetter');
-            const barEl = document.getElementById('confidenceBar');
-            const labelEl = document.getElementById('confidenceLabel');
-
-            // Update gesture display
-            if (data.gesture) {
-                letterEl.textContent = data.gesture;
-                letterEl.className = 'gesture-letter detected';
-                barEl.style.width = (data.confidence * 100).toFixed(0) + '%';
-                labelEl.textContent = `Sign detected: ${data.gesture} (${(data.confidence * 100).toFixed(0)}% confidence)`;
-
-                // Auto-add letters to answer (with debounce)
-                if (data.gesture !== lastGesture && interviewActive) {
-                    // Handle special gestures
-                    if (data.gesture === 'SPACE') {
-                        addSpace();
-                    } else if (data.gesture === 'DELETE') {
-                        deleteChar();
-                    } else if (data.gesture === 'CLEAR') {
-                        clearAnswer();
-                    } else if (data.gesture.length === 1 && /[A-Z]/i.test(data.gesture)) {
-                        // Add letter to answer
-                        addLetter(data.gesture);
-                        addToLog(data.gesture);
-                    }
-                    lastGesture = data.gesture;
-
-                    // Reset after 1 second to allow same letter again
-                    setTimeout(() => {
-                        if (lastGesture === data.gesture) {
-                            lastGesture = null;
-                        }
-                    }, 1000);
+        function updateUI(data){
+            const le=document.getElementById('gestureLetter'),bar=document.getElementById('confidenceBar'),lbl=document.getElementById('confidenceLabel'),pct=document.getElementById('confidencePct');
+            if(data.gesture){
+                le.textContent=data.gesture;le.className='gesture-box detected';
+                const p=(data.confidence*100).toFixed(0);bar.style.width=p+'%';lbl.textContent=`Detected: ${data.gesture}`;pct.textContent=p+'%';
+                if(data.gesture!==lastGesture&&interviewActive){
+                    if(data.gesture==='SPACE')addSpace();
+                    else if(data.gesture==='DELETE')deleteChar();
+                    else if(data.gesture==='CLEAR')clearAnswer();
+                    else if(data.gesture.length===1&&/[A-Z]/i.test(data.gesture)){addLetter(data.gesture);addToLog(data.gesture);}
+                    lastGesture=data.gesture;
+                    setTimeout(()=>{if(lastGesture===data.gesture)lastGesture=null;},1000);
                 }
             } else {
-                letterEl.className = 'gesture-letter none';
-                if (data.hand_detected) {
-                    letterEl.textContent = '...';
-                    labelEl.textContent = 'Analyzing hand position...';
-                } else {
-                    letterEl.textContent = '—';
-                    labelEl.textContent = 'Show your hand to sign your answer';
-                }
-                barEl.style.width = '0%';
+                le.className='gesture-box none';bar.style.width='0%';pct.textContent='0%';
+                le.textContent=data.hand_detected?'…':'—';lbl.textContent=data.hand_detected?'Analyzing…':'Show your hand to sign';
             }
         }
-
-        function addLetter(letter) {
-            currentAnswer += letter;
-            document.getElementById('currentAnswer').textContent = currentAnswer;
-            // Also update the recognizer's text for consistency
-            fetch(`${ASL_SERVER}/api/update-text`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: currentAnswer })
-            }).catch(err => console.log('Update error:', err));
+        function addLetter(l){currentAnswer+=l;document.getElementById('currentAnswer').textContent=currentAnswer;fetch(`${ASL_SERVER}/api/update-text`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:currentAnswer})}).catch(()=>{});}
+        function addSpace(){currentAnswer+=' ';document.getElementById('currentAnswer').textContent=currentAnswer;}
+        function deleteChar(){currentAnswer=currentAnswer.slice(0,-1);document.getElementById('currentAnswer').textContent=currentAnswer;}
+        function clearAnswer(silent){currentAnswer='';document.getElementById('currentAnswer').textContent='';if(!silent)showToast('Answer cleared','warning');}
+        function addToLog(g){
+            const log=document.getElementById('gestureLog');const emp=log.querySelector('.log-empty');if(emp)emp.remove();
+            const t=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+            const chip=document.createElement('div');chip.className='sign-chip';chip.innerHTML=`${g}<span class="chip-t">${t}</span>`;
+            log.prepend(chip);while(log.children.length>24)log.removeChild(log.lastChild);
         }
-
-        function addSpace() {
-            currentAnswer += ' ';
-            document.getElementById('currentAnswer').textContent = currentAnswer;
+        function updateServerStatus(online){
+            const b=document.getElementById('serverStatus'),t=document.getElementById('statusText');
+            if(online){b.className='status-banner online';t.textContent='ASL recognition server is online and ready';if(questions.length===0)initInterview();}
+            else{b.className='status-banner offline';t.innerHTML='Server offline — run: <code style="font-family:monospace;background:rgba(255,255,255,.08);padding:1px 6px;border-radius:4px">python asl_web_server.py</code>';}
         }
-
-        function deleteChar() {
-            currentAnswer = currentAnswer.slice(0, -1);
-            document.getElementById('currentAnswer').textContent = currentAnswer;
-        }
-
-        function clearAnswer() {
-            currentAnswer = '';
-            document.getElementById('currentAnswer').textContent = '';
-            showFeedback('Answer cleared', 'info');
-        }
-
-        function addToLog(gesture) {
-            const log = document.getElementById('gestureLog');
-            const time = new Date().toLocaleTimeString();
-            const div = document.createElement('div');
-            div.className = 'log-entry';
-            div.innerHTML = `<span class="log-letter">${gesture}</span><span>${time}</span>`;
-            log.prepend(div);
-
-            while (log.children.length > 20) {
-                log.removeChild(log.lastChild);
-            }
-        }
-
-        function updateServerStatus(isOnline) {
-            const statusDiv = document.getElementById('serverStatus');
-            const statusText = document.getElementById('statusText');
-
-            if (isOnline) {
-                statusDiv.className = 'status-banner online';
-                statusText.textContent = 'ASL recognition server is online and ready';
-                // Start interview when server is online
-                if (questions.length === 0) {
-                    initInterview();
-                }
-            } else {
-                statusDiv.className = 'status-banner offline';
-                statusText.innerHTML = 'ASL server is offline — run: <code style="background:#1e1e1e;padding:2px 8px;border-radius:4px;margin-left:6px">python asl_web_server.py</code>';
-            }
-        }
-
-        // Start polling
-        setInterval(pollGesture, 200);
-        pollGesture();
-
-        window.onload = function() {
-            const shadowRoot = document.querySelector('spline-viewer').shadowRoot;
-            if (shadowRoot) {
-                const logo = shadowRoot.querySelector('#logo');
-                if (logo) logo.remove();
-            }
-        }
+        setInterval(pollGesture,200);pollGesture();
+        window.addEventListener('load',()=>{const sv=document.querySelector('spline-viewer');if(sv?.shadowRoot){const logo=sv.shadowRoot.querySelector('#logo');if(logo)logo.remove();}});
     </script>
 {% endblock %}
