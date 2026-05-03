@@ -28,7 +28,7 @@ class FileObject
     private ?int $fileSize = null;
 
     #[ORM\Column]
-    private ?\DateTimeInterface $uploadedAt = null;
+    private ?\DateTimeImmutable $uploadedAt = null;
 
     #[ORM\Column]
     private ?int $artifactId = null;
@@ -92,12 +92,12 @@ class FileObject
         return $this;
     }
 
-    public function getUploadedAt(): ?\DateTimeInterface
+    public function getUploadedAt(): ?\DateTimeImmutable
     {
         return $this->uploadedAt;
     }
 
-    public function setUploadedAt(?\DateTimeInterface $uploadedAt): self
+    public function setUploadedAt(?\DateTimeImmutable $uploadedAt): self
     {
         $this->uploadedAt = $uploadedAt;
         return $this;

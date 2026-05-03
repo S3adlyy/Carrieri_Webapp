@@ -12,7 +12,9 @@ use App\Repository\ModuleRepository;
 use App\Repository\ResultatQuizModuleRepository;
 use App\Repository\ResultatTestCoursRepository;
 use App\Service\CandidateRecommendationService;
+use App\Service\OllamaRecommendationService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 final class CandidateRecommendationServiceTest extends TestCase
 {
@@ -57,12 +59,15 @@ final class CandidateRecommendationServiceTest extends TestCase
         $testRepository->method('findLatestForCandidateAndCours')->willReturn(null);
         $testRepository->method('findPassedCoursIdsForCandidate')->willReturn([1]);
 
+        // Fix:
+        $ollamaService = new OllamaRecommendationService(new NullLogger());
         $service = new CandidateRecommendationService(
             $coursRepository,
             $moduleRepository,
             $leconRepository,
             $quizRepository,
             $testRepository,
+            $ollamaService //hedhi radineha null PHPSTAN
         );
 
         $candidate = new User();

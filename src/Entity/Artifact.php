@@ -31,13 +31,13 @@ class Artifact
     private ?string $testContent = null;
 
     #[ORM\Column]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
     private ?int $trackId = null;
 
     #[ORM\Column]
-    private ?\DateTimeInterface $deletedAt = null;
+    private ?\DateTimeImmutable $deletedAt = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(name: 'track_id', referencedColumnName: 'id')]
@@ -109,12 +109,12 @@ class Artifact
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(?\DateTimeInterface $createdAt): self
+    public function setCreatedAt(?\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
         return $this;
@@ -131,12 +131,12 @@ class Artifact
         return $this;
     }
 
-    public function getDeletedAt(): ?\DateTimeInterface
+    public function getDeletedAt(): ?\DateTimeImmutable
     {
         return $this->deletedAt;
     }
 
-    public function setDeletedAt(?\DateTimeInterface $deletedAt): self
+    public function setDeletedAt(?\DateTimeImmutable $deletedAt): self
     {
         $this->deletedAt = $deletedAt;
         return $this;

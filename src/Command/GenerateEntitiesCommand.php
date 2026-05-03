@@ -9,6 +9,8 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 use Symfony\Component\Filesystem\Filesystem;
+use Doctrine\DBAL\Schema\AbstractSchemaManager;
+
 
 #[AsCommand(
     name: 'app:generate:entities',
@@ -16,7 +18,7 @@ use Symfony\Component\Filesystem\Filesystem;
 )]
 class GenerateEntitiesCommand extends Command
 {
-    private $entityManager;
+    private EntityManagerInterface $entityManager;
 
     public function __construct(EntityManagerInterface $entityManager)
     {
@@ -64,7 +66,7 @@ class GenerateEntitiesCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function generateEntityWithProperties(string $tableName, $schemaManager, SymfonyStyle $io): void
+    private function generateEntityWithProperties(string $tableName,  $schemaManager, SymfonyStyle $io): void
     {
         // Get columns and foreign keys
         $columns = $schemaManager->listTableColumns($tableName);
@@ -210,3 +212,5 @@ class GenerateEntitiesCommand extends Command
         return $mapping[$doctrineType] ?? 'string';
     }
 }
+
+

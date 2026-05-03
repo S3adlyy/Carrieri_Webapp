@@ -10,6 +10,8 @@ parameters:
   jitsi_room_prefix: '%env(JITSI_ROOM_PREFIX)%'
   azure_face_endpoint: '%env(AZURE_FACE_ENDPOINT)%'
   azure_face_key: '%env(AZURE_FACE_KEY)%'
+  app.aws.region: '%env(AWS_REGION)%'
+  app.aws.bucket: '%env(AWS_BUCKET)%'
 
 services:
     # default configuration for services in *this* file
@@ -60,6 +62,12 @@ services:
         $twilioSid: '%env(TWILIO_SID)%'
         $twilioAuthToken: '%env(TWILIO_AUTH_TOKEN)%'
         $twilioPhoneNumber: '%env(TWILIO_PHONE_NUMBER)%'
+
+
+    App\Service\S3Service:
+      arguments:
+        $region: '%app.aws.region%'
+        $bucket: '%app.aws.bucket%'
   # add more service definitions when explicit configuration is needed
   # please note that last definitions always *replace* previous ones
   # add more service definitions when explicit configuration is needed

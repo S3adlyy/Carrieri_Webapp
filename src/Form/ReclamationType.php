@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Form\FrontOffice;
+namespace App\Form;
 
 use App\Entity\Cours;
 use App\Entity\Reclamation;

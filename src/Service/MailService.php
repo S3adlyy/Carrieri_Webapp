@@ -10,7 +10,7 @@ class MailService
 {
     public function __construct(private MailerInterface $mailer) {}
 
-    public function sendReclamationTreatedEmail(Reclamation $reclamation, string $reponse, string $statutFinal, string $emailDestinataire, ?string $prenom = null): void
+    public function sendReclamationTreatedEmail(Reclamation $reclamation, string $reponse, string $statutFinal, ?string $emailDestinataire, ?string $prenom = null): void
     {
         $prenom = $prenom ?: 'Cher candidat';
         $color = $statutFinal === 'Résolu' ? '#28a745' : '#ffc107';

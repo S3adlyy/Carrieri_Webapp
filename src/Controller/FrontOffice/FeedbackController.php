@@ -4,7 +4,7 @@ namespace App\Controller\FrontOffice;
 
 use App\Entity\Feedback;
 use App\Entity\RenduMission;
-use App\Form\FrontOffice\FeedbackType;
+use App\Form\FeedbackType;
 use App\Repository\FeedbackRepository;
 use App\Repository\RenduMissionRepository;
 use Doctrine\ORM\EntityManagerInterface;

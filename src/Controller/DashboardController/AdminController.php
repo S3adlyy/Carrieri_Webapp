@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Controller\DashboardController;
 
+use App\Entity\OffreEmploi;
 use App\Entity\User;
 use App\Form\UserEditType;
 use App\Service\BackOfficeDashboardService;

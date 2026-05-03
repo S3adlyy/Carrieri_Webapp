@@ -3,7 +3,7 @@
 namespace App\Controller\FrontOffice;
 
 use App\Entity\Reclamation;
-use App\Form\FrontOffice\ReclamationType;
+use App\Form\ReclamationType;
 use App\Repository\ReclamationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

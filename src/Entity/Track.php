@@ -25,16 +25,16 @@ class Track
     private ?string $category = null;
 
     #[ORM\Column]
-    private ?\DateTimeInterface $startDate = null;
+    private ?\DateTimeImmutable $startDate = null;
 
     #[ORM\Column]
-    private ?\DateTimeInterface $endDate = null;
+    private ?\DateTimeImmutable $endDate = null;
 
     #[ORM\Column]
     private ?string $status = null;
 
     #[ORM\Column]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
     private ?string $visibility = null;

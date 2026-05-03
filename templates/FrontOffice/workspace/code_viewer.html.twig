@@ -1,0 +1,305 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Code Viewer — {{ artifact.artifactName }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* ── Code Viewer — Full Screen GitHub-style layout ── */
+        .cv-shell {
+            display: flex; flex-direction: column;
+            height: calc(100vh - 60px);
+            background: #0d1117; color: #c9d1d9;
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+        .cv-topbar {
+            display: flex; align-items: center; gap: 12px;
+            padding: 0 20px; height: 52px;
+            background: #161b22; border-bottom: 1px solid #30363d;
+            flex-shrink: 0;
+        }
+        .cv-topbar-title { font-weight: 700; font-size: 15px; color: #e6edf3; }
+        .cv-topbar-meta  { font-size: 12px; color: #8b949e; }
+        .cv-breadcrumb   { font-size: 12px; color: #58a6ff; margin-left: auto; }
+        .cv-btn {
+            background: #21262d; border: 1px solid #30363d; color: #c9d1d9;
+            padding: 5px 14px; border-radius: 6px; font-size: 12px;
+            cursor: pointer; transition: background .15s;
+            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .cv-btn:hover { background: #30363d; color: #e6edf3; }
+        .cv-btn.primary { background: #238636; border-color: #2ea043; color: #fff; }
+        .cv-btn.primary:hover { background: #2ea043; }
+
+        .cv-body { display: flex; flex: 1; overflow: hidden; }
+
+        /* ── File Tree ── */
+        .cv-tree {
+            width: 260px; min-width: 180px; max-width: 400px;
+            background: #161b22; border-right: 1px solid #30363d;
+            overflow-y: auto; display: flex; flex-direction: column;
+            flex-shrink: 0;
+        }
+        .cv-tree-search {
+            padding: 10px 12px;
+            border-bottom: 1px solid #30363d;
+        }
+        .cv-tree-search input {
+            width: 100%; background: #0d1117; border: 1px solid #30363d;
+            color: #c9d1d9; padding: 5px 10px; border-radius: 6px;
+            font-size: 12px; outline: none;
+        }
+        .cv-tree-search input::placeholder { color: #8b949e; }
+        .cv-tree-list { flex: 1; overflow-y: auto; padding: 6px 0; }
+
+        .cv-tree-node {
+            display: flex; align-items: center; gap: 6px;
+            padding: 4px 12px; cursor: pointer;
+            font-size: 12.5px; user-select: none;
+            transition: background .1s;
+        }
+        .cv-tree-node:hover { background: #21262d; }
+        .cv-tree-node.active { background: #1f2937; color: #58a6ff; }
+        .cv-tree-node .icon { font-size: 14px; flex-shrink: 0; }
+        .cv-tree-node .label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cv-tree-node.dir > .icon::before { content: '📁'; }
+        .cv-tree-node.dir.open > .icon::before { content: '📂'; }
+        .cv-tree-node.file > .icon::before { content: '📄'; }
+        .cv-tree-indent { padding-left: 16px; }
+
+        /* ── Editor panel ── */
+        .cv-editor-panel {
+            flex: 1; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .cv-editor-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 16px; height: 40px;
+            background: #161b22; border-bottom: 1px solid #30363d;
+            font-size: 12px; color: #8b949e; flex-shrink: 0;
+        }
+        .cv-editor-path { color: #58a6ff; font-weight: 500; }
+        .cv-editor-lang { margin-left: auto; background: #21262d; border: 1px solid #30363d;
+            padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        #cv-monaco { flex: 1; height: 100%; }
+
+        .cv-empty {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100%; color: #8b949e; gap: 12px;
+        }
+        .cv-empty-icon { font-size: 48px; opacity: .4; }
+
+        /* ── Resize handle ── */
+        .cv-resize-handle {
+            width: 4px; cursor: col-resize; background: transparent;
+            transition: background .2s;
+        }
+        .cv-resize-handle:hover, .cv-resize-handle.dragging { background: #58a6ff44; }
+
+        /* ── No file state ── */
+        .cv-nofile {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            height: 100%; gap: 16px; color: #8b949e;
+        }
+    </style>
+{% endblock %}
+
+{% block candidatecontent %}
+    <div class="cv-shell">
+
+        {# ── Top Bar ── #}
+        <div class="cv-topbar">
+            <a href="{{ path('profile_view') }}" class="cv-btn">← Back</a>
+            <span class="cv-topbar-title">{{ artifact.artifactName }}</span>
+            {% if artifact.language %}
+                <span class="cv-topbar-meta">{{ artifact.language }}</span>
+            {% endif %}
+            <span class="cv-breadcrumb" id="cv-breadcrumb">Select a file</span>
+
+            {% if hasFile %}
+                <a href="{{ downloadUrl }}" class="cv-btn" download>⬇ Download ZIP</a>
+            {% endif %}
+            <a href="{{ path('profile_view') }}" class="cv-btn primary">✓ Done</a>
+        </div>
+
+        <div class="cv-body">
+
+            {% if hasFile %}
+                {# ── File Tree ── #}
+                <div class="cv-tree" id="cv-tree">
+                    <div class="cv-tree-search">
+                        <input type="text" id="cv-tree-search" placeholder="Filter files…">
+                    </div>
+                    <div class="cv-tree-list" id="cv-tree-list">
+                        <div style="padding: 20px; text-align:center; color:#8b949e; font-size:12px;">Loading tree…</div>
+                    </div>
+                </div>
+
+                {# ── Resize handle ── #}
+                <div class="cv-resize-handle" id="cv-resize"></div>
+
+                {# ── Editor ── #}
+                <div class="cv-editor-panel">
+                    <div class="cv-editor-header">
+                        <span id="cv-file-path" class="cv-editor-path">—</span>
+                        <span id="cv-file-lang" class="cv-editor-lang">—</span>
+                        <button class="cv-btn" id="cv-download-file" style="display:none">⬇ Download file</button>
+                    </div>
+                    <div id="cv-monaco">
+                        <div class="cv-empty">
+                            <div class="cv-empty-icon">⚡</div>
+                            <div>Click a file in the tree to view it</div>
+                        </div>
+                    </div>
+                </div>
+
+            {% else %}
+                <div class="cv-nofile">
+                    <div style="font-size:48px">📦</div>
+                    <div style="font-size:18px; font-weight:700; color:#e6edf3">No file uploaded yet</div>
+                    <div>Upload a ZIP file for this artifact to browse the code.</div>
+                    <a href="{{ path('profile_view') }}" class="cv-btn primary">Back to Profile</a>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% if hasFile %}
+        <script>
+            const ARTIFACT_ID  = {{ artifact.id }};
+            const FO_ID        = {{ fileObject.id }};
+            const DOWNLOAD_URL = {{ downloadUrl|json_encode|raw }};
+            const TREE_URL     = `/workspace/code/${ARTIFACT_ID}/tree?fo=${FO_ID}`;
+            const FILE_URL     = `/workspace/code/${ARTIFACT_ID}/file?fo=${FO_ID}&path=`;
+
+            let monacoEditor   = null;
+            let currentPath    = null;
+            let treeData       = [];
+
+            // ── Monaco loader ────────────────────────────────────────────────────────────
+            require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/vs' } });
+            require(['vs/editor/editor.main'], function () {
+                monacoEditor = monaco.editor.create(document.getElementById('cv-monaco'), {
+                    value:            '// Select a file from the tree',
+                    language:         'plaintext',
+                    theme:            'vs-dark',
+                    fontSize:         13,
+                    lineNumbers:      'on',
+                    minimap:          { enabled: true },
+                    scrollBeyondLastLine: false,
+                    automaticLayout:  true,
+                    readOnly:         true,
+                    fontFamily:       "'JetBrains Mono', 'Fira Code', monospace",
+                });
+                loadTree();
+            });
+
+            // ── Tree loading ─────────────────────────────────────────────────────────────
+            async function loadTree() {
+                const res  = await fetch(TREE_URL);
+                const json = await res.json();
+                treeData   = json.tree || [];
+                renderTree(treeData, document.getElementById('cv-tree-list'), 0);
+            }
+
+            function renderTree(nodes, container, depth) {
+                nodes.forEach(node => {
+                    const el  = document.createElement('div');
+                    el.className = `cv-tree-node ${node.type}`;
+                    el.style.paddingLeft = `${12 + depth * 16}px`;
+                    el.innerHTML = `<span class="icon"></span><span class="label">${escHtml(node.name)}</span>`;
+                    el.dataset.path = node.path;
+                    el.dataset.type = node.type;
+
+                    if (node.type === 'dir') {
+                        const childContainer = document.createElement('div');
+                        childContainer.className = 'cv-tree-indent';
+                        childContainer.style.display = 'none';
+                        el.addEventListener('click', e => {
+                            e.stopPropagation();
+                            const open = el.classList.toggle('open');
+                            childContainer.style.display = open ? 'block' : 'none';
+                        });
+                        container.appendChild(el);
+                        container.appendChild(childContainer);
+                        renderTree(node.children || [], childContainer, depth + 1);
+                    } else {
+                        el.addEventListener('click', () => openFile(node.path, el));
+                        container.appendChild(el);
+                    }
+                });
+            }
+
+            async function openFile(path, el) {
+                document.querySelectorAll('.cv-tree-node').forEach(n => n.classList.remove('active'));
+                el.classList.add('active');
+                currentPath = path;
+
+                document.getElementById('cv-file-path').textContent = path;
+                monacoEditor.setValue('// Loading…');
+
+                const res  = await fetch(FILE_URL + encodeURIComponent(path));
+                const json = await res.json();
+
+                document.getElementById('cv-breadcrumb').textContent = path;
+                document.getElementById('cv-file-lang').textContent  = json.language || 'plaintext';
+                document.getElementById('cv-download-file').style.display = 'inline-flex';
+
+                monaco.editor.setModelLanguage(monacoEditor.getModel(), json.language || 'plaintext');
+                monacoEditor.setValue(json.content || '');
+
+                // Download individual file button
+                document.getElementById('cv-download-file').onclick = () => {
+                    const blob = new Blob([json.content], { type: 'text/plain' });
+                    const a    = document.createElement('a');
+                    a.href     = URL.createObjectURL(blob);
+                    a.download = path.split('/').pop();
+                    a.click();
+                };
+            }
+
+            // ── Search filter ─────────────────────────────────────────────────────────────
+            document.getElementById('cv-tree-search').addEventListener('input', function () {
+                const q = this.value.toLowerCase().trim();
+                document.querySelectorAll('.cv-tree-node.file').forEach(el => {
+                    const name = el.querySelector('.label').textContent.toLowerCase();
+                    el.style.display = (!q || name.includes(q)) ? '' : 'none';
+                });
+            });
+
+            // ── Resizable tree panel ──────────────────────────────────────────────────────
+            (function() {
+                const handle = document.getElementById('cv-resize');
+                const tree   = document.getElementById('cv-tree');
+                let dragging = false, startX = 0, startW = 0;
+
+                handle.addEventListener('mousedown', e => {
+                    dragging = true; startX = e.clientX; startW = tree.offsetWidth;
+                    handle.classList.add('dragging');
+                    document.body.style.cursor = 'col-resize';
+                });
+                document.addEventListener('mousemove', e => {
+                    if (!dragging) return;
+                    const w = Math.max(140, Math.min(600, startW + e.clientX - startX));
+                    tree.style.width = w + 'px';
+                });
+                document.addEventListener('mouseup', () => {
+                    if (!dragging) return;
+                    dragging = false;
+                    handle.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                });
+            })();
+
+            function escHtml(s) {
+                return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            }
+        </script>
+        <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/vs/loader.js"></script>
+    {% endif %}
+{% endblock %}

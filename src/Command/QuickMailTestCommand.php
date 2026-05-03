@@ -41,7 +41,9 @@ class QuickMailTestCommand extends Command
             $this->mailService->sendReclamationTreatedEmail(
                 $reclamation, 
                 'Ceci est un test de la commande Symfony', 
-                'Résolu'
+                'Résolu',
+                null,
+                null
             );
             $output->writeln('<info>✅ Email envoyé avec succès !</info>');
             $output->writeln('Vérifie dans Mailtrap : https://mailtrap.io');

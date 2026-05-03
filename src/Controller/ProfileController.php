@@ -4,11 +4,16 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Track;
 use App\Entity\User;
+use App\Entity\Workspace;
 use App\Form\ProfileForm;
 use App\Service\ProfileService;
+use App\Service\TrackService;
+use App\Service\WorkspaceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,17 +26,20 @@ use App\Service\GeminiAIService;
 #[IsGranted('ROLE_USER')]
 final class ProfileController extends AbstractController
 {
+
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly ProfileService $profileService,
         private readonly GeminiAIService $geminiAIService, // Add this
+        private readonly WorkspaceService $workspaceService,
+        private readonly TrackService $trackService,
 
     ) {
     }
 
     #[Route('/{id}', name: 'app_profile_view', requirements: ['id' => '\\d+'], methods: ['GET'])]
     #[Route('', name: 'app_my_profile', methods: ['GET'])]
-    public function view(?int $id = null, Request $request): Response
+    public function view(Request $request, ?int $id = null): Response
     {
         $currentUser = $this->requireCurrentUser();
 
@@ -51,7 +59,106 @@ final class ProfileController extends AbstractController
             'suggestions' => $this->profileService->suggestPeopleYouMayKnow($currentUser, 5),
             'public_profile_url' => sprintf('carrieri.app/in/%s', $this->profileService->slugifyDisplayName($targetUser)),
             'edit_section' => $this->normalizeEditSection((string) $this->getRequestEditSection()),
+            'workspace' => $this->workspaceService->getOrCreateByUser($currentUser),
+            'isOwner'   => $currentUser->getId() === $targetUser->getId(),
         ]);
+    }
+
+    #[Route('/workspace/data', name: 'workspace_data', methods: ['GET'])]
+    public function workspaceData(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $workspace = $this->workspaceService->getOrCreateByUser($user);
+
+        $tracks = $this->trackService->listByWorkspace($workspace);
+
+        return $this->json([
+            'workspace' => [
+                'id' => $workspace->getId(),
+                'description' => $workspace->getDescription(),
+                'createdAt' => $workspace->getCreatedAt()?->format('Y-m-d H:i:s'),
+                'candidateId' => $workspace->getUser(),
+            ],
+            'tracks' => array_map(static function (Track $track): array {
+                return [
+                    'id' => $track->getId(),
+                    'title' => $track->getTitle(),
+                    'description' => $track->getDescription(),
+                    'visibility' => $track->getVisibility(),
+                    'createdAt' => $track->getCreatedAt()?->format('Y-m-d H:i:s'),
+                ];
+            }, $tracks),
+        ]);
+    }
+
+    #[Route('/workspace/track/create', name: 'workspace_track_create', methods: ['POST'])]
+    public function createTrack(Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        $payload = json_decode($request->getContent(), true);
+        if (!is_array($payload)) {
+            $payload = $request->request->all();
+        }
+
+        $title = trim((string) ($payload['title'] ?? ''));
+        $category = strtoupper(trim((string) ($payload['category'] ?? 'PROJECT')));
+        $description = trim((string) ($payload['description'] ?? ''));
+        $visibility = strtoupper(trim((string) ($payload['visibility'] ?? 'PRIVATE')));
+        $startDate = !empty($payload['startDate']) ? new \DateTimeImmutable($payload['startDate']) : null;
+        $endDate = !empty($payload['endDate']) ? new \DateTimeImmutable($payload['endDate']) : null;
+
+        if ($title === '') {
+            return $this->json(['error' => 'Title is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        if (!in_array($category, ['PROJECT', 'EXPERIENCE', 'EDUCATION', 'ACTIVITY', 'OTHER'], true)) {
+            $category = 'PROJECT';
+        }
+
+        if (!in_array($visibility, ['PUBLIC', 'PRIVATE'], true)) {
+            $visibility = 'PRIVATE';
+        }
+
+        $workspace = $this->workspaceService->getOrCreateByUser($user);
+
+        $track = new Track();
+        $track->setWorkspace($workspace);
+        $track->setWorkspaceId($workspace->getId());
+        $track->setTitle($title);
+        $track->setCategory($category);
+        $track->setStartDate($startDate);
+        $track->setEndDate($endDate);
+        $track->setDescription($description !== '' ? $description : null);
+        $track->setVisibility($visibility);
+        $track->setStatus('ACTIVE');
+        $track->setCreatedAt(new \DateTimeImmutable());
+
+        $this->entityManager->persist($track);
+        $this->entityManager->flush();
+
+        return $this->json([
+            'success' => true,
+            'track' => [
+                'id' => $track->getId(),
+                'title' => $track->getTitle(),
+                'category' => $track->getCategory(),
+                'startDate' => $track->getStartDate()?->format('Y-m-d'),
+                'endDate' => $track->getEndDate()?->format('Y-m-d'),
+                'description' => $track->getDescription(),
+                'visibility' => $track->getVisibility(),
+                'createdAt' => $track->getCreatedAt()?->format('Y-m-d H:i:s'),
+            ],
+        ], Response::HTTP_CREATED);
     }
     #[Route('/about/improve', name: 'app_profile_about_improve', methods: ['POST'])]
     public function improveAbout(Request $request): Response

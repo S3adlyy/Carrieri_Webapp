@@ -888,16 +888,19 @@
                     </button>
                 </div>
 
-                <!-- Workspace Card -->
-                <div class="fo-side-card">
-                    <div class="fo-section-title">
-                        <span><i class="fas fa-briefcase"></i> Workspace</span>
-                    </div>
-                    <p class="fo-info-value mb-0">
-                        Workspace section placeholder — we will connect this to your existing workspace entity and actions in the next step.
-                    </p>
-                </div>
+
             </div>
+            {# Workspace — full width row below the 2-column section #}
+            {# ── Full-width Workspace Section ── #}
+            {% if isOwner or (workspace is defined and workspace) %}
+                <div class="col-12">
+                    {% include 'FrontOffice/workspace/_workspace_card.html.twig' with {
+                        isOwner: isOwner,
+                        user: user,
+                        workspace: workspace ?? null
+                    } %}
+                </div>
+            {% endif %}
         </div>
 
         {% if isOwner %}

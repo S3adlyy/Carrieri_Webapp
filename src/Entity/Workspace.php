@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Entity;
 
+use App\Repository\WorkspaceRepository;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Table(name: 'workspace')]
@@ -15,28 +17,19 @@ class Workspace
     #[ORM\Column]
     private ?int $id = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: Types::STRING)]
     private ?string $description = null;
 
-    #[ORM\Column]
-    private ?\DateTimeInterface $createdAt = null;
-
-    #[ORM\Column]
-    private ?int $candidatId = null;
+    #[ORM\Column(type: Types::DATETIME_IMMUTABLE)]
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'candidat_id', referencedColumnName: 'id')]
+    #[ORM\JoinColumn(name: 'candidat_id', referencedColumnName: 'id', nullable: false)]
     private ?User $user = null;
 
     public function getId(): ?int
     {
         return $this->id;
-    }
-
-    public function setId(?int $id): self
-    {
-        $this->id = $id;
-        return $this;
     }
 
     public function getDescription(): ?string
@@ -50,25 +43,14 @@ class Workspace
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(?\DateTimeInterface $createdAt): self
+    public function setCreatedAt(?\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    public function getCandidatId(): ?int
-    {
-        return $this->candidatId;
-    }
-
-    public function setCandidatId(?int $candidatId): self
-    {
-        $this->candidatId = $candidatId;
         return $this;
     }
 
@@ -82,4 +64,5 @@ class Workspace
         $this->user = $user;
         return $this;
     }
+
 }

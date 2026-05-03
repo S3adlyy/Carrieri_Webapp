@@ -25,7 +25,7 @@ class Snapshot
     private ?int $isFinal = null;
 
     #[ORM\Column]
-    private ?\DateTimeInterface $createdAt = null;
+    private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
     private ?int $trackId = null;
@@ -85,12 +85,12 @@ class Snapshot
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): ?\DateTimeImmutable
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(?\DateTimeInterface $createdAt): self
+    public function setCreatedAt(?\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
         return $this;

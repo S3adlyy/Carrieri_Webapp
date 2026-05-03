@@ -40,6 +40,7 @@ class Conversation
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user2_id', referencedColumnName: 'id')]
     private ?User $user2 = null;  // ← Nom différent : user2
+    private ArrayCollection $messages; //hedhi zedneha khater fel construct kenet mech mawjouda w naytoulha (baad php stan)
 
     public function __construct()
     {
