@@ -27,6 +27,7 @@ class FeedbackService
 
     /**
      * Distribution des notes
+     * @return array<int, int>
      */
     public function getNoteDistribution(User $recruiter): array
     {
@@ -46,6 +47,7 @@ class FeedbackService
 
     /**
      * Derniers feedbacks
+     * @return array<\App\Entity\Feedback>
      */
     public function getLatestFeedbacks(User $recruiter, int $limit = 5): array
     {
@@ -58,6 +60,7 @@ class FeedbackService
 
     /**
      * Statistiques globales des feedbacks pour un recruteur
+     * @return array<string, mixed>
      */
     public function getStats(User $recruiter): array
     {
@@ -73,6 +76,9 @@ class FeedbackService
         ];
     }
 
+    /**
+     * @param array<int, int> $distribution
+     */
     private function getBestNote(array $distribution): int
     {
         for ($i = 5; $i >= 1; $i--) {
@@ -81,6 +87,9 @@ class FeedbackService
         return 0;
     }
 
+    /**
+     * @param array<int, int> $distribution
+     */
     private function getWorstNote(array $distribution): int
     {
         for ($i = 1; $i <= 5; $i++) {

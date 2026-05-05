@@ -33,7 +33,7 @@ final class ArtifactService
     public function create(
         Track $track,
         string $name,
-        ?string $description,
+        string $description,
         string $type,
         ?string $language = null,
         ?string $textContent = null

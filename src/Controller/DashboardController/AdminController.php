@@ -11,6 +11,7 @@ use App\Service\BackOfficeDashboardService;
 use App\Service\CertificateModerationService;
 use App\Service\CertificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,7 @@ use Doctrine\ORM\EntityManagerInterface;
 #[Route('/admin')]
 class AdminController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private BackOfficeDashboardService $dashboardData,
         private RenduMissionRepository $renduMissionRepository,
@@ -89,15 +91,16 @@ class AdminController extends AbstractController
     #[Route('/utilisateur/{id}/delete', name: 'app_admin_utilisateur_delete', methods: ['POST'])]
     public function deleteUtilisateur(Request $request, User $user): Response
     {
-        $this->requireUser();
+        $authenticatedUser = $this->requireUser();
 
         // Prevent admin from deleting themselves
-        if ($user->getId() === $this->getUser()->getId()) {
+        if ($user->getId() === $authenticatedUser->getId()) {
             $this->addFlash('error', 'Vous ne pouvez pas supprimer votre propre compte.');
             return $this->redirectToRoute('app_admin_utilisateurs');
         }
 
-        if ($this->isCsrfTokenValid('delete_user_' . $user->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete_user_' . $user->getId(), is_string($token) ? $token : '')) {
             try {
                 // Delete related records based on user type
                 $connection = $this->entityManager->getConnection();
@@ -185,6 +188,9 @@ class AdminController extends AbstractController
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function getMissionStats(User $user): array
     {
         $missions = $this->dashboardData->listMissions($user);
@@ -287,7 +293,7 @@ class AdminController extends AbstractController
 
     private function requireUser(): User
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }

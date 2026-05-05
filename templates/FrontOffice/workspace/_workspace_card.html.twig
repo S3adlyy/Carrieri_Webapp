@@ -117,6 +117,7 @@
                         <option value="DOCUMENT">📄 Document</option>
                         <option value="IMAGE">🖼 Image</option>
                         <option value="VIDEO">🎬 Video</option>
+                        <option value="AUDIO">🎵 Audio</option>
                         <option value="TEXT">📝 Text note</option>
                         <option value="LINK">🔗 Link</option>
                     </select>
@@ -129,6 +130,23 @@
             <div class="wsc-field" id="wsc-af-text-row" style="display:none">
                 <label id="wsc-af-text-label">Text / URL</label>
                 <textarea id="wsc-af-text" rows="4" maxlength="5000"></textarea>
+            </div>
+            <div class="wsc-field" id="wsc-af-file-row">
+                <label id="wsc-af-file-label">File *</label>
+
+                <input
+                        type="file"
+                        id="wsc-af-file"
+                        style="display:none"
+                >
+
+                <div id="wsc-af-dropzone" class="wsc-dropzone" tabindex="0" role="button">
+                    <div class="wsc-dropzone-icon">📂</div>
+                    <div class="wsc-dropzone-label" id="wsc-af-dropzone-label">Drop a file here or click to browse</div>
+                    <div class="wsc-dropzone-sub" id="wsc-af-dropzone-sub">Max 50 MB</div>
+                </div>
+
+                <div class="wsc-field-hint" id="wsc-af-selected-file" style="display:none"></div>
             </div>
             <div class="wsc-field">
                 <label>Description (optional)</label>
@@ -539,9 +557,11 @@
                 artifactRenameTemplate: '/track/artifact/999999/rename',
                 artifactDeleteTemplate: '/track/artifact/999999/delete',
                 artifactUploadTemplate: '/track/artifact/999999/upload',
-                fileDownloadTemplate: '/track/fileobject/999999/download-url',
+                fileDownloadTemplate: '/track/fileobject/999999/download',
                 snapshotListTemplate: '/snapshot/list/999999',
-                snapshotCreateTemplate: '/snapshot/create/999999'
+                snapshotCreateTemplate: '/snapshot/create/999999',
+                codeViewerTemplate: '{{ path('codeviewer', { artifactId: 999999 }) }}',
+                codeRawViewerTemplate: '{{ path('codeviewer', { artifactId: 999999 }) }}'
             }
         };
 
@@ -617,40 +637,40 @@
         }
 
         async function wscFetch(url, options = {}) {
-            const finalOptions = {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
-                    ...(options.headers || {})
-                },
-                ...options
-            };
+            const finalUrl = String(url || '');
 
-            log('AJAX request', { url, finalOptions });
+            if (/^https?:\/\//i.test(finalUrl)) {
+                throw new Error('wscFetch() must only be used with app JSON routes, not direct file URLs.');
+            }
 
-            const response = await fetch(url, finalOptions);
-            const contentType = response.headers.get('content-type') || '';
-            const raw = await response.text();
+            const headers = new Headers(options.headers || {});
+            const isFormData = options.body instanceof FormData;
 
-            log('AJAX response', {
-                url,
-                status: response.status,
-                statusText: response.statusText,
-                contentType,
-                raw
+            if (!headers.has('X-Requested-With')) {
+                headers.set('X-Requested-With', 'XMLHttpRequest');
+            }
+
+            if (!isFormData && !headers.has('Content-Type') && options.body != null) {
+                headers.set('Content-Type', 'application/json');
+            }
+
+            const response = await fetch(finalUrl, {
+                ...options,
+                headers,
+                credentials: 'same-origin'
             });
 
-            let data = {};
-            if (raw) {
-                try {
-                    data = JSON.parse(raw);
-                } catch (e) {
-                    throw new Error(`Expected JSON, got: ${raw.substring(0, 220)}`);
-                }
+            const raw = await response.text();
+            let data = null;
+
+            try {
+                data = raw ? JSON.parse(raw) : {};
+            } catch (e) {
+                throw new Error(`Expected JSON from app route, got: ${raw.slice(0, 180)}`);
             }
 
             if (!response.ok) {
-                throw new Error(data.error || `HTTP ${response.status}`);
+                throw new Error(data?.error || `HTTP ${response.status}`);
             }
 
             return data;
@@ -669,17 +689,17 @@
             };
         }
 
-        function normalizeArtifact(item) {
+        function normalizeArtifact(item = {}) {
             return {
-                id: Number(item?.id ?? item?.artifactId ?? 0),
-                name: String(item?.name ?? item?.artifactName ?? ''),
-                type: String(item?.type ?? item?.artifactType ?? 'OTHER').toUpperCase(),
-                language: item?.language ?? null,
-                textContent: item?.textContent ?? item?.testContent ?? null,
-                description: item?.description ?? item?.artifactDescription ?? null,
-                createdAt: item?.createdAt ?? null,
-                hasFile: Boolean(item?.hasFile),
-                fileObjectId: item?.fileObjectId ?? null
+                id: Number(item.id ?? 0),
+                name: String(item.name ?? ''),
+                type: String(item.type ?? 'OTHER').toUpperCase(),
+                language: item.language ?? null,
+                textContent: item.textContent ?? null,
+                description: item.description ?? '',
+                createdAt: item.createdAt ?? null,
+                hasFile: Boolean(item.hasFile),
+                fileObjectId: item.fileObjectId ?? null
             };
         }
 
@@ -877,52 +897,68 @@
 
         function artifactRowHtml(artifact) {
             const iconMap = {
-                CODE: '📦',
+                CODE: '💻',
                 DOCUMENT: '📄',
-                IMAGE: '🖼',
+                IMAGE: '🖼️',
                 VIDEO: '🎬',
                 AUDIO: '🎵',
                 LINK: '🔗',
                 TEXT: '📝',
-                OTHER: '📌'
+                OTHER: '📦'
             };
 
             const fileBadge = artifact.hasFile
                 ? `<span class="wsc-art-badge">File</span>`
                 : `<span class="wsc-art-badge no-file">No file</span>`;
 
+            const previewBtn = artifact.fileObjectId
+                ? `<button class="wsc-btn-sm" type="button" onclick="event.stopPropagation(); previewArtifact(${artifact.id}, '${escHtml(artifact.type)}', ${artifact.fileObjectId})">Preview</button>`
+                : '';
+
             const downloadBtn = artifact.fileObjectId
-                ? `<button class="wsc-btn-sm" type="button" onclick="downloadArtifact(${artifact.fileObjectId})">Download</button>`
+                ? `<button class="wsc-btn-sm" type="button" onclick="event.stopPropagation(); downloadArtifact(${artifact.fileObjectId})">Download</button>`
                 : '';
 
             const textPreview = artifact.textContent
                 ? `<div class="wsc-art-meta">${escHtml(String(artifact.textContent).slice(0, 120))}${String(artifact.textContent).length > 120 ? '…' : ''}</div>`
                 : '';
 
-            const ownerActions = WSC.isOwner
-                ? `
-                <div class="wsc-art-actions">
-                    <button class="wsc-btn-sm" type="button" onclick="renameArtifact(${artifact.id})">Rename</button>
-                    <button class="wsc-btn-sm" type="button" onclick="uploadVersion(${artifact.id})">Upload</button>
-                    <button class="wsc-btn-sm wsc-btn-danger" type="button" onclick="deleteArtifact(${artifact.id})">Delete</button>
-                </div>
-            `
+            const ownerActions = WSC.isOwner ? `
+        <div class="wsc-art-actions">
+            ${previewBtn}
+            ${downloadBtn}
+            <button class="wsc-btn-sm" type="button" onclick="event.stopPropagation(); renameArtifact(${artifact.id})">Rename</button>
+            <button class="wsc-btn-sm" type="button" onclick="event.stopPropagation(); uploadVersion(${artifact.id})">Upload</button>
+            <button class="wsc-btn-sm wsc-btn-danger" type="button" onclick="event.stopPropagation(); deleteArtifact(${artifact.id})">Delete</button>
+        </div>
+    ` : `
+        <div class="wsc-art-actions">
+            ${previewBtn}
+            ${downloadBtn}
+        </div>
+    `;
+
+            const rowClick = artifact.fileObjectId
+                ? `onclick="previewArtifact(${artifact.id}, '${escHtml(artifact.type)}', ${artifact.fileObjectId})"`
                 : '';
 
             return `
-            <div class="wsc-artifact-row" data-artifact-id="${artifact.id}">
-                <div class="wsc-art-icon">${iconMap[artifact.type] || '📌'}</div>
-                <div style="flex:1; min-width:0;">
-                    <div class="wsc-art-name">${escHtml(artifact.name)}</div>
-                    <div class="wsc-art-meta">${escHtml(artifact.type)}${artifact.language ? ' · ' + escHtml(artifact.language) : ''}${artifact.createdAt ? ' · ' + escHtml(artifact.createdAt) : ''}</div>
-                    ${artifact.description ? `<div class="wsc-art-meta">${escHtml(artifact.description)}</div>` : ''}
-                    ${textPreview}
+        <div class="wsc-artifact-row" data-artifact-id="${artifact.id}" ${rowClick} style="${artifact.fileObjectId ? 'cursor:pointer' : ''}">
+            <div class="wsc-art-icon">${iconMap[artifact.type] || '📦'}</div>
+            <div style="flex:1; min-width:0;">
+                <div class="wsc-art-name">${escHtml(artifact.name)}</div>
+                <div class="wsc-art-meta">
+                    ${escHtml(artifact.type)}
+                    ${artifact.language ? ' · ' + escHtml(artifact.language) : ''}
+                    ${artifact.createdAt ? ' · ' + escHtml(artifact.createdAt) : ''}
                 </div>
-                ${fileBadge}
-                ${downloadBtn}
-                ${ownerActions}
+                ${artifact.description ? `<div class="wsc-art-meta">${escHtml(artifact.description)}</div>` : ''}
+                ${textPreview}
             </div>
-        `;
+            ${fileBadge}
+            ${ownerActions}
+        </div>
+    `;
         }
 
         function renderTimelineHtml(snapshots) {
@@ -970,6 +1006,9 @@
             setVisible(progressPanel, !showCurrent);
         }
 
+
+
+
         function showSnapshot(snapshotId) {
             document.querySelectorAll('.wsc-seg').forEach(seg => {
                 seg.classList.toggle('active', Number(seg.dataset.snapshotId) === Number(snapshotId));
@@ -991,32 +1030,35 @@
         function openEditTrack(trackId) {
             const track = getTrackById(trackId);
             if (!track) {
-                wscToast('Track not found.', 'error');
+                wscToast('Track data not found.', 'error');
                 return;
             }
 
             WSC.editTrackId = Number(trackId);
             clearTrackForm();
 
-            qs('wsc-f-title').value = track.title || '';
-            qs('wsc-f-category').value = track.category || 'PROJECT';
-            qs('wsc-f-visibility').value = track.visibility || 'PRIVATE';
-            qs('wsc-f-start').value = track.startDate || '';
-            qs('wsc-f-end').value = track.endDate || '';
-            qs('wsc-f-desc').value = track.description || '';
+            qs('wsc-modal-title').textContent = 'Edit Track';
+            qs('wsc-modal-save').textContent = 'Save Changes';
+            qs('wsc-f-title').value = track.title ?? '';
+            qs('wsc-f-category').value = track.category ?? 'PROJECT';
+            qs('wsc-f-visibility').value = track.visibility ?? 'PRIVATE';
+            qs('wsc-f-start').value = track.startDate ?? '';
+            qs('wsc-f-end').value = track.endDate ?? '';
+            qs('wsc-f-desc').value = track.description ?? '';
 
-            if (els.modalTitle()) els.modalTitle().textContent = 'Edit Track';
-            if (els.modalSave()) els.modalSave().textContent = 'Save Changes';
-            setVisible(els.modalOverlay(), true, 'flex');
+            setVisible(qs('wsc-modal-overlay'), true, 'flex');
+            qs('wsc-f-title')?.focus();
         }
 
         function closeTrackModal() {
-            setVisible(els.modalOverlay(), false);
+            setVisible(qs('wsc-modal-overlay'), false);
             clearTrackForm();
+            WSC.editTrackId = null;
         }
 
+
         function clearTrackForm() {
-            ['wsc-f-title', 'wsc-f-start', 'wsc-f-end', 'wsc-f-desc'].forEach(id => {
+            ['wsc-f-title', 'wsc-f-start', 'wsc-f-end', 'wsc-f-desc'].forEach((id) => {
                 const el = qs(id);
                 if (el) el.value = '';
             });
@@ -1079,6 +1121,7 @@
             }
         }
 
+
         function closeDetail() {
             WSC.currentTrackId = null;
             WSC.currentTrackData = null;
@@ -1097,13 +1140,21 @@
         function closeArtifactModal() {
             setVisible(els.artOverlay(), false);
             clearArtifactForm();
+            WSC.currentArtifactTrackId = null;
+
         }
 
         function clearArtifactForm() {
-            ['wsc-af-name', 'wsc-af-language', 'wsc-af-text', 'wsc-af-desc'].forEach(id => {
+            ['wsc-af-name', 'wsc-af-language', 'wsc-af-text', 'wsc-af-desc', 'wsc-af-file'].forEach(id => {
                 const el = qs(id);
                 if (el) el.value = '';
             });
+
+            const selectedFile = qs('wsc-af-selected-file');
+            if (selectedFile) {
+                selectedFile.textContent = '';
+                selectedFile.style.display = 'none';
+            }
 
             if (qs('wsc-af-type')) qs('wsc-af-type').value = 'CODE';
             clearModalError('wsc-art-err');
@@ -1111,17 +1162,121 @@
         }
 
         function onArtifactTypeChange() {
-            const type = getValue('wsc-af-type');
+            const type = getValue('wsc-af-type').trim().toUpperCase();
             const isText = type === 'TEXT' || type === 'LINK';
             const isCode = type === 'CODE';
+            const needsFile = !isText;
 
             setVisible(qs('wsc-af-text-row'), isText);
             setVisible(qs('wsc-af-lang-row'), isCode, 'flex');
+            setVisible(qs('wsc-af-file-row'), needsFile);
 
-            const label = qs('wsc-af-text-label');
-            if (label) {
-                label.textContent = type === 'LINK' ? 'URL *' : 'Text content *';
+            const textLabel = qs('wsc-af-text-label');
+            if (textLabel) {
+                textLabel.textContent = type === 'LINK' ? 'URL *' : 'Text content *';
             }
+
+            const fileInput = qs('wsc-af-file');
+            const fileLabel = qs('wsc-af-file-label');
+            const dropLabel = qs('wsc-af-dropzone-label');
+            const dropSub = qs('wsc-af-dropzone-sub');
+
+            if (needsFile && fileInput) {
+                const config = getArtifactUploadConfig(type);
+                fileInput.setAttribute('accept', config.accept);
+
+                if (fileLabel) fileLabel.textContent = config.label;
+                if (dropLabel) dropLabel.textContent = 'Drop a file here or click to browse';
+                if (dropSub) dropSub.textContent = config.hint;
+            }
+
+            updateSelectedFileLabel();
+        }
+        function updateSelectedFileLabel(file = null) {
+            const label = qs('wsc-af-selected-file');
+            const input = qs('wsc-af-file');
+            if (!label || !input) return;
+
+            const selected = file || (input.files && input.files.length ? input.files[0] : null);
+
+            if (!selected) {
+                label.textContent = '';
+                label.style.display = 'none';
+                return;
+            }
+
+            const sizeMb = (selected.size / (1024 * 1024)).toFixed(2);
+            label.textContent = `Selected: ${selected.name} (${sizeMb} MB)`;
+            label.style.display = 'block';
+        }
+
+        function setFileInputFiles(files) {
+            const input = qs('wsc-af-file');
+            if (!input || !files || !files.length) return;
+
+            const dt = new DataTransfer();
+            dt.items.add(files[0]);
+            input.files = dt.files;
+            updateSelectedFileLabel(files[0]);
+        }
+
+        function validateSelectedFile(file, type) {
+            if (!file) return 'Please select a file.';
+            if (file.size > 50 * 1024 * 1024) return 'File too large (max 50 MB).';
+
+            const config = getArtifactUploadConfig(type);
+            if (!config.accept) return null;
+
+            const allowedExts = config.accept
+                .split(',')
+                .map(x => x.trim().toLowerCase())
+                .filter(Boolean);
+
+            const lowerName = file.name.toLowerCase();
+            const matches = allowedExts.some(ext => lowerName.endsWith(ext));
+
+            return matches ? null : `Invalid file type for ${type.toLowerCase()}.`;
+        }
+
+        function initArtifactDropzone() {
+            const dropzone = qs('wsc-af-dropzone');
+            const input = qs('wsc-af-file');
+            if (!dropzone || !input) return;
+
+            dropzone.addEventListener('click', () => input.click());
+            dropzone.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    input.click();
+                }
+            });
+
+            input.addEventListener('change', () => {
+                const file = input.files && input.files.length ? input.files[0] : null;
+                updateSelectedFileLabel(file);
+            });
+
+            ['dragenter', 'dragover'].forEach(evt => {
+                dropzone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.add('drag-over');
+                });
+            });
+
+            ['dragleave', 'dragend', 'drop'].forEach(evt => {
+                dropzone.addEventListener(evt, (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    dropzone.classList.remove('drag-over');
+                });
+            });
+
+            dropzone.addEventListener('drop', (e) => {
+                const files = e.dataTransfer && e.dataTransfer.files ? e.dataTransfer.files : null;
+                if (!files || !files.length) return;
+                setFileInputFiles(files);
+            });
         }
 
         async function saveArtifact() {
@@ -1129,7 +1284,9 @@
             const type = getValue('wsc-af-type').trim().toUpperCase();
             const language = getValue('wsc-af-language').trim() || null;
             const textContent = getValue('wsc-af-text').trim() || null;
-            const description = getValue('wsc-af-desc').trim() || null;
+            const description = getValue('wsc-af-desc').trim() || '';
+            const fileInput = qs('wsc-af-file');
+            const file = fileInput && fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
 
             if (!WSC.currentArtifactTrackId) {
                 showModalError('wsc-art-err', 'No track selected.');
@@ -1141,32 +1298,50 @@
                 return;
             }
 
-            if (!type) {
-                showModalError('wsc-art-err', 'Type is required.');
-                return;
-            }
-
             if ((type === 'TEXT' || type === 'LINK') && !textContent) {
                 showModalError('wsc-art-err', type === 'LINK' ? 'URL is required.' : 'Text content is required.');
                 return;
             }
 
+            if (!(type === 'TEXT' || type === 'LINK')) {
+                const fileError = validateSelectedFile(file, type);
+                if (fileError) {
+                    showModalError('wsc-art-err', fileError);
+                    return;
+                }
+            }
+
             try {
-                await wscFetch(routeWithId(WSC.routes.artifactCreateTemplate, WSC.currentArtifactTrackId), {
+                const createRes = await wscFetch(routeWithId(WSC.routes.artifactCreateTemplate, WSC.currentArtifactTrackId), {
                     method: 'POST',
                     body: JSON.stringify({ name, type, language, textContent, description })
                 });
 
-                closeArtifactModal();
-                wscToast('Artifact added ✓', 'success');
-
-                if (WSC.currentTrackId) {
-                    await openTrackDetail(WSC.currentTrackId);
+                const artifactId = Number(createRes?.artifact?.id ?? 0);
+                if (!artifactId) {
+                    throw new Error('Artifact created but upload target is missing.');
                 }
+
+                if (file) {
+                    const fd = new FormData();
+                    fd.append('file', file);
+
+                    await wscFetch(routeWithId(WSC.routes.artifactUploadTemplate, artifactId), {
+                        method: 'POST',
+                        body: fd
+                    });
+                }
+
+                closeArtifactModal();
+                wscToast(file ? 'Artifact and file uploaded ✓' : 'Artifact added ✓', 'success');
+
+                closeDetail();
+                await loadWorkspaceData();
             } catch (e) {
                 showModalError('wsc-art-err', e.message);
             }
         }
+
 
         async function renameArtifact(artifactId) {
             const newName = prompt('New name:');
@@ -1226,11 +1401,9 @@
                         method: 'POST',
                         body: fd
                     });
-                    wscToast('Upload complete ✓', 'success');
 
-                    if (WSC.currentTrackId) {
-                        await openTrackDetail(WSC.currentTrackId);
-                    }
+                    wscToast('Upload complete ✓', 'success');
+                    await openTrackDetail(WSC.currentTrackId);
                 } catch (e) {
                     wscToast('Upload failed: ' + e.message, 'error');
                 }
@@ -1239,14 +1412,35 @@
             input.click();
         }
 
-        async function downloadArtifact(fileObjectId) {
-            try {
-                const data = await wscFetch(routeWithId(WSC.routes.fileDownloadTemplate, fileObjectId));
-                if (!data?.url) throw new Error('Missing download URL.');
-                window.open(data.url, '_blank', 'noopener');
-            } catch (e) {
-                wscToast(e.message, 'error');
+        function downloadArtifact(fileObjectId) {
+            const url = routeWithId(WSC.routes.fileDownloadTemplate, fileObjectId);
+            const a = document.createElement('a');
+            a.href = url;
+            a.setAttribute('download', '');
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+        function previewArtifact(artifactId, type, fileObjectId) {
+            const upperType = String(type || '').toUpperCase();
+            const baseUrl = routeWithId(WSC.routes.codeViewerTemplate, artifactId);
+
+            if (!fileObjectId) {
+                wscToast('No file attached to this artifact.', 'error');
+                return;
             }
+
+            if (upperType === 'CODE') {
+                window.open(`${baseUrl}?fo=${fileObjectId}`, '_blank');
+                return;
+            }
+
+            if (upperType === 'DOCUMENT' || upperType === 'IMAGE' || upperType === 'VIDEO' || upperType === 'AUDIO' || upperType === 'OTHER') {
+                window.open(`${baseUrl}?fo=${fileObjectId}&mode=preview`, '_blank');
+                return;
+            }
+
+            wscToast('This artifact type has no file preview.', 'error');
         }
 
         function openSnapshotModal(trackId) {
@@ -1254,11 +1448,13 @@
             if (qs('wsc-snap-msg')) qs('wsc-snap-msg').value = '';
             if (qs('wsc-snap-chars')) qs('wsc-snap-chars').textContent = '0';
             clearModalError('wsc-snap-err');
-            setVisible(els.snapOverlay(), true, 'flex');
+            setVisible(qs('wsc-snap-overlay'), true, 'flex');
+            qs('wsc-snap-msg')?.focus();
         }
 
         function closeSnapshotModal() {
-            setVisible(els.snapOverlay(), false);
+            setVisible(qs('wsc-snap-overlay'), false);
+            clearModalError('wsc-snap-err');
         }
 
         async function saveSnapshot() {
@@ -1291,6 +1487,43 @@
             } catch (e) {
                 showModalError('wsc-snap-err', e.message);
             }
+        }
+
+        function getArtifactUploadConfig(type) {
+            const map = {
+                CODE: {
+                    accept: '.zip,.rar,.7z,.tar,.gz,.bz2,.xz,.c,.cpp,.cc,.h,.hpp,.java,.py,.js,.ts,.jsx,.tsx,.php,.html,.css,.scss,.sass,.json,.xml,.yml,.yaml,.sql,.sh,.bat,.md,.txt',
+                    label: 'Code file or ZIP *',
+                    hint: 'Upload source files or a ZIP archive for a full project/folder. Max 50 MB.'
+                },
+                DOCUMENT: {
+                    accept: '.pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.odt',
+                    label: 'Document *',
+                    hint: 'Accepted: PDF, Word, PowerPoint, Excel, CSV, TXT, RTF, ODT. Max 50 MB.'
+                },
+                IMAGE: {
+                    accept: '.jpg,.jpeg,.png,.gif,.webp,.bmp,.svg',
+                    label: 'Image *',
+                    hint: 'Accepted: JPG, PNG, GIF, WEBP, BMP, SVG. Max 50 MB.'
+                },
+                VIDEO: {
+                    accept: '.mp4,.webm,.mov,.avi,.mkv,.m4v',
+                    label: 'Video *',
+                    hint: 'Accepted: MP4, WEBM, MOV, AVI, MKV, M4V. Max 50 MB.'
+                },
+                AUDIO: {
+                    accept: '.mp3,.wav,.ogg,.m4a,.aac,.flac',
+                    label: 'Audio *',
+                    hint: 'Accepted: MP3, WAV, OGG, M4A, AAC, FLAC. Max 50 MB.'
+                },
+                OTHER: {
+                    accept: '',
+                    label: 'File *',
+                    hint: 'Upload one file. Max 50 MB.'
+                }
+            };
+
+            return map[type] || map.OTHER;
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1360,5 +1593,11 @@
         window.saveSnapshot = saveSnapshot;
         window.switchMode = switchMode;
         window.showSnapshot = showSnapshot;
+        window.previewArtifact = previewArtifact;
+
+        initArtifactDropzone();
+        onArtifactTypeChange();
     })();
+
+
 </script>

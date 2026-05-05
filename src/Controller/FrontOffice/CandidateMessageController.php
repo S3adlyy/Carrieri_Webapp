@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Entity\Conversation;
@@ -8,6 +10,7 @@ use App\Entity\User;
 use App\Repository\MessageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,11 +19,12 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/messagerie')]
 class CandidateMessageController extends AbstractController
 {
+    use UserTypeCasterTrait;
     #[Route('/', name: 'app_candidate_messages')]
     public function index(EntityManagerInterface $em): Response
     {
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if (!$user) {
             return $this->redirectToRoute('app_login');
@@ -61,15 +65,23 @@ class CandidateMessageController extends AbstractController
     #[Route('/conversation/{id}', name: 'app_candidate_conversation_show')]
     public function showConversation(Conversation $conversation): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
 
         if ($conversation->getUser1() !== $user && $conversation->getUser2() !== $user) {
             throw $this->createAccessDeniedException('Vous n\'avez pas accès à cette conversation');
         }
 
-        $otherUser = $conversation->getUser1()->getId() === $user->getId()
-            ? $conversation->getUser2()
-            : $conversation->getUser1();
+        $user1 = $conversation->getUser1();
+        $user2 = $conversation->getUser2();
+        if (!$user1 || !$user2) {
+            throw $this->createAccessDeniedException('Conversation invalide');
+        }
+
+        $otherUser = $user1->getId() === $user->getId() ? $user2 : $user1;
 
         return $this->render('FrontOffice/main/conversation.html.twig', [
             'conversation' => $conversation,
@@ -81,7 +93,7 @@ class CandidateMessageController extends AbstractController
     public function getConversations(EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
             if (!$user) {
                 return $this->json(['error' => 'Utilisateur non connecté'], 401);
@@ -132,7 +144,7 @@ class CandidateMessageController extends AbstractController
     public function getMessages(int $id, MessageRepository $messageRepo): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
             if (!$user) {
                 return $this->json(['error' => 'Utilisateur non connecté'], 401);
@@ -173,12 +185,16 @@ class CandidateMessageController extends AbstractController
     public function sendMessage(Request $request, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
             $conversationId = $request->request->get('conversation_id');
             $content = $request->request->get('content');
 
             if (!$user) {
                 return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            if (!is_string($content)) {
+                return $this->json(['success' => false, 'error' => 'Contenu invalide']);
             }
 
             if (empty(trim($content))) {
@@ -200,12 +216,14 @@ class CandidateMessageController extends AbstractController
                 return $this->json(['success' => false, 'error' => 'Conversation introuvable']);
             }
 
-            $destinataire = $conversation->getUser1()->getId() === $user->getId() ?
-                $conversation->getUser2() : $conversation->getUser1();
-
-            if (!$destinataire) {
+            $user1 = $conversation->getUser1();
+            $user2 = $conversation->getUser2();
+            if (!$user1 || !$user2) {
                 return $this->json(['success' => false, 'error' => 'Destinataire introuvable']);
             }
+
+            $destinataire = $user1->getId() === $user->getId() ? $user2 : $user1;
+
 
             $message = new Message();
             $message->setContenu($content);
@@ -235,12 +253,16 @@ class CandidateMessageController extends AbstractController
     public function newConversation(Request $request, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
             $recruiterId = $request->request->get('recruiter_id');
             $content = $request->request->get('content');
 
             if (!$user) {
                 return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            if (!is_string($content)) {
+                return $this->json(['success' => false, 'error' => 'Contenu invalide']);
             }
 
             if (empty(trim($content))) {
@@ -320,7 +342,7 @@ class CandidateMessageController extends AbstractController
     public function archiveConversation(Conversation $conversation, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
             if ($conversation->getUser1() !== $user && $conversation->getUser2() !== $user) {
                 return $this->json(['success' => false, 'error' => 'Accès non autorisé'], 403);
@@ -339,13 +361,22 @@ class CandidateMessageController extends AbstractController
     public function editMessage(Message $message, Request $request, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
-            if ($message->getExpediteur()->getId() !== $user->getId()) {
+            if (!$user) {
+                return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            $expediteur = $message->getExpediteur();
+            if (!$expediteur || $expediteur->getId() !== $user->getId()) {
                 return $this->json(['success' => false, 'error' => 'Vous ne pouvez pas modifier ce message']);
             }
 
             $newContent = $request->request->get('content');
+
+            if (!is_string($newContent)) {
+                return $this->json(['success' => false, 'error' => 'Contenu invalide']);
+            }
 
             if (empty(trim($newContent))) {
                 return $this->json(['success' => false, 'error' => 'Le message ne peut pas être vide']);
@@ -381,9 +412,14 @@ class CandidateMessageController extends AbstractController
     public function deleteMessage(Message $message, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
-            if ($message->getExpediteur()->getId() !== $user->getId()) {
+            if (!$user) {
+                return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            $expediteur = $message->getExpediteur();
+            if (!$expediteur || $expediteur->getId() !== $user->getId()) {
                 return $this->json(['success' => false, 'error' => 'Vous ne pouvez pas supprimer ce message']);
             }
 

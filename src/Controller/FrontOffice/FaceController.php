@@ -6,9 +6,8 @@ namespace App\Controller\FrontOffice;
 
 use App\Entity\User;
 use App\Service\FaceRecognitionService;
-use App\Service\AzureFaceClientService;
-use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,10 +21,9 @@ use Psr\Log\LoggerInterface;
 #[Route('/face')]
 class FaceController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private readonly FaceRecognitionService $faceService,
-        private readonly AzureFaceClientService $azureFaceClient,
-        private readonly EntityManagerInterface $entityManager,
         private readonly LoggerInterface $logger
     ) {
     }
@@ -34,13 +32,13 @@ class FaceController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function enrollFace(Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'User not found'], Response::HTTP_UNAUTHORIZED);
         }
 
         $data = json_decode($request->getContent(), true);
-        $imageBase64 = $data['image'] ?? null;
+        $imageBase64 = is_array($data) && isset($data['image']) && is_string($data['image']) ? $data['image'] : null;
 
         if (!$imageBase64) {
             return $this->json(['error' => 'No image provided'], Response::HTTP_BAD_REQUEST);
@@ -94,7 +92,8 @@ class FaceController extends AbstractController
         ];
 
         // Test 3: Check if .env file exists and is readable
-        $envFile = $this->getParameter('kernel.project_dir') . '/.env';
+        $projectDir = $this->getParameter('kernel.project_dir');
+        $envFile = (is_string($projectDir) ? $projectDir : '') . '/.env';
         $results['env_file'] = [
             'exists' => file_exists($envFile),
             'readable' => is_readable($envFile),
@@ -104,7 +103,7 @@ class FaceController extends AbstractController
         // Test 4: Read .env file content (first few lines)
         if (file_exists($envFile)) {
             $content = file_get_contents($envFile);
-            $lines = explode("\n", $content);
+            $lines = explode("\n", is_string($content) ? $content : '');
             $azureLines = [];
             foreach ($lines as $line) {
                 if (str_contains($line, 'AZURE_FACE')) {
@@ -122,7 +121,7 @@ class FaceController extends AbstractController
     {
         try {
             $data = json_decode($request->getContent(), true);
-            $imageBase64 = $data['image'] ?? null;
+            $imageBase64 = is_array($data) && isset($data['image']) && is_string($data['image']) ? $data['image'] : null;
 
             $this->logger->info('Face login attempt', ['has_image' => !empty($imageBase64)]);
 
@@ -184,7 +183,7 @@ class FaceController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function disableFace(): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'User not found'], Response::HTTP_UNAUTHORIZED);
         }
@@ -202,7 +201,7 @@ class FaceController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function faceStatus(): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'User not found'], Response::HTTP_UNAUTHORIZED);
         }
@@ -235,8 +234,8 @@ class FaceController extends AbstractController
 
             // Log image info for debugging
             $this->logger->info('Testing face detection', [
-                'image_size' => strlen($imageBytes),
-                'image_size_kb' => strlen($imageBytes) / 1024
+                'image_size' => strlen((string) $imageBytes),
+                'image_size_kb' => strlen((string) $imageBytes) / 1024
             ]);
 
             // Call Azure Face API directly (bypass the client for testing)
@@ -250,7 +249,7 @@ class FaceController extends AbstractController
                 'Ocp-Apim-Subscription-Key: ' . $key,
                 'Content-Type: application/octet-stream'
             ]);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $imageBytes);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, (string) $imageBytes);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 
@@ -271,7 +270,7 @@ class FaceController extends AbstractController
                 ], Response::HTTP_BAD_REQUEST);
             }
 
-            $data = json_decode($response, true);
+            $data = json_decode(is_string($response) ? $response : '', true);
 
             if (empty($data) || !is_array($data)) {
                 return $this->json([

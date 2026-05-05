@@ -213,7 +213,7 @@ class OffreEmploiType extends AbstractType
 
     }
 
-    public function validateUniqueTitre($value, ExecutionContextInterface $context): void
+    public function validateUniqueTitre(mixed $value, ExecutionContextInterface $context): void
     {
         $offre = $context->getRoot()->getData();
         $existingOffre = $this->offreEmploiRepository->findOneBy(['titre' => $value]);

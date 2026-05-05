@@ -32,6 +32,10 @@ class PostulationRepository extends ServiceEntityRepository
                 ->getSingleScalarResult() > 0;
     }
 
+    /**
+     * @param list<int> $offerIds
+     * @return array<int, int>
+     */
     public function countByOfferIds(array $offerIds): array
     {
         if ($offerIds === []) {
@@ -54,6 +58,9 @@ class PostulationRepository extends ServiceEntityRepository
         return $counts;
     }
 
+    /**
+     * @return Postulation[]
+     */
     public function findByCandidate(User $user): array
     {
         return $this->createQueryBuilder('p')
@@ -66,6 +73,9 @@ class PostulationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return array<string, int>
+     */
     public function getStatsByUser(User $user): array
     {
         return [
@@ -76,6 +86,9 @@ class PostulationRepository extends ServiceEntityRepository
         ];
     }
 
+    /**
+     * @return Postulation[]
+     */
     public function findByRecruiter(User $recruiter): array
     {
         return $this->createQueryBuilder('p')
@@ -90,6 +103,9 @@ class PostulationRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return Postulation[]
+     */
     public function findByOffreAndRecruiter(int $offreId, User $recruiter): array
     {
         return $this->createQueryBuilder('p')
@@ -108,6 +124,8 @@ class PostulationRepository extends ServiceEntityRepository
 
     /**
      * Advanced search for Recruiter Dashboard (kept as-is)
+     * @param array<string, mixed> $filters
+     * @return Postulation[]
      */
     public function searchPostulationsWithFiltersForRecruiter(User $recruiter, array $filters = []): array
     {
@@ -174,6 +192,8 @@ class PostulationRepository extends ServiceEntityRepository
     /**
      * Search & Filter for Candidate "Mes Postulations" page
      * Simple and optimized for the candidate side
+     * @param array<string, mixed> $filters
+     * @return Postulation[]
      */
     public function searchPostulationsForCandidate(User $user, array $filters = []): array
     {
@@ -211,6 +231,13 @@ class PostulationRepository extends ServiceEntityRepository
 
     /**
      * Statistiques détaillées pour le dashboard recruteur
+     * @return array{
+     *     total:int,
+     *     accepted:int,
+     *     refused:int,
+     *     pending:int,
+     *     by_offre:list<array<string, mixed>>
+     * }
      */
     public function getDetailedStatsForRecruiter(User $recruiter): array
     {
@@ -261,6 +288,7 @@ class PostulationRepository extends ServiceEntityRepository
 
     /**
      * Évolution des candidatures par mois
+     * @return array<string, int>
      */
     public function getPostulationsEvolution(User $recruiter, int $months = 6): array
     {

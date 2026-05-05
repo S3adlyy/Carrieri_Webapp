@@ -1,0 +1,914 @@
+vendor\bin\phpstan : Note: Using configuration file C:\xampp\htdocs\Carrieri_Webapp-main\phpstan.neon.
+At line:1 char:61
++ ... in'; $out = vendor\bin\phpstan analyse --no-progress --error-format=t ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Note: Using con...n\phpstan.neon.:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ ------ --------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Command\GenerateEntitiesCommand.php                                                                                              
+ ------ --------------------------------------------------------------------------------------------------------------------------------- 
+  69     Method App\Command\GenerateEntitiesCommand::generateEntityWithProperties() has parameter $schemaManager with no type specified.  
+         ≠É¨¨  missingType.parameter                                                                                                        
+         at src/Command/GenerateEntitiesCommand.php:69                                                                                    
+ ------ --------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------ 
+  Line   Controller\DashboardController\AIController.php                                                                   
+ ------ ------------------------------------------------------------------------------------------------------------------ 
+  36     Offset 'message' might not exist on array{error?: string, success?: bool, samples_used?: int, message?: string}.  
+         ≠É¨¨  offsetAccess.notFound                                                                                         
+         at src/Controller/DashboardController/AIController.php:36                                                         
+ ------ ------------------------------------------------------------------------------------------------------------------ 
+
+ ------ ------------------------------------------------------------------ 
+  Line   Controller\DashboardController\CalendarController.php             
+ ------ ------------------------------------------------------------------ 
+  104    Call to an undefined method App\Entity\Entretien::getMission().   
+         ≠É¨¨  method.notFound                                               
+         at src/Controller/DashboardController/CalendarController.php:104  
+  138    Call to an undefined method App\Entity\Entretien::getMission().   
+         ≠É¨¨  method.notFound                                               
+         at src/Controller/DashboardController/CalendarController.php:138  
+ ------ ------------------------------------------------------------------ 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+  Line   Controller\DashboardController\CoursController.php                                                                                                                      
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+  245    Offset 'seekable' on array{timed_out: bool, blocked: bool, eof: bool, unread_bytes: int, stream_type: string, wrapper_type: string, wrapper_data: mixed, mode: string,  
+         ...} on left side of ?? always exists and is not nullable.                                                                                                              
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                 
+         at src/Controller/DashboardController/CoursController.php:245                                                                                                           
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+
+ ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\EntretienController.php                                                                                                        
+ ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  51     Parameter #1 $recruiterId of method App\Repository\RenduMissionRepository::findAcceptedSubmissionsByRecruiter() expects int, int|null given.                  
+         ≠É¨¨  argument.type                                                                                                                                             
+         at src/Controller/DashboardController/EntretienController.php:51                                                                                              
+  109    Parameter #2 $candidatId of method App\Service\JitsiLinkGenerator::generateMeetingLink() expects int, int|null given.                                         
+         ≠É¨¨  argument.type                                                                                                                                             
+         at src/Controller/DashboardController/EntretienController.php:109                                                                                             
+  133    Parameter $missionTitle of method App\Service\EmailService::sendInterviewNotification() expects string, string|null given.                                    
+         ≠É¨¨  argument.type                                                                                                                                             
+         at src/Controller/DashboardController/EntretienController.php:133                                                                                             
+  165    Parameter #1 $candidatId of method App\Controller\DashboardController\EntretienController::sendInterviewNotificationWebSocket() expects int, int|null given.  
+         ≠É¨¨  argument.type                                                                                                                                             
+         at src/Controller/DashboardController/EntretienController.php:165                                                                                             
+  264    Parameter #1 $recruiterId of method App\Repository\RenduMissionRepository::findAcceptedSubmissionsByRecruiter() expects int, int|null given.                  
+         ≠É¨¨  argument.type                                                                                                                                             
+         at src/Controller/DashboardController/EntretienController.php:264                                                                                             
+  289    Parameter #1 $recruiterId of method App\Repository\RenduMissionRepository::findAcceptedSubmissionsByRecruiter() expects int, int|null given.                  
+         ≠É¨¨  argument.type                                                                                                                                             
+         at src/Controller/DashboardController/EntretienController.php:289                                                                                             
+  351    Parameter #1 $missionIds of method App\Repository\RenduMissionRepository::findActiveSessionsByMissionIds() expects array<int>, list<int|null> given.          
+         ≠É¨¨  argument.type                                                                                                                                             
+         at src/Controller/DashboardController/EntretienController.php:351                                                                                             
+ ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\FeedbackController.php                                                                                                                  
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  119    Call to an undefined method App\Service\ExportService::exportFeedbacksToExcel().                                                                                       
+         ≠É¨¨  method.notFound                                                                                                                                                    
+         at src/Controller/DashboardController/FeedbackController.php:119                                                                                                       
+  196    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/FeedbackController.php:196                                                                                                       
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+  Line   Controller\DashboardController\LeconController.php                                                                                                                      
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+  222    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.   
+         ≠É¨¨  argument.type                                                                                                                                                       
+         at src/Controller/DashboardController/LeconController.php:222                                                                                                           
+  340    Offset 'seekable' on array{timed_out: bool, blocked: bool, eof: bool, unread_bytes: int, stream_type: string, wrapper_type: string, wrapper_data: mixed, mode: string,  
+         ...} on left side of ?? always exists and is not nullable.                                                                                                              
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                 
+         at src/Controller/DashboardController/LeconController.php:340                                                                                                           
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\ModuleController.php                                                                                                                    
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  203    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/ModuleController.php:203                                                                                                         
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\OffreEmploiController.php                                                                                                               
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  167    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/OffreEmploiController.php:167                                                                                                    
+  201    Method App\Controller\DashboardController\OffreEmploiController::getOffreStats() return type has no value type specified in iterable type array.                       
+         ≠É¨¨  missingType.iterableValue                                                                                                                                          
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                             
+         at src/Controller/DashboardController/OffreEmploiController.php:201                                                                                                    
+  598    Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/scripts/generate‘«™' results in an error.                                                   
+         ≠É¨¨  binaryOp.invalid                                                                                                                                                   
+         at src/Controller/DashboardController/OffreEmploiController.php:598                                                                                                    
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\PostulationController.php                                                                                                               
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  138    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/PostulationController.php:138                                                                                                    
+  144    Parameter #1 $statut of method App\Entity\Postulation::setStatut() expects string|null, bool|float|int|string|null given.                                              
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/PostulationController.php:144                                                                                                    
+  178    Parameter #1 $string of function htmlspecialchars expects string, string|null given.                                                                                   
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/PostulationController.php:178                                                                                                    
+  179    Parameter #1 $string of function htmlspecialchars expects string, string|null given.                                                                                   
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/PostulationController.php:179                                                                                                    
+  187    Parameter #1 $string of function htmlspecialchars expects string, string|null given.                                                                                   
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/PostulationController.php:187                                                                                                    
+  188    Parameter #1 $string of function htmlspecialchars expects string, string|null given.                                                                                   
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/PostulationController.php:188                                                                                                    
+  227    Method App\Controller\DashboardController\PostulationController::getStats() return type has no value type specified in iterable type array.                            
+         ≠É¨¨  missingType.iterableValue                                                                                                                                          
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                             
+         at src/Controller/DashboardController/PostulationController.php:227                                                                                                    
+  314    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/PostulationController.php:314                                                                                                    
+  322    Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/public/' results in an error.                                                             
+         ≠É¨¨  binaryOp.invalid                                                                                                                                                   
+         at src/Controller/DashboardController/PostulationController.php:322                                                                                                    
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\ReclamationController.php                                                                                                               
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  77     Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/ReclamationController.php:77                                                                                                     
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\RecruteurMessagerieController.php                                                                             
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  239    Negated boolean expression is always false.                                                                                                  
+         ≠É¨¨  booleanNot.alwaysFalse                                                                                                                   
+         ≠É∆Ì  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your phpstan.neon.  
+         at src/Controller/DashboardController/RecruteurMessagerieController.php:239                                                                  
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\DashboardController\TraitementReclamationController.php                                                                                                     
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  67     Parameter #1 $json of function json_decode expects string, string|false given.                                                                                         
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/TraitementReclamationController.php:67                                                                                           
+  105    Cannot call method getId() on App\Entity\User|null.                                                                                                                    
+         ≠É¨¨  method.nonObject                                                                                                                                                   
+         at src/Controller/DashboardController/TraitementReclamationController.php:105                                                                                          
+  123    Parameter #1 $json of function json_decode expects string, string|false given.                                                                                         
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/TraitementReclamationController.php:123                                                                                          
+  272    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/DashboardController/TraitementReclamationController.php:272                                                                                          
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\AssessmentController.php                                                                                              
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  159    Comparison operation ">" between int<1, max> and 0 is always true.                                                                           
+         ≠É¨¨  greater.alwaysTrue                                                                                                                       
+         ≠É∆Ì  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your phpstan.neon.  
+         at src/Controller/FrontOffice/AssessmentController.php:159                                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\CandidateMainController.php                                                                                                   
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------- 
+  59     Parameter #1 $keyword of method App\Repository\OffreEmploiRepository::searchAndFilter() expects string|null, bool|float|int|string|null given.       
+         ≠É¨¨  argument.type                                                                                                                                    
+         at src/Controller/FrontOffice/CandidateMainController.php:59                                                                                         
+  60     Parameter #2 $type of method App\Repository\OffreEmploiRepository::searchAndFilter() expects string|null, bool|float|int|string|null given.          
+         ≠É¨¨  argument.type                                                                                                                                    
+         at src/Controller/FrontOffice/CandidateMainController.php:60                                                                                         
+  61     Parameter #3 $localisation of method App\Repository\OffreEmploiRepository::searchAndFilter() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                    
+         at src/Controller/FrontOffice/CandidateMainController.php:61                                                                                         
+  105    Call to an undefined method App\Repository\MissionRepository::findByCreatedById().                                                                   
+         ≠É¨¨  method.notFound                                                                                                                                  
+         at src/Controller/FrontOffice/CandidateMainController.php:105                                                                                        
+  116    Parameter #2 $offreId of method App\Repository\FavoritesOffresRepository::isFavorite() expects int, int|null given.                                  
+         ≠É¨¨  argument.type                                                                                                                                    
+         at src/Controller/FrontOffice/CandidateMainController.php:116                                                                                        
+  219    Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/public/uploads/cv' results in an error.                                 
+         ≠É¨¨  binaryOp.invalid                                                                                                                                 
+         at src/Controller/FrontOffice/CandidateMainController.php:219                                                                                        
+  325    Instanceof between App\Entity\User and App\Entity\User will always evaluate to true.                                                                 
+         ≠É¨¨  instanceof.alwaysTrue                                                                                                                            
+         ≠É∆Ì  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your phpstan.neon.          
+         at src/Controller/FrontOffice/CandidateMainController.php:325                                                                                        
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\CandidateMessageController.php                                                                                        
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  227    Negated boolean expression is always false.                                                                                                  
+         ≠É¨¨  booleanNot.alwaysFalse                                                                                                                   
+         ≠É∆Ì  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your phpstan.neon.  
+         at src/Controller/FrontOffice/CandidateMessageController.php:227                                                                             
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\CertificateController.php                                                                                                                           
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  25     Property App\Controller\FrontOffice\CertificateController::$certificatesDir is never read, only written.                                                                   
+         ≠É¨¨  property.onlyWritten                                                                                                                                                   
+         ≠É∆Ì  See: https://phpstan.org/developing-extensions/always-read-written-properties                                                                                          
+         at src/Controller/FrontOffice/CertificateController.php:25                                                                                                                 
+  43     Call to an undefined method object::getId().                                                                                                                               
+         ≠É¨¨  method.notFound                                                                                                                                                        
+         at src/Controller/FrontOffice/CertificateController.php:43                                                                                                                 
+  48     Parameter #1 $certificate of method App\Service\CertificationService::ensureCertificateFile() expects App\Entity\Certification, object given.                              
+         ≠É¨¨  argument.type                                                                                                                                                          
+         at src/Controller/FrontOffice/CertificateController.php:48                                                                                                                 
+  49     Call to an undefined method object::getCours().                                                                                                                            
+         ≠É¨¨  method.notFound                                                                                                                                                        
+         at src/Controller/FrontOffice/CertificateController.php:49                                                                                                                 
+  50     Parameter #1 $certificate of method App\Service\CertificationService::getPublicVerificationUrl() expects App\Entity\Certification, object given.                           
+         ≠É¨¨  argument.type                                                                                                                                                          
+         at src/Controller/FrontOffice/CertificateController.php:50                                                                                                                 
+  51     Parameter #1 $certificate of method App\Service\CertificateModerationService::getCertificateState() expects App\Entity\Certification, object given.                        
+         ≠É¨¨  argument.type                                                                                                                                                          
+         at src/Controller/FrontOffice/CertificateController.php:51                                                                                                                 
+  57     Call to an undefined method object::getDateObtention().                                                                                                                    
+         ≠É¨¨  method.notFound                                                                                                                                                        
+         at src/Controller/FrontOffice/CertificateController.php:57                                                                                                                 
+  63     Offset 'reason' on array{status: string, reason: string, reviewed_by: string, reviewed_at: string, anomaly: array<string, mixed>} on left side of ?? always exists and is  
+          not nullable.                                                                                                                                                             
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                    
+         at src/Controller/FrontOffice/CertificateController.php:63                                                                                                                 
+  171    Offset 'reason' on array{status: string, reason: string, reviewed_by: string, reviewed_at: string, anomaly: array<string, mixed>} on left side of ?? always exists and is  
+          not nullable.                                                                                                                                                             
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                    
+         at src/Controller/FrontOffice/CertificateController.php:171                                                                                                                
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\CodeExecutionController.php                                                                                                           
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  164    Method App\Controller\FrontOffice\CodeExecutionController::runCodeTest() has parameter $expected with no value type specified in iterable type array.        
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:164                                                                                                
+  164    Method App\Controller\FrontOffice\CodeExecutionController::runCodeTest() has parameter $input with no value type specified in iterable type array.           
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:164                                                                                                
+  164    Method App\Controller\FrontOffice\CodeExecutionController::runCodeTest() return type has no value type specified in iterable type array.                     
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:164                                                                                                
+  180    Method App\Controller\FrontOffice\CodeExecutionController::runPythonTest() has parameter $expected with no value type specified in iterable type array.      
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:180                                                                                                
+  180    Method App\Controller\FrontOffice\CodeExecutionController::runPythonTest() has parameter $input with no value type specified in iterable type array.         
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:180                                                                                                
+  180    Method App\Controller\FrontOffice\CodeExecutionController::runPythonTest() return type has no value type specified in iterable type array.                   
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:180                                                                                                
+  271    Method App\Controller\FrontOffice\CodeExecutionController::runJavaScriptTest() has parameter $expected with no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:271                                                                                                
+  271    Method App\Controller\FrontOffice\CodeExecutionController::runJavaScriptTest() has parameter $input with no value type specified in iterable type array.     
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:271                                                                                                
+  271    Method App\Controller\FrontOffice\CodeExecutionController::runJavaScriptTest() return type has no value type specified in iterable type array.               
+         ≠É¨¨  missingType.iterableValue                                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                   
+         at src/Controller/FrontOffice/CodeExecutionController.php:271                                                                                                
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\CodeViewerController.php                                                                              
+ ------ ----------------------------------------------------------------------------------------------------------------------------- 
+  24     Property App\Controller\FrontOffice\CodeViewerController::$snapshotService is never read, only written.                      
+         ≠É¨¨  property.onlyWritten                                                                                                     
+         ≠É∆Ì  See: https://phpstan.org/developing-extensions/always-read-written-properties                                            
+         at src/Controller/FrontOffice/CodeViewerController.php:24                                                                    
+  43     Parameter #1 $storageKey of method App\Service\FileObjectService::presignedDownloadUrl() expects string, string|null given.  
+         ≠É¨¨  argument.type                                                                                                            
+         at src/Controller/FrontOffice/CodeViewerController.php:43                                                                    
+ ------ ----------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\CoursController.php                                                                                                                                 
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  67     Parameter #5 $order of method App\Repository\CoursRepository::searchForCandidate() expects string, bool|float|int|string|null given.                                       
+         ≠É¨¨  argument.type                                                                                                                                                          
+         at src/Controller/FrontOffice/CoursController.php:67                                                                                                                       
+  159    Offset 'progress' on array{modules: array<int, App\Entity\Module>, lessons_by_module: array<int, array<int, App\Entity\Lecon>>, viewed_lesson_ids: array<int, bool>, prog  
+         ress: int, continue_lesson: App\Entity\Lecon|null} on left side of ?? always exists and is not nullable.                                                                   
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                    
+         at src/Controller/FrontOffice/CoursController.php:159                                                                                                                      
+  297    Offset 'seekable' on array{timed_out: bool, blocked: bool, eof: bool, unread_bytes: int, stream_type: string, wrapper_type: string, wrapper_data: mixed, mode: string,     
+         ...} on left side of ?? always exists and is not nullable.                                                                                                                 
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                    
+         at src/Controller/FrontOffice/CoursController.php:297                                                                                                                      
+  359    Offset 'progress' on array{modules: array<int, App\Entity\Module>, lessons_by_module: array<int, array<int, App\Entity\Lecon>>, viewed_lesson_ids: array<int, bool>, prog  
+         ress: int, continue_lesson: App\Entity\Lecon|null} on left side of ?? always exists and is not nullable.                                                                   
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                    
+         at src/Controller/FrontOffice/CoursController.php:359                                                                                                                      
+  444    Comparison operation ">" between int<1, max> and 0 is always true.                                                                                                         
+         ≠É¨¨  greater.alwaysTrue                                                                                                                                                     
+         ≠É∆Ì  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your phpstan.neon.                                
+         at src/Controller/FrontOffice/CoursController.php:444                                                                                                                      
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\FaceController.php                                                                
+ ------ --------------------------------------------------------------------------------------------------------- 
+  29     Property App\Controller\FrontOffice\FaceController::$azureFaceClient is never read, only written.        
+         ≠É¨¨  property.onlyWritten                                                                                 
+         ≠É∆Ì  See: https://phpstan.org/developing-extensions/always-read-written-properties                        
+         at src/Controller/FrontOffice/FaceController.php:29                                                      
+  30     Property App\Controller\FrontOffice\FaceController::$entityManager is never read, only written.          
+         ≠É¨¨  property.onlyWritten                                                                                 
+         ≠É∆Ì  See: https://phpstan.org/developing-extensions/always-read-written-properties                        
+         at src/Controller/FrontOffice/FaceController.php:30                                                      
+  99     Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/.env' results in an error.  
+         ≠É¨¨  binaryOp.invalid                                                                                     
+         at src/Controller/FrontOffice/FaceController.php:99                                                      
+  109    Parameter #2 $string of function explode expects string, string|false given.                             
+         ≠É¨¨  argument.type                                                                                        
+         at src/Controller/FrontOffice/FaceController.php:109                                                     
+  212    Call to an undefined method App\Service\FaceRecognitionService::getFaceStatus().                         
+         ≠É¨¨  method.notFound                                                                                      
+         at src/Controller/FrontOffice/FaceController.php:212                                                     
+  240    Parameter #1 $string of function strlen expects string, string|false given.                              
+         ≠É¨¨  argument.type                                                                                        
+         at src/Controller/FrontOffice/FaceController.php:240                                                     
+  241    Parameter #1 $string of function strlen expects string, string|false given.                              
+         ≠É¨¨  argument.type                                                                                        
+         at src/Controller/FrontOffice/FaceController.php:241                                                     
+  255    Parameter #3 $value of function curl_setopt expects array|string, string|false given.                    
+         ≠É¨¨  argument.type                                                                                        
+         at src/Controller/FrontOffice/FaceController.php:255                                                     
+  276    Parameter #1 $json of function json_decode expects string, bool|string given.                            
+         ≠É¨¨  argument.type                                                                                        
+         at src/Controller/FrontOffice/FaceController.php:276                                                     
+ ------ --------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\FeedbackController.php                                                                                                                          
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  64     Cannot call method getId() on App\Entity\User|null.                                                                                                                    
+         ≠É¨¨  method.nonObject                                                                                                                                                   
+         at src/Controller/FrontOffice/FeedbackController.php:64                                                                                                                
+  143    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/FrontOffice/FeedbackController.php:143                                                                                                               
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\LanguageController.php                                                                                            
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------- 
+  27     Parameter #1 $url of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::redirect() expects string, string|null given.  
+         ≠É¨¨  argument.type                                                                                                                        
+         at src/Controller/FrontOffice/LanguageController.php:27                                                                                  
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+  Line   Controller\FrontOffice\LeconController.php                                                                                                                              
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+  191    Offset 'seekable' on array{timed_out: bool, blocked: bool, eof: bool, unread_bytes: int, stream_type: string, wrapper_type: string, wrapper_data: mixed, mode: string,  
+         ...} on left side of ?? always exists and is not nullable.                                                                                                              
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                                 
+         at src/Controller/FrontOffice/LeconController.php:191                                                                                                                   
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ 
+
+ ------ -------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\PaiementController.php                                                                       
+ ------ -------------------------------------------------------------------------------------------------------------------- 
+  47     Parameter #1 $candidatId of method App\Service\PaiementService::aCcesAuCours() expects int, int|null given.         
+         ≠É¨¨  argument.type                                                                                                   
+         at src/Controller/FrontOffice/PaiementController.php:47                                                             
+  60     Parameter #2 $titre of method App\Service\PaiementService::creerPaymentIntent() expects string, string|null given.  
+         ≠É¨¨  argument.type                                                                                                   
+         at src/Controller/FrontOffice/PaiementController.php:60                                                             
+  62     Parameter #4 $candidatId of method App\Service\PaiementService::creerPaymentIntent() expects int, int|null given.   
+         ≠É¨¨  argument.type                                                                                                   
+         at src/Controller/FrontOffice/PaiementController.php:62                                                             
+  115    Parameter #1 $candidatId of method App\Service\PaiementService::confirmerPaiement() expects int, int|null given.    
+         ≠É¨¨  argument.type                                                                                                   
+         at src/Controller/FrontOffice/PaiementController.php:115                                                            
+  118    Parameter #4 $montant of method App\Service\PaiementService::confirmerPaiement() expects float, float|null given.   
+         ≠É¨¨  argument.type                                                                                                   
+         at src/Controller/FrontOffice/PaiementController.php:118                                                            
+  148    Parameter #1 $candidatId of method App\Service\PaiementService::aCcesAuCours() expects int, int|null given.         
+         ≠É¨¨  argument.type                                                                                                   
+         at src/Controller/FrontOffice/PaiementController.php:148                                                            
+  173    Parameter #1 $candidatId of method App\Service\PaiementService::aCcesAuCours() expects int, int|null given.         
+         ≠É¨¨  argument.type                                                                                                   
+         at src/Controller/FrontOffice/PaiementController.php:173                                                            
+ ------ -------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\ReclamationController.php                                                                                                                       
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  48     Cannot call method getId() on App\Entity\User|null.                                                                                                                    
+         ≠É¨¨  method.nonObject                                                                                                                                                   
+         at src/Controller/FrontOffice/ReclamationController.php:48                                                                                                             
+  49     Cannot call method getEmail() on App\Entity\User|null.                                                                                                                 
+         ≠É¨¨  method.nonObject                                                                                                                                                   
+         at src/Controller/FrontOffice/ReclamationController.php:49                                                                                                             
+  123    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/FrontOffice/ReclamationController.php:123                                                                                                            
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------ 
+  Line   Controller\FrontOffice\RegistrationController.php                                                                       
+ ------ ------------------------------------------------------------------------------------------------------------------------ 
+  26     Property App\Controller\FrontOffice\RegistrationController::$slugger is never read, only written.                       
+         ≠É¨¨  property.onlyWritten                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/developing-extensions/always-read-written-properties                                       
+         at src/Controller/FrontOffice/RegistrationController.php:26                                                             
+  53     Call to an undefined method Symfony\Component\Form\FormError|Symfony\Component\Form\FormErrorIterator::getMessage().    
+         ≠É¨¨  method.notFound                                                                                                     
+         at src/Controller/FrontOffice/RegistrationController.php:53                                                             
+  58     Call to an undefined method Symfony\Component\Form\FormError|Symfony\Component\Form\FormErrorIterator::getMessage().    
+         ≠É¨¨  method.notFound                                                                                                     
+         at src/Controller/FrontOffice/RegistrationController.php:58                                                             
+  112    Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/public/uploads‘«™' results in an error.      
+         ≠É¨¨  binaryOp.invalid                                                                                                    
+         at src/Controller/FrontOffice/RegistrationController.php:112                                                            
+  138    Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/public/uploads/temp' results in an error.  
+         ≠É¨¨  binaryOp.invalid                                                                                                    
+         at src/Controller/FrontOffice/RegistrationController.php:138                                                            
+  207    Parameter #1 $roles of method App\Entity\User::setRoles() expects string|null, array<int, string> given.                
+         ≠É¨¨  argument.type                                                                                                       
+         at src/Controller/FrontOffice/RegistrationController.php:207                                                            
+  241    Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/public/uploads‘«™' results in an error.      
+         ≠É¨¨  binaryOp.invalid                                                                                                    
+         at src/Controller/FrontOffice/RegistrationController.php:241                                                            
+  242    Binary operation "." between array|bool|float|int|string|UnitEnum|null and '/public/uploads‘«™' results in an error.      
+         ≠É¨¨  binaryOp.invalid                                                                                                    
+         at src/Controller/FrontOffice/RegistrationController.php:242                                                            
+ ------ ------------------------------------------------------------------------------------------------------------------------ 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\RenduMissionController.php                                                                                            
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  75     Parameter #1 $missionId of method App\Repository\RenduMissionRepository::findExistingSubmission() expects int, int|null given.               
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/RenduMissionController.php:75                                                                                  
+  76     Parameter #2 $candidatId of method App\Repository\RenduMissionRepository::findExistingSubmission() expects int, int|null given.              
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/RenduMissionController.php:76                                                                                  
+  226    Parameter #1 $missionId of method App\Repository\RenduMissionRepository::findExistingSubmission() expects int, int|null given.               
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/RenduMissionController.php:226                                                                                 
+  227    Parameter #2 $candidatId of method App\Repository\RenduMissionRepository::findExistingSubmission() expects int, int|null given.              
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/RenduMissionController.php:227                                                                                 
+  288    Parameter #1 $missionId of method App\Repository\RenduMissionRepository::findExistingSubmission() expects int, int|null given.               
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/RenduMissionController.php:288                                                                                 
+  289    Parameter #2 $candidatId of method App\Repository\RenduMissionRepository::findExistingSubmission() expects int, int|null given.              
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/RenduMissionController.php:289                                                                                 
+  329    Method App\Controller\FrontOffice\RenduMissionController::autoSubmitWithZero() has parameter $mission with no type specified.                
+         ≠É¨¨  missingType.parameter                                                                                                                    
+         at src/Controller/FrontOffice/RenduMissionController.php:329                                                                                 
+  329    Method App\Controller\FrontOffice\RenduMissionController::autoSubmitWithZero() has parameter $user with no type specified.                   
+         ≠É¨¨  missingType.parameter                                                                                                                    
+         at src/Controller/FrontOffice/RenduMissionController.php:329                                                                                 
+  374    Method App\Controller\FrontOffice\RenduMissionController::executeUserCode() return type has no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                   
+         at src/Controller/FrontOffice/RenduMissionController.php:374                                                                                 
+  410    Call to an undefined method App\Repository\RenduMissionRepository::findActiveSessions().                                                     
+         ≠É¨¨  method.notFound                                                                                                                          
+         at src/Controller/FrontOffice/RenduMissionController.php:410                                                                                 
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\SnapshotController.php                                                                                              
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------- 
+  32     Cannot call method getId() on App\Entity\User|null.                                                                                        
+         ≠É¨¨  method.nonObject                                                                                                                       
+         at src/Controller/FrontOffice/SnapshotController.php:32                                                                                    
+  32     Cannot call method getId() on Symfony\Component\Security\Core\User\UserInterface|null.                                                     
+         ≠É¨¨  method.nonObject                                                                                                                       
+         at src/Controller/FrontOffice/SnapshotController.php:32                                                                                    
+  32     Cannot call method getUser() on App\Entity\Workspace|null.                                                                                 
+         ≠É¨¨  method.nonObject                                                                                                                       
+         at src/Controller/FrontOffice/SnapshotController.php:32                                                                                    
+  41     Cannot call method getId() on Symfony\Component\Security\Core\User\UserInterface|null.                                                     
+         ≠É¨¨  method.nonObject                                                                                                                       
+         at src/Controller/FrontOffice/SnapshotController.php:41                                                                                    
+  74     Cannot call method getId() on App\Entity\Artifact|null.                                                                                    
+         ≠É¨¨  method.nonObject                                                                                                                       
+         at src/Controller/FrontOffice/SnapshotController.php:74                                                                                    
+  75     Cannot call method getArtifactName() on App\Entity\Artifact|null.                                                                          
+         ≠É¨¨  method.nonObject                                                                                                                       
+         at src/Controller/FrontOffice/SnapshotController.php:75                                                                                    
+  76     Cannot call method getArtifactType() on App\Entity\Artifact|null.                                                                          
+         ≠É¨¨  method.nonObject                                                                                                                       
+         at src/Controller/FrontOffice/SnapshotController.php:76                                                                                    
+  79     Parameter #1 $storageKey of method App\Service\FileObjectService::presignedDownloadUrl() expects string, string|null given.                
+         ≠É¨¨  argument.type                                                                                                                          
+         at src/Controller/FrontOffice/SnapshotController.php:79                                                                                    
+  84     Method App\Controller\FrontOffice\SnapshotController::serializeSnapshot() return type has no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                                              
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                 
+         at src/Controller/FrontOffice/SnapshotController.php:84                                                                                    
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\TrackController.php                                                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  110    Cannot call method getWorkspace() on App\Entity\Track|null.                                                                                  
+         ≠É¨¨  method.nonObject                                                                                                                         
+         at src/Controller/FrontOffice/TrackController.php:110                                                                                        
+  111    Cannot call method getUser() on App\Entity\Workspace|null.                                                                                   
+         ≠É¨¨  method.nonObject                                                                                                                         
+         at src/Controller/FrontOffice/TrackController.php:111                                                                                        
+  124    Parameter #1 $path of function basename expects string, string|null given.                                                                   
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/TrackController.php:124                                                                                        
+  136    Parameter #1 $storageKey of method App\Service\FileObjectService::presignedDownloadUrl() expects string, string|null given.                  
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/TrackController.php:136                                                                                        
+  145    Cannot call method getUser() on App\Entity\Workspace|null.                                                                                   
+         ≠É¨¨  method.nonObject                                                                                                                         
+         at src/Controller/FrontOffice/TrackController.php:145                                                                                        
+  154    Call to an undefined method Symfony\Component\Security\Core\User\UserInterface::getId().                                                     
+         ≠É¨¨  method.notFound                                                                                                                          
+         at src/Controller/FrontOffice/TrackController.php:154                                                                                        
+  160    Parameter #1 $t of method App\Controller\FrontOffice\TrackController::isTrackOwner() expects App\Entity\Track, App\Entity\Track|null given.  
+         ≠É¨¨  argument.type                                                                                                                            
+         at src/Controller/FrontOffice/TrackController.php:160                                                                                        
+  163    Method App\Controller\FrontOffice\TrackController::serializeArtifact() return type has no value type specified in iterable type array.       
+         ≠É¨¨  missingType.iterableValue                                                                                                                
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                   
+         at src/Controller/FrontOffice/TrackController.php:163                                                                                        
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\FrontOffice\WorkspaceController.php                                                                                           
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------- 
+  145    Cannot call method getId() on App\Entity\User|null.                                                                                      
+         ≠É¨¨  method.nonObject                                                                                                                     
+         at src/Controller/FrontOffice/WorkspaceController.php:145                                                                                
+  145    Cannot call method getUser() on App\Entity\Workspace|null.                                                                               
+         ≠É¨¨  method.nonObject                                                                                                                     
+         at src/Controller/FrontOffice/WorkspaceController.php:145                                                                                
+  148    Method App\Controller\FrontOffice\WorkspaceController::serializeTrack() return type has no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                                            
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                               
+         at src/Controller/FrontOffice/WorkspaceController.php:148                                                                                
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Controller\ProfileController.php                                                                                                                                       
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  311    Parameter #2 $token of method Symfony\Bundle\FrameworkBundle\Controller\AbstractController::isCsrfTokenValid() expects string|null, bool|float|int|string|null given.  
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/ProfileController.php:311                                                                                                                            
+  323    Parameter #1 $string of function trim expects string, bool|float|int|string given.                                                                                     
+         ≠É¨¨  argument.type                                                                                                                                                      
+         at src/Controller/ProfileController.php:323                                                                                                                            
+  347    Method App\Controller\ProfileController::renderWithErrors() has parameter $errors with no value type specified in iterable type array.                                 
+         ≠É¨¨  missingType.iterableValue                                                                                                                                          
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                             
+         at src/Controller/ProfileController.php:347                                                                                                                            
+  347    Method App\Controller\ProfileController::renderWithErrors() has parameter $oldInput with no value type specified in iterable type array.                               
+         ≠É¨¨  missingType.iterableValue                                                                                                                                          
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                             
+         at src/Controller/ProfileController.php:347                                                                                                                            
+  347    Method App\Controller\ProfileController::renderWithErrors() is unused.                                                                                                 
+         ≠É¨¨  method.unused                                                                                                                                                      
+         at src/Controller/ProfileController.php:347                                                                                                                            
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Entity\Conversation.php                                                                                                                                                    
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  18     Property App\Entity\Conversation::$id (int|null) is never assigned int so it can be removed from the property type.                                                        
+         ≠É¨¨  property.unusedType                                                                                                                                                    
+         at src/Entity/Conversation.php:18                                                                                                                                          
+  43     Property App\Entity\Conversation::$messages with generic class Doctrine\Common\Collections\ArrayCollection does not specify its types: TKey, T                             
+         ≠É¨¨  missingType.generics                                                                                                                                                   
+         at src/Entity/Conversation.php:43                                                                                                                                          
+  95     Method App\Entity\Conversation::getMessages() return type with generic interface Doctrine\Common\Collections\Collection does not specify its types: TKey, T                
+         ≠É¨¨  missingType.generics                                                                                                                                                   
+         at src/Entity/Conversation.php:95                                                                                                                                          
+  100    Method App\Entity\Conversation::setMessages() has parameter $messages with generic interface Doctrine\Common\Collections\Collection but does not specify its types: TKey,  
+         T                                                                                                                                                                          
+         ≠É¨¨  missingType.generics                                                                                                                                                   
+         at src/Entity/Conversation.php:100                                                                                                                                         
+  102    Property App\Entity\Conversation::$messages (Doctrine\Common\Collections\ArrayCollection) does not accept Doctrine\Common\Collections\Collection.                          
+         ≠É¨¨  assign.propertyType                                                                                                                                                    
+         at src/Entity/Conversation.php:102                                                                                                                                         
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------------------------------------------- 
+  Line   Entity\Message.php                                                                                              
+ ------ ---------------------------------------------------------------------------------------------------------------- 
+  16     Property App\Entity\Message::$id (int|null) is never assigned int so it can be removed from the property type.  
+         ≠É¨¨  property.unusedType                                                                                         
+         at src/Entity/Message.php:16                                                                                    
+ ------ ---------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------- 
+  Line   Entity\Track.php                                                                                        
+ ------ -------------------------------------------------------------------------------------------------------- 
+  100    Property App\Entity\Track::$startDate (DateTimeImmutable|null) does not accept DateTimeInterface|null.  
+         ≠É¨¨  assign.propertyType                                                                                 
+         at src/Entity/Track.php:100                                                                             
+  111    Property App\Entity\Track::$endDate (DateTimeImmutable|null) does not accept DateTimeInterface|null.    
+         ≠É¨¨  assign.propertyType                                                                                 
+         at src/Entity/Track.php:111                                                                             
+  133    Property App\Entity\Track::$createdAt (DateTimeImmutable|null) does not accept DateTimeInterface|null.  
+         ≠É¨¨  assign.propertyType                                                                                 
+         at src/Entity/Track.php:133                                                                             
+ ------ -------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------- 
+  Line   Entity\User.php                                                                 
+ ------ -------------------------------------------------------------------------------- 
+  226    Parameter #1 $string of function strtoupper expects string, string|null given.  
+         ≠É¨¨  argument.type                                                               
+         at src/Entity/User.php:226                                                      
+ ------ -------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------ 
+  Line   Entity\Workspace.php                                                                                              
+ ------ ------------------------------------------------------------------------------------------------------------------ 
+  18     Property App\Entity\Workspace::$id (int|null) is never assigned int so it can be removed from the property type.  
+         ≠É¨¨  property.unusedType                                                                                           
+         at src/Entity/Workspace.php:18                                                                                    
+ ------ ------------------------------------------------------------------------------------------------------------------ 
+
+ ------ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   EventSubscriber\CandidateFraudNotificationSubscriber.php                                                                                                              
+ ------ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  57     Offset 'course_title' on array{certificate_id: int, course_title: string, reason: string, reviewed_at: string} on left side of ?? always exists and is not nullable.  
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                               
+         at src/EventSubscriber/CandidateFraudNotificationSubscriber.php:57                                                                                                    
+  58     Offset 'reason' on array{certificate_id: int, course_title: string, reason: string, reviewed_at: string} on left side of ?? always exists and is not nullable.        
+         ≠É¨¨  nullCoalesce.offset                                                                                                                                               
+         at src/EventSubscriber/CandidateFraudNotificationSubscriber.php:58                                                                                                    
+  59     Call to an undefined method Symfony\Component\HttpFoundation\Session\SessionInterface::getFlashBag().                                                                 
+         ≠É¨¨  method.notFound                                                                                                                                                   
+         at src/EventSubscriber/CandidateFraudNotificationSubscriber.php:59                                                                                                    
+ ------ ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------- 
+  Line   Form\OffreEmploiType.php                                                                             
+ ------ ----------------------------------------------------------------------------------------------------- 
+  216    Method App\Form\OffreEmploiType::validateUniqueTitre() has parameter $value with no type specified.  
+         ≠É¨¨  missingType.parameter                                                                            
+         at src/Form/OffreEmploiType.php:216                                                                  
+ ------ ----------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Repository\ConversationRepository.php                                                                                            
+ ------ --------------------------------------------------------------------------------------------------------------------------------- 
+  22     Method App\Repository\ConversationRepository::findByRecruteur() return type has no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                                    
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                       
+         at src/Repository/ConversationRepository.php:22                                                                                  
+ ------ --------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Repository\FavoritesOffresRepository.php                                                                                                                                  
+ ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  9      Class App\Repository\FavoritesOffresRepository extends generic class Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository but does not specify its types: T  
+         ≠É¨¨  missingType.generics                                                                                                                                                  
+         at src/Repository/FavoritesOffresRepository.php:9                                                                                                                         
+  52     Method App\Repository\FavoritesOffresRepository::getFavoritesByCandidat() return type has no value type specified in iterable type array.                                 
+         ≠É¨¨  missingType.iterableValue                                                                                                                                             
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                                
+         at src/Repository/FavoritesOffresRepository.php:52                                                                                                                        
+  60     Method App\Repository\FavoritesOffresRepository::getFavoriteOfferIdsByCandidat() return type has no value type specified in iterable type array.                          
+         ≠É¨¨  missingType.iterableValue                                                                                                                                             
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                                                
+         at src/Repository/FavoritesOffresRepository.php:60                                                                                                                        
+ ------ -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------- 
+  Line   Repository\MissionRepository.php                                                           
+ ------ ------------------------------------------------------------------------------------------- 
+  48     Strict comparison using !== between non-falsy-string and '' will always evaluate to true.  
+         ≠É¨¨  notIdentical.alwaysTrue                                                                
+         at src/Repository/MissionRepository.php:48                                                 
+  54     Strict comparison using !== between non-falsy-string and '' will always evaluate to true.  
+         ≠É¨¨  notIdentical.alwaysTrue                                                                
+         at src/Repository/MissionRepository.php:54                                                 
+ ------ ------------------------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Repository\OffreEmploiRepository.php                                                                                                                
+ ------ ---------------------------------------------------------------------------------------------------------------------------------------------------- 
+  21     Method App\Repository\OffreEmploiRepository::findByUserWithSearch() return type has no value type specified in iterable type array.                 
+         ≠É¨¨  missingType.iterableValue                                                                                                                       
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                          
+         at src/Repository/OffreEmploiRepository.php:21                                                                                                      
+  41     Method App\Repository\OffreEmploiRepository::findActiveOffers() return type has no value type specified in iterable type array.                     
+         ≠É¨¨  missingType.iterableValue                                                                                                                       
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                          
+         at src/Repository/OffreEmploiRepository.php:41                                                                                                      
+  51     Method App\Repository\OffreEmploiRepository::searchAndFilter() return type has no value type specified in iterable type array.                      
+         ≠É¨¨  missingType.iterableValue                                                                                                                       
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                          
+         at src/Repository/OffreEmploiRepository.php:51                                                                                                      
+  94     Method App\Repository\OffreEmploiRepository::searchOffersWithFilters() has parameter $filters with no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                                                       
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                          
+         at src/Repository/OffreEmploiRepository.php:94                                                                                                      
+  94     Method App\Repository\OffreEmploiRepository::searchOffersWithFilters() return type has no value type specified in iterable type array.              
+         ≠É¨¨  missingType.iterableValue                                                                                                                       
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                          
+         at src/Repository/OffreEmploiRepository.php:94                                                                                                      
+  161    Method App\Repository\OffreEmploiRepository::getStatsForUser() return type has no value type specified in iterable type array.                      
+         ≠É¨¨  missingType.iterableValue                                                                                                                       
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                                          
+         at src/Repository/OffreEmploiRepository.php:161                                                                                                     
+ ------ ---------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Repository\UserRepository.php                                                                                                        
+ ------ ------------------------------------------------------------------------------------------------------------------------------------- 
+  73     Method App\Repository\UserRepository::findActiveSuggestions() return type has no value type specified in iterable type array.        
+         ≠É¨¨  missingType.iterableValue                                                                                                        
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                           
+         at src/Repository/UserRepository.php:73                                                                                              
+  85     Method App\Repository\UserRepository::findActiveSuggestionsByType() return type has no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                                        
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                           
+         at src/Repository/UserRepository.php:85                                                                                              
+ ------ ------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------- 
+  Line   Service\AiCodeEvaluatorService.php                                                                                     
+ ------ ----------------------------------------------------------------------------------------------------------------------- 
+  34     Method App\Service\AiCodeEvaluatorService::evaluate() return type has no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                          
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                             
+         at src/Service/AiCodeEvaluatorService.php:34                                                                           
+ ------ ----------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Service\AssessmentAutoGeneratorService.php                                                                                                                               
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  51     Parameter #1 $questions of method App\Service\AssessmentAutoGeneratorService::collectQuestionFingerprints() expects list<object>, array<App\Entity\QuestionQuiz> given.  
+         ≠É¨¨  argument.type                                                                                                                                                        
+         ≠É∆Ì  array<App\Entity\QuestionQuiz> might not be a list.                                                                                                                  
+         at src/Service/AssessmentAutoGeneratorService.php:51                                                                                                                     
+  106    Parameter #1 $questions of method App\Service\AssessmentAutoGeneratorService::collectQuestionFingerprints() expects list<object>, array<App\Entity\QuestionTest> given.  
+         ≠É¨¨  argument.type                                                                                                                                                        
+         ≠É∆Ì  array<App\Entity\QuestionTest> might not be a list.                                                                                                                  
+         at src/Service/AssessmentAutoGeneratorService.php:106                                                                                                                    
+  125    Call to an undefined method object::getQuestionText().                                                                                                                   
+         ≠É¨¨  method.notFound                                                                                                                                                      
+         at src/Service/AssessmentAutoGeneratorService.php:125                                                                                                                    
+  145    Call to an undefined method object::getContenu().                                                                                                                        
+         ≠É¨¨  method.notFound                                                                                                                                                      
+         at src/Service/AssessmentAutoGeneratorService.php:145                                                                                                                    
+ ------ ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ---------------------------------------------------------------------------------------------------------------------------- 
+  Line   Service\AwsFaceRecognitionService.php                                                                                       
+ ------ ---------------------------------------------------------------------------------------------------------------------------- 
+  32     Method App\Service\AwsFaceRecognitionService::enrollFace() return type has no value type specified in iterable type array.  
+         ≠É¨¨  missingType.iterableValue                                                                                               
+         ≠É∆Ì  See: https://phpstan.org/blog/solving-phpstan-no-value-type-specified-in-iterable-type                                  
+         at src/Service/AwsFaceRecognitionService.php:32                                                                             
+  42     Parameter #1 $string of function base64_decode expects string, string|null given.                                           
+         ≠É¨¨  argument.type                                                                                                           
+         at src/Service/AwsFaceRecognitionService.php:42                                                                             
+  134    Parameter #1 $string of function base64_decode expects string, string|null given.                                           
+         ≠É¨¨  argument.type                                                                                                           
+         at src/Service/AwsFaceRecognitionService.php:134                                                                            
+ ------ ---------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------- 
+  Line   Service\AzureFaceClientService.php                                                       
+ ------ ----------------------------------------------------------------------------------------- 
+  14     Property App\Service\AzureFaceClientService::$binaryClient is never read, only written.  
+         ≠É¨¨  property.onlyWritten                                                                 
+         ≠É∆Ì  See: https://phpstan.org/developing-extensions/always-read-written-properties        
+         at src/Service/AzureFaceClientService.php:14                                             
+  65     Call to an undefined method GuzzleHttp\Exception\GuzzleException::getResponse().         
+         ≠É¨¨  method.notFound                                                                      
+         at src/Service/AzureFaceClientService.php:65                                             
+  140    Parameter #1 $string of function base64_decode expects string, string|null given.        
+         ≠É¨¨  argument.type                                                                        
+         at src/Service/AzureFaceClientService.php:140                                            
+  224    Parameter #1 $string of function base64_decode expects string, string|null given.        
+         ≠É¨¨  argument.type                                                                        
+         at src/Service/AzureFaceClientService.php:224                                            
+  228    Parameter #1 $string of function strlen expects string, string|null given.               
+         ≠É¨¨  argument.type                                                                        
+         at src/Service/AzureFaceClientService.php:228                                            
+  264    Parameter #1 $string of function strlen expects string, bool|string given.               
+         ≠É¨¨  argument.type                                                                        
+         at src/Service/AzureFaceClientService.php:264                                            
+  275    Parameter #1 $json of function json_decode expects string, bool|string given.            
+         ≠É¨¨  argument.type                                                                        
+         at src/Service/AzureFaceClientService.php:275                                            
+  344    Call to an undefined method GuzzleHttp\Exception\GuzzleException::getResponse().         
+         ≠É¨¨  method.notFound                                                                      
+         at src/Service/AzureFaceClientService.php:344                                            
+ ------ ----------------------------------------------------------------------------------------- 
+
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Service\CandidateAssessmentService.php                                                                                                                           
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  47     Parameter #1 $questionEntities of method App\Service\CandidateAssessmentService::hydrateQuestions() expects list<object>, array<App\Entity\QuestionQuiz> given.  
+         ≠É¨¨  argument.type                                                                                                                                                
+         ≠É∆Ì  array<App\Entity\QuestionQuiz> might not be a list.                                                                                                          
+         at src/Service/CandidateAssessmentService.php:47                                                                                                                 
+  67     Parameter #1 $questionEntities of method App\Service\CandidateAssessmentService::hydrateQuestions() expects list<object>, array<App\Entity\QuestionTest> given.  
+         ≠É¨¨  argument.type                                                                                                                                                
+         ≠É∆Ì  array<App\Entity\QuestionTest> might not be a list.                                                                                                          
+         at src/Service/CandidateAssessmentService.php:67                                                                                                                 
+  163    Call to an undefined method object::getId().                                                                                                                     
+         ≠É¨¨  method.notFound                                                                                                                                              
+         at src/Service/CandidateAssessmentService.php:163                                                                                                                
+  193    Call to an undefined method object::getQuestionText().                                                                                                           
+         ≠É¨¨  method.notFound                                                                                                                                              
+         at src/Service/CandidateAssessmentService.php:193                                                                                                                
+  194    Call to an undefined method object::getPoints().                                                                                                                 
+         ≠É¨¨  method.notFound                                                                                                                                              
+         at src/Service/CandidateAssessmentService.php:194                                                                                                                
+ ------ ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Service\CertificateModerationService.php                                                                                                                                   
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+  202    Parameter #1 $data of method App\Service\CertificateModerationService::writeStorage() expects array<string, array<string, mixed>>, array<int|string, array<string, mixed>  
+         > given.                                                                                                                                                                   
+         ≠É¨¨  argument.type                                                                                                                                                          
+         at src/Service/CertificateModerationService.php:202                                                                                                                        
+  248    Call to function is_array() with array<string, mixed> will always evaluate to true.                                                                                        
+         ≠É¨¨  function.alreadyNarrowedType                                                                                                                                           
+         ≠É∆Ì  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your phpstan.neon.                                
+         at src/Service/CertificateModerationService.php:248                                                                                                                        
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  Line   Service\CertificationService.php                                                                                                             
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+  262    Strict comparison using !== between string and null will always evaluate to true.                                                            
+         ≠É¨¨  notIdentical.alwaysTrue                                                                                                                  
+         ≠É∆Ì  Because the type is coming from a PHPDoc, you can turn off this check by setting treatPhpDocTypesAsCertain: false in your phpstan.neon.  
+         at src/Service/CertificationService.php:262                                                                                                  
+ ------ --------------------------------------------------------------------------------------------------------------------------------------------- 
+
+ ------ ------------------------------------------------------------- 
+  Line   Service\CodeBrowseService.php                                
+ ------ ------------------------------------------------------------- 
+  129    Empty array passed to foreach.                               
+         ≠É¨¨  foreach.emptyArray                                       
+         at src/Service/CodeBrowseService.php:129                     
+  136    Call to function unset() contains undefined variable $node.  
+         ≠É¨¨  unset.variable                                           
+         at src/Service/CodeBrowseService.php:136                     
+  138    Negated boolean expression is always true.                   
+         ≠É¨¨  booleanNot.alwaysTrue                                    
+         at src/Service/CodeBrowseService.php:138                     
+ ------ ------------------------------------------------------------- 
+
+ ------ --------------------------------------------------------------------------- 
+  Line   Service\FaceRecognitionService.php                                         
+ ------ --------------------------------------------------------------------------- 
+  129    Call to an undefined method App\Service\AzureFaceClientService::config().  
+         ≠É¨¨  method.notFound                                                        
+         at src/Service/FaceRecognitionService.php:129                              
+  133    Call to an undefined method App\Service\AzureFaceClientService::config().  
+         ≠É¨¨  method.notFound                                                        
+         at src/Service/FaceRecognitionService.php:133                              
+  136    Call to an undefined method App\Service\AzureFaceClientService::config().  
+         ≠É¨¨  method.notFound                                                        
+         at src/Service/FaceRecognitionService.php:136                              
+ ------ --------------------------------------------------------------------------- 
+
+ [ERROR] Found 194 errors                                                                                               
+
+

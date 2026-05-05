@@ -1,7 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\DashboardController;
 
+use App\Controller\UserTypeCasterTrait;
 use App\Repository\MessageRepository;
 use App\Entity\Conversation;
 use App\Entity\Message;
@@ -16,10 +19,15 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/recruteur/messagerie')]
 class RecruteurMessagerieController extends AbstractController
 {
+    use UserTypeCasterTrait;
+
     #[Route('/', name: 'app_recruteur_messages')]
     public function index(EntityManagerInterface $em): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException('User not found');
+        }
 
         // Récupérer les conversations où le recruteur est user1 ou user2
         $conversations = $em->createQueryBuilder()
@@ -29,7 +37,7 @@ class RecruteurMessagerieController extends AbstractController
             ->leftJoin('c.user2', 'u2')
             ->where('c.user1 = :userId OR c.user2 = :userId')
             ->andWhere('c.statut != :archived')
-            ->setParameter('userId', $user)
+            ->setParameter('userId', $user->getId())
             ->setParameter('archived', 'archived')
             ->orderBy('c.dateCreation', 'DESC')
             ->getQuery()
@@ -53,7 +61,7 @@ class RecruteurMessagerieController extends AbstractController
     public function getStats(EntityManagerInterface $em): JsonResponse
     {
         try {
-            $recruteur = $this->getUser();
+            $recruteur = $this->getAuthenticatedUser();
 
             if (!$recruteur) {
                 return $this->json(['error' => 'Utilisateur non connecté'], 401);
@@ -73,7 +81,7 @@ class RecruteurMessagerieController extends AbstractController
                 ->createQueryBuilder('c')
                 ->select('COUNT(DISTINCT CASE WHEN c.user1 = :recruteur THEN IDENTITY(c.user2) ELSE IDENTITY(c.user1) END)')
                 ->where('c.user1 = :recruteur OR c.user2 = :recruteur')
-                ->setParameter('recruteur', $recruteur)
+                ->setParameter('recruteur', $recruteur->getId())
                 ->getQuery()
                 ->getSingleScalarResult();
 
@@ -81,7 +89,7 @@ class RecruteurMessagerieController extends AbstractController
             $messagesNonLus = $em->getRepository(Message::class)
                 ->createQueryBuilder('m')
                 ->where('m.destinataire = :recruteur')
-                ->setParameter('recruteur', $recruteur)
+                ->setParameter('recruteur', $recruteur->getId())
                 ->select('COUNT(m.id)')
                 ->getQuery()
                 ->getSingleScalarResult();
@@ -100,7 +108,7 @@ class RecruteurMessagerieController extends AbstractController
     public function getConversations(EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
             if (!$user) {
                 return $this->json(['error' => 'Utilisateur non connecté'], 401);
@@ -113,7 +121,7 @@ class RecruteurMessagerieController extends AbstractController
                 ->leftJoin('c.user2', 'u2')
                 ->where('c.user1 = :userId OR c.user2 = :userId')
                 ->andWhere('c.statut != :archived')
-                ->setParameter('userId', $user)
+                ->setParameter('userId', $user->getId())
                 ->setParameter('archived', 'archived')
                 ->orderBy('c.dateCreation', 'DESC')
                 ->getQuery()
@@ -154,7 +162,7 @@ class RecruteurMessagerieController extends AbstractController
     public function getMessages(int $id, MessageRepository $messageRepo): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
             if (!$user) {
                 return $this->json(['error' => 'Utilisateur non connecté'], 401);
@@ -188,12 +196,16 @@ class RecruteurMessagerieController extends AbstractController
     public function sendMessage(Request $request, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
             $conversationId = $request->request->get('conversation_id');
             $content = $request->request->get('content');
 
             if (!$user) {
                 return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            if (!is_string($content)) {
+                return $this->json(['success' => false, 'error' => 'Contenu invalide']);
             }
 
             // Validations
@@ -216,12 +228,14 @@ class RecruteurMessagerieController extends AbstractController
                 return $this->json(['success' => false, 'error' => 'Conversation introuvable']);
             }
 
-            $destinataire = $conversation->getUser1()->getId() === $user->getId() ?
-                $conversation->getUser2() : $conversation->getUser1();
-
-            if (!$destinataire) {
+            $user1 = $conversation->getUser1();
+            $user2 = $conversation->getUser2();
+            if (!$user1 || !$user2) {
                 return $this->json(['success' => false, 'error' => 'Destinataire introuvable']);
             }
+
+            $destinataire = $user1->getId() === $user->getId() ? $user2 : $user1;
+
 
             $message = new Message();
             $message->setContenu($content);
@@ -250,12 +264,16 @@ class RecruteurMessagerieController extends AbstractController
     public function newConversation(Request $request, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
             $candidatId = $request->request->get('candidat_id');
             $content = $request->request->get('content');
 
             if (!$user) {
                 return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            if (!is_string($content)) {
+                return $this->json(['success' => false, 'error' => 'Contenu invalide']);
             }
 
             if (empty(trim($content))) {
@@ -335,13 +353,22 @@ class RecruteurMessagerieController extends AbstractController
     public function editMessage(Message $message, Request $request, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
-            if ($message->getExpediteur()->getId() !== $user->getId()) {
+            if (!$user) {
+                return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            $expediteur = $message->getExpediteur();
+            if (!$expediteur || $expediteur->getId() !== $user->getId()) {
                 return $this->json(['success' => false, 'error' => 'Vous ne pouvez pas modifier ce message']);
             }
 
             $newContent = $request->request->get('content');
+
+            if (!is_string($newContent)) {
+                return $this->json(['success' => false, 'error' => 'Contenu invalide']);
+            }
 
             if (empty(trim($newContent))) {
                 return $this->json(['success' => false, 'error' => 'Le message ne peut pas être vide']);
@@ -377,9 +404,14 @@ class RecruteurMessagerieController extends AbstractController
     public function deleteMessage(Message $message, EntityManagerInterface $em): JsonResponse
     {
         try {
-            $user = $this->getUser();
+            $user = $this->getAuthenticatedUser();
 
-            if ($message->getExpediteur()->getId() !== $user->getId()) {
+            if (!$user) {
+                return $this->json(['success' => false, 'error' => 'Utilisateur non connecté'], 401);
+            }
+
+            $expediteur = $message->getExpediteur();
+            if (!$expediteur || $expediteur->getId() !== $user->getId()) {
                 return $this->json(['success' => false, 'error' => 'Vous ne pouvez pas supprimer ce message']);
             }
 

@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Entity\Track;
@@ -7,6 +9,7 @@ use App\Entity\User;
 use App\Service\TrackService;
 use App\Service\WorkspaceService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -14,6 +17,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/workspace', name: 'workspace_')]
 class WorkspaceController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private readonly WorkspaceService $workspaceService,
         private readonly TrackService $trackService,
@@ -23,7 +27,7 @@ class WorkspaceController extends AbstractController
     #[Route('/data', name: 'data', methods: ['GET'])]
     public function data(): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], 401);
         }
@@ -44,7 +48,7 @@ class WorkspaceController extends AbstractController
     #[Route('/track/create', name: 'track_create', methods: ['POST'])]
     public function createTrack(Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'Unauthorized.'], 401);
         }
@@ -135,12 +139,19 @@ class WorkspaceController extends AbstractController
 
     private function isOwner(Track $track): bool
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+
+        $workspace = $track->getWorkspace();
+        $owner = $workspace?->getUser();
 
         return $user instanceof User
-            && $track->getWorkspace()->getUser()->getId() === $user->getId();
+            && $owner instanceof User
+            && $owner->getId() === $user->getId();
     }
 
+    /**
+     * @return array<string, int|string|null>
+     */
     private function serializeTrack(Track $t): array
     {
         return [

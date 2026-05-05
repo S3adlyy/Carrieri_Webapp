@@ -165,6 +165,7 @@ final class OllamaRecommendationService
 
     /**
      * @param array<int, array{course_level: string, course_duration: int, skill_matches: array{exact: int, partial: int}}> $courses
+     * @param string[] $candidateSkills
      * @return array<int, list<string>>
      */
     private function buildFallbackForAll(string $candidateLevel, array $candidateSkills, array $courses): array
@@ -173,9 +174,9 @@ final class OllamaRecommendationService
         foreach ($courses as $i => $course) {
             $result[$i] = $this->getFallbackReasons(
                 $candidateLevel,
-                $course['course_level'] ?? '',
-                $course['skill_matches'] ?? ['exact' => 0, 'partial' => 0],
-                $course['course_duration'] ?? 0,
+                $course['course_level'],
+                $course['skill_matches'],
+                $course['course_duration'],
             );
         }
         return $result;
@@ -192,8 +193,8 @@ final class OllamaRecommendationService
         int    $courseDuration,
     ): array {
         $reasons        = [];
-        $exactMatches   = $skillMatches['exact']   ?? 0;
-        $partialMatches = $skillMatches['partial']  ?? 0;
+        $exactMatches   = $skillMatches['exact'];
+        $partialMatches = $skillMatches['partial'];
 
         if ($courseLevel === $candidateLevel) {
             $reasons[] = 'Cours adapté à votre niveau actuel';

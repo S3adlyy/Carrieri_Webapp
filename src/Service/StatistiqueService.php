@@ -16,6 +16,7 @@ class StatistiqueService
 
     /**
      * Tableau de bord global
+     * @return array<string, mixed>
      */
     public function getDashboardStats(): array
     {
@@ -46,6 +47,7 @@ class StatistiqueService
 
     /**
      * Statistiques par mois (pour les graphiques)
+     * @return array<int, array<string, int>>
      */
     public function getMonthlyStats(int $year): array
     {
@@ -66,23 +68,27 @@ class StatistiqueService
 
     private function countReclamationsBetween(\DateTimeImmutable $start, \DateTimeImmutable $end): int
     {
-        return $this->reclamationRepository->createQueryBuilder('r')
+        $result = $this->reclamationRepository->createQueryBuilder('r')
             ->select('COUNT(r.id)')
             ->where('r.dateCreation BETWEEN :start AND :end')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->getQuery()
             ->getSingleScalarResult();
+        
+        return (int) $result;
     }
 
     private function countFeedbacksBetween(\DateTimeImmutable $start, \DateTimeImmutable $end): int
     {
-        return $this->feedbackRepository->createQueryBuilder('f')
+        $result = $this->feedbackRepository->createQueryBuilder('f')
             ->select('COUNT(f.id)')
             ->where('f.createdAt BETWEEN :start AND :end')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
             ->getQuery()
             ->getSingleScalarResult();
+        
+        return (int) $result;
     }
 }

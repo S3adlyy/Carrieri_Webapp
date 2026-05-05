@@ -26,6 +26,7 @@ class FaceRecognitionService
 
     /**
      * Enroll a user's face for future recognition
+     * @return array<string, mixed>
      */
     public function enrollFace(User $user, string $imageBase64): array
     {
@@ -42,7 +43,7 @@ class FaceRecognitionService
 
             // Create a person for this user
             $personName = $user->getFirstName() . ' ' . $user->getLastName();
-            $personId = $this->azureFaceClient->createPerson($user->getId(), $personName);
+            $personId = $this->azureFaceClient->createPerson((int) $user->getId(), $personName);
 
             if (!$personId) {
                 return [
@@ -203,5 +204,17 @@ class FaceRecognitionService
     public function hasFaceEnrolled(User $user): bool
     {
         return $user->getFaceEnabled() === 1 && !empty($user->getFacePersonId());
+    }
+
+    /**
+     * @return array{enrolled: bool, facePersonId: string|null, faceEnabled: bool}
+     */
+    public function getFaceStatus(User $user): array
+    {
+        return [
+            'enrolled' => $this->hasFaceEnrolled($user),
+            'facePersonId' => $user->getFacePersonId(),
+            'faceEnabled' => $user->getFaceEnabled() === 1,
+        ];
     }
 }

@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Repository\EntretienRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +22,7 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 #[IsGranted('ROLE_RECRUITER')]
 class CalendarController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private EntityManagerInterface $entityManager,
         private EntretienRepository $entretienRepository,
@@ -31,7 +33,7 @@ class CalendarController extends AbstractController
     #[Route('/', name: 'app_admin_calendar')]
     public function index(): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -42,7 +44,7 @@ class CalendarController extends AbstractController
     #[Route('/api/events', name: 'app_admin_calendar_events', methods: ['GET'])]
     public function getEvents(Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
@@ -89,7 +91,7 @@ class CalendarController extends AbstractController
     #[Route('/api/events/{id}/move', name: 'app_admin_calendar_move', methods: ['PUT'])]
     public function moveEvent(int $id, Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
@@ -99,8 +101,9 @@ class CalendarController extends AbstractController
             return $this->json(['error' => 'Event not found'], 404);
         }
 
-        $mission = $entretien->getMission();
-        if ($mission->getUser() !== $user) {
+        $rendu = $entretien->getRendu();
+        $mission = $rendu ? $rendu->getMission() : null;
+        if (!$mission || $mission->getUser() !== $user) {
             return $this->json(['error' => 'Unauthorized'], 401);
         }
 
@@ -114,27 +117,38 @@ class CalendarController extends AbstractController
         $this->entityManager->flush();
 
         // Envoyer une notification au candidat
-        $this->sendRescheduleNotification($entretien, $oldDate, $message);
+        if ($oldDate) {
+            $this->sendRescheduleNotification($entretien, $oldDate, $message);
+        }
 
         return $this->json(['success' => true, 'newDate' => $newDate->format('Y-m-d H:i:s')]);
     }
 
-    private function sendRescheduleNotification($entretien, $oldDate, $message): void
+    /**
+     * @param \App\Entity\Entretien $entretien
+     * @param \DateTimeInterface $oldDate
+     * @param string $message
+     */
+    private function sendRescheduleNotification($entretien, \DateTimeInterface $oldDate, string $message): void
     {
         $candidat = $entretien->getCandidat();
         if (!$candidat || !$candidat->getEmail()) {
             return;
         }
 
+        $rendu = $entretien->getRendu();
+        $mission = $rendu ? $rendu->getMission() : null;
+        $missionType = $mission ? $mission->getType() : 'Mission';
+
         $email = (new TemplatedEmail())
             ->from('noreply@carrieri.com')
             ->to($candidat->getEmail())
-            ->subject('Entretien reprogrammé - ' . $entretien->getMission()->getType())
+            ->subject('Entretien reprogrammé - ' . $missionType)
             ->htmlTemplate('emails/entretien_reschedule.html.twig')
             ->context([
                 'candidat' => $candidat,
                 'entretien' => $entretien,
-                'mission' => $entretien->getMission(),
+                'mission' => $mission,
                 'oldDate' => $oldDate,
                 'message' => $message,
             ]);

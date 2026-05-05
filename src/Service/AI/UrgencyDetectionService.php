@@ -4,16 +4,17 @@ namespace App\Service\AI;
 
 use App\Entity\Reclamation;
 use App\Repository\ReclamationRepository;
-use Doctrine\ORM\EntityManagerInterface;
 
 class UrgencyDetectionService
 {
+    /** @var array<int, float> */
     private array $weights = [];
+    /** @var array<int, string> */
     private array $vocabulary = [];
+    /** @var array<int, float> */
     private array $bias = [];
 
     public function __construct(
-        private EntityManagerInterface $em,
         private ReclamationRepository $reclamationRepository
     ) {
         $this->loadModel();
@@ -23,9 +24,14 @@ class UrgencyDetectionService
         }
     }
 
+    /**
+     * @return array{score: int, niveau: string, probabilite: int}
+     */
     public function detectUrgency(Reclamation $reclamation): array
     {
-        $text = $reclamation->getObjet() . ' ' . $reclamation->getDescription();
+        $objet = $reclamation->getObjet() ?? '';
+        $description = $reclamation->getDescription() ?? '';
+        $text = $objet . ' ' . $description;
         $features = $this->extractFeatures($text);
         $score = $this->predict($features);
         
@@ -36,6 +42,10 @@ class UrgencyDetectionService
         ];
     }
 
+    /**
+     * @param array<Reclamation> $reclamations
+     * @return array<array{reclamation: Reclamation, urgency_score: int, urgency_level: string, probability: int}>
+     */
     public function analyzeAndSortReclamations(array $reclamations): array
     {
         $results = [];
@@ -57,47 +67,62 @@ class UrgencyDetectionService
         return $results;
     }
 
+    /**
+     * @return array{error?: string, success?: bool, samples_used?: int, message?: string}
+     */
     public function trainWithRealData(): array
-{
-    $trainingData = [];
-    
-    // 1. Récupérer les corrections manuelles
-    $correctionFile = __DIR__ . '/../../../var/models/corrections.json';
-    if (file_exists($correctionFile)) {
-        $corrections = json_decode(file_get_contents($correctionFile), true);
-        foreach ($corrections as $correction) {
-            $trainingData[] = [$correction['text'], $correction['score']];
+    {
+        $trainingData = [];
+        
+        // 1. Récupérer les corrections manuelles
+        $correctionFile = __DIR__ . '/../../../var/models/corrections.json';
+        if (file_exists($correctionFile)) {
+            $content = file_get_contents($correctionFile);
+            if (is_string($content)) {
+                $corrections = json_decode($content, true);
+                if (is_array($corrections)) {
+                    foreach ($corrections as $correction) {
+                        if (is_array($correction) && isset($correction['text']) && isset($correction['score'])) {
+                            $trainingData[] = [(string)$correction['text'], (int)$correction['score']];
+                        }
+                    }
+                }
+            }
         }
-    }
-    
-    // 2. Récupérer les réclamations traitées
-    $reclamations = $this->reclamationRepository->findBy(['statut' => 'Traité']);
-    foreach ($reclamations as $reclamation) {
-        $text = $reclamation->getObjet() . ' ' . $reclamation->getDescription();
-        $priorite = $reclamation->getPriorite();
-        if ($priorite === 'Haute') {
-            $score = 85;
-        } elseif ($priorite === 'Moyenne') {
-            $score = 55;
-        } else {
-            $score = 25;
+        
+        // 2. Récupérer les réclamations traitées
+        $reclamations = $this->reclamationRepository->findBy(['statut' => 'Traité']);
+        foreach ($reclamations as $reclamation) {
+            $objet = $reclamation->getObjet() ?? '';
+            $description = $reclamation->getDescription() ?? '';
+            $text = $objet . ' ' . $description;
+            $priorite = $reclamation->getPriorite();
+            if ($priorite === 'Haute') {
+                $score = 85;
+            } elseif ($priorite === 'Moyenne') {
+                $score = 55;
+            } else {
+                $score = 25;
+            }
+            $trainingData[] = [$text, $score];
         }
-        $trainingData[] = [$text, $score];
+        
+        if (count($trainingData) < 3) {
+            return ['error' => 'Pas assez de données.'];
+        }
+        
+        $this->retrain($trainingData);
+        
+        return [
+            'success' => true,
+            'samples_used' => count($trainingData),
+            'message' => 'IA ré-entraînée avec ' . count($trainingData) . ' exemples'
+        ];
     }
-    
-    if (count($trainingData) < 3) {
-        return ['error' => 'Pas assez de données.'];
-    }
-    
-    $this->retrain($trainingData);
-    
-    return [
-        'success' => true,
-        'samples_used' => count($trainingData),
-        'message' => 'IA ré-entraînée avec ' . count($trainingData) . ' exemples'
-    ];
-}
 
+    /**
+     * @param array<array{0: string, 1: int}> $trainingData
+     */
     private function retrain(array $trainingData): void
     {
         // Construire le vocabulaire
@@ -112,8 +137,8 @@ class UrgencyDetectionService
         }
         
         $this->vocabulary = array_keys($vocabSet);
-        $this->weights = array_fill(0, count($this->vocabulary), 0);
-        $this->bias = [0];
+        $this->weights = array_fill(0, count($this->vocabulary), 0.0);
+        $this->bias = [0.0];
         
         // Entraînement par descente de gradient
         $learningRate = 0.01;
@@ -140,6 +165,7 @@ class UrgencyDetectionService
 
     private function train(): void
     {
+        /** @var array<array{0: string, 1: int}> $trainingData */
         $trainingData = [
             ["urgence besoin aide rapidement", 90],
             ["probleme systeme erreur critique", 88],
@@ -156,6 +182,9 @@ class UrgencyDetectionService
         $this->retrain($trainingData);
     }
 
+    /**
+     * @return array<int, int>
+     */
     private function extractFeatures(string $text): array
     {
         $text = $this->cleanText($text);
@@ -168,9 +197,12 @@ class UrgencyDetectionService
         return $features;
     }
 
+    /**
+     * @param array<int, int> $features
+     */
     private function predict(array $features): int
     {
-        $score = $this->bias[0] ?? 0;
+        $score = $this->bias[0] ?? 0.0;
         
         foreach ($features as $index => $value) {
             if (isset($this->weights[$index])) {
@@ -186,9 +218,9 @@ class UrgencyDetectionService
 
     private function cleanText(string $text): string
     {
-        $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text);
+        $text = preg_replace('/[^\p{L}\p{N}\s]/u', ' ', $text) ?? ' ';
         $text = mb_strtolower($text);
-        $text = preg_replace('/\s+/', ' ', $text);
+        $text = preg_replace('/\s+/', ' ', $text) ?? ' ';
         return trim($text);
     }
 
@@ -222,11 +254,20 @@ class UrgencyDetectionService
         $file = __DIR__ . '/../../../var/models/urgency_model.json';
         
         if (file_exists($file)) {
-            $data = json_decode(file_get_contents($file), true);
-            if ($data && isset($data['weights'])) {
-                $this->weights = $data['weights'];
-                $this->vocabulary = $data['vocabulary'];
-                $this->bias = $data['bias'] ?? [0];
+            $content = file_get_contents($file);
+            if (is_string($content)) {
+                $data = json_decode($content, true);
+                if (is_array($data) && isset($data['weights'])) {
+                    /** @var array<int, float> $weights */
+                    $weights = $data['weights'];
+                    /** @var array<int, string> $vocabulary */
+                    $vocabulary = $data['vocabulary'];
+                    /** @var array<int, float> $bias */
+                    $bias = $data['bias'] ?? [0.0];
+                    $this->weights = $weights;
+                    $this->vocabulary = $vocabulary;
+                    $this->bias = $bias;
+                }
             }
         }
     }

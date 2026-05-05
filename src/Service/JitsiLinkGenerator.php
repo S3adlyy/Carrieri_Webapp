@@ -14,8 +14,10 @@ class JitsiLinkGenerator
 
     public function __construct(ParameterBagInterface $params)
     {
-        $this->jitsiDomain = $params->get('jitsi_domain');
-        $this->roomPrefix = $params->get('jitsi_room_prefix');
+        $jitsiDomainParam = $params->get('jitsi_domain');
+        $this->jitsiDomain = is_scalar($jitsiDomainParam) ? (string)$jitsiDomainParam : 'meet.jit.si';
+        $roomPrefixParam = $params->get('jitsi_room_prefix');
+        $this->roomPrefix = is_scalar($roomPrefixParam) ? (string)$roomPrefixParam : 'carrieri';
     }
 
     /**

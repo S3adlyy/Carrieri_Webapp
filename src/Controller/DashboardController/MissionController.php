@@ -12,6 +12,7 @@ use App\Repository\MissionRepository;
 use App\Repository\RenduMissionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
@@ -23,6 +24,7 @@ use Dompdf\Options;
 #[Route('/admin/missions')]
 class MissionController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private EntityManagerInterface $entityManager,
         private MissionRepository $missionRepository,
@@ -32,37 +34,37 @@ class MissionController extends AbstractController
 
     #[Route('/', name: 'app_admin_missions_list')]
     #[IsGranted('ROLE_RECRUITER')]
-    public function index(Request $request, $stats): Response
+    public function index(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
         // Récupérer les paramètres de recherche et de tri
-        $search = $request->query->get('search', '');
-        $sortBy = $request->query->get('sort_by', 'id');
-        $sortOrder = $request->query->get('sort_order', 'DESC');
-        $filter = $request->query->get('filter', 'all');
+        $searchString = trim((string) $request->query->get('search', ''));
+        $sortByString = trim((string) $request->query->get('sort_by', 'id'));
+        $sortOrderString = trim((string) $request->query->get('sort_order', 'DESC'));
+        $filter = trim((string) $request->query->get('filter', 'all'));
 
         // Valider les paramètres de tri
         $allowedSortFields = ['id', 'description', 'type', 'scoreMin', 'createdAt'];
-        if (!in_array($sortBy, $allowedSortFields)) {
-            $sortBy = 'id';
+        if (!in_array($sortByString, $allowedSortFields, true)) {
+            $sortByString = 'id';
         }
-        $sortOrder = strtoupper($sortOrder) === 'ASC' ? 'ASC' : 'DESC';
+        $sortOrderString = strtoupper($sortOrderString) === 'ASC' ? 'ASC' : 'DESC';
 
         // Récupérer les missions avec recherche et tri
         $missions = $this->missionRepository->findByUserWithSearchAndSort(
             $user,
-            $search,
-            $sortBy,
-            $sortOrder
+            $searchString,
+            $sortByString,
+            $sortOrderString
         );
 
         // Appliquer le filtre par score
         if ($filter !== 'all') {
-            $missions = array_filter($missions, function($mission) use ($stats, $filter) {
+            $missions = array_filter($missions, function (Mission $mission) use ($filter): bool {
                 $score = $mission->getScoreMin();
                 if ($filter === 'high') {
                     return $score >= 80;
@@ -71,7 +73,6 @@ class MissionController extends AbstractController
                 } elseif ($filter === 'low') {
                     return $score < 50;
                 }
-                dump($stats); die;
                 return true;
             });
         }
@@ -82,9 +83,9 @@ class MissionController extends AbstractController
         return $this->render('BackOffice/dashboard/missions/index.html.twig', [
             'missions' => $missions,
             'is_admin_view' => false,
-            'search' => $search,
-            'sort_by' => $sortBy,
-            'sort_order' => $sortOrder,
+            'search' => $searchString,
+            'sort_by' => $sortByString,
+            'sort_order' => $sortOrderString,
             'filter' => $filter,
             'stats' => $stats,  // ← TRÈS IMPORTANT : Cette ligne doit être présente
         ]);
@@ -94,26 +95,26 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function exportExcel(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        $search = $request->query->get('search', '');
-        $sortBy = $request->query->get('sort_by', 'id');
-        $sortOrder = $request->query->get('sort_order', 'DESC');
+        $searchString = trim((string) $request->query->get('search', ''));
+        $sortByString = trim((string) $request->query->get('sort_by', 'id'));
+        $sortOrderString = trim((string) $request->query->get('sort_order', 'DESC'));
 
         $missions = $this->missionRepository->findByUserWithSearchAndSort(
             $user,
-            $search,
-            $sortBy,
-            $sortOrder
+            $searchString,
+            $sortByString,
+            $sortOrderString
         );
 
         $html = $this->renderView('BackOffice/dashboard/missions/export_excel.html.twig', [
             'missions' => $missions,
             'export_date' => date('d/m/Y H:i:s'),
-            'search' => $search,
+            'search' => $searchString,
         ]);
 
         $fileName = 'missions_' . date('Y-m-d_H-i-s') . '.xls';
@@ -129,26 +130,26 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function exportPDF(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        $search = $request->query->get('search', '');
-        $sortBy = $request->query->get('sort_by', 'id');
-        $sortOrder = $request->query->get('sort_order', 'DESC');
+        $searchString = trim((string) $request->query->get('search', ''));
+        $sortByString = trim((string) $request->query->get('sort_by', 'id'));
+        $sortOrderString = trim((string) $request->query->get('sort_order', 'DESC'));
 
         $missions = $this->missionRepository->findByUserWithSearchAndSort(
             $user,
-            $search,
-            $sortBy,
-            $sortOrder
+            $searchString,
+            $sortByString,
+            $sortOrderString
         );
 
         $html = $this->renderView('BackOffice/dashboard/missions/export_pdf.html.twig', [
             'missions' => $missions,
             'export_date' => date('d/m/Y H:i:s'),
-            'search' => $search,
+            'search' => $searchString,
         ]);
 
         $options = new Options();
@@ -172,7 +173,7 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function create(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -184,7 +185,10 @@ class MissionController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $mission->setUser($user);
             $mission->setCreatedAt(new \DateTime());
-            $mission->setCreatedById($user->getId());
+            $userId = $user->getId();
+            if ($userId) {
+                $mission->setCreatedById($userId);
+            }
 
             $this->entityManager->persist($mission);
             $this->entityManager->flush();
@@ -203,7 +207,7 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function edit(Request $request, Mission $mission): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -232,12 +236,12 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function show(Mission $mission): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        if ($mission->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles())) {
+        if ($mission->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles(), true)) {
             $this->addFlash('error', 'Vous ne pouvez pas voir cette mission.');
             return $this->redirectToRoute('app_admin_missions_list');
         }
@@ -251,7 +255,7 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function delete(Request $request, Mission $mission): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -261,7 +265,9 @@ class MissionController extends AbstractController
             return $this->redirectToRoute('app_admin_missions_list');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $mission->getId(), $request->request->get('_token'))) {
+        $tokenRaw = $request->request->get('_token');
+        $token = is_string($tokenRaw) ? $tokenRaw : '';
+        if ($this->isCsrfTokenValid('delete' . $mission->getId(), $token)) {
             $this->entityManager->remove($mission);
             $this->entityManager->flush();
             $this->addFlash('success', 'La mission a été supprimée avec succès.');
@@ -276,7 +282,7 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function submissions(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -302,7 +308,7 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function reviewSubmission(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -319,16 +325,17 @@ class MissionController extends AbstractController
             return $this->redirectToRoute('app_admin_missions_list');
         }
 
-        $action = $request->request->get('action');
+        $action = is_string($request->request->get('action')) ? $request->request->get('action') : '';
         $feedback = $request->request->get('feedback', '');
+        $feedbackString = is_string($feedback) ? $feedback : '';
 
         if ($action === 'accept') {
             $rendu->setStatut('accepte');
-            $rendu->setFeedback($feedback ?: 'Félicitations ! Votre solution a été acceptée.');
+            $rendu->setFeedback($feedbackString ?: 'Félicitations ! Votre solution a été acceptée.');
             $this->addFlash('success', 'La soumission a été acceptée avec succès.');
         } elseif ($action === 'reject') {
             $rendu->setStatut('refuse');
-            $rendu->setFeedback($feedback ?: 'Désolé, votre solution n\'a pas été retenue.');
+            $rendu->setFeedback($feedbackString ?: 'Désolé, votre solution n\'a pas été retenue.');
             $this->addFlash('success', 'La soumission a été refusée.');
         } else {
             $this->addFlash('error', 'Action invalide.');
@@ -344,7 +351,7 @@ class MissionController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function viewSubmission(int $id): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -367,6 +374,22 @@ class MissionController extends AbstractController
         ]);
     }
 
+    /**
+     * @return array{
+     *     total_missions:int,
+     *     total_submissions:int,
+     *     missions_with_submissions:int,
+     *     submission_rate:int,
+     *     total_accepted:int,
+     *     total_rejected:int,
+     *     total_pending:int,
+     *     acceptance_rate:int,
+     *     average_score:float,
+     *     max_score:float,
+     *     min_score:float,
+     *     score_distribution:array<string,int>
+     * }
+     */
     private function getMissionStats(User $user): array
     {
         $missions = $this->missionRepository->findByUserWithSearchAndSort($user, '', 'id', 'DESC');
@@ -427,11 +450,11 @@ class MissionController extends AbstractController
             'total_missions' => $totalMissions,
             'total_submissions' => $totalSubmissions,
             'missions_with_submissions' => $missionsWithSubmissions,
-            'submission_rate' => $totalMissions > 0 ? round(($missionsWithSubmissions / $totalMissions) * 100) : 0,
+            'submission_rate' => $totalMissions > 0 ? (int) round(($missionsWithSubmissions / $totalMissions) * 100) : 0,
             'total_accepted' => $totalAccepted,
             'total_rejected' => $totalRejected,
             'total_pending' => $totalPending,
-            'acceptance_rate' => $totalSubmissions > 0 ? round(($totalAccepted / $totalSubmissions) * 100) : 0,
+            'acceptance_rate' => $totalSubmissions > 0 ? (int) round(($totalAccepted / $totalSubmissions) * 100) : 0,
             'average_score' => round($averageScore, 1),
             'max_score' => round($maxScore, 1),
             'min_score' => round($minScore, 1),

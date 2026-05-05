@@ -2,10 +2,12 @@
 declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
+use App\Entity\User;
 use App\Service\SnapshotService;
 use App\Service\TrackService;
 use App\Service\FileObjectService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
@@ -15,6 +17,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[Route('/snapshot')]
 final class SnapshotController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private readonly SnapshotService   $snapshotService,
         private readonly TrackService      $trackService,
@@ -27,16 +30,25 @@ final class SnapshotController extends AbstractController
     {
         $track = $this->trackService->findById($trackId);
         if (!$track) return $this->json(['error' => 'Track not found.'], 404);
-        if ($track->getWorkspace()->getUser()->getId() !== $this->getUser()->getId()) {
+
+        $workspace = $track->getWorkspace();
+        $workspaceUser = $workspace?->getUser();
+        $currentUser = $this->requireUser();
+        if (!$workspace || !$workspaceUser || $workspaceUser->getId() !== $currentUser->getId()) {
             return $this->json(['error' => 'Forbidden.'], 403);
         }
 
         $data    = json_decode($request->getContent(), true) ?? [];
-        $message = trim($data['message'] ?? '');
+        $message = trim((string) ($data['message'] ?? ''));
         if ($message === '') return $this->json(['error' => 'Message is required.'], 422);
         if (strlen($message) > 280) return $this->json(['error' => 'Message too long (max 280 chars).'], 422);
 
-        $snapshot = $this->snapshotService->create($track, $this->getUser()->getId(), $message);
+        $currentUserId = $currentUser->getId();
+        if ($currentUserId === null) {
+            return $this->json(['error' => 'User not found.'], 403);
+        }
+
+        $snapshot = $this->snapshotService->create($track, $currentUserId, $message);
 
         return $this->json(['snapshot' => $this->serializeSnapshot($snapshot)], 201);
     }
@@ -68,24 +80,50 @@ final class SnapshotController extends AbstractController
             'snapshot' => $this->serializeSnapshot($snapshot),
             'items'    => array_map(function ($item) {
                 $fo = $item->getFileObject();
+                $artifact = $item->getArtifact();
+                if (!$artifact) {
+                    return [
+                        'artifactId' => null,
+                        'artifactName' => null,
+                        'artifactType' => null,
+                        'fileObjectId' => $fo?->getId(),
+                        'hasFile' => $fo !== null,
+                        'downloadUrl' => null,
+                    ];
+                }
+
                 return [
-                    'artifactId'   => $item->getArtifact()->getId(),
-                    'artifactName' => $item->getArtifact()->getArtifactName(),
-                    'artifactType' => $item->getArtifact()->getArtifactType(),
+                    'artifactId'   => $artifact->getId(),
+                    'artifactName' => $artifact->getArtifactName(),
+                    'artifactType' => $artifact->getArtifactType(),
                     'fileObjectId' => $fo?->getId(),
                     'hasFile'      => $fo !== null,
-                    'downloadUrl'  => $fo ? $this->fileObjectService->presignedDownloadUrl($fo->getStorageKey(), 600) : null,];
+                    'downloadUrl'  => $fo ? $this->fileObjectService->presignedDownloadUrl((string) $fo->getStorageKey(), 600) : null,
+                ];
             }, $items),
         ]);
     }
 
+    /**
+     * @return array{id:int|null,message:string|null,createdAt:string|null,isFinal:bool}
+     */
     private function serializeSnapshot(\App\Entity\Snapshot $s): array
     {
         return [
             'id'        => $s->getId(),
             'message'   => $s->getMessage(),
             'createdAt' => $s->getCreatedAt()?->format('Y-m-d H:i'),
-            'isFinal'   => $s->getIsFinal(),
+            'isFinal'   => (bool) $s->getIsFinal(),
         ];
+    }
+
+    private function requireUser(): User
+    {
+        $user = $this->getAuthenticatedUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        return $user;
     }
 }

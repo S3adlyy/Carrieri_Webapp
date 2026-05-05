@@ -19,6 +19,7 @@ class ReclamationService
 
     /**
      * Compter les réclamations par statut pour un utilisateur
+     * @return array<string, int>
      */
     public function countByStatus(User $user): array
     {
@@ -48,15 +49,11 @@ class ReclamationService
      */
     public function changeStatus(Reclamation $reclamation, string $newStatus, ?string $commentaire = null): void
     {
-        $oldStatus = $reclamation->getStatut();
+        $oldStatus = $reclamation->getStatut() ?? '';
         $reclamation->setStatut($newStatus);
-        
-        // Ajouter un historique si tu as une entité HistoriqueReclamation
-        // $this->addHistory($reclamation, $oldStatus, $newStatus, $commentaire);
         
         $this->em->flush();
         
-        // Envoyer une notification au candidat
         $this->sendStatusNotification($reclamation, $oldStatus, $newStatus);
     }
 
@@ -70,7 +67,7 @@ class ReclamationService
         
         $email = (new Email())
             ->from('noreply@carrieri.com')
-            ->to($user->getEmail())
+            ->to((string) $user->getEmail())
             ->subject('Mise à jour de votre réclamation')
             ->html($this->renderEmailTemplate($reclamation, $oldStatus, $newStatus));
         
@@ -79,9 +76,11 @@ class ReclamationService
 
     private function renderEmailTemplate(Reclamation $reclamation, string $oldStatus, string $newStatus): string
     {
+        $user = $reclamation->getUser();
+        $firstName = $user ? $user->getFirstName() : '';
         return "
             <h1>Suivi de votre réclamation</h1>
-            <p>Bonjour {$reclamation->getUser()->getFirstName()},</p>
+            <p>Bonjour {$firstName},</p>
             <p>Le statut de votre réclamation a changé :</p>
             <ul>
                 <li><strong>Ancien statut :</strong> {$oldStatus}</li>
@@ -105,8 +104,6 @@ class ReclamationService
         
         $totalDays = 0;
         foreach ($traitees as $reclamation) {
-            // Logique de calcul (si tu as une date de traitement)
-            // $totalDays += $reclamation->getDateTraitement()->diff($reclamation->getDateCreation())->days;
         }
         
         return $totalDays / count($traitees);
@@ -114,6 +111,7 @@ class ReclamationService
 
     /**
      * Obtenir les réclamations urgentes (priorité Haute + non traitées)
+     * @return array<Reclamation>
      */
     public function getUrgentReclamations(): array
     {

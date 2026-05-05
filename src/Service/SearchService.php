@@ -2,6 +2,9 @@
 
 namespace App\Service;
 
+use App\Entity\Cours;
+use App\Entity\Mission;
+use App\Entity\OffreEmploi;
 use App\Repository\CoursRepository;
 use App\Repository\MissionRepository;
 use App\Repository\OffreEmploiRepository;
@@ -16,6 +19,7 @@ class SearchService
 
     /**
      * Recherche globale dans tous les modules
+     * @return array<string, mixed>
      */
     public function globalSearch(string $query): array
     {
@@ -33,6 +37,8 @@ class SearchService
 
     /**
      * Recherche avancée avec filtres
+     * @param array<string, mixed> $filters
+     * @return array<Cours>
      */
     public function advancedSearch(array $filters): array
     {
@@ -61,6 +67,9 @@ class SearchService
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return array<Cours>
+     */
     private function searchCours(string $query): array
     {
         return $this->coursRepository->createQueryBuilder('c')
@@ -72,6 +81,9 @@ class SearchService
             ->getResult();
     }
 
+    /**
+     * @return array<Mission>
+     */
     private function searchMissions(string $query): array
     {
         return $this->missionRepository->createQueryBuilder('m')
@@ -82,6 +94,9 @@ class SearchService
             ->getResult();
     }
 
+    /**
+     * @return array<OffreEmploi>
+     */
     private function searchOffres(string $query): array
     {
         return $this->offreEmploiRepository->createQueryBuilder('o')

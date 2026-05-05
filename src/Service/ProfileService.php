@@ -24,19 +24,30 @@ final class ProfileService
         return $user->getType() === 'RECRUITER' || in_array('ROLE_RECRUITER', $user->getRoles(), true);
     }
 
+    /**
+     * @return array<User>
+     */
     public function suggestPeopleYouMayKnow(User $viewer, int $limit = 5): array
     {
+        $viewerId = $viewer->getId();
+        if ($viewerId === null) {
+            return [];
+        }
+
         if ($this->isCandidate($viewer)) {
-            return $this->userRepository->findActiveSuggestionsByType($viewer->getId(), 'RECRUITER', $limit);
+            return $this->userRepository->findActiveSuggestionsByType($viewerId, 'RECRUITER', $limit);
         }
 
         if ($this->isRecruiter($viewer)) {
-            return $this->userRepository->findActiveSuggestionsByType($viewer->getId(), 'CANDIDATE', $limit);
+            return $this->userRepository->findActiveSuggestionsByType($viewerId, 'CANDIDATE', $limit);
         }
 
-        return $this->userRepository->findActiveSuggestions($viewer->getId(), $limit);
+        return $this->userRepository->findActiveSuggestions($viewerId, $limit);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function updateBasic(User $user, array $data): void
     {
         $firstName = $this->requiredString($data['firstName'] ?? null, 'First name is required.');
@@ -58,6 +69,9 @@ final class ProfileService
         $user->setBio($this->nullableString($bio));
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function updateEducation(User $user, array $data): void
     {
         $user
@@ -67,6 +81,9 @@ final class ProfileService
             ->setGraduationYear($this->parseGraduationYear($data['graduationYear'] ?? null));
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function updateSkills(User $user, array $data): void
     {
         $user
@@ -74,6 +91,9 @@ final class ProfileService
             ->setSoftSkills($this->normalizeCsv($data['softSkills'] ?? null));
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function updateLinks(User $user, array $data): void
     {
         $user
@@ -81,6 +101,9 @@ final class ProfileService
             ->setPortfolioUrl($this->nullableString($data['portfolioUrl'] ?? null));
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function updateOrganization(User $user, array $data): void
     {
         $user

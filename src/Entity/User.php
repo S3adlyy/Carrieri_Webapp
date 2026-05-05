@@ -219,11 +219,13 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             return $role;
         }
 
+        $normalizedRole = preg_replace('/[^a-zA-Z0-9]+/', '_', $role) ?? '';
+
         return match (strtoupper($role)) {
             'ADMIN' => 'ROLE_ADMIN',
             'RECRUITER' => 'ROLE_RECRUITER',
             'CANDIDAT', 'CANDIDATE', 'STUDENT' => 'ROLE_CANDIDAT',
-            default => 'ROLE_' . strtoupper(preg_replace('/[^a-zA-Z0-9]+/', '_', $role)),
+            default => 'ROLE_' . strtoupper($normalizedRole),
         };
     }
 

@@ -6,6 +6,8 @@ namespace App\Service;
 
 use App\Entity\Cours;
 use App\Entity\Module;
+use App\Entity\QuestionQuiz;
+use App\Entity\QuestionTest;
 use App\Entity\ResultatQuizModule;
 use App\Entity\ResultatTestCours;
 use App\Entity\User;
@@ -17,8 +19,8 @@ use Doctrine\ORM\EntityManagerInterface;
 final class CandidateAssessmentService
 {
     private const QUIZ_PASS_THRESHOLD = 70.0;
-    private const QUIZ_EXPECTED_QUESTIONS = 5;
-    private const FINAL_TEST_EXPECTED_QUESTIONS = 15;
+    private const QUIZ_EXPECTED_QUESTIONS = 12;
+    private const FINAL_TEST_EXPECTED_QUESTIONS = 22;
 
     public function __construct(
         private QuestionQuizRepository $questionQuizRepository,
@@ -30,7 +32,7 @@ final class CandidateAssessmentService
     }
 
     /**
-     * @return array{questions: list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool>}>>, expected_count:int}
+     * @return array{questions: list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool}>}>, expected_count:int}
      */
     public function buildModuleQuiz(Module $module): array
     {
@@ -41,7 +43,7 @@ final class CandidateAssessmentService
 
         $this->assessmentAutoGeneratorService->ensureModuleQuizGenerated($module, self::QUIZ_EXPECTED_QUESTIONS);
 
-        $questions = $this->questionQuizRepository->findByModuleOrdered($moduleId, self::QUIZ_EXPECTED_QUESTIONS);
+        $questions = array_values($this->questionQuizRepository->findByModuleOrdered($moduleId, self::QUIZ_EXPECTED_QUESTIONS));
 
         return [
             'questions' => $this->hydrateQuestions($questions, 'QUIZ'),
@@ -50,7 +52,7 @@ final class CandidateAssessmentService
     }
 
     /**
-     * @return array{questions: list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool>}>>, expected_count:int}
+     * @return array{questions: list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool}>}>, expected_count:int}
      */
     public function buildCoursFinalTest(Cours $cours): array
     {
@@ -61,7 +63,7 @@ final class CandidateAssessmentService
 
         $this->assessmentAutoGeneratorService->ensureCoursFinalTestGenerated($cours, self::FINAL_TEST_EXPECTED_QUESTIONS);
 
-        $questions = $this->questionTestRepository->findByCoursOrdered($coursId, self::FINAL_TEST_EXPECTED_QUESTIONS);
+        $questions = array_values($this->questionTestRepository->findByCoursOrdered($coursId, self::FINAL_TEST_EXPECTED_QUESTIONS));
 
         return [
             'questions' => $this->hydrateQuestions($questions, 'TEST'),
@@ -70,7 +72,7 @@ final class CandidateAssessmentService
     }
 
     /**
-     * @param list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool>}>> $questions
+     * @param list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool}>}> $questions
      * @param array<string, mixed> $submittedAnswers
      * @return array{score:int,total_points:int,percentage:float,passed:bool,missing_question_ids:list<int>}
      */
@@ -152,8 +154,8 @@ final class CandidateAssessmentService
     }
 
     /**
-     * @param list<object> $questionEntities
-     * @return list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool>}>>
+     * @param array<int, QuestionQuiz|QuestionTest> $questionEntities
+     * @return list<array{id:int,text:string,points:int,answers:list<array{id:int,text:string,is_correct:bool}>}>
      */
     private function hydrateQuestions(array $questionEntities, string $questionType): array
     {

@@ -29,6 +29,9 @@ class AwsFaceRecognitionService
         }
     }
 
+    /**
+     * @return array{success: bool, faceId?: string, message?: string, error?: string}
+     */
     public function enrollFace(User $user, string $imageBase64): array
     {
         try {
@@ -38,7 +41,7 @@ class AwsFaceRecognitionService
             ]);
 
             // Remove data URL prefix
-            $imageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64);
+            $imageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64) ?? '';
             $imageBytes = base64_decode($imageBase64);
 
             // Check if user already has a face enrolled
@@ -130,7 +133,7 @@ class AwsFaceRecognitionService
         try {
             $this->logger->info('Starting AWS face login process');
 
-            $imageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64);
+            $imageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64) ?? '';
             $imageBytes = base64_decode($imageBase64);
 
             $rekognition = $this->awsConfig->getRekognitionClient();

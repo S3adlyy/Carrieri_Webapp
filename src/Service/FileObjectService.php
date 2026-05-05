@@ -26,10 +26,18 @@ final class FileObjectService
         $ext = S3KeyUtil::extNoDotOrDefault($file->getClientOriginalName());
         $contentType = S3KeyUtil::contentTypeFromExt($ext);
 
+        $track = $artifact->getTrack();
+        $trackId = $track?->getId();
+        $artifactId = $artifact->getId();
+
+        if ($trackId === null || $artifactId === null) {
+            throw new \RuntimeException('Track or artifact ID missing');
+        }
+
         $key = S3KeyUtil::artifactFileKey(
             $candidateId,
-            $artifact->getTrack()->getId(),
-            $artifact->getId(),
+            $trackId,
+            $artifactId,
             $ext
         );
 
@@ -37,12 +45,12 @@ final class FileObjectService
 
         $fileObject = new FileObject();
         $fileObject->setArtifact($artifact);
-        $fileObject->setArtifactId($artifact->getId());
+        $fileObject->setArtifactId($artifactId);
         $fileObject->setStorageKey($key);
+        $fileObject->setPublicUrl('s3://carrieri-storage-dev-islem/' . $key);
         $fileObject->setMimeType($contentType);
-        $fileObject->setFileSize($file->getSize());
+        $fileObject->setFileSize((int) $file->getSize());
         $fileObject->setUploadedAt(new \DateTimeImmutable());
-        $fileObject->setPublicUrl(null);
 
         $this->em->persist($fileObject);
         $this->em->flush();

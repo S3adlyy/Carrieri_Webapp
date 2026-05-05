@@ -56,7 +56,7 @@ class MailService
         
         $email = (new Email())
             ->from('selim.benabdelkader@esprit.tn')
-            ->to($emailDestinataire)
+            ->to((string) $emailDestinataire)
             ->subject('Votre réclamation a été traitée - Carrieri')
             ->html($htmlContent);
         

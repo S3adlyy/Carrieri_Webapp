@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Entity\Reclamation;
@@ -7,6 +9,7 @@ use App\Form\ReclamationType;
 use App\Repository\ReclamationRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,10 +19,14 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CANDIDAT')]
 class ReclamationController extends AbstractController
 {
+    use UserTypeCasterTrait;
     #[Route('/', name: 'app_candidat_reclamation_index', methods: ['GET'])]
     public function index(ReclamationRepository $repository): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException();
+        }
 
         $reclamations = $repository->findBy(['user' => $user], ['dateCreation' => 'DESC']);
 
@@ -31,7 +38,10 @@ class ReclamationController extends AbstractController
     #[Route('/new', name: 'app_candidat_reclamation_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException();
+        }
 
         $reclamation = new Reclamation();
         $form = $this->createForm(ReclamationType::class, $reclamation);
@@ -62,7 +72,7 @@ class ReclamationController extends AbstractController
     #[Route('/{id}', name: 'app_candidat_reclamation_show', methods: ['GET'])]
     public function show(Reclamation $reclamation): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if ($reclamation->getUser() !== $user) {
             throw $this->createAccessDeniedException('Accès non autorisé');
@@ -76,7 +86,7 @@ class ReclamationController extends AbstractController
     #[Route('/{id}/edit', name: 'app_candidat_reclamation_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Reclamation $reclamation, EntityManagerInterface $em): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if ($reclamation->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier cette réclamation');
@@ -105,7 +115,7 @@ class ReclamationController extends AbstractController
     #[Route('/{id}', name: 'app_candidat_reclamation_delete', methods: ['POST'])]
     public function delete(Request $request, Reclamation $reclamation, EntityManagerInterface $em): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if ($reclamation->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas supprimer cette réclamation');
@@ -116,7 +126,8 @@ class ReclamationController extends AbstractController
             return $this->redirectToRoute('app_candidat_reclamation_index');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $reclamation->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete' . $reclamation->getId(), is_string($token) ? $token : null)) {
             $em->remove($reclamation);
             $em->flush();
             $this->addFlash('success', 'Votre réclamation a été supprimée');

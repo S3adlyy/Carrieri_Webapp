@@ -6,6 +6,7 @@ namespace App\Service;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use Psr\Log\LoggerInterface;
 
 class AzureFaceClientService
@@ -41,6 +42,11 @@ class AzureFaceClientService
         ]);
     }
 
+    public function config(): AzureFaceConfigService
+    {
+        return $this->config;
+    }
+
     /**
      * Create Person Group if it doesn't exist
      */
@@ -62,7 +68,7 @@ class AzureFaceClientService
             return true;
 
         } catch (GuzzleException $e) {
-            $response = $e->getResponse();
+            $response = $e instanceof RequestException ? $e->getResponse() : null;
             $statusCode = $response ? $response->getStatusCode() : 0;
 
             // Person group already exists
@@ -122,21 +128,17 @@ class AzureFaceClientService
     {
         try {
             // Remove data:image/jpeg;base64, prefix if present
-            $imageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64);
+            $sanitizedImageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64);
+            if (!is_string($sanitizedImageBase64)) {
+                return null;
+            }
+            $imageBase64 = $sanitizedImageBase64;
 
             $url = $this->config->getBaseUrl() . '/persongroups/' . $this->config->getPersonGroupId()
                 . '/persons/' . $personId . '/persistedFaces'
                 . '?detectionModel=' . $this->config->getDetectionModel();
 
-            // Use a separate client for binary data
-            $binaryClient = new Client([
-                'headers' => [
-                    'Ocp-Apim-Subscription-Key' => $this->config->getApiKey(),
-                    'Content-Type' => 'application/octet-stream',
-                ],
-            ]);
-
-            $response = $binaryClient->post($url, [
+            $response = $this->binaryClient->post($url, [
                 'body' => base64_decode($imageBase64),
             ]);
 
@@ -218,10 +220,16 @@ class AzureFaceClientService
         try {
             // Handle both data URL and raw base64
             if (str_contains($imageBase64, 'base64,')) {
-                $imageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64);
+                $sanitizedImageBase64 = preg_replace('/^data:image\/\w+;base64,/', '', $imageBase64);
+                if (is_string($sanitizedImageBase64)) {
+                    $imageBase64 = $sanitizedImageBase64;
+                }
             }
 
-            $imageBytes = base64_decode($imageBase64);
+            $imageBytes = base64_decode($imageBase64, true);
+            if ($imageBytes === false) {
+                return null;
+            }
 
             // Log image info
             $this->logger->info('Detecting face', [
@@ -261,7 +269,7 @@ class AzureFaceClientService
 
             $this->logger->info('Azure detect response', [
                 'http_code' => $httpCode,
-                'response_length' => strlen($response)
+                'response_length' => strlen(is_string($response) ? $response : '')
             ]);
 
             if ($httpCode !== 200) {
@@ -272,7 +280,10 @@ class AzureFaceClientService
                 return null;
             }
 
-            $data = json_decode($response, true);
+            $data = json_decode(is_string($response) ? $response : '', true);
+            if (!is_array($data)) {
+                return null;
+            }
 
             if (empty($data)) {
                 $this->logger->warning('No faces detected in image');
@@ -295,6 +306,7 @@ class AzureFaceClientService
 
     /**
      * Identify face against person group
+     * @return array<mixed>|null
      */
     public function identifyFace(string $faceId): ?array
     {
@@ -340,7 +352,7 @@ class AzureFaceClientService
             ];
 
         } catch (GuzzleException $e) {
-            $response = $e->getResponse();
+            $response = $e instanceof RequestException ? $e->getResponse() : null;
             $statusCode = $response ? $response->getStatusCode() : 0;
             $responseBody = $response ? $response->getBody()->getContents() : '';
 

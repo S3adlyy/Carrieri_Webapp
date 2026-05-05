@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\DashboardController;
 
 use App\Entity\Reclamation;
@@ -72,7 +74,8 @@ class ReclamationController extends AbstractController
     #[Route('/{id}', name: 'app_dashboard_reclamation_delete', methods: ['POST'])]
     public function delete(Request $request, Reclamation $reclamation, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $reclamation->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete' . $reclamation->getId(), is_string($token) ? $token : null)) {
             $em->remove($reclamation);
             $em->flush();
             $this->addFlash('success', 'Réclamation supprimée avec succès');

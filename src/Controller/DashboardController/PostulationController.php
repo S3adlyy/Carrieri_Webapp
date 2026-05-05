@@ -9,6 +9,7 @@ use App\Repository\PostulationRepository;
 use App\Repository\OffreEmploiRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -23,6 +24,7 @@ use Symfony\Component\DependencyInjection\Attribute\Autowire;
 #[Route('/admin/postulations')]
 class PostulationController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private EntityManagerInterface $entityManager,
         private PostulationRepository $postulationRepository,
@@ -38,19 +40,19 @@ class PostulationController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function index(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
         // Récupérer tous les filtres
         $filters = [
-            'keyword' => $request->query->get('keyword', ''),
-            'statut' => $request->query->get('statut', ''),
-            'offreId' => $request->query->get('offreId', ''),
-            'typeContrat' => $request->query->get('typeContrat', ''),
-            'dateDebut' => $request->query->get('dateDebut', ''),
-            'dateFin' => $request->query->get('dateFin', ''),
+            'keyword' => trim((string) $request->query->get('keyword', '')),
+            'statut' => trim((string) $request->query->get('statut', '')),
+            'offreId' => (int) $request->query->get('offreId', 0),
+            'typeContrat' => trim((string) $request->query->get('typeContrat', '')),
+            'dateDebut' => trim((string) $request->query->get('dateDebut', '')),
+            'dateFin' => trim((string) $request->query->get('dateFin', '')),
         ];
 
         // Utiliser la nouvelle méthode de recherche avancée - CORRECTED METHOD NAME
@@ -65,7 +67,7 @@ class PostulationController extends AbstractController
             'stats' => $stats,
             'filters' => $filters,
             'offres' => $offres,
-            'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
+            'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles(), true),
         ]);
     }
 
@@ -73,23 +75,23 @@ class PostulationController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function byOffre(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
         $offre = $this->offreEmploiRepository->find($id);
-        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles(), true))) {
             $this->addFlash('error', 'Offre non trouvée ou accès non autorisé.');
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
         // Récupérer les filtres pour la page par offre
         $filters = [
-            'keyword' => $request->query->get('keyword', ''),
-            'statut' => $request->query->get('statut', ''),
-            'dateDebut' => $request->query->get('dateDebut', ''),
-            'dateFin' => $request->query->get('dateFin', ''),
+            'keyword' => trim((string) $request->query->get('keyword', '')),
+            'statut' => trim((string) $request->query->get('statut', '')),
+            'dateDebut' => trim((string) $request->query->get('dateDebut', '')),
+            'dateFin' => trim((string) $request->query->get('dateFin', '')),
             'offreId' => $id,
         ];
 
@@ -99,7 +101,7 @@ class PostulationController extends AbstractController
             'postulations' => $postulations,
             'offre' => $offre,
             'filters' => $filters,
-            'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles()),
+            'is_admin_view' => in_array('ROLE_ADMIN', $user->getRoles(), true),
         ]);
     }
 
@@ -107,7 +109,7 @@ class PostulationController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function updateStatut(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -120,12 +122,13 @@ class PostulationController extends AbstractController
 
         // Make sure the recruiter owns the offer
         $offre = $postulation->getOffreEmploi();
-        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles(), true))) {
             $this->addFlash('error', 'Accès non autorisé.');
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
-        $statut = $request->request->get('statut');
+        $statutRaw = $request->request->get('statut');
+        $statut = is_string($statutRaw) ? $statutRaw : '';
         $allowedStatuts = ['En attente', 'Acceptée', 'Refusée'];
 
         if (!in_array($statut, $allowedStatuts)) {
@@ -133,17 +136,18 @@ class PostulationController extends AbstractController
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
-        if (!$this->isCsrfTokenValid('statut' . $postulation->getId(), $request->request->get('_token'))) {
+        $csrfToken = is_string($request->request->get('_token')) ? $request->request->get('_token') : '';
+        if (!$this->isCsrfTokenValid('statut' . $postulation->getId(), $csrfToken)) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
         $oldStatut = $postulation->getStatut();
-        $postulation->setStatut($statut);
+        $postulation->setStatut((string) $statut);
         $this->entityManager->flush();
 
         // Send email only when status changes to Acceptée or Refusée
-        if ($statut !== $oldStatut && in_array($statut, ['Acceptée', 'Refusée'])) {
+        if ($statut !== $oldStatut && in_array($statut, ['Acceptée', 'Refusée'], true)) {
             $candidate = $postulation->getUser();
 
             // Check if candidate exists
@@ -172,18 +176,18 @@ class PostulationController extends AbstractController
                     ? '
                 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#f0fdf4;border-radius:16px;">
                     <h2 style="color:#059669;">🎉 Félicitations !</h2>
-                    <p>Bonjour <strong>' . htmlspecialchars($candidate->getFirstName() ?? '') . '</strong>,</p>
-                    <p>Votre candidature pour l\'offre <strong>' . htmlspecialchars($offre->getTitre()) . '</strong> 
-                    chez <strong>' . htmlspecialchars($offre->getEntreprise()) . '</strong> a été <strong style="color:#059669;">acceptée</strong>.</p>
-                    <p>Le recruteur vous contactera prochainement à l\'adresse : <strong>' . htmlspecialchars($offre->getContactRecruteur() ?? '') . '</strong></p>
+                    <p>Bonjour <strong>' . htmlspecialchars((string) $candidate->getFirstName()) . '</strong>,</p>
+                    <p>Votre candidature pour l\'offre <strong>' . htmlspecialchars((string) $offre->getTitre()) . '</strong> 
+                    chez <strong>' . htmlspecialchars((string) $offre->getEntreprise()) . '</strong> a été <strong style="color:#059669;">acceptée</strong>.</p>
+                    <p>Le recruteur vous contactera prochainement à l\'adresse : <strong>' . htmlspecialchars((string) $offre->getContactRecruteur()) . '</strong></p>
                     <p style="color:#6b7280;font-size:13px;margin-top:24px;">Carrieri — Plateforme de recrutement</p>
                 </div>'
                     : '
                 <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#fef2f2;border-radius:16px;">
                     <h2 style="color:#dc2626;">Résultat de votre candidature</h2>
-                    <p>Bonjour <strong>' . htmlspecialchars($candidate->getFirstName() ?? '') . '</strong>,</p>
-                    <p>Nous vous informons que votre candidature pour l\'offre <strong>' . htmlspecialchars($offre->getTitre()) . '</strong> 
-                    chez <strong>' . htmlspecialchars($offre->getEntreprise()) . '</strong> n\'a pas été retenue.</p>
+                    <p>Bonjour <strong>' . htmlspecialchars((string) $candidate->getFirstName()) . '</strong>,</p>
+                    <p>Nous vous informons que votre candidature pour l\'offre <strong>' . htmlspecialchars((string) $offre->getTitre()) . '</strong> 
+                    chez <strong>' . htmlspecialchars((string) $offre->getEntreprise()) . '</strong> n\'a pas été retenue.</p>
                     <p>Ne vous découragez pas, d\'autres opportunités vous attendent sur Carrieri !</p>
                     <p style="color:#6b7280;font-size:13px;margin-top:24px;">Carrieri — Plateforme de recrutement</p>
                 </div>';
@@ -222,6 +226,9 @@ class PostulationController extends AbstractController
         return $this->redirectToRoute('app_admin_postulations_by_offre', ['id' => $offre->getId()]);
     }
 
+    /**
+     * @return array<string, int>
+     */
     private function getStats(User $user): array
     {
         $postulations = $this->postulationRepository->findByRecruiter($user);
@@ -250,13 +257,13 @@ class PostulationController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function exportPdf(int $id): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
         $offre = $this->offreEmploiRepository->find($id);
-        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles(), true))) {
             $this->addFlash('error', 'Offre non trouvée ou accès non autorisé.');
             return $this->redirectToRoute('app_admin_postulations_list');
         }
@@ -290,7 +297,7 @@ class PostulationController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function delete(Request $request, int $id): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -303,21 +310,25 @@ class PostulationController extends AbstractController
 
         // Vérifier que le recruteur possède l'offre associée
         $offre = $postulation->getOffreEmploi();
-        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles()))) {
+        if (!$offre || ($offre->getUser() !== $user && !in_array('ROLE_ADMIN', $user->getRoles(), true))) {
             $this->addFlash('error', 'Accès non autorisé.');
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
         // Vérifier le token CSRF
-        if (!$this->isCsrfTokenValid('delete_postulation_' . $postulation->getId(), $request->request->get('_token'))) {
+        $csrfTokenRaw = $request->request->get('_token');
+        $csrfToken = is_string($csrfTokenRaw) ? $csrfTokenRaw : '';
+        if (!$this->isCsrfTokenValid('delete_postulation_' . $postulation->getId(), $csrfToken)) {
             $this->addFlash('error', 'Token CSRF invalide.');
             return $this->redirectToRoute('app_admin_postulations_list');
         }
 
         // Supprimer le fichier CV s'il existe
         $cvPath = $postulation->getCvPath();
-        if ($cvPath) {
-            $fullPath = $this->getParameter('kernel.project_dir') . '/public/' . $cvPath;
+        if (is_string($cvPath) && $cvPath !== '') {
+            $projectDirValue = $this->getParameter('kernel.project_dir');
+            $projectDir = is_string($projectDirValue) ? $projectDirValue : '';
+            $fullPath = $projectDir . '/public/' . $cvPath;
             if (file_exists($fullPath)) {
                 unlink($fullPath);
             }

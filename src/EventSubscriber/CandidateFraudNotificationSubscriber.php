@@ -7,6 +7,7 @@ namespace App\EventSubscriber;
 use App\Entity\User;
 use App\Service\CertificateModerationService;
 use Symfony\Component\EventDispatcher\Attribute\AsEventListener;
+use Symfony\Component\HttpFoundation\Session\Session;
 use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 use Symfony\Component\Security\Core\Security;
@@ -52,10 +53,13 @@ final class CandidateFraudNotificationSubscriber
         }
 
         $session = $request->getSession();
+        if (!$session instanceof Session) {
+            return;
+        }
 
         foreach ($alerts as $alert) {
-            $courseTitle = (string) ($alert['course_title'] ?? 'ce cours');
-            $reason = (string) ($alert['reason'] ?? 'Fraude signalee par recruteur.');
+            $courseTitle = $alert['course_title'];
+            $reason = $alert['reason'];
             $session->getFlashBag()->add(
                 'fraud_alert',
                 sprintf('Certificat invalide pour "%s". %s', $courseTitle, $reason)

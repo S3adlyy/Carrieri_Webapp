@@ -14,6 +14,7 @@ use App\Service\OffreInsightService;
 use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,6 +29,7 @@ use Symfony\Component\Process\Process;
 #[Route('/admin/offres')]
 class OffreEmploiController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private EntityManagerInterface $entityManager,
         private OffreEmploiRepository $offreEmploiRepository,
@@ -40,7 +42,7 @@ class OffreEmploiController extends AbstractController
     /*#[IsGranted('ROLE_RECRUITER')]*/
     public function index(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -74,7 +76,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function create(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -104,7 +106,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function edit(Request $request, OffreEmploi $offre): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -133,7 +135,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function show(OffreEmploi $offre): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -152,7 +154,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function delete(Request $request, OffreEmploi $offre): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -162,7 +164,8 @@ class OffreEmploiController extends AbstractController
             return $this->redirectToRoute('app_admin_offres_list');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $offre->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete' . $offre->getId(), is_string($token) ? $token : null)) {
             $connection = $this->entityManager->getConnection();
             $postulationIds = array_map(
                 'intval',
@@ -196,6 +199,9 @@ class OffreEmploiController extends AbstractController
         return $this->redirectToRoute('app_admin_offres_list');
     }
 
+    /**
+     * @return array{total:int, actives:int, expirees:int, par_contrat:array{CDI:int, CDD:int, Stage:int, Freelance:int}}
+     */
     private function getOffreStats(User $user): array
     {
         $isAdmin = in_array('ROLE_ADMIN', $user->getRoles());
@@ -236,7 +242,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function inlineEdit(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
         }
@@ -312,7 +318,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function insights(OffreEmploi $offre): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -382,7 +388,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function exportInsightsPdf(OffreEmploi $offre): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -445,7 +451,7 @@ class OffreEmploiController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function exportInsightsExcel(OffreEmploi $offre): StreamedResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -593,7 +599,12 @@ class OffreEmploiController extends AbstractController
             return $this->json(['error' => 'Aucun mot-clé fourni'], 400);
         }
 
-        $pythonPath = $this->getParameter('kernel.project_dir') . '/scripts/generate_offer.py';
+        $projectDir = $this->getParameter('kernel.project_dir');
+        if (!is_string($projectDir)) {
+            return $this->json(['error' => 'Chemin projet invalide'], 500);
+        }
+
+        $pythonPath = $projectDir . '/scripts/generate_offer.py';
 
         if (!file_exists($pythonPath)) {
             return $this->json(['error' => 'Script Python non trouvé'], 500);
@@ -635,3 +646,4 @@ class OffreEmploiController extends AbstractController
     }
 
 }
+

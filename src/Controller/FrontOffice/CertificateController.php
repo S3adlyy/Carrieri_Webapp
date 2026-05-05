@@ -7,6 +7,7 @@ namespace App\Controller\FrontOffice;
 use App\Service\CertificateModerationService;
 use App\Service\CertificationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -17,18 +18,17 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CANDIDAT')]
 class CertificateController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private CertificationService $certificationService,
         private CertificateModerationService $certificateModerationService,
-        #[Autowire('%kernel.project_dir%/public/certificates')]
-        private string $certificatesDir,
     ) {
     }
 
     #[Route('/mes-certificats', name: 'app_candidate_certificates')]
     public function index(): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
@@ -58,7 +58,7 @@ class CertificateController extends AbstractController
                 'verification_url' => $verificationUrl,
                 'verification_qr_url' => $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null,
                 'is_invalid' => $state['status'] === 'invalid',
-                'moderation_reason' => (string) ($state['reason'] ?? ''),
+                'moderation_reason' => (string) $state['reason'],
             ];
         }
 
@@ -71,7 +71,7 @@ class CertificateController extends AbstractController
     #[Route('/certificat/{id}/telecharger', name: 'app_candidate_certificate_download', requirements: ['id' => '\\d+'])]
     public function download(int $id): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
@@ -108,7 +108,7 @@ class CertificateController extends AbstractController
     #[Route('/certificat/{id}/voir', name: 'app_candidate_certificate_view', requirements: ['id' => '\\d+'])]
     public function view(int $id): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
@@ -141,7 +141,7 @@ class CertificateController extends AbstractController
     #[Route('/certificat/{id}', name: 'app_candidate_certificate_show', requirements: ['id' => '\\d+'])]
     public function show(int $id): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
@@ -166,7 +166,7 @@ class CertificateController extends AbstractController
             'verification_url' => $verificationUrl,
             'verification_qr_url' => $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null,
             'certificate_is_invalid' => $state['status'] === 'invalid',
-            'certificate_moderation_reason' => (string) ($state['reason'] ?? ''),
+            'certificate_moderation_reason' => (string) $state['reason'],
         ]);
     }
 
@@ -175,6 +175,7 @@ class CertificateController extends AbstractController
         return 'https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=' . rawurlencode($value);
     }
 }
+
 
 
 

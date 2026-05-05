@@ -13,6 +13,7 @@ use App\Repository\ModuleRepository;
 use App\Service\BackOfficeDashboardService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/lecons')]
 class LeconController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private LeconRepository $leconRepository,
         private ModuleRepository $moduleRepository,
@@ -217,7 +219,9 @@ class LeconController extends AbstractController
         $this->storeSelectionContext($request, $lecon);
 
         $redirectModuleId = $lecon->getModuleId();
-        if ($this->isCsrfTokenValid('delete_lecon_' . $lecon->getId(), $request->getPayload()->get('_token'))) {
+        $tokenRaw = $request->getPayload()->get('_token');
+        $token = is_string($tokenRaw) ? $tokenRaw : '';
+        if ($this->isCsrfTokenValid('delete_lecon_' . $lecon->getId(), $token)) {
             $this->em->remove($lecon);
             $this->em->flush();
             $this->addFlash('success', 'Leçon supprimée avec succès.');
@@ -273,7 +277,7 @@ class LeconController extends AbstractController
 
     private function requireUser(): User
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -335,7 +339,7 @@ class LeconController extends AbstractController
 
         if (is_resource($blob)) {
             $meta = stream_get_meta_data($blob);
-            if (($meta['seekable'] ?? false) === true) {
+            if ($meta['seekable'] === true) {
                 rewind($blob);
             }
             $content = stream_get_contents($blob);
@@ -350,3 +354,4 @@ class LeconController extends AbstractController
         return null;
     }
 }
+

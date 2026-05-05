@@ -18,9 +18,12 @@ class OffreEmploiRepository extends ServiceEntityRepository
         parent::__construct($registry, OffreEmploi::class);
     }
 
+    /**
+     * @return OffreEmploi[]
+     */
     public function findByUserWithSearch(User $user, string $search = ''): array
     {
-        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles());
+        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles(), true);
 
         $qb = $this->createQueryBuilder('o')
             ->orderBy('o.id', 'DESC');
@@ -38,6 +41,9 @@ class OffreEmploiRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return OffreEmploi[]
+     */
     public function findActiveOffers(): array
     {
         return $this->createQueryBuilder('o')
@@ -48,6 +54,9 @@ class OffreEmploiRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return OffreEmploi[]
+     */
     public function searchAndFilter(?string $keyword, ?string $type, ?string $localisation, ?float $salaireMin): array
     {
         $qb = $this->createQueryBuilder('o')
@@ -91,9 +100,13 @@ class OffreEmploiRepository extends ServiceEntityRepository
     }
 
     // Nouvelle méthode pour la recherche avancée dans le back office
+    /**
+     * @param array<string, mixed> $filters
+     * @return OffreEmploi[]
+     */
     public function searchOffersWithFilters(User $user, array $filters = []): array
     {
-        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles());
+        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles(), true);
 
         $qb = $this->createQueryBuilder('o')
             ->leftJoin('o.user', 'u')
@@ -158,9 +171,17 @@ class OffreEmploiRepository extends ServiceEntityRepository
     }
 
     // Statistiques pour le dashboard recruteur
+    /**
+     * @return array{
+     *     total:int,
+     *     actives:int,
+     *     expirees:int,
+     *     par_contrat:array{CDI:int, CDD:int, Stage:int, Freelance:int}
+     * }
+     */
     public function getStatsForUser(User $user): array
     {
-        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles());
+        $isAdmin = in_array('ROLE_ADMIN', $user->getRoles(), true);
 
         $qb = $this->createQueryBuilder('o');
 

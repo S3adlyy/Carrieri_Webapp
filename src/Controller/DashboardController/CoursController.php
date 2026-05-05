@@ -15,6 +15,7 @@ use Dompdf\Dompdf;
 use Dompdf\Options;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -22,6 +23,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/cours')]
 class CoursController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private BackOfficeDashboardService $dashboardData,
         private CoursRepository $coursRepository,
@@ -186,7 +188,9 @@ class CoursController extends AbstractController
     #[Route('/{id}/supprimer', name: 'app_admin_cours_delete', methods: ['POST'])]
     public function delete(Request $request, Cours $cours): Response
     {
-        if ($this->isCsrfTokenValid('delete_cours_' . $cours->getId(), $request->getPayload()->get('_token'))) {
+        $token = $request->getPayload()->get('_token');
+        $tokenString = is_string($token) ? $token : '';
+        if ($this->isCsrfTokenValid('delete_cours_' . $cours->getId(), $tokenString)) {
             $this->em->remove($cours);
             $this->em->flush();
             $this->addFlash('success', 'Cours supprimé avec succès.');
@@ -199,7 +203,7 @@ class CoursController extends AbstractController
 
     private function requireUser(): User
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -207,6 +211,9 @@ class CoursController extends AbstractController
         return $user;
     }
 
+    /**
+     * @return array{0: list<\App\Entity\Module>, 1: array<int, list<\App\Entity\Lecon>>}
+     */
     private function loadCourseTree(Cours $cours): array
     {
         $modules = $this->moduleRepository->findByCours($cours);
@@ -224,7 +231,7 @@ class CoursController extends AbstractController
             }
         }
 
-        return [$modules, $lessonsByModule];
+        return [array_values($modules), $lessonsByModule];
     }
 
     private function encodeBinaryToBase64(mixed $blob): ?string
@@ -235,7 +242,7 @@ class CoursController extends AbstractController
 
         if (is_resource($blob)) {
             $meta = stream_get_meta_data($blob);
-            if (($meta['seekable'] ?? false) === true) {
+            if ($meta['seekable'] === true) {
                 rewind($blob);
             }
             $content = stream_get_contents($blob);

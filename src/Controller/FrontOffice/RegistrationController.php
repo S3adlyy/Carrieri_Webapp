@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
-use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\Form\FormError;
 use Psr\Log\LoggerInterface;
 
 class RegistrationController extends AbstractController
@@ -23,7 +23,6 @@ class RegistrationController extends AbstractController
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
         private readonly UserPasswordHasherInterface $passwordHasher,
-        private readonly SluggerInterface $slugger,
         private readonly EmailService $emailService,
         private readonly AwsFaceRecognitionService $awsFaceService,
         private readonly LoggerInterface $logger,
@@ -50,12 +49,16 @@ class RegistrationController extends AbstractController
                 $this->logger->debug('Form validation FAILED');
                 // Log all form errors
                 foreach ($form->getErrors(true) as $error) {
-                    $this->logger->debug('Form error: ' . $error->getMessage());
+                    if ($error instanceof FormError) {
+                        $this->logger->debug('Form error: ' . $error->getMessage());
+                    }
                 }
                 // Log field errors
                 foreach ($form->all() as $child) {
                     foreach ($child->getErrors() as $error) {
-                        $this->logger->debug('Field ' . $child->getName() . ' error: ' . $error->getMessage());
+                        if ($error instanceof FormError) {
+                            $this->logger->debug('Field ' . $child->getName() . ' error: ' . $error->getMessage());
+                        }
                     }
                 }
             } else {
@@ -72,17 +75,19 @@ class RegistrationController extends AbstractController
             $phone = $form->get('phone')->getData();
 
             $faceImage = $request->request->get('face_image');
+            $faceImageString = is_string($faceImage) ? $faceImage : '';
             $this->logger->info('Registration data - RAW', [
                 'has_face_image' => $request->request->has('face_image'),
-                'face_image_length' => strlen($faceImage ?? ''),
+                'face_image_length' => strlen($faceImageString),
                 'all_post_keys' => array_keys($request->request->all())
             ]);
             $enableFaceEnroll = $request->request->get('enable_face_enroll');
+            $enableFaceEnrollString = is_string($enableFaceEnroll) ? $enableFaceEnroll : '0';
 
             $this->logger->info('Registration data', [
-                'has_face_image' => !empty($faceImage),
-                'face_image_length' => strlen($faceImage ?? ''),
-                'enable_face_enroll' => $enableFaceEnroll
+                'has_face_image' => !empty($faceImageString),
+                'face_image_length' => strlen($faceImageString),
+                'enable_face_enroll' => $enableFaceEnrollString
             ]);
 
             if (!isset($allowedRoles[$role])) {
@@ -106,13 +111,17 @@ class RegistrationController extends AbstractController
 
             // Save face image to temporary file instead of session
             $tempFaceImagePath = null;
-            if ($enableFaceEnroll === '1' && !empty($faceImage)) {
-                $tempDir = $this->getParameter('kernel.project_dir') . '/public/uploads/temp_faces';
+            if ($enableFaceEnrollString === '1' && !empty($faceImageString)) {
+                $projectDir = $this->getParameter('kernel.project_dir');
+                if (!is_string($projectDir)) {
+                    $projectDir = '';
+                }
+                $tempDir = $projectDir . '/public/uploads/temp_faces';
                 if (!file_exists($tempDir)) {
                     mkdir($tempDir, 0777, true);
                 }
                 $tempFaceImagePath = $tempDir . '/face_' . uniqid() . '.txt';
-                file_put_contents($tempFaceImagePath, $faceImage);
+                file_put_contents($tempFaceImagePath, $faceImageString);
                 $this->logger->info('Face image saved to temp file', ['path' => $tempFaceImagePath]);
             }
 
@@ -126,14 +135,18 @@ class RegistrationController extends AbstractController
                 'phone' => $phone,
                 'verificationCode' => $verificationCode,
                 'profilePicture' => null,
-                'enableFaceEnroll' => $enableFaceEnroll,
+                'enableFaceEnroll' => $enableFaceEnrollString,
                 'tempFaceImagePath' => $tempFaceImagePath,
             ]);
 
             // Store profile picture if uploaded
             $profilePictureFile = $form->get('profilePicture')->getData();
             if ($profilePictureFile) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/temp';
+                $projectDir = $this->getParameter('kernel.project_dir');
+                if (!is_string($projectDir)) {
+                    $projectDir = '';
+                }
+                $uploadDir = $projectDir . '/public/uploads/temp';
                 if (!file_exists($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
                 }
@@ -179,15 +192,18 @@ class RegistrationController extends AbstractController
         $this->logger->info('Verification attempt', [
             'code_submitted' => $verificationCode,
             'has_session' => $pendingData !== null,
-            'session_keys' => $pendingData ? array_keys($pendingData) : []
+            'session_keys' => is_array($pendingData) ? array_keys($pendingData) : []
         ]);
 
-        if (!$pendingData) {
+        if (!$pendingData || !is_array($pendingData)) {
             $this->addFlash('danger', 'No pending registration found. Please register again.');
             return $this->redirectToRoute('app_register');
         }
 
-        if ((string)$pendingData['verificationCode'] !== (string)$verificationCode) {
+        /** @var array{firstName:mixed,lastName:mixed,email:mixed,plainPassword:mixed,role:mixed,phone?:mixed,verificationCode:mixed,profilePicture?:mixed,enableFaceEnroll:mixed,tempFaceImagePath?:mixed} $pendingData */
+
+        $verificationCodeString = is_string($verificationCode) ? $verificationCode : '';
+        if ((string)$pendingData['verificationCode'] !== $verificationCodeString) {
             $this->addFlash('danger', 'Invalid verification code. Please try again.');
             return $this->render('FrontOffice/security/verify_email.html.twig', [
                 'email' => $pendingData['email'],
@@ -197,18 +213,19 @@ class RegistrationController extends AbstractController
 
         // Create user
         $user = new User();
-        $user->setFirstName($pendingData['firstName']);
-        $user->setLastName($pendingData['lastName']);
-        $user->setEmail($pendingData['email']);
-        $user->setRoles($pendingData['role']);
-        $user->setType($pendingData['role']);
+        $user->setFirstName((string) $pendingData['firstName']);
+        $user->setLastName((string) $pendingData['lastName']);
+        $user->setEmail((string) $pendingData['email']);
+        $role = $pendingData['role'];
+        $user->setRoles('ROLE_' . (string) $role);
+        $user->setType((string) $role);
         $user->setIsActive(1);
         $user->setCreatedAt(new \DateTimeImmutable());
         $user->setFaceEnabled(0);
         $user->setIsVerified(true);
 
         if (!empty($pendingData['phone'])) {
-            $user->setPhone($pendingData['phone']);
+            $user->setPhone((string) $pendingData['phone']);
         }
 
         // Set default values
@@ -234,17 +251,22 @@ class RegistrationController extends AbstractController
 
         // Handle profile picture
         if (isset($pendingData['profilePicture']) && $pendingData['profilePicture']) {
-            $tempFile = $this->getParameter('kernel.project_dir') . '/public/uploads/temp/' . $pendingData['profilePicture'];
-            $targetDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profile-pictures';
+            $projectDir = $this->getParameter('kernel.project_dir');
+            if (!is_string($projectDir)) {
+                $projectDir = '';
+            }
+            $profilePicture = (string) $pendingData['profilePicture'];
+            $tempFile = $projectDir . '/public/uploads/temp/' . $profilePicture;
+            $targetDir = $projectDir . '/public/uploads/profile-pictures';
 
             if (!file_exists($targetDir)) {
                 mkdir($targetDir, 0777, true);
             }
 
-            $targetFile = $targetDir . '/' . $pendingData['profilePicture'];
+            $targetFile = $targetDir . '/' . $profilePicture;
             if (file_exists($tempFile)) {
                 rename($tempFile, $targetFile);
-                $user->setProfilePic('/uploads/profile-pictures/' . $pendingData['profilePicture']);
+                $user->setProfilePic('/uploads/profile-pictures/' . $profilePicture);
             }
         }
 
@@ -259,16 +281,16 @@ class RegistrationController extends AbstractController
             $this->logger->info('User saved', ['userId' => $user->getId()]);
 
             // Handle face enrollment - read from temp file
-            $enableFaceEnroll = $pendingData['enableFaceEnroll'] ?? '0';
+            $enableFaceEnroll = is_string($pendingData['enableFaceEnroll'] ?? '0') ? $pendingData['enableFaceEnroll'] : '0';
             $faceImage = null;
 
             if ($enableFaceEnroll === '1' && isset($pendingData['tempFaceImagePath'])) {
                 $tempFacePath = $pendingData['tempFaceImagePath'];
-                if (file_exists($tempFacePath)) {
+                if (is_string($tempFacePath) && file_exists($tempFacePath)) {
                     $faceImage = file_get_contents($tempFacePath);
                     $this->logger->info('Face image loaded from temp file', [
                         'path' => $tempFacePath,
-                        'length' => strlen($faceImage)
+                        'length' => is_string($faceImage) ? strlen($faceImage) : 0
                     ]);
                     // Clean up temp file
                     unlink($tempFacePath);
@@ -277,25 +299,31 @@ class RegistrationController extends AbstractController
                 }
             }
 
+            $faceImageString = is_string($faceImage) ? $faceImage : '';
             $this->logger->info('Face enrollment check', [
                 'enable' => $enableFaceEnroll,
-                'has_image' => !empty($faceImage),
-                'image_length' => strlen($faceImage ?? '')
+                'has_image' => !empty($faceImageString),
+                'image_length' => strlen($faceImageString)
             ]);
 
-            if ($enableFaceEnroll === '1' && !empty($faceImage)) {
-                $this->logger->info('Calling face enrollment', ['userId' => $user->getId()]);
+            if ($enableFaceEnroll === '1' && !empty($faceImageString)) {
+                $userId = $user->getId();
+                if ($userId) {
+                    $this->logger->info('Calling face enrollment', ['userId' => $userId]);
+                }
 
                 // Clean the face image
-                $cleanFaceImage = preg_replace('/^data:image\/\w+;base64,/', '', $faceImage);
-                $faceResult = $this->awsFaceService->enrollFace($user, $cleanFaceImage);
+                $cleanFaceImage = preg_replace('/^data:image\/\w+;base64,/', '', $faceImageString);
+                $cleanFaceImageString = is_string($cleanFaceImage) ? $cleanFaceImage : '';
+                $faceResult = $this->awsFaceService->enrollFace($user, $cleanFaceImageString);
 
                 if ($faceResult['success']) {
-                    $this->logger->info('Face enrollment SUCCESS', ['faceId' => $faceResult['faceId']]);
+                    $this->logger->info('Face enrollment SUCCESS', ['faceId' => $faceResult['faceId'] ?? '']);
                     $this->addFlash('success', 'Face ID has been enabled!');
                 } else {
-                    $this->logger->error('Face enrollment FAILED', ['error' => $faceResult['error']]);
-                    $this->addFlash('warning', 'Face enrollment failed: ' . $faceResult['error']);
+                    $errorMessage = (string) ($faceResult['error'] ?? 'Unknown error');
+                    $this->logger->error('Face enrollment FAILED', ['error' => $errorMessage]);
+                    $this->addFlash('warning', 'Face enrollment failed: ' . $errorMessage);
                 }
             }
 

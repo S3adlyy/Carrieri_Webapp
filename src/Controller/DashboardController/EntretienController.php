@@ -17,6 +17,7 @@ use App\Service\JitsiLinkGenerator;
 use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -28,6 +29,7 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 #[IsGranted('ROLE_RECRUITER')]
 class EntretienController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private EntityManagerInterface $entityManager,
         private MissionRepository $missionRepository,
@@ -41,12 +43,19 @@ class EntretienController extends AbstractController
     #[Route('/candidats-acceptes', name: 'app_admin_candidats_acceptes')]
     public function candidatsAcceptes(): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
-        $candidatsAcceptes = $this->renduMissionRepository->findAcceptedSubmissionsByRecruiter($user->getId());
+        $userId = $user->getId();
+        if ($userId === null) {
+            return $this->render('BackOffice/dashboard/entretiens/candidats_acceptes.html.twig', [
+                'candidats' => [],
+            ]);
+        }
+
+        $candidatsAcceptes = $this->renduMissionRepository->findAcceptedSubmissionsByRecruiter($userId);
 
         return $this->render('BackOffice/dashboard/entretiens/candidats_acceptes.html.twig', [
             'candidats' => $candidatsAcceptes,
@@ -56,7 +65,7 @@ class EntretienController extends AbstractController
     #[Route('/creer/{renduId}', name: 'app_admin_entretien_create')]
     public function create(int $renduId, Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -83,17 +92,52 @@ class EntretienController extends AbstractController
             $this->entityManager->persist($entretien);
             $this->entityManager->flush();
 
+            $renduUser = $rendu->getUser();
+            if (!$renduUser) {
+                $this->addFlash('error', 'Candidat introuvable pour cette soumission');
+                return $this->redirectToRoute('app_admin_candidats_acceptes');
+            }
+
+            $renduUserId = $renduUser->getId();
+            if ($renduUserId === null) {
+                $this->addFlash('error', 'Identifiant du candidat manquant');
+                return $this->redirectToRoute('app_admin_candidats_acceptes');
+            }
+
+            $entretienId = $entretien->getId();
+            if (!$entretienId) {
+                $this->addFlash('error', 'Erreur lors de la création de l\'entretien');
+                return $this->redirectToRoute('app_admin_candidats_acceptes');
+            }
+
+            $userId = $user->getId();
+            if ($userId === null) {
+                $this->addFlash('error', 'Erreur utilisateur');
+                return $this->redirectToRoute('app_admin_candidats_acceptes');
+            }
+
             // Générer automatiquement le lien Jitsi
             $jitsiLink = $this->jitsiLinkGenerator->generateMeetingLink(
-                $entretien->getId(),
-                $rendu->getUser()->getId(),
-                $user->getId()
+                $entretienId,
+                $renduUserId,
+                $userId
             );
 
             $entretien->setLien($jitsiLink);
             $this->entityManager->flush();
 
             $recruiterName = $user->getFirstName() . ' ' . $user->getLastName();
+
+            $mission = $rendu->getMission();
+            $dateEntretien = $entretien->getDateEntretien();
+            $interviewType = $entretien->getType();
+            if (!$mission || !$dateEntretien || !$interviewType) {
+                $this->addFlash('error', 'Données de l\'entretien incomplètes');
+                return $this->redirectToRoute('app_admin_candidats_acceptes');
+            }
+
+            $missionType = $mission->getType();
+            $missionTitle = is_string($missionType) ? $missionType : '';
 
             // 🔔 ENVOI DE L'EMAIL AU CANDIDAT
             $emailSent = false;
@@ -102,11 +146,11 @@ class EntretienController extends AbstractController
                 $emailSent = $this->emailService->sendInterviewNotification(
                     toEmail: $candidatEmail,
                     candidateName: $candidatName,
-                    missionTitle: $rendu->getMission()->getType(),
-                    score: $rendu->getScore() ?? 0.0, // Provide default value if null
-                    interviewDate: $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                    missionTitle: $missionTitle,
+                    score: (float) ($rendu->getScore() ?? 0.0),
+                    interviewDate: $dateEntretien->format('d/m/Y à H:i'),
                     jitsiLink: $jitsiLink,
-                    interviewType: $entretien->getType(),
+                    interviewType: (string) $interviewType,
                     recruiterName: $recruiterName
                 );
 
@@ -114,7 +158,7 @@ class EntretienController extends AbstractController
                     $this->addFlash('success', sprintf(
                         '✅ Entretien planifié pour %s le %s<br>🔗 Lien Jitsi : %s<br>📧 Un email a été envoyé à %s',
                         $candidatName,
-                        $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                        $dateEntretien->format('d/m/Y à H:i'),
                         $jitsiLink,
                         $candidatEmail
                     ));
@@ -134,10 +178,10 @@ class EntretienController extends AbstractController
 
             // Notification WebSocket (optionnelle)
             $this->sendInterviewNotificationWebSocket(
-                $rendu->getUser()->getId(),
-                $entretien->getDateEntretien()->format('d/m/Y à H:i'),
+                $renduUserId,
+                $dateEntretien->format('d/m/Y à H:i'),
                 $jitsiLink,
-                $entretien->getType(),
+                (string) $interviewType,
                 $recruiterName
             );
 
@@ -172,7 +216,7 @@ class EntretienController extends AbstractController
     #[Route('/{id}/edit', name: 'app_admin_entretien_edit')]
     public function edit(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -201,7 +245,7 @@ class EntretienController extends AbstractController
     #[Route('/{id}/delete', name: 'app_admin_entretien_delete', methods: ['POST'])]
     public function delete(int $id, Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -212,7 +256,8 @@ class EntretienController extends AbstractController
             return $this->redirectToRoute('app_admin_candidats_acceptes');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $entretien->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if (is_string($token) && $this->isCsrfTokenValid('delete' . $entretien->getId(), $token)) {
             $this->entityManager->remove($entretien);
             $this->entityManager->flush();
             $this->addFlash('success', 'Entretien supprimé avec succès.');
@@ -227,7 +272,7 @@ class EntretienController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function exportExcel(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -252,7 +297,7 @@ class EntretienController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function exportPDF(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -284,7 +329,7 @@ class EntretienController extends AbstractController
     #[Route('/watch/{missionId}/{candidatId}', name: 'app_recruiter_watch_candidate')]
     public function watchCandidate(int $missionId, int $candidatId): Response
     {
-        $recruiter = $this->getUser();
+        $recruiter = $this->getAuthenticatedUser();
         if (!$recruiter instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -311,13 +356,16 @@ class EntretienController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function activeSessions(RenduMissionRepository $renduMissionRepository): Response
     {
-        $recruiter = $this->getUser();
+        $recruiter = $this->getAuthenticatedUser();
         if (!$recruiter instanceof User) {
             throw $this->createAccessDeniedException();
         }
 
         $missions = $this->missionRepository->findBy(['user' => $recruiter]);
-        $missionIds = array_map(fn($m) => $m->getId(), $missions);
+        $missionIds = array_values(array_filter(
+            array_map(static fn ($m): ?int => $m->getId(), $missions),
+            static fn (?int $missionId): bool => $missionId !== null
+        ));
 
         $activeSessions = $renduMissionRepository->findActiveSessionsByMissionIds($missionIds);
 
@@ -330,13 +378,16 @@ class EntretienController extends AbstractController
     #[IsGranted('ROLE_RECRUITER')]
     public function activeSessionsCount(): JsonResponse
     {
-        $recruiter = $this->getUser();
+        $recruiter = $this->getAuthenticatedUser();
         if (!$recruiter instanceof User) {
             return $this->json(['count' => 0]);
         }
 
         $missions = $this->missionRepository->findBy(['user' => $recruiter]);
-        $missionIds = array_map(fn($m) => $m->getId(), $missions);
+        $missionIds = array_values(array_filter(
+            array_map(static fn ($m): ?int => $m->getId(), $missions),
+            static fn (?int $missionId): bool => $missionId !== null
+        ));
 
         $thirtyMinutesAgo = new \DateTime('-30 minutes');
 

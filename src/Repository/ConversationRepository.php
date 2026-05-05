@@ -19,6 +19,9 @@ class ConversationRepository extends ServiceEntityRepository
 
     // src/Repository/ConversationRepository.php
 
+    /**
+     * @return Conversation[]
+     */
     public function findByRecruteur(User $recruteur): array
     {
         return $this->createQueryBuilder('c')

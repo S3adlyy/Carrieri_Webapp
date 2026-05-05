@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="471fcba7-befa-41a0-8131-5ff213828930" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/../composer.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../phpstan.neon" beforeDir="false" afterPath="$PROJECT_DIR$/../phpstan.neon" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/Api/MailApiController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/Api/MailApiController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/AIController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/AIController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/AdminController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/AdminController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/CalendarController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/CalendarController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/CoursController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/CoursController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/EntretienController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/EntretienController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/FeedbackController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/FeedbackController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/LeconController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/LeconController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/MissionController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/MissionController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/ModuleController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/ModuleController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/OffreEmploiController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/OffreEmploiController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/PostulationController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/PostulationController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/ReclamationController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/ReclamationController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/RecruiterDashboardController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/RecruiterDashboardController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/RecruteurMessagerieController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/RecruteurMessagerieController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/StatsController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/StatsController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/DashboardController/TraitementReclamationController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/DashboardController/TraitementReclamationController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/AssessmentController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/AssessmentController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/AwsFaceController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/AwsFaceController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/CandidateMainController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/CandidateMainController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/CandidateMessageController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/CandidateMessageController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/CertificateController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/CertificateController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/CodeExecutionController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/CodeExecutionController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/CoursController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/CoursController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/FaceController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/FaceController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/FeedbackController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/FeedbackController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/HomeController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/HomeController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/LeconController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/LeconController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/MissionController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/MissionController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/PaiementController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/PaiementController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/ReclamationController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/ReclamationController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/RegistrationController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/RegistrationController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/RenduMissionController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/RenduMissionController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/SnapshotController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/SnapshotController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/TrackController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/TrackController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/FrontOffice/WorkspaceController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/FrontOffice/WorkspaceController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/ProfileController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/ProfileController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Controller/TestAIController.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Controller/TestAIController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Repository/MissionRepository.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Repository/MissionRepository.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Repository/OffreEmploiRepository.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Repository/OffreEmploiRepository.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Repository/PostulationRepository.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Repository/PostulationRepository.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Repository/RenduMissionRepository.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Repository/RenduMissionRepository.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/AI/UrgencyDetectionService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/AI/UrgencyDetectionService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/ArtifactService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/ArtifactService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/AssessmentAutoGeneratorService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/AssessmentAutoGeneratorService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/AwsFaceRecognitionService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/AwsFaceRecognitionService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/AzureFaceClientService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/AzureFaceClientService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/CandidateAssessmentService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/CandidateAssessmentService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/CandidateRecommendationService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/CandidateRecommendationService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/CertificationService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/CertificationService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/CodeBrowseService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/CodeBrowseService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/ExportService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/ExportService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/FaceRecognitionService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/FaceRecognitionService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/FeedbackService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/FeedbackService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/FileObjectService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/FileObjectService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/GeminiAIService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/GeminiAIService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/JitsiLinkGenerator.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/JitsiLinkGenerator.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/MailService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/MailService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/MissionAnalyzerService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/MissionAnalyzerService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/OffreInsightService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/OffreInsightService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/OllamaRecommendationService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/OllamaRecommendationService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/PaiementService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/PaiementService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/ProfileService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/ProfileService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/ReclamationService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/ReclamationService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/ReportService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/ReportService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/SearchService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/SearchService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/SnapshotService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/SnapshotService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/StatistiqueService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/StatistiqueService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/TrackService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/TrackService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../src/Service/UserRegistrationService.php" beforeDir="false" afterPath="$PROJECT_DIR$/../src/Service/UserRegistrationService.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../templates/FrontOffice/main/cours_show.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/../templates/FrontOffice/main/cours_show.html.twig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../templates/FrontOffice/main/partials/_course_sidebar.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/../templates/FrontOffice/main/partials/_course_sidebar.html.twig" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 3
+}]]></component>
+  <component name="ProjectId" id="3DFtKJKjMkjsL30THzTK7TuO8AI" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "git-widget-placeholder": "main",
+    "ignore.virus.scanning.warn.message": "true",
+    "last_opened_file_path": "C:/xampp/htdocs/Carrieri_Webapp-main/sign_language_project"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-python-sdk-2653e85de345-6d6dccd035ac-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-253.31033.139" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="471fcba7-befa-41a0-8131-5ff213828930" name="Changes" comment="" />
+      <created>1777889581480</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1777889581480</updated>
+    </task>
+    <servers />
+  </component>
+</project>

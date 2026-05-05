@@ -18,10 +18,11 @@ final class CodeBrowseService
     /**
      * Returns a nested file tree array from the ZIP.
      * Shape: [['name' => 'src', 'type' => 'dir', 'children' => [...]], ...]
+     * @return array<array<string, mixed>>
      */
     public function buildTree(FileObject $fo): array
     {
-        $tmpPath = $this->s3->downloadToTempFile($fo->getStorageKey());
+        $tmpPath = $this->s3->downloadToTempFile((string) $fo->getStorageKey());
 
         try {
             $zip  = new ZipArchive();
@@ -50,22 +51,56 @@ final class CodeBrowseService
      */
     public function readEntry(FileObject $fo, string $entryPath): string
     {
-        $tmpPath = $this->s3->downloadToTempFile($fo->getStorageKey());
+        $tmpPath = $this->s3->downloadToTempFile((string) $fo->getStorageKey());
 
         try {
-            $zip = new ZipArchive();
+            $zip = new \ZipArchive();
             if ($zip->open($tmpPath) !== true) {
                 throw new \RuntimeException('Cannot open ZIP file.');
             }
 
-            $content = $zip->getFromName($entryPath);
+            $requested = str_replace('\\', '/', trim($entryPath));
+            $requested = ltrim($requested, '/');
+
+            $candidates = array_values(array_unique([
+                $requested,
+                rawurldecode($requested),
+                str_replace('//', '/', $requested),
+            ]));
+
+            $content = false;
+
+            foreach ($candidates as $candidate) {
+                $content = $zip->getFromName($candidate);
+                if ($content !== false) {
+                    $entryPath = $candidate;
+                    break;
+                }
+            }
+
+            if ($content === false) {
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $name = $zip->getNameIndex($i);
+                    if ($name === false) {
+                        continue;
+                    }
+
+                    $normalizedName = ltrim(str_replace('\\', '/', $name), '/');
+
+                    if (strcasecmp($normalizedName, $requested) === 0) {
+                        $content = $zip->getFromIndex($i);
+                        $entryPath = $normalizedName;
+                        break;
+                    }
+                }
+            }
+
             $zip->close();
 
             if ($content === false) {
-                return '// File not found in archive: ' . $entryPath;
+                return '// File not found in archive: ' . $requested;
             }
 
-            // Detect binary content — return placeholder
             if (!mb_check_encoding($content, 'UTF-8') || str_contains(substr($content, 0, 512), "\x00")) {
                 return sprintf('// Binary file: %s (%d bytes) — download to view.', basename($entryPath), strlen($content));
             }
@@ -108,40 +143,63 @@ final class CodeBrowseService
 
     // ─── Private ─────────────────────────────────────────────────────────
 
+    /**
+     * @param array<string> $entries
+     * @return array<array<string, mixed>>
+     */
     private function entriesToTree(array $entries): array
     {
         $root = [];
 
         foreach ($entries as $entry) {
-            $parts   = explode('/', rtrim($entry, '/'));
-            $isDir   = str_ends_with($entry, '/');
-            $current = &$root;
+            $entry = str_replace('\\', '/', $entry);
+            $entry = ltrim($entry, '/');
+
+            if ($entry === '') {
+                continue;
+            }
+
+            $isDir = str_ends_with($entry, '/');
+            $trimmed = rtrim($entry, '/');
+
+            if ($trimmed === '') {
+                continue;
+            }
+
+            $parts = explode('/', $trimmed);
+            $current =& $root;
+            $builtPath = '';
 
             foreach ($parts as $i => $part) {
-                if ($part === '') continue;
+                if ($part === '') {
+                    continue;
+                }
 
-                $found = false;
-                foreach ($current as &$node) {
-                    if ($node['name'] === $part) {
-                        $current = &$node['children'];
-                        $found = true;
+                $isLast = $i === count($parts) - 1;
+                $type = ($isLast && !$isDir) ? 'file' : 'dir';
+                $builtPath = $builtPath === '' ? $part : $builtPath . '/' . $part;
+                $nodePath = $type === 'dir' ? $builtPath . '/' : $builtPath;
+
+                $index = null;
+                foreach ($current as $k => $node) {
+                    if (($node['name'] ?? null) === $part && ($node['type'] ?? null) === $type) {
+                        $index = $k;
                         break;
                     }
                 }
-                unset($node);
 
-                if (!$found) {
-                    $isLast = ($i === count($parts) - 1);
-                    $type   = ($isLast && !$isDir) ? 'file' : 'dir';
-                    $path   = implode('/', array_slice($parts, 0, $i + 1)) . ($type === 'dir' ? '/' : '');
+                if ($index === null) {
                     $current[] = [
-                        'name'     => $part,
-                        'type'     => $type,
-                        'path'     => $path,
+                        'name' => $part,
+                        'type' => $type,
+                        'path' => $nodePath,
                         'children' => [],
                     ];
-                    $last = &$current[count($current) - 1];
-                    $current = &$last['children'];
+                    $index = array_key_last($current);
+                }
+
+                if ($type === 'dir') {
+                    $current =& $current[$index]['children'];
                 }
             }
         }
@@ -149,6 +207,36 @@ final class CodeBrowseService
         return $this->sortTree($root);
     }
 
+    /**
+     * @param array<array<string, mixed>> $nodes
+     * @param list<string> $parts
+     * @param array<string, mixed> $newNode
+     */
+    private function addTreeNode(array &$nodes, array $parts, array $newNode): void
+    {
+        $name = $parts[0];
+
+        foreach ($nodes as &$node) {
+            if ($node['name'] !== $name) {
+                continue;
+            }
+
+            if (count($parts) > 1) {
+                $children = is_array($node['children']) ? $node['children'] : [];
+                $this->addTreeNode($children, array_slice($parts, 1), $newNode);
+                $node['children'] = $children;
+            }
+
+            return;
+        }
+
+        $nodes[] = $newNode;
+    }
+
+    /**
+     * @param array<array<string, mixed>> $nodes
+     * @return array<array<string, mixed>>
+     */
     private function sortTree(array $nodes): array
     {
         usort($nodes, function (array $a, array $b) {
@@ -165,5 +253,28 @@ final class CodeBrowseService
             }
         }
         return $nodes;
+    }
+    public function readRawFile(FileObject $fo): string
+    {
+        $tmpPath = $this->s3->downloadToTempFile((string) $fo->getStorageKey());
+
+        try {
+            $content = file_get_contents($tmpPath);
+            if ($content === false) {
+                throw new \RuntimeException('Unable to read file.');
+            }
+
+            if (!mb_check_encoding($content, 'UTF-8') || str_contains(substr($content, 0, 512), "\0")) {
+                return '[Binary file cannot be previewed as text]';
+            }
+
+            return $content;
+        } finally {
+            @unlink($tmpPath);
+        }
+    }
+    public static function languageFromStorageKey(string $path): string
+    {
+        return self::languageFromPath($path);
     }
 }

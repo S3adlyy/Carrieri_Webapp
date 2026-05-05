@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\DashboardController;
 
 
@@ -9,6 +11,7 @@ use App\Service\ReclamationService;
 use App\Service\FeedbackService;
 use App\Service\ExportService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,10 +19,11 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/dashboard/stats')]
 class StatsController extends AbstractController
 {
+    use UserTypeCasterTrait;
 
 private function checkRecruiter(): void
 {
-    $user = $this->getUser();
+    $user = $this->getAuthenticatedUser();
     if (!$user || $user->getType() !== 'RECRUITER') {
         throw $this->createAccessDeniedException('Accès réservé aux recruteurs');
     }
@@ -29,7 +33,7 @@ private function checkRecruiter(): void
         StatistiqueService $statsService,
         ReclamationService $reclamationService
     ): Response {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         
         $stats = $statsService->getDashboardStats();
         $urgentReclamations = $reclamationService->getUrgentReclamations();

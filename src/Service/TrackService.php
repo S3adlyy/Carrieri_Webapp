@@ -38,7 +38,10 @@ final class TrackService
     ): Track {
         $track = new Track();
         $track->setWorkspace($workspace);
-        $track->setWorkspaceId($workspace->getId());
+        $workspaceId = $workspace->getId();
+        if ($workspaceId !== null) {
+            $track->setWorkspaceId($workspaceId);
+        }
         $track->setTitle($title);
         $track->setCategory(strtoupper($category));
         $track->setVisibility(strtoupper($visibility));

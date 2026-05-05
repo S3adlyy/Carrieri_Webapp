@@ -9,6 +9,7 @@ use App\Entity\User;
 use App\Repository\OffreEmploiRepository;
 use App\Repository\PostulationRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -18,6 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_RECRUITER')]
 class RecruiterDashboardController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private OffreEmploiRepository $offreEmploiRepository,
         private PostulationRepository $postulationRepository,
@@ -27,7 +29,7 @@ class RecruiterDashboardController extends AbstractController
     #[Route('/dashboard', name: 'app_recruiter_dashboard')]
     public function dashboard(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }

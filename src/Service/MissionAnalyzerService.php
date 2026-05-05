@@ -16,6 +16,9 @@ class MissionAnalyzerService
         private string $aiApiBaseUrl = 'http://127.0.0.1:8001',
     ) {}
 
+    /**
+     * @return array<string, mixed>
+     */
     public function analyzeMissionDescription(string $description, string $title = ''): array
     {
         // Essayer d'abord avec l'API IA
@@ -29,6 +32,9 @@ class MissionAnalyzerService
         return $this->generateBasicMissionData($description, $title);
     }
 
+    /**
+     * @return array<string, mixed>|null
+     */
     private function callAiApi(string $description, string $title): ?array
     {
         try {
@@ -60,6 +66,9 @@ class MissionAnalyzerService
         return null;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function generateBasicMissionData(string $description, string $title): array
     {
         $lowerDesc = strtolower($description);
@@ -315,6 +324,9 @@ class MissionAnalyzerService
         ];
     }
 
+    /**
+     * @return array<array<string, string>>
+     */
     private function extractExamplesFromDescription(string $description): array
     {
         $examples = [];
@@ -348,6 +360,9 @@ class MissionAnalyzerService
         return $examples;
     }
 
+    /**
+     * @return array<string>
+     */
     private function extractConstraints(string $description): array
     {
         $constraints = [];
@@ -399,6 +414,9 @@ class MissionAnalyzerService
         return 'solution';
     }
 
+    /**
+     * @return array<string>
+     */
     private function extractParameters(string $description): array
     {
         $lowerDesc = strtolower($description);

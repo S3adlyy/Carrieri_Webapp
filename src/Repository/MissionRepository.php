@@ -45,13 +45,13 @@ class MissionRepository extends ServiceEntityRepository
         $qb = $this->createQueryBuilder('m');
 
         // Filter by type
-        if ($type && $type !== '') {
+        if ($type !== null) {
             $qb->andWhere('LOWER(m.type) = LOWER(:type)')
                 ->setParameter('type', $type);
         }
 
         // Search in description
-        if ($search && $search !== '') {
+        if ($search !== null) {
             $qb->andWhere('LOWER(m.description) LIKE LOWER(:search)')
                 ->setParameter('search', '%' . $search . '%');
         }
@@ -97,6 +97,24 @@ class MissionRepository extends ServiceEntityRepository
         return $this->createQueryBuilder('m')
             ->orderBy('m.createdAt', 'DESC')
             ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return Mission[]
+     */
+    public function findByCreatedById(?int $userId): array
+    {
+        if ($userId === null) {
+            return [];
+        }
+
+        return $this->createQueryBuilder('m')
+            ->innerJoin('m.user', 'u')
+            ->andWhere('u.id = :userId')
+            ->setParameter('userId', $userId)
+            ->orderBy('m.createdAt', 'DESC')
             ->getQuery()
             ->getResult();
     }

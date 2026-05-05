@@ -23,7 +23,7 @@ final class LanguageController extends AbstractController
         }
 
         // Redirect back to the page the user was on
-        $referer = $request->headers->get('referer', $this->generateUrl('app_candidate_cours'));
+        $referer = $request->headers->get('referer') ?? $this->generateUrl('app_candidate_cours');
         return $this->redirect($referer);
     }
 }

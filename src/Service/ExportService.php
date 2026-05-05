@@ -21,6 +21,9 @@ class ExportService
         
         $filename = tempnam(sys_get_temp_dir(), 'feedbacks_') . '.csv';
         $file = fopen($filename, 'w');
+        if ($file === false) {
+            return $filename;
+        }
         
         // BOM UTF-8 pour les accents
         fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
@@ -50,7 +53,7 @@ class ExportService
             
             fputcsv($file, [
                 $f->getId(),
-                $f->getCommentaire(),
+                (string) $f->getCommentaire(),
                 $etoiles . ' (' . $note . '/5)',
                 $f->getRenduMission() ? 'Mission #' . $f->getRenduMission()->getId() : '—',
                 $nomCandidat,
@@ -63,6 +66,14 @@ class ExportService
     }
 
     /**
+     * Backward-compatible alias used by the dashboard controller.
+     */
+    public function exportFeedbacksToExcel(): string
+    {
+        return $this->exportFeedbacksToHtml();
+    }
+
+    /**
      * Exporter en HTML (peut être ouvert dans Excel)
      */
     public function exportFeedbacksToHtml(): string
@@ -71,10 +82,13 @@ class ExportService
         
         $filename = tempnam(sys_get_temp_dir(), 'feedbacks_') . '.xls';
         $file = fopen($filename, 'w');
+        if ($file === false) {
+            return $filename;
+        }
         
         // Début du HTML
         $html = '<!DOCTYPE html>
-        <html>
+        <html lang="fr">
         <head>
             <meta charset="UTF-8">
             <title>Rapport Feedbacks</title>
@@ -118,7 +132,7 @@ class ExportService
             
             $html .= '<tr>
                 <td>' . $f->getId() . '</td>
-                <td>' . htmlspecialchars($f->getCommentaire()) . '</td>
+                <td>' . htmlspecialchars((string) $f->getCommentaire()) . '</td>
                 <td class="' . $classeNote . '">' . $etoiles . ' (' . $note . '/5)</td>
                 <td>' . ($f->getRenduMission() ? 'Mission #' . $f->getRenduMission()->getId() : '—') . '</td>
                 <td>' . htmlspecialchars($nomCandidat) . '</td>
@@ -146,6 +160,9 @@ class ExportService
         
         $filename = tempnam(sys_get_temp_dir(), 'reclamations_') . '.csv';
         $file = fopen($filename, 'w');
+        if ($file === false) {
+            return $filename;
+        }
         
         fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
         $separateur = ';';

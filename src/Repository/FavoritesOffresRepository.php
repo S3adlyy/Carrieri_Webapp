@@ -6,6 +6,9 @@ use App\Entity\FavoritesOffres;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
+/**
+ * @extends ServiceEntityRepository<FavoritesOffres>
+ */
 class FavoritesOffresRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
@@ -49,6 +52,9 @@ class FavoritesOffresRepository extends ServiceEntityRepository
         return $affected > 0;
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function getFavoritesByCandidat(int $candidatId): array
     {
         return $this->getEntityManager()->getConnection()->fetchAllAssociative(
@@ -57,6 +63,9 @@ class FavoritesOffresRepository extends ServiceEntityRepository
         );
     }
 
+    /**
+     * @return list<int>
+     */
     public function getFavoriteOfferIdsByCandidat(int $candidatId): array
     {
         $rows = $this->getEntityManager()->getConnection()->fetchFirstColumn(

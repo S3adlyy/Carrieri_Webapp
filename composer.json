@@ -7,6 +7,7 @@
     "php": ">=8.1",
     "ext-ctype": "*",
     "ext-iconv": "*",
+    "ext-curl": "*",
     "ahmed-bhs/doctrine-doctor": "^1.1",
     "aws/aws-sdk-php": "^3.379",
     "doctrine/annotations": "^2.0",
@@ -56,7 +57,8 @@
     "twig/twig": "^2.12|^3.0",
     "twilio/sdk": "^8.11",
     "webmozart/assert": "1.11",
-    "ext-zip": "*"
+    "ext-zip": "*",
+    "ext-http": "*"
   },
   "config": {
     "allow-plugins": {

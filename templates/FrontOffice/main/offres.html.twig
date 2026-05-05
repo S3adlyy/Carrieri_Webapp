@@ -49,28 +49,42 @@
                value="{{ app.request.get('localisation') }}">
         <input type="number" name="salaire" placeholder="Salaire min"
                value="{{ app.request.get('salaire') }}">
+
         <div class="fo-filter-actions">
             <button type="submit">Filtrer</button>
-            <a href="{{ path('app_candidate_offres') }}" class="fo-reset-btn">Réinitialiser</a>
+            <a href="{{ path('app_candidate_offres') }}" class="fo-reset-btn">Reinitialiser</a>
         </div>
     </form>
 
     <div class="fo-offres-page">
         <div class="fo-offres-intro text-center">
             <p class="fo-offres-intro__text">
-                Découvrez les opportunités disponibles et trouvez l'offre qui correspond à votre profil.
+                Decouvrez les opportunites disponibles et trouvez l'offre qui correspond a votre profil.
             </p>
+            <div class="fo-smart-actions">
+                <a href="{{ path('app_candidate_offres_smart', app.request.query.all) }}" class="fo-smart-link">
+                    Ouvrir Smart Matching
+                </a>
+            </div>
         </div>
 
-        {% if offres is defined and offres|length > 0 %}
+        {% if rankedOffres is defined and rankedOffres|length > 0 %}
             <div class="row">
-                {% for offre in offres %}
+                {% for ranked in rankedOffres %}
+                    {% set offre = ranked.offre %}
+                    {% set match = ranked.match %}
                     <div class="col-lg-6 col-md-12 mb-4">
                         <div class="fo-offre-card text-start">
                             <div class="fo-offre-card__top">
                                 <div>
                                     <h3 class="fo-offre-card__title">{{ offre.titre }}</h3>
                                     <div class="fo-offre-card__company">{{ offre.entreprise }}</div>
+                                    {% if match %}
+                                        <div class="fo-match-pill fo-match-pill--{{ match.tone }}">
+                                            <span class="fo-match-pill__score">{{ match.score }}%</span>
+                                            <span class="fo-match-pill__label">{{ match.label }}</span>
+                                        </div>
+                                    {% endif %}
                                 </div>
                                 <span class="fo-offre-card__badge
                                     {% if offre.typeContrat == 'CDI' %}fo-badge-cdi
@@ -100,13 +114,13 @@
                                     <span class="fo-meta-item__value">{{ offre.niveauQualification }}</span>
                                 </div>
                                 <div class="fo-meta-item">
-                                    <span class="fo-meta-item__label">Expérience</span>
+                                    <span class="fo-meta-item__label">Experience</span>
                                     <span class="fo-meta-item__value">{{ offre.experienceRequise }}</span>
                                 </div>
                                 <div class="fo-meta-item">
                                     <span class="fo-meta-item__label">Expiration</span>
                                     <span class="fo-meta-item__value">
-                                        {{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '—' }}
+                                        {{ offre.dateExpiration ? offre.dateExpiration|date('d/m/Y H:i') : '-' }}
                                     </span>
                                 </div>
                                 <div class="fo-meta-item">
@@ -118,6 +132,27 @@
                             <div class="fo-offre-card__description">
                                 {{ offre.description|length > 180 ? offre.description|slice(0, 180) ~ '...' : offre.description }}
                             </div>
+
+                            {% if match %}
+                                <div class="fo-match-box">
+                                    <div class="fo-match-box__title">Pourquoi cette offre vous correspond</div>
+                                    <div class="fo-match-reasons">
+                                        {% for reason in match.short_reasons|slice(0, 2) %}
+                                            <span class="fo-match-chip">{{ reason }}</span>
+                                        {% endfor %}
+                                    </div>
+                                    {% if match.ai_analysis and match.ai_analysis.summary %}
+                                        <div class="fo-match-summary">{{ match.ai_analysis.summary }}</div>
+                                    {% endif %}
+                                    {% if match.missing_skills is not empty %}
+                                        <div class="fo-match-missing">
+                                            {% set lightMissing = match.missing_skills|first %}
+                                            A renforcer :
+                                            {{ lightMissing|length > 90 ? lightMissing|slice(0, 90) ~ '...' : lightMissing }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
 
                             <div class="fo-offre-card__actions">
                                 <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="fo-offre-btn">
@@ -145,7 +180,6 @@
         {% endif %}
     </div>
 
-    {# OpenStreetMap Modal #}
     <div id="mapModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
         <div style="background:#fff; border-radius:22px; padding:24px; width:90%; max-width:700px; position:relative;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -173,7 +207,7 @@
         .fo-stat-value { display: block; font-size: 28px; font-weight: 800; color: #1f3470; line-height: 1; }
         .fo-stat-label { display: block; font-size: 13px; font-weight: 600; color: #6b7280; margin-top: 4px; }
 
-        .fo-filter-bar { display: grid; grid-template-columns: 2fr 1fr 1.5fr 1fr auto; gap: 12px; margin-bottom: 28px; background: rgba(255,255,255,0.92); padding: 18px; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,55,120,0.08); }
+        .fo-filter-bar { display: grid; grid-template-columns: 2fr 1fr 1.5fr 1fr 1fr auto; gap: 12px; margin-bottom: 28px; background: rgba(255,255,255,0.92); padding: 18px; border-radius: 18px; box-shadow: 0 10px 28px rgba(31,55,120,0.08); }
         .fo-filter-bar input, .fo-filter-bar select { border: 1px solid #dbe4f3; border-radius: 12px; padding: 12px 14px; font-size: 14px; background: #fff; color: #1f2937; width: 100%; }
         .fo-filter-bar button { border: none; border-radius: 12px; padding: 12px 18px; font-weight: 700; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: #fff; cursor: pointer; }
         .fo-filter-actions { display: flex; gap: 10px; align-items: center; }
@@ -183,6 +217,9 @@
         .fo-offres-page { width: 100%; }
         .fo-offres-intro { margin-bottom: 35px; }
         .fo-offres-intro__text { max-width: 760px; margin: 0 auto; color: #5b647d; font-size: 17px; line-height: 1.8; }
+        .fo-smart-actions { margin-top: 18px; }
+        .fo-smart-link { display: inline-flex; align-items: center; justify-content: center; padding: 12px 22px; border-radius: 999px; text-decoration: none; font-weight: 800; color: #fff; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); box-shadow: 0 10px 20px rgba(37,99,235,0.20); transition: transform 0.25s ease; }
+        .fo-smart-link:hover { color: #fff; text-decoration: none; transform: translateY(-2px); }
 
         .fo-offre-card { height: 100%; border-radius: 22px; background: rgba(255,255,255,0.92); box-shadow: 0 12px 35px rgba(31,55,120,0.10); transition: all 0.25s ease; overflow: hidden; padding: 28px; text-align: left; }
         .fo-offre-card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(31,55,120,0.16); }
@@ -190,6 +227,12 @@
         .fo-offre-card__top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 22px; }
         .fo-offre-card__title { font-size: 30px; font-weight: 800; color: #1f3470; line-height: 1.2; margin-bottom: 8px; }
         .fo-offre-card__company { font-size: 15px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #6b7280; }
+        .fo-match-pill { display: inline-flex; align-items: center; gap: 8px; margin-top: 14px; padding: 8px 14px; border-radius: 999px; font-weight: 800; }
+        .fo-match-pill--good { background: rgba(22,163,74,0.14); color: #15803d; }
+        .fo-match-pill--medium { background: rgba(234,179,8,0.18); color: #a16207; }
+        .fo-match-pill--low { background: rgba(239,68,68,0.14); color: #b91c1c; }
+        .fo-match-pill__score { font-size: 18px; line-height: 1; }
+        .fo-match-pill__label { font-size: 13px; text-transform: uppercase; letter-spacing: 0.4px; }
 
         .fo-offre-card__badge { display: inline-block; padding: 10px 16px; border-radius: 999px; font-size: 13px; font-weight: 700; margin-top: 4px; }
         .fo-badge-cdi { background: rgba(59,130,246,0.12); color: #2563eb; }
@@ -201,10 +244,8 @@
         .fo-meta-item { background: #f8fbff; border: 1px solid #e6eefc; border-radius: 14px; padding: 14px 16px; }
         .fo-meta-item__label { display: block; font-size: 13px; font-weight: 700; color: #3b82f6; margin-bottom: 4px; }
         .fo-meta-item__value { display: block; font-size: 15px; font-weight: 600; color: #1f2937; }
-
         .fo-meta-location-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
-        /* Map button on card — same style as offre_show */
         .map-btn-card {
             display: inline-flex;
             align-items: center;
@@ -225,9 +266,14 @@
         .map-btn-card i { font-size: 14px; }
 
         .fo-offre-card__description { color: #5f6780; font-size: 15px; line-height: 1.8; background: #fcfcff; border-left: 4px solid #3b82f6; padding: 14px 16px; border-radius: 10px; margin-bottom: 24px; }
+        .fo-match-box { margin-bottom: 22px; padding: 16px 18px; border-radius: 16px; background: linear-gradient(135deg, rgba(15,118,110,0.08), rgba(37,99,235,0.08)); border: 1px solid rgba(20,184,166,0.16); }
+        .fo-match-box__title { font-size: 14px; font-weight: 800; color: #134e4a; margin-bottom: 12px; }
+        .fo-match-reasons { display: flex; flex-wrap: wrap; gap: 8px; }
+        .fo-match-chip { display: inline-flex; align-items: center; padding: 8px 12px; border-radius: 999px; background: #fff; color: #155e75; font-size: 13px; font-weight: 700; }
+        .fo-match-summary { margin-top: 12px; color: #475569; font-size: 14px; line-height: 1.7; }
+        .fo-match-missing { margin-top: 12px; color: #6b7280; font-size: 13px; line-height: 1.6; }
 
         .fo-offre-card__actions { display: flex; align-items: center; gap: 12px; justify-content: flex-end; }
-
         .fo-offre-btn { display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; border-radius: 999px; padding: 11px 24px; font-weight: 700; box-shadow: 0 10px 20px rgba(37,99,235,0.20); transition: 0.25s ease; text-decoration: none; }
         .fo-offre-btn:hover { color: white; text-decoration: none; transform: translateY(-2px); }
 
@@ -251,7 +297,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 
     <script>
-        // Auto-hide alerts
         setTimeout(function () {
             document.querySelectorAll('.fo-auto-hide-alert').forEach(function (alertBox) {
                 alertBox.classList.add('fo-alert-hide');
@@ -259,7 +304,6 @@
             });
         }, 10000);
 
-        // OpenStreetMap
         let map = null;
 
         document.querySelectorAll('.map-btn-card').forEach(function(btn) {
@@ -286,7 +330,7 @@
 
                         map = L.map('map').setView([lat, lon], 13);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                            attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
                         }).addTo(map);
                         L.marker([lat, lon]).addTo(map)
                             .bindPopup('<strong>' + location + '</strong>')

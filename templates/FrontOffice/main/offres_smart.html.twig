@@ -1,0 +1,566 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}Smart Matching{% endblock %}
+{% block candidate_page_heading %}Smart Matching{% endblock %}
+{% block candidate_breadcrumb %} / Smart Matching{% endblock %}
+
+{% block candidate_content %}
+    <div class="smart-page">
+        <div class="smart-header">
+            <div>
+                <div class="smart-kicker">AI Matching Preview</div>
+                <h2 class="smart-title">Explorez les offres les plus compatibles avec votre profil</h2>
+                <p class="smart-subtitle">
+                    Cette vue affiche les offres deja triees par score de matching. Vous pouvez parcourir une carte a la fois.
+                </p>
+            </div>
+            <a href="{{ path('app_candidate_offres', app.request.query.all) }}" class="smart-back">
+                Retour aux offres
+            </a>
+        </div>
+
+        {% if rankedOffres is not empty %}
+            <div class="smart-stage">
+                {% for ranked in rankedOffres %}
+                    {% set offre = ranked.offre %}
+                    {% set match = ranked.match %}
+                    <article class="smart-card{{ loop.first ? ' is-active' : '' }}" data-smart-card>
+                        <div class="smart-card__top">
+                            <div>
+                                <div class="smart-company">{{ offre.entreprise }}</div>
+                                <h3 class="smart-role">{{ offre.titre }}</h3>
+                            </div>
+                            <div class="smart-score smart-score--{{ match.tone }}">
+                                <span class="smart-score__value">{{ match.score }}%</span>
+                                <span class="smart-score__label">{{ match.label }}</span>
+                            </div>
+                        </div>
+
+                        <div class="smart-breakdown">
+                            <div class="smart-breakdown__item">
+                                <span class="smart-breakdown__name">Rule-based</span>
+                                <span class="smart-breakdown__value">{{ match.breakdown.rule_based }}</span>
+                            </div>
+                            <div class="smart-breakdown__item">
+                                <span class="smart-breakdown__name">AI analysis</span>
+                                <span class="smart-breakdown__value">{{ match.breakdown.ai ?? '—' }}</span>
+                            </div>
+                            <div class="smart-breakdown__item smart-breakdown__item--final">
+                                <span class="smart-breakdown__name">Final score</span>
+                                <span class="smart-breakdown__value">{{ match.score }}</span>
+                            </div>
+                        </div>
+
+                        <div class="smart-meta">
+                            <span>{{ offre.typeContrat }}</span>
+                            <span>{{ offre.localisation }}</span>
+                            <span>{{ offre.salaire }} DT</span>
+                        </div>
+
+                        <p class="smart-description">
+                            {{ offre.description|length > 260 ? offre.description|slice(0, 260) ~ '...' : offre.description }}
+                        </p>
+
+                        <div class="smart-section">
+                            <div class="smart-section__title">Pourquoi ca matche</div>
+                            <div class="smart-tags">
+                                {% for reason in match.reasons %}
+                                    <span class="smart-tag">{{ reason }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        {% if match.ai_analysis and match.ai_analysis.summary %}
+                            <div class="smart-section">
+                                <div class="smart-section__title">Vue d'ensemble</div>
+                                <div class="smart-note">{{ match.ai_analysis.summary }}</div>
+                            </div>
+                        {% endif %}
+
+                        {% if match.ai_analysis and match.ai_analysis.strengths is not empty %}
+                            <div class="smart-section">
+                                <div class="smart-section__title">Remarques</div>
+                                <div class="smart-remarks">
+                                    {% for strength in match.ai_analysis.strengths %}
+                                        <div class="smart-remark">{{ strength }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if match.missing_skills is not empty %}
+                            <div class="smart-section">
+                                <div class="smart-section__title">A renforcer</div>
+                                <div class="smart-remarks">
+                                    {% for missing in match.missing_skills %}
+                                        <div class="smart-remark smart-remark--muted">{{ missing }}</div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="smart-actions">
+                            <button type="button" class="smart-action smart-action--skip" data-smart-next>Passer</button>
+                            <a href="{{ path('app_candidate_offre_show', {'id': offre.id}) }}" class="smart-action smart-action--details">Details</a>
+                            {% if offre.id in favoriteIds|default([]) %}
+                                <button type="button" class="smart-action smart-action--like is-liked" disabled>Deja aime</button>
+                            {% else %}
+                                <form method="post" action="{{ path('app_candidate_favorite_toggle', {'id': offre.id}) }}" class="smart-like-form" data-smart-like-form>
+                                    <input type="hidden" name="_favorite_action" value="add">
+                                    <button type="submit" class="smart-action smart-action--like">J'aime</button>
+                                </form>
+                            {% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+
+            <div id="smartEmptyState" class="smart-empty" hidden>
+                <h3>Vous avez parcouru toutes les offres</h3>
+                <a href="{{ path('app_candidate_offres') }}" class="smart-back smart-back--inline">Revenir a la liste</a>
+            </div>
+        {% else %}
+            <div class="smart-empty smart-empty--visible">
+                <h3>Aucune offre disponible</h3>
+                <p>Il n'y a pas encore d'offres a analyser pour le smart matching.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <style>
+        .smart-page {
+            padding: 8px 0 24px;
+        }
+
+        .smart-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            align-items: flex-start;
+            margin-bottom: 28px;
+        }
+
+        .smart-kicker {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 1.8px;
+            text-transform: uppercase;
+            color: #3b82f6;
+            margin-bottom: 10px;
+        }
+
+        .smart-title {
+            margin: 0 0 10px;
+            color: #183153;
+            font-size: 34px;
+            font-weight: 900;
+            line-height: 1.15;
+        }
+
+        .smart-subtitle {
+            max-width: 760px;
+            margin: 0;
+            color: #5b647d;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .smart-back {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+            border-radius: 999px;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #fff;
+            font-weight: 800;
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 10px 20px rgba(37,99,235,0.20);
+        }
+
+        .smart-back:hover {
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .smart-stage {
+            position: relative;
+            min-height: 620px;
+        }
+
+        .smart-card {
+            display: none;
+            max-width: 860px;
+            margin: 0 auto;
+            background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(240,249,255,0.96));
+            border: 1px solid rgba(59,130,246,0.14);
+            border-radius: 28px;
+            padding: 34px;
+            box-shadow: 0 26px 60px rgba(15,23,42,0.12);
+        }
+
+        .smart-card.is-active {
+            display: block;
+        }
+
+        .smart-card__top {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 18px;
+        }
+
+        .smart-company {
+            font-size: 13px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 8px;
+        }
+
+        .smart-role {
+            margin: 0;
+            font-size: 30px;
+            line-height: 1.2;
+            color: #183153;
+            font-weight: 900;
+        }
+
+        .smart-score {
+            min-width: 140px;
+            text-align: center;
+            border-radius: 24px;
+            padding: 16px 18px;
+            color: #fff;
+        }
+        .smart-score--good { background: rgba(22,163,74,0.14); color: #15803d; }
+        .smart-score--medium { background: rgba(234,179,8,0.18); color: #a16207; }
+        .smart-score--low { background: rgba(239,68,68,0.14); color: #b91c1c; }
+
+        .smart-score__value {
+            display: block;
+            font-size: 30px;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .smart-score__label {
+            display: block;
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .smart-breakdown {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .smart-breakdown__item {
+            padding: 12px 14px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.88);
+            border: 1px solid rgba(59,130,246,0.10);
+            text-align: center;
+        }
+
+        .smart-breakdown__item--final {
+            background: rgba(59,130,246,0.08);
+        }
+
+        .smart-breakdown__name {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .smart-breakdown__value {
+            display: block;
+            margin-top: 6px;
+            font-size: 22px;
+            font-weight: 900;
+            color: #1f3470;
+            line-height: 1;
+        }
+
+        .smart-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 22px;
+        }
+
+        .smart-meta span {
+            display: inline-flex;
+            align-items: center;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            font-weight: 700;
+            font-size: 13px;
+            border: none;
+        }
+
+        .smart-description {
+            margin: 0 0 24px;
+            padding: 18px 20px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.85);
+            color: #475569;
+            line-height: 1.8;
+            border-left: 4px solid #3b82f6;
+            box-shadow: inset 0 0 0 1px rgba(59,130,246,0.08);
+        }
+
+        .smart-section {
+            margin-bottom: 20px;
+        }
+
+        .smart-section__title {
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: 800;
+            color: #134e4a;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+        }
+
+        .smart-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .smart-tag {
+            display: inline-flex;
+            align-items: center;
+            padding: 9px 14px;
+            border-radius: 999px;
+            background: #ffffff;
+            color: #155e75;
+            font-size: 13px;
+            font-weight: 700;
+            border: 1px solid rgba(20,184,166,0.14);
+            box-shadow: none;
+        }
+
+        .smart-missing {
+            color: #475569;
+            line-height: 1.7;
+            font-weight: 600;
+        }
+
+        .smart-note {
+            color: #475569;
+            line-height: 1.8;
+            background: rgba(255,255,255,0.85);
+            border-radius: 18px;
+            padding: 16px 18px;
+        }
+
+        .smart-remarks {
+            display: grid;
+            gap: 10px;
+        }
+
+        .smart-remark {
+            padding: 14px 16px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.88);
+            color: #475569;
+            line-height: 1.75;
+            border: 1px solid rgba(59,130,246,0.10);
+        }
+
+        .smart-remark--muted {
+            color: #5f6780;
+        }
+
+        .smart-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .smart-like-form {
+            margin: 0;
+        }
+
+        .smart-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            text-decoration: none;
+            border-radius: 999px;
+            padding: 12px 22px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .smart-action--skip {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .smart-action--details {
+            background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(37,99,235,0.20);
+        }
+
+        .smart-action--like {
+            background: #fce7f3;
+            color: #e11d48;
+            box-shadow: inset 0 0 0 1px rgba(225,29,72,0.08);
+        }
+
+        .smart-action--like.is-liked {
+            background: #e11d48;
+            color: #fff;
+            box-shadow: 0 10px 20px rgba(225,29,72,0.18);
+            cursor: default;
+            opacity: 0.9;
+        }
+
+        .smart-empty {
+            max-width: 760px;
+            margin: 40px auto 0;
+            text-align: center;
+            background: rgba(255,255,255,0.94);
+            border-radius: 24px;
+            padding: 44px 28px;
+            box-shadow: 0 18px 40px rgba(15,23,42,0.08);
+            border: 1px solid rgba(59,130,246,0.12);
+        }
+
+        .smart-empty--visible {
+            margin-top: 0;
+        }
+
+        .smart-back--inline {
+            margin-top: 18px;
+        }
+
+        @media (max-width: 991px) {
+            .smart-header {
+                flex-direction: column;
+            }
+
+            .smart-card {
+                padding: 26px 20px;
+            }
+
+            .smart-card__top {
+                flex-direction: column;
+            }
+
+            .smart-score {
+                width: 100%;
+            }
+
+            .smart-breakdown {
+                grid-template-columns: 1fr;
+            }
+
+            .smart-title {
+                font-size: 28px;
+            }
+        }
+    </style>
+
+    <script>
+        (function () {
+            const cards = Array.from(document.querySelectorAll('[data-smart-card]'));
+            const emptyState = document.getElementById('smartEmptyState');
+
+            function activateNextCard(currentCard) {
+                currentCard.classList.remove('is-active');
+
+                const nextCard = cards.find(function (card) {
+                    return card.classList.contains('is-active');
+                }) || cards.find(function (card) {
+                    return card !== currentCard && card.style.display !== 'none';
+                });
+
+                if (nextCard && nextCard !== currentCard) {
+                    nextCard.classList.add('is-active');
+                    return;
+                }
+
+                const remainingCard = cards.find(function (card) {
+                    return card !== currentCard && !card.hasAttribute('data-smart-hidden');
+                });
+
+                if (remainingCard) {
+                    remainingCard.classList.add('is-active');
+                    return;
+                }
+
+                if (emptyState) {
+                    emptyState.hidden = false;
+                }
+            }
+
+            cards.forEach(function (card) {
+                function hideCurrentCard() {
+                    card.setAttribute('data-smart-hidden', '1');
+                    card.classList.remove('is-active');
+                    card.style.display = 'none';
+                    activateNextCard(card);
+                }
+
+                card.querySelectorAll('[data-smart-next]').forEach(function (nextButton) {
+                    nextButton.addEventListener('click', hideCurrentCard);
+                });
+
+                const likeForm = card.querySelector('[data-smart-like-form]');
+                if (!likeForm) {
+                    return;
+                }
+
+                likeForm.addEventListener('submit', function (event) {
+                    event.preventDefault();
+
+                    const submitButton = likeForm.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.disabled = true;
+                        submitButton.textContent = 'Ajoute...';
+                    }
+
+                    fetch(likeForm.action, {
+                        method: 'POST',
+                        body: new FormData(likeForm),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        credentials: 'same-origin'
+                    }).then(function (response) {
+                        if (!response.ok) {
+                            throw new Error('Favorite request failed');
+                        }
+
+                        hideCurrentCard();
+                    }).catch(function () {
+                        if (submitButton) {
+                            submitButton.disabled = false;
+                            submitButton.textContent = "J'aime";
+                        }
+                    });
+                });
+            });
+        })();
+    </script>
+{% endblock %}

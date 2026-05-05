@@ -1,12 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controller\DashboardController;
 
+use App\Controller\UserTypeCasterTrait;
 use App\Service\ExportService;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use App\Service\FeedbackService;
 use App\Entity\Feedback;
 use App\Entity\RenduMission;
+use App\Entity\User;
 use App\Form\FeedbackType;
 use App\Repository\FeedbackRepository;
 use App\Repository\RenduMissionRepository;
@@ -19,10 +23,12 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/dashboard/feedback')]
 class FeedbackController extends AbstractController
 {
+    use UserTypeCasterTrait;
+
     private function checkRecruiter(): void
     {
-        $user = $this->getUser();
-        if (!$user || $user->getType() !== 'RECRUITER') {
+        $user = $this->getAuthenticatedUser();
+        if (!$user instanceof User || $user->getType() !== 'RECRUITER') {
             throw $this->createAccessDeniedException('Accès réservé aux recruteurs');
         }
     }
@@ -44,7 +50,11 @@ class FeedbackController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('User not found');
+        }
+
         $rendu = $renduRepository->find($renduId);
 
         if (!$rendu) {
@@ -89,7 +99,11 @@ class FeedbackController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('User not found');
+        }
+
         $feedbacks = $repository->findBy(['user' => $user], ['createdAt' => 'DESC']);
         $stats = $feedbackService->getStats($user);
 
@@ -103,7 +117,7 @@ class FeedbackController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $file = $exportService->exportFeedbacksToExcel();
+        $file = $exportService->exportFeedbacksToHtml();
 
         return $this->file($file, 'feedbacks_' . date('Y-m-d') . '.xls');
     }
@@ -122,7 +136,10 @@ class FeedbackController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException('User not found');
+        }
 
         if ($feedback->getUser() !== $user) {
             throw $this->createAccessDeniedException('Accès non autorisé');
@@ -138,7 +155,10 @@ class FeedbackController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException('User not found');
+        }
 
         if ($feedback->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier ce feedback');
@@ -164,13 +184,18 @@ class FeedbackController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException('User not found');
+        }
 
         if ($feedback->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas supprimer ce feedback');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $feedback->getId(), $request->request->get('_token'))) {
+        $tokenRaw = $request->request->get('_token');
+        $token = is_string($tokenRaw) ? $tokenRaw : '';
+        if ($this->isCsrfTokenValid('delete' . $feedback->getId(), $token)) {
             $em->remove($feedback);
             $em->flush();
             $this->addFlash('success', 'Votre feedback a été supprimé');

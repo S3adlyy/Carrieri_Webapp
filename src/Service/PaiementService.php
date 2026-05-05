@@ -37,7 +37,7 @@ class PaiementService
         string $titre,
         int $coursId,
         int $candidatId
-    ): string {
+    ): ?string {
         try {
             $intent = PaymentIntent::create([
                 'amount' => (int)($montant * 100), // Convertir en centimes
@@ -107,6 +107,7 @@ class PaiementService
 
     /**
      * Récupère les cours achetés par un candidat
+     * @return array<int>
      */
     public function getCoursAchetes(int $candidatId): array
     {
@@ -119,7 +120,10 @@ class PaiementService
 
         $coursIds = [];
         foreach ($achatsCours as $achat) {
-            $coursIds[] = $achat->getCoursId();
+            $coursId = $achat->getCoursId();
+            if ($coursId !== null) {
+                $coursIds[] = $coursId;
+            }
         }
 
         return $coursIds;

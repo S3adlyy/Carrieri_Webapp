@@ -11,6 +11,7 @@ use App\Repository\ModuleRepository;
 use App\Repository\ResultatQuizModuleRepository;
 use App\Repository\ResultatTestCoursRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -20,6 +21,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CANDIDAT')]
 class LeconController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private ModuleRepository $moduleRepository,
         private LeconRepository $leconRepository,
@@ -149,7 +151,7 @@ class LeconController extends AbstractController
         $completedModuleQuizzes = 0;
         $passedFinalTest = 0;
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if ($user instanceof \App\Entity\User && $user->getId() !== null) {
             foreach ($modules as $module) {
                 $moduleId = $module->getId();
@@ -186,7 +188,7 @@ class LeconController extends AbstractController
 
         if (is_resource($blob)) {
             $meta = stream_get_meta_data($blob);
-            if (($meta['seekable'] ?? false) === true) {
+            if ($meta['seekable'] === true) {
                 rewind($blob);
             }
 
@@ -211,4 +213,5 @@ class LeconController extends AbstractController
         return $default;
     }
 }
+
 

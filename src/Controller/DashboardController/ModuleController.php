@@ -13,6 +13,7 @@ use App\Repository\ModuleRepository;
 use App\Service\BackOfficeDashboardService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -21,6 +22,7 @@ use Symfony\Component\Routing\Attribute\Route;
 #[Route('/admin/modules')]
 class ModuleController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private ModuleRepository $moduleRepository,
         private CoursRepository $coursRepository,
@@ -198,7 +200,8 @@ class ModuleController extends AbstractController
         $this->storeSelectionContext($request, $module);
 
         $redirectCoursId = $module->getCoursId();
-        if ($this->isCsrfTokenValid('delete_module_' . $module->getId(), $request->getPayload()->get('_token'))) {
+        $token = $request->getPayload()->get('_token');
+        if ($this->isCsrfTokenValid('delete_module_' . $module->getId(), is_string($token) ? $token : null)) {
             $this->em->remove($module);
             $this->em->flush();
             $this->addFlash('success', 'Module supprimé avec succès.');
@@ -254,7 +257,7 @@ class ModuleController extends AbstractController
 
     private function requireUser(): User
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }
@@ -288,3 +291,4 @@ class ModuleController extends AbstractController
         $request->getSession()->set('selected_module_id', $module->getId());
     }
 }
+

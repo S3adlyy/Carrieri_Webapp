@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -12,10 +14,14 @@ class CodeExecutionController extends AbstractController
     #[Route('/execute-code', name: 'execute_code', methods: ['POST'])]
     public function executeCode(Request $request): JsonResponse
     {
-        $data = json_decode($request->getContent(), true);
-        $code = $data['code'] ?? '';
-        $language = $data['language'] ?? 'python';
-        $mode = $data['mode'] ?? 'free';
+        $content = $request->getContent();
+        $data = json_decode($content, true);
+        if (!is_array($data)) {
+            $data = [];
+        }
+        $code = isset($data['code']) && is_string($data['code']) ? $data['code'] : '';
+        $language = isset($data['language']) && is_string($data['language']) ? $data['language'] : 'python';
+        $mode = isset($data['mode']) && is_string($data['mode']) ? $data['mode'] : 'free';
 
         if ($mode === 'free') {
             return $this->executeFreeCode($code, $language);
@@ -65,15 +71,16 @@ class CodeExecutionController extends AbstractController
 
         unlink($tempFile);
 
+        $outputString = is_string($output) ? $output : '';
         if ($exitCode === 0 || $output !== null) {
             return $this->json([
                 'success' => true,
-                'output' => $output ?: "(Pas de sortie)"
+                'output' => $outputString ?: "(Pas de sortie)"
             ]);
         } else {
             return $this->json([
                 'success' => false,
-                'error' => $output ?: "Erreur d'exécution. Vérifiez votre code Python.",
+                'error' => $outputString ?: "Erreur d'exécution. Vérifiez votre code Python.",
                 'output' => null
             ]);
         }
@@ -99,15 +106,16 @@ class CodeExecutionController extends AbstractController
 
         unlink($tempFile);
 
+        $outputString = is_string($output) ? $output : '';
         if ($exitCode === 0 || $output !== null) {
             return $this->json([
                 'success' => true,
-                'output' => $output ?: "(Pas de sortie)"
+                'output' => $outputString ?: "(Pas de sortie)"
             ]);
         } else {
             return $this->json([
                 'success' => false,
-                'error' => $output ?: "Erreur d'exécution",
+                'error' => $outputString ?: "Erreur d'exécution",
                 'output' => null
             ]);
         }
@@ -153,6 +161,11 @@ class CodeExecutionController extends AbstractController
         ]);
     }
 
+    /**
+     * @param array{nums: array<int, int>, target: int} $input
+     * @param array<int, int> $expected
+     * @return array{passed: bool, message: string, expected: array<int, int>, output: mixed}
+     */
     private function runCodeTest(string $code, string $language, array $input, array $expected): array
     {
         if ($language === 'python') {
@@ -169,6 +182,11 @@ class CodeExecutionController extends AbstractController
         }
     }
 
+    /**
+     * @param array{nums: array<int, int>, target: int} $input
+     * @param array<int, int> $expected
+     * @return array{passed: bool, message: string, expected: array<int, int>, output: mixed}
+     */
     private function runPythonTest(string $code, array $input, array $expected): array
     {
         $tempDir = sys_get_temp_dir();
@@ -223,35 +241,48 @@ class CodeExecutionController extends AbstractController
 
         unlink($tempFile);
 
-        $result = json_decode($output, true);
+        $outputString = is_string($output) ? $output : '';
+        $result = json_decode($outputString, true);
+        if (!is_array($result)) {
+            $result = [];
+        }
 
-        if ($result && isset($result['passed'])) {
+        if (isset($result['passed'])) {
             if ($result['passed']) {
+                $outputValue = $result['output'] ?? '';
+                $outputStringValue = is_scalar($outputValue) ? (string)$outputValue : '';
                 return [
                     'passed' => true,
-                    'message' => "✓ Succès ! Résultat: " . $result['output'],
+                    'message' => "✓ Succès ! Résultat: " . $outputStringValue,
                     'expected' => $expected,
-                    'output' => $result['output']
+                    'output' => $outputValue
                 ];
             } else {
-                $errorMsg = $result['error'] ?? "Résultat incorrect. Attendu: " . ($result['expected'] ?? json_encode($expected)) . ", Reçu: " . ($result['output'] ?? '');
+                $expectedValue = $result['expected'] ?? json_encode($expected);
+                $outputValue = $result['output'] ?? '';
+                $errorMsg = $result['error'] ?? "Résultat incorrect. Attendu: " . (is_scalar($expectedValue) ? (string)$expectedValue : '') . ", Reçu: " . (is_scalar($outputValue) ? (string)$outputValue : '');
                 return [
                     'passed' => false,
                     'message' => "✗ " . $errorMsg,
                     'expected' => $expected,
-                    'output' => $result['output'] ?? null
+                    'output' => $outputValue
                 ];
             }
         } else {
             return [
                 'passed' => false,
-                'message' => "✗ Erreur: " . ($output ?: "Erreur inconnue. Vérifiez la syntaxe de votre code."),
+                'message' => "✗ Erreur: " . ($outputString ?: "Erreur inconnue. Vérifiez la syntaxe de votre code."),
                 'expected' => $expected,
                 'output' => null
             ];
         }
     }
 
+    /**
+     * @param array{nums: array<int, int>, target: int} $input
+     * @param array<int, int> $expected
+     * @return array{passed: bool, message: string, expected: array<int, int>, output: mixed}
+     */
     private function runJavaScriptTest(string $code, array $input, array $expected): array
     {
         $tempDir = sys_get_temp_dir();
@@ -295,20 +326,28 @@ class CodeExecutionController extends AbstractController
 
         unlink($tempFile);
 
-        $result = json_decode($output, true);
+        $outputString = is_string($output) ? $output : '';
+        $result = json_decode($outputString, true);
+        if (!is_array($result)) {
+            $result = [];
+        }
 
-        if ($result && isset($result['passed'])) {
+        if (isset($result['passed'])) {
             if ($result['passed']) {
+                $outputValue = $result['output'] ?? '';
+                $outputStringValue = is_scalar($outputValue) ? (string)$outputValue : '';
                 return [
                     'passed' => true,
-                    'message' => "✓ Succès ! Résultat: " . json_encode($result['output']),
+                    'message' => "✓ Succès ! Résultat: " . json_encode($outputValue),
                     'expected' => $expected,
-                    'output' => $result['output']
+                    'output' => $outputValue
                 ];
             } else {
+                $errorMessage = $result['error'] ?? "Test échoué";
+                $errorMessageString = is_scalar($errorMessage) ? (string)$errorMessage : "Test échoué";
                 return [
                     'passed' => false,
-                    'message' => "✗ " . ($result['error'] ?? "Test échoué"),
+                    'message' => "✗ " . $errorMessageString,
                     'expected' => $expected,
                     'output' => $result['output'] ?? null
                 ];
@@ -316,7 +355,7 @@ class CodeExecutionController extends AbstractController
         } else {
             return [
                 'passed' => false,
-                'message' => "✗ Erreur: " . ($output ?: "Erreur inconnue"),
+                'message' => "✗ Erreur: " . ($outputString ?: "Erreur inconnue"),
                 'expected' => $expected,
                 'output' => null
             ];
@@ -326,9 +365,11 @@ class CodeExecutionController extends AbstractController
     private function getLastExitCode(): int
     {
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
-            return (int)shell_exec("echo %errorlevel%");
+            $output = shell_exec("echo %errorlevel%");
+            return is_string($output) ? (int)$output : 0;
         } else {
-            return (int)shell_exec("echo $?");
+            $output = shell_exec("echo $?");
+            return is_string($output) ? (int)$output : 0;
         }
     }
 }

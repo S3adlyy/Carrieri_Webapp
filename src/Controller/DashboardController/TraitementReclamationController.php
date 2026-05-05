@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\DashboardController;
 
 use App\Entity\Reclamation;
@@ -11,6 +13,7 @@ use App\Service\AI\UrgencyDetectionService;
 use App\Service\MailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,9 +21,10 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/dashboard/traitement')]
 class TraitementReclamationController extends AbstractController
 {
+    use UserTypeCasterTrait;
     private function checkRecruiter(): void
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user || $user->getType() !== 'RECRUITER') {
             throw $this->createAccessDeniedException('Accès réservé aux recruteurs');
         }
@@ -60,7 +64,8 @@ class TraitementReclamationController extends AbstractController
         $correctionFile = __DIR__ . '/../../../var/models/corrections.json';
         $correctionsCount = 0;
         if (file_exists($correctionFile)) {
-            $corrections = json_decode(file_get_contents($correctionFile), true);
+            $correctionContent = file_get_contents($correctionFile);
+            $corrections = json_decode($correctionContent !== false ? $correctionContent : '[]', true);
             $correctionsCount = is_array($corrections) ? count($corrections) : 0;
         }
 
@@ -82,7 +87,10 @@ class TraitementReclamationController extends AbstractController
     ): Response {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
+        if (!$user) {
+            throw $this->createAccessDeniedException();
+        }
         $urgency = $ai->detectUrgency($reclamation);
 
         $existingTraitement = $em->getRepository(TraitementReclamation::class)->findOneBy(['reclamation' => $reclamation]);
@@ -116,7 +124,11 @@ class TraitementReclamationController extends AbstractController
             if ($corrigerIa) {
                 $niveauReel = (int)$request->request->get('niveau_reel', 50);
                 $correctionFile = __DIR__ . '/../../../var/models/corrections.json';
-                $corrections = file_exists($correctionFile) ? json_decode(file_get_contents($correctionFile), true) : [];
+                $correctionContent = file_exists($correctionFile) ? file_get_contents($correctionFile) : false;
+                $corrections = json_decode($correctionContent !== false ? $correctionContent : '[]', true);
+                if (!is_array($corrections)) {
+                    $corrections = [];
+                }
                 $corrections[] = [
                     'text' => $reclamation->getObjet() . ' ' . $reclamation->getDescription(),
                     'score' => $niveauReel,
@@ -207,7 +219,7 @@ class TraitementReclamationController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         $traitements = $repository->findBy(['user' => $user], ['dateTraitement' => 'DESC']);
 
         return $this->render('BackOffice/dashboard/traitement/index.html.twig', [
@@ -220,7 +232,7 @@ class TraitementReclamationController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if ($traitement->getUser() !== $user) {
             throw $this->createAccessDeniedException('Accès non autorisé');
         }
@@ -235,7 +247,7 @@ class TraitementReclamationController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if ($traitement->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier ce traitement');
         }
@@ -260,12 +272,13 @@ class TraitementReclamationController extends AbstractController
     {
         $this->checkRecruiter();
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if ($traitement->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas supprimer ce traitement');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $traitement->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete' . $traitement->getId(), is_string($token) ? $token : null)) {
             $reclamation = $traitement->getReclamation();
             if ($reclamation) {
                 $reclamation->setStatut('En attente');

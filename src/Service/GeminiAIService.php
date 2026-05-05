@@ -15,7 +15,6 @@ class GeminiAIService
 
     public function __construct(
         private HttpClientInterface $httpClient,
-        private ParameterBagInterface $params,
         private LoggerInterface $logger
     ) {
         $this->apiKey = 'AIzaSyDBRWP3lzdPFBE7TmEk1Z61wGBUfo7AIGo';
@@ -23,6 +22,7 @@ class GeminiAIService
 
     /**
      * Improve the user's bio/about section using AI
+     * @param array<string, mixed> $userData
      */
     public function improveBio(string $currentBio, array $userData = []): string
     {
@@ -36,6 +36,9 @@ class GeminiAIService
         return $this->callGeminiApi($prompt);
     }
 
+    /**
+     * @param array<string, mixed> $userData
+     */
     private function buildBioImprovementPrompt(string $currentBio, array $userData): string
     {
         $contextInfo = '';

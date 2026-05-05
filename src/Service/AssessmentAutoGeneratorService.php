@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Cours;
+use App\Entity\Lecon;
 use App\Entity\Module;
 use App\Entity\QuestionQuiz;
 use App\Entity\QuestionTest;
@@ -21,7 +22,7 @@ final class AssessmentAutoGeneratorService
     private const STOP_WORDS = [
         'le', 'la', 'les', 'un', 'une', 'des', 'de', 'du', 'd', 'et', 'ou', 'mais', 'donc', 'car', 'ni', 'or',
         'a', 'au', 'aux', 'en', 'dans', 'sur', 'sous', 'avec', 'sans', 'pour', 'par', 'ce', 'cet', 'cette', 'ces',
-        'est', 'sont', 'etre', 'etre', 'qui', 'que', 'quoi', 'dont', 'ainsi', 'comme', 'plus', 'moins', 'tres',
+        'est', 'sont', 'etre', 'qui', 'que', 'quoi', 'dont', 'ainsi', 'comme', 'plus', 'moins', 'tres',
     ];
 
     public function __construct(
@@ -33,14 +34,14 @@ final class AssessmentAutoGeneratorService
     ) {
     }
 
-    public function ensureModuleQuizGenerated(Module $module, int $expected = 5): void
+    public function ensureModuleQuizGenerated(Module $module, int $expected = 12): void
     {
         $moduleId = $module->getId();
         if ($moduleId === null) {
             return;
         }
 
-        $existing = $this->questionQuizRepository->findByModuleOrdered($moduleId, 200);
+        $existing = array_values($this->questionQuizRepository->findByModuleOrdered($moduleId, 200));
         $existingCount = count($existing);
         if ($existingCount >= $expected) {
             return;
@@ -55,14 +56,14 @@ final class AssessmentAutoGeneratorService
         }
     }
 
-    public function ensureCoursFinalTestGenerated(Cours $cours, int $expected = 15): void
+    public function ensureCoursFinalTestGenerated(Cours $cours, int $expected = 22): void
     {
         $coursId = $cours->getId();
         if ($coursId === null) {
             return;
         }
 
-        $modules = $this->moduleRepository->findByCours($cours);
+        $modules = array_values($this->moduleRepository->findByCours($cours));
         $quizQuestionFingerprints = [];
 
         foreach ($modules as $module) {
@@ -71,9 +72,9 @@ final class AssessmentAutoGeneratorService
                 continue;
             }
 
-            $this->ensureModuleQuizGenerated($module, 5);
+            $this->ensureModuleQuizGenerated($module, 12);
 
-            $moduleQuizQuestions = $this->questionQuizRepository->findByModuleOrdered($moduleId, 200);
+            $moduleQuizQuestions = array_values($this->questionQuizRepository->findByModuleOrdered($moduleId, 200));
             foreach ($moduleQuizQuestions as $question) {
                 $text = (string) $question->getQuestionText();
                 if ($text !== '') {
@@ -82,7 +83,7 @@ final class AssessmentAutoGeneratorService
             }
         }
 
-        $testQuestions = $this->questionTestRepository->findByCoursOrdered($coursId, 200);
+        $testQuestions = array_values($this->questionTestRepository->findByCoursOrdered($coursId, 200));
         $existingCount = count($testQuestions);
         if ($existingCount >= $expected) {
             return;
@@ -114,7 +115,7 @@ final class AssessmentAutoGeneratorService
     }
 
     /**
-     * @param list<object> $questions
+     * @param array<int, QuestionQuiz|QuestionTest> $questions
      * @return array<string, bool>
      */
     private function collectQuestionFingerprints(array $questions): array
@@ -134,7 +135,7 @@ final class AssessmentAutoGeneratorService
     }
 
     /**
-     * @param list<object> $lessons
+     * @param array<int, Lecon> $lessons
      * @return string[]
      */
     private function extractSentencesFromLessons(array $lessons): array
@@ -247,7 +248,9 @@ final class AssessmentAutoGeneratorService
         }
 
         $targetWord = $tokens[array_rand($tokens)];
-        $pattern = '/\b' . preg_quote($targetWord, '/') . '\b/ui';
+        // Use Unicode-aware word boundaries: ensure characters on both sides aren't letters
+        // This avoids issues with accented characters where \b may not behave as expected.
+        $pattern = '/(?<!\p{L})' . preg_quote($targetWord, '/') . '(?!\p{L})/iu';
         $blanked = preg_replace($pattern, '______', $sentence, 1);
         if ($blanked === null || $blanked === $sentence) {
             return null;
@@ -362,13 +365,14 @@ final class AssessmentAutoGeneratorService
 
     private function makeFalseSentence(string $sentence): string
     {
+        // Prefer French-oriented negations and simple swaps to produce a false statement
         $replacements = [
             '/\best\b/ui' => 'n\'est pas',
             '/\bsont\b/ui' => 'ne sont pas',
             '/\bpeut\b/ui' => 'ne peut pas',
             '/\bpermet\b/ui' => 'n\'autorise pas',
-            '/\balways\b/ui' => 'never',
-            '/\btrue\b/ui' => 'false',
+            '/\btoujours\b/ui' => 'jamais',
+            '/\bvrai\b/ui' => 'faux',
         ];
 
         foreach ($replacements as $pattern => $replace) {
@@ -482,7 +486,7 @@ final class AssessmentAutoGeneratorService
 
         shuffle($choices);
 
-        return array_values($choices);
+        return $choices;
     }
 
     /**
@@ -520,6 +524,9 @@ final class AssessmentAutoGeneratorService
                 ->setOrdre($order++);
 
             $this->entityManager->persist($question);
+
+            // Persist answers after the question is created; flush once per question to
+            // avoid excessive flush() calls while keeping IDs available.
             $this->entityManager->flush();
 
             $questionId = $question->getId();
@@ -563,6 +570,7 @@ final class AssessmentAutoGeneratorService
                 ->setOrdre($order++);
 
             $this->entityManager->persist($question);
+            // flush to obtain question id before persisting answers
             $this->entityManager->flush();
 
             $questionId = $question->getId();

@@ -8,6 +8,7 @@ namespace App\Controller\FrontOffice;
 use App\Entity\User;
 use App\Repository\MissionRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -16,6 +17,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CANDIDAT')]
 class MissionController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private MissionRepository $missionRepository
     ) {
@@ -24,7 +26,7 @@ class MissionController extends AbstractController
     #[Route('/', name: 'app_candidate_mission')]
     public function index(): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }

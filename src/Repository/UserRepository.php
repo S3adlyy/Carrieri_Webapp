@@ -70,6 +70,9 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return User[]
+     */
     public function findActiveSuggestions(int $excludeUserId, int $limit = 5): array
     {
         return $this->createQueryBuilder('u')
@@ -82,6 +85,9 @@ class UserRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return User[]
+     */
     public function findActiveSuggestionsByType(int $excludeUserId, string $type, int $limit = 5): array
     {
         return $this->createQueryBuilder('u')

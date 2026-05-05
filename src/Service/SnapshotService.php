@@ -6,6 +6,7 @@ use App\Entity\Snapshot;
 use App\Entity\SnapshotItem;
 use App\Entity\Track;
 use App\Repository\SnapshotRepository;
+use App\Repository\SnapshotItemRepository;
 use App\Service\ArtifactService;
 use App\Service\FileObjectService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -14,6 +15,7 @@ final class SnapshotService
 {
     public function __construct(
         private readonly SnapshotRepository     $snapshotRepo,
+        private readonly SnapshotItemRepository $snapshotItemRepo,
         private readonly ArtifactService        $artifactService,
         private readonly FileObjectService      $fileObjectService,
         private readonly EntityManagerInterface $em,
@@ -28,12 +30,13 @@ final class SnapshotService
         $snapshot = new Snapshot();
         $snapshot->setTrack($track);
         $snapshot->setAuthorId($authorId);
+        $snapshot->setTitle("Snapshot");
         $snapshot->setMessage($message);
         $snapshot->setCreatedAt(new \DateTimeImmutable());
         $snapshot->setIsFinal(0);
         $this->em->persist($snapshot);
 
-        $artifacts = $this->artifactService->listActive($track);
+        $artifacts = $this->artifactService->listActiveByTrack($track);
         foreach ($artifacts as $artifact) {
             $latestFo = $this->fileObjectService->findLatestByArtifact($artifact);
             $item = new SnapshotItem();
@@ -64,6 +67,6 @@ final class SnapshotService
     /** @return SnapshotItem[] */
     public function getItems(Snapshot $snapshot): array
     {
-        return $snapshot->getItems()->toArray();
+        return $this->snapshotItemRepo->findBy(['snapshot' => $snapshot]);
     }
 }

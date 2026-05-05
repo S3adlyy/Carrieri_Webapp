@@ -9,6 +9,7 @@ use App\Service\AwsFaceRecognitionService;
 use App\Service\AwsRekognitionConfigService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -23,6 +24,7 @@ use Psr\Log\LoggerInterface;
 #[Route('/face')]
 class AwsFaceController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private readonly AwsFaceRecognitionService $faceService,
         private readonly AwsRekognitionConfigService $awsConfig,
@@ -37,7 +39,7 @@ class AwsFaceController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function enrollFace(Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'User not found'], Response::HTTP_UNAUTHORIZED);
         }
@@ -52,7 +54,7 @@ class AwsFaceController extends AbstractController
         $result = $this->faceService->enrollFace($user, $imageBase64);
 
         if (!$result['success']) {
-            return $this->json(['error' => $result['error']], Response::HTTP_BAD_REQUEST);
+            return $this->json(['error' => $result['error'] ?? 'Face enrollment failed'], Response::HTTP_BAD_REQUEST);
         }
 
         return $this->json($result);
@@ -105,7 +107,7 @@ class AwsFaceController extends AbstractController
     #[IsGranted('ROLE_USER')]
     public function disableFace(): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'User not found'], Response::HTTP_UNAUTHORIZED);
         }

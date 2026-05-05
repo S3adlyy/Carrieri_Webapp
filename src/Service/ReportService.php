@@ -2,6 +2,8 @@
 
 namespace App\Service;
 
+use App\Entity\Reclamation;
+use App\Entity\Feedback;
 use App\Repository\ReclamationRepository;
 use App\Repository\FeedbackRepository;
 
@@ -14,6 +16,7 @@ class ReportService
 
     /**
      * Générer un rapport de réclamations
+     * @return array<string, mixed>
      */
     public function generateReclamationReport(\DateTimeInterface $start, \DateTimeInterface $end): array
     {
@@ -38,6 +41,7 @@ class ReportService
 
     /**
      * Générer un rapport de feedbacks
+     * @return array<string, mixed>
      */
     public function generateFeedbackReport(\DateTimeInterface $start, \DateTimeInterface $end): array
     {
@@ -63,11 +67,15 @@ class ReportService
         ];
     }
 
+    /**
+     * @param array<Reclamation> $reclamations
+     * @return array<string, int>
+     */
     private function groupByStatus(array $reclamations): array
     {
         $result = [];
         foreach ($reclamations as $r) {
-            $status = $r->getStatut();
+            $status = $r->getStatut() ?? '';
             if (!isset($result[$status])) {
                 $result[$status] = 0;
             }
@@ -76,11 +84,15 @@ class ReportService
         return $result;
     }
 
+    /**
+     * @param array<Reclamation> $reclamations
+     * @return array<string, int>
+     */
     private function groupByPriority(array $reclamations): array
     {
         $result = [];
         foreach ($reclamations as $r) {
-            $priority = $r->getPriorite();
+            $priority = $r->getPriorite() ?? '';
             if (!isset($result[$priority])) {
                 $result[$priority] = 0;
             }

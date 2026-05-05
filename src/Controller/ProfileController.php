@@ -13,6 +13,7 @@ use App\Service\TrackService;
 use App\Service\WorkspaceService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,6 +27,7 @@ use App\Service\GeminiAIService;
 #[IsGranted('ROLE_USER')]
 final class ProfileController extends AbstractController
 {
+    use UserTypeCasterTrait;
 
     public function __construct(
         private readonly EntityManagerInterface $entityManager,
@@ -67,7 +69,7 @@ final class ProfileController extends AbstractController
     #[Route('/workspace/data', name: 'workspace_data', methods: ['GET'])]
     public function workspaceData(Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if (!$user instanceof User) {
             return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
@@ -99,7 +101,7 @@ final class ProfileController extends AbstractController
     #[Route('/workspace/track/create', name: 'workspace_track_create', methods: ['POST'])]
     public function createTrack(Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if (!$user instanceof User) {
             return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
@@ -306,7 +308,7 @@ final class ProfileController extends AbstractController
 
         // Verify CSRF token
         $submittedToken = $request->request->get('_token');
-        if (!$this->isCsrfTokenValid('about_form', $submittedToken)) {
+        if (!$this->isCsrfTokenValid('about_form', is_string($submittedToken) ? $submittedToken : null)) {
             if ($isAjax) {
                 return $this->json(['success' => false, 'error' => 'Invalid CSRF token.'], 400);
             }
@@ -316,7 +318,7 @@ final class ProfileController extends AbstractController
 
         $bio = $request->request->get('bio');
 
-        if ($bio !== null) {
+        if (is_string($bio)) {
             try {
                 $user->setBio(trim($bio));
                 $this->entityManager->flush();
@@ -342,23 +344,6 @@ final class ProfileController extends AbstractController
 
         return $this->redirectToProfileSection('about');
     }
-    private function renderWithErrors(User $user, string $section, array $errors = [], array $oldInput = []): Response
-    {
-        $currentUser = $this->requireCurrentUser();
-
-        return $this->render('FrontOffice/main/profile.html.twig', [
-            'user' => $user,
-            'is_owner' => true,
-            'is_candidate' => $this->profileService->isCandidate($user),
-            'is_recruiter' => $this->profileService->isRecruiter($user),
-            'suggestions' => $this->profileService->suggestPeopleYouMayKnow($currentUser, 5),
-            'public_profile_url' => sprintf('carrieri.app/in/%s', $this->profileService->slugifyDisplayName($user)),
-            'edit_section' => $section,
-            'form_errors' => $errors,
-            'old_input' => $oldInput,
-        ]);
-    }
-
     #[Route('/education/save', name: 'app_profile_education_save', methods: ['POST'])]
     public function saveEducation(Request $request): Response
     {
@@ -664,7 +649,7 @@ final class ProfileController extends AbstractController
 
     private function requireCurrentUser(): User
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException('You must be logged in.');

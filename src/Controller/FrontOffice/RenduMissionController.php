@@ -6,6 +6,7 @@ declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Entity\RenduMission;
+use App\Entity\Mission;
 use App\Entity\User;
 use App\Repository\MissionRepository;
 use App\Repository\RenduMissionRepository;
@@ -13,6 +14,7 @@ use App\Service\AiCodeEvaluatorService;
 use App\Service\MissionAnalyzerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -24,6 +26,7 @@ use Symfony\Component\HttpFoundation\Session\SessionInterface;
 #[IsGranted('ROLE_CANDIDAT')]
 class RenduMissionController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private EntityManagerInterface $entityManager,
         private MissionRepository $missionRepository,
@@ -69,9 +72,15 @@ class RenduMissionController extends AbstractController
             ?? throw $this->createNotFoundException('Mission non trouvée');
 
         // Vérifier si une soumission existe déjà (terminée)
+        $missionId = $mission->getId();
+        $userId = $user->getId();
+        if ($missionId === null || $userId === null) {
+            throw $this->createAccessDeniedException('Identifiants de mission ou utilisateur manquants');
+        }
+
         $existingRendu = $this->renduMissionRepository->findExistingSubmission(
-            $mission->getId(),
-            $user->getId()
+            $missionId,
+            $userId
         );
 
         if ($existingRendu && $existingRendu->getStatut() !== 'en_attente') {
@@ -191,8 +200,8 @@ class RenduMissionController extends AbstractController
 
         return new JsonResponse([
             'success' => $result['success'],
-            'output' => $result['output'] ?? null,
-            'error' => $result['error'] ?? null,
+            'output' => $result['output'],
+            'error' => null,
             'remainingExecutions' => $session->get($executionsKey)
         ]);
     }
@@ -282,9 +291,15 @@ class RenduMissionController extends AbstractController
         }
 
         if (!$activeRendu) {
+            $missionId = $mission->getId();
+            $userId = $user->getId();
+            if ($missionId === null || $userId === null) {
+                return new JsonResponse(['success' => false, 'error' => 'Identifiants manquants'], 500);
+            }
+
             $activeRendu = $this->renduMissionRepository->findExistingSubmission(
-                $mission->getId(),
-                $user->getId()
+                $missionId,
+                $userId
             );
         }
 
@@ -324,7 +339,7 @@ class RenduMissionController extends AbstractController
         return new JsonResponse(['success' => true, 'redirect' => $this->generateUrl('app_candidate_rendu_status', ['id' => $activeRendu->getId()])]);
     }
 
-    private function autoSubmitWithZero($mission, $user, SessionInterface $session, string $reason): Response
+    private function autoSubmitWithZero(Mission $mission, User $user, SessionInterface $session, string $reason): Response
     {
         // Récupérer le rendu actif
         $renduIdKey = "mission_{$mission->getId()}_rendu_id";
@@ -335,9 +350,15 @@ class RenduMissionController extends AbstractController
         }
 
         if (!$activeRendu) {
+            $missionId = $mission->getId();
+            $userId = $user->getId();
+            if ($missionId === null || $userId === null) {
+                return new JsonResponse(['success' => false, 'error' => 'Identifiants manquants'], 500);
+            }
+
             $activeRendu = $this->renduMissionRepository->findExistingSubmission(
-                $mission->getId(),
-                $user->getId()
+                $missionId,
+                $userId
             );
         }
 
@@ -369,6 +390,9 @@ class RenduMissionController extends AbstractController
         return $this->redirectToRoute('app_candidate_my_results');
     }
 
+    /**
+     * @return array{success: bool, output: string}
+     */
     private function executeUserCode(string $code, string $language): array
     {
         // Implémentez votre logique d'exécution ici
@@ -405,7 +429,8 @@ class RenduMissionController extends AbstractController
         $user = $this->requireUser();
 
         // Récupérer les missions actives du candidat
-        $activeMissions = $this->renduMissionRepository->findActiveSessions($user->getId());
+        $userId = $user->getId();
+        $activeMissions = $userId === null ? [] : $this->renduMissionRepository->findActiveSessions($userId);
 
         return $this->render('FrontOffice/main/live_sessions.html.twig', [
             'missions' => $activeMissions,
@@ -414,7 +439,7 @@ class RenduMissionController extends AbstractController
 
     private function requireUser(): User
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException();
         }

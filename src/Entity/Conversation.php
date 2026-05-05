@@ -40,7 +40,8 @@ class Conversation
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'user2_id', referencedColumnName: 'id')]
     private ?User $user2 = null;  // ← Nom différent : user2
-    private ArrayCollection $messages; //hedhi zedneha khater fel construct kenet mech mawjouda w naytoulha (baad php stan)
+    /** @var Collection<int, Message> */
+    private Collection $messages; //hedhi zedneha khater fel construct kenet mech mawjouda w naytoulha (baad php stan)
 
     public function __construct()
     {
@@ -52,6 +53,13 @@ class Conversation
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function setId(?int $id): self
+    {
+        $this->id = $id;
+
+        return $this;
     }
 
     public function getDateCreation(): ?\DateTimeInterface
@@ -92,11 +100,17 @@ class Conversation
         return $this->user1Id;
     }
 // Ajoutez cette méthode à la fin de la classe
+    /**
+     * @return Collection<int, Message>
+     */
     public function getMessages(): Collection
     {
         return $this->messages;
     }
 
+    /**
+     * @param Collection<int, Message> $messages
+     */
     public function setMessages(Collection $messages): self
     {
         $this->messages = $messages;

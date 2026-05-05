@@ -118,7 +118,7 @@ final class CandidateRecommendationService
             $sd = $row['skills_data'];
             $coursesBatch[] = [
                 'course_title'   => (string) ($row['course']->getTitre() ?? ''),
-                'course_skills'  => array_values($sd['course_skills']),
+                'course_skills'  => $sd['course_skills'],
                 'course_level'   => (string) ($row['course']->getNiveau() ?? ''),
                 'course_duration' => $sd['duration'],
                 'skill_matches'  => ['exact' => $sd['exact'], 'partial' => $sd['partial']],
@@ -127,7 +127,7 @@ final class CandidateRecommendationService
 
         $allReasons = $this->ollamaRecommendationService->generateReasonsForAllCourses(
             candidateLevel:  $inferredLevel,
-            candidateSkills: array_values(array_keys($skillProfile)),
+            candidateSkills: array_keys($skillProfile),
             courses:         $coursesBatch,
         );
 

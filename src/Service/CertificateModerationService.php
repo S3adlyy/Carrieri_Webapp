@@ -222,7 +222,7 @@ final class CertificateModerationService
     }
 
     /**
-     * @param array<string, array<string, mixed>> $data
+     * @param array<int|string, array<string, mixed>> $data
      */
     private function writeStorage(array $data): void
     {
@@ -245,10 +245,6 @@ final class CertificateModerationService
         $candidateKey = (string) $candidateId;
 
         foreach ($all as $certificateId => $state) {
-            if (!is_array($state)) {
-                continue;
-            }
-
             if ((string) ($state['status'] ?? 'valid') !== 'invalid') {
                 continue;
             }

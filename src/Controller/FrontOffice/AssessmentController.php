@@ -13,6 +13,7 @@ use App\Repository\ResultatQuizModuleRepository;
 use App\Repository\ResultatTestCoursRepository;
 use App\Service\CandidateAssessmentService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -22,6 +23,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CANDIDAT')]
 class AssessmentController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private CandidateAssessmentService $assessmentService,
         private LeconRepository $leconRepository,
@@ -36,7 +38,7 @@ class AssessmentController extends AbstractController
     {
         $user = $this->getAuthenticatedCandidate();
         $moduleGate = $this->computeModuleQuizGate($request, $module);
-        $payload = ['questions' => [], 'expected_count' => 5];
+        $payload = ['questions' => [], 'expected_count' => 12];
         if ($moduleGate['unlocked']) {
             $payload = $this->assessmentService->buildModuleQuiz($module);
         }
@@ -86,7 +88,7 @@ class AssessmentController extends AbstractController
     {
         $user = $this->getAuthenticatedCandidate();
         $gate = $this->computeFinalTestGate($user, $cours);
-        $payload = ['questions' => [], 'expected_count' => 15];
+        $payload = ['questions' => [], 'expected_count' => 22];
         if ($gate['unlocked']) {
             $payload = $this->assessmentService->buildCoursFinalTest($cours);
         }
@@ -154,7 +156,7 @@ class AssessmentController extends AbstractController
         $total = count($modules);
 
         return [
-            'unlocked' => $total > 0 && $passed >= $total,
+            'unlocked' => $passed >= $total,
             'total' => $total,
             'passed' => $passed,
         ];
@@ -162,7 +164,7 @@ class AssessmentController extends AbstractController
 
     private function getAuthenticatedCandidate(): User
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof User || $user->getId() === null) {
             throw $this->createAccessDeniedException();
         }
@@ -204,4 +206,5 @@ class AssessmentController extends AbstractController
         ];
     }
 }
+
 

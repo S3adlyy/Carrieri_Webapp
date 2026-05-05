@@ -17,7 +17,9 @@ final class S3Service
     ) {
         $this->client = new S3Client([
             'version' => 'latest',
-            'region' => $this->region,
+            'region' => 'eu-west-3',
+            'signature_version' => 'v4',
+            'use_path_style_endpoint' => false,
         ]);
     }
 

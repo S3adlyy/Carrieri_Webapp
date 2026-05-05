@@ -1,11 +1,14 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Entity\Cours;
 use App\Service\PaiementService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -16,6 +19,7 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CANDIDAT')]
 class PaiementController extends AbstractController
 {
+    use UserTypeCasterTrait;
     public function __construct(
         private PaiementService $paiementService,
         private EntityManagerInterface $entityManager
@@ -34,13 +38,15 @@ class PaiementController extends AbstractController
         }
 
         // Récupérer l'utilisateur connecté
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
 
         // Vérifier si l'utilisateur a déjà accès au cours
-        if ($this->paiementService->aCcesAuCours($user->getId(), $id)) {
+        $userId = $this->requireEntityId($user->getId());
+
+        if ($this->paiementService->aCcesAuCours($userId, $id)) {
             return $this->redirectToRoute('app_candidate_cours_show', ['id' => $id]);
         }
 
@@ -53,9 +59,9 @@ class PaiementController extends AbstractController
         try {
             $clientSecret = $this->paiementService->creerPaymentIntent(
                 (float) ($cours->getPrix() ?? 0),
-                $cours->getTitre(),
+                $this->requireCourseTitle($cours),
                 $id,
-                $user->getId()
+                $userId
             );
         } catch (\Exception $e) {
             $this->addFlash('error', 'Erreur lors de la création du paiement: ' . $e->getMessage());
@@ -75,7 +81,7 @@ class PaiementController extends AbstractController
     #[Route('/confirmer', name: 'confirmer', methods: ['POST'])]
     public function confirmerPaiement(Request $request): JsonResponse
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
             return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
         }
@@ -87,8 +93,9 @@ class PaiementController extends AbstractController
         }
 
         try {
-            $coursId = (int)$data['coursId'];
-            $paymentIntentId = $data['paymentIntentId'];
+            $coursId = (int) $data['coursId'];
+            $paymentIntentId = (string) $data['paymentIntentId'];
+            $userId = $this->requireEntityId($user->getId());
 
             // Récupérer le cours
             $cours = $this->entityManager->getRepository(Cours::class)->find($coursId);
@@ -100,7 +107,7 @@ class PaiementController extends AbstractController
             if (!$this->paiementService->verifyPaymentIntentOwnershipAndAmount(
                 $paymentIntentId,
                 $coursId,
-                (int) $user->getId(),
+                $userId,
                 (float) ($cours->getPrix() ?? 0)
             )) {
                 return $this->json(['error' => 'Paiement non confirmé'], Response::HTTP_PAYMENT_REQUIRED);
@@ -108,10 +115,10 @@ class PaiementController extends AbstractController
 
             // Confirmer le paiement
             $achatCours = $this->paiementService->confirmerPaiement(
-                $user->getId(),
+                $userId,
                 $coursId,
                 $paymentIntentId,
-                $cours->getPrix()
+                (float) ($cours->getPrix() ?? 0)
             );
 
             return $this->json([
@@ -131,7 +138,7 @@ class PaiementController extends AbstractController
     #[Route('/succes/{coursId}', name: 'succes', methods: ['GET'])]
     public function paiementSucces(Request $request, int $coursId): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
@@ -141,18 +148,20 @@ class PaiementController extends AbstractController
             throw $this->createNotFoundException('Cours non trouvé');
         }
 
-        if (!$this->paiementService->aCcesAuCours($user->getId(), $coursId)) {
+        $userId = $this->requireEntityId($user->getId());
+
+        if (!$this->paiementService->aCcesAuCours($userId, $coursId)) {
             $paymentIntentId = (string) $request->query->get('payment_intent', '');
             if ($paymentIntentId !== '' && (bool) $cours->getEstPayant()) {
                 try {
                     if ($this->paiementService->verifyPaymentIntentOwnershipAndAmount(
                         $paymentIntentId,
                         $coursId,
-                        (int) $user->getId(),
+                        $userId,
                         (float) ($cours->getPrix() ?? 0)
                     )) {
                         $this->paiementService->confirmerPaiement(
-                            (int) $user->getId(),
+                            $userId,
                             $coursId,
                             $paymentIntentId,
                             (float) ($cours->getPrix() ?? 0)
@@ -166,7 +175,7 @@ class PaiementController extends AbstractController
         }
 
         // Vérifier que le paiement a été effectué
-        if (!$this->paiementService->aCcesAuCours($user->getId(), $coursId)) {
+        if (!$this->paiementService->aCcesAuCours($userId, $coursId)) {
             return $this->redirectToRoute('paiement_cours', ['id' => $coursId]);
         }
 
@@ -183,7 +192,27 @@ class PaiementController extends AbstractController
     {
         return $this->render('FrontOffice/paiement/erreur.html.twig');
     }
+
+    private function requireEntityId(?int $id): int
+    {
+        if ($id === null) {
+            throw new \LogicException('Expected a persisted entity with an id.');
+        }
+
+        return $id;
+    }
+
+    private function requireCourseTitle(Cours $cours): string
+    {
+        $title = $cours->getTitre();
+        if ($title === null) {
+            throw new \LogicException('Expected a course title before starting payment.');
+        }
+
+        return $title;
+    }
 }
+
 
 
 

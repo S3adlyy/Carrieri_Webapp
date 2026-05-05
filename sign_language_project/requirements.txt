@@ -1,0 +1,5 @@
+opencv-python>=4.8.1
+mediapipe>=0.10.14
+numpy>=1.26.0
+scikit-learn>=1.5.0
+pillow>=10.1.0

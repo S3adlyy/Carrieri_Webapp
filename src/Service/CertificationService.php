@@ -259,7 +259,7 @@ class CertificationService
         $qrImageUrl = $verificationUrl !== null ? $this->buildQrImageUrl($verificationUrl) : null;
 
         $qrHtml = '';
-        if ($qrImageUrl !== null && $verificationUrl !== null) {
+        if ($qrImageUrl !== null) {
             $safeQrImage = htmlspecialchars($qrImageUrl, ENT_QUOTES, 'UTF-8');
             $safeVerification = htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8');
             $qrHtml = <<<QRCODE
@@ -596,6 +596,8 @@ HTML;
 
     /**
      * Récupère les certificats d'un utilisateur
+     *
+     * @return Certification[]
      */
     public function getCertificatesByUser(User $user): array
     {
@@ -607,6 +609,9 @@ HTML;
 
     /**
      * Récupère un certificat spécifique
+     */
+    /**
+     * @return Certification|null
      */
     public function getCertificate(int $id): ?Certification
     {

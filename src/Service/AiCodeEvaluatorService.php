@@ -29,6 +29,8 @@ class AiCodeEvaluatorService
     ) {}
 
     /**
+     * @return array{score: float, statut: string, feedback: string, resultat_html: string, summary: string}
+     *
      * @throws \RuntimeException when the AI service is unavailable
      */
     public function evaluate(

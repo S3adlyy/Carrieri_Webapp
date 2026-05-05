@@ -1,5 +1,7 @@
 <?php
 
+
+declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Entity\Feedback;
@@ -9,6 +11,7 @@ use App\Repository\FeedbackRepository;
 use App\Repository\RenduMissionRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -18,10 +21,11 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_RECRUTEUR')]
 class FeedbackController extends AbstractController
 {
+    use UserTypeCasterTrait;
     #[Route('/', name: 'app_recruteur_feedback_index', methods: ['GET'])]
     public function index(RenduMissionRepository $renduRepository): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         // Récupérer les rendus de mission (peut-être filtrés par recruteur)
         $rendus = $renduRepository->findAll();
@@ -34,7 +38,7 @@ class FeedbackController extends AbstractController
     #[Route('/new/{renduId}', name: 'app_recruteur_feedback_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em, int $renduId, RenduMissionRepository $renduRepository): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         // Récupérer le rendu de mission sélectionné
         $rendu = $renduRepository->find($renduId);
@@ -53,6 +57,9 @@ class FeedbackController extends AbstractController
 
         $feedback = new Feedback();
         $form = $this->createForm(FeedbackType::class, $feedback);
+        if (!$user instanceof \App\Entity\User || $user->getId() === null) {
+            throw $this->createAccessDeniedException();
+        }
 
         // Valeurs par défaut
         $feedback->setCreatedAt(new \DateTimeImmutable());
@@ -80,7 +87,7 @@ class FeedbackController extends AbstractController
     #[Route('/mes-feedbacks', name: 'app_recruteur_feedback_list', methods: ['GET'])]
     public function myFeedbacks(FeedbackRepository $repository): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         $feedbacks = $repository->findBy(['user' => $user], ['createdAt' => 'DESC']);
 
@@ -92,7 +99,7 @@ class FeedbackController extends AbstractController
     #[Route('/{id}', name: 'app_recruteur_feedback_show', methods: ['GET'])]
     public function show(Feedback $feedback): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if ($feedback->getUser() !== $user) {
             throw $this->createAccessDeniedException('Accès non autorisé');
@@ -106,7 +113,7 @@ class FeedbackController extends AbstractController
     #[Route('/{id}/edit', name: 'app_recruteur_feedback_edit', methods: ['GET', 'POST'])]
     public function edit(Request $request, Feedback $feedback, EntityManagerInterface $em): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if ($feedback->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas modifier ce feedback');
@@ -130,13 +137,14 @@ class FeedbackController extends AbstractController
     #[Route('/{id}', name: 'app_recruteur_feedback_delete', methods: ['POST'])]
     public function delete(Request $request, Feedback $feedback, EntityManagerInterface $em): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if ($feedback->getUser() !== $user) {
             throw $this->createAccessDeniedException('Vous ne pouvez pas supprimer ce feedback');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $feedback->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete' . $feedback->getId(), is_string($token) ? $token : null)) {
             $em->remove($feedback);
             $em->flush();
             $this->addFlash('success', 'Votre feedback a été supprimé');

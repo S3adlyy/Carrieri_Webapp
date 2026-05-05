@@ -66,7 +66,7 @@ class GenerateEntitiesCommand extends Command
         return Command::SUCCESS;
     }
 
-    private function generateEntityWithProperties(string $tableName,  $schemaManager, SymfonyStyle $io): void
+    private function generateEntityWithProperties(string $tableName, mixed $schemaManager, SymfonyStyle $io): void
     {
         // Get columns and foreign keys
         $columns = $schemaManager->listTableColumns($tableName);
@@ -212,5 +212,3 @@ class GenerateEntitiesCommand extends Command
         return $mapping[$doctrineType] ?? 'string';
     }
 }
-
-

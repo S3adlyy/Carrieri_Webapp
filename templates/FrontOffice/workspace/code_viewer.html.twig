@@ -1,7 +1,11 @@
 {% extends 'FrontOffice/main/base_candidate.html.twig' %}
 
-{% block title %}Code Viewer — {{ artifact.artifactName }}{% endblock %}
-
+{% block title %}Code Viewer - {{ artifact.artifactName }}{% endblock %}
+{% block candidate_page_heading %}{% endblock %}
+{% block candidate_breadcrumb %}{% endblock %}
+{% block candidate_content_container_class %}container-fluid p-0{% endblock %}
+{% block candidate_content_row_class %}row g-0 m-0{% endblock %}
+{% block candidate_content_col_class %}col-12 p-0{% endblock %}
 {% block stylesheets %}
     {{ parent() }}
     <style>
@@ -102,114 +106,171 @@
             align-items: center; justify-content: center;
             height: 100%; gap: 16px; color: #8b949e;
         }
+        .cv-editor-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        #cv-monaco {
+            flex: 1;
+            min-height: 0;
+            min-width: 0;
+        }
     </style>
 {% endblock %}
 
-{% block candidatecontent %}
-    <div class="cv-shell">
 
-        {# ── Top Bar ── #}
+{% block candidate_content %}
+    <div class="cv-shell">
         <div class="cv-topbar">
-            <a href="{{ path('profile_view') }}" class="cv-btn">← Back</a>
+            <a href="{{ path('app_my_profile') }}" class="cv-btn">← Back</a>
             <span class="cv-topbar-title">{{ artifact.artifactName }}</span>
             {% if artifact.language %}
                 <span class="cv-topbar-meta">{{ artifact.language }}</span>
             {% endif %}
-            <span class="cv-breadcrumb" id="cv-breadcrumb">Select a file</span>
-
+            <span class="cv-breadcrumb" id="cv-breadcrumb">
+            {% if viewerMode == 'tree' %}Select a file{% else %}Preview{% endif %}
+        </span>
             {% if hasFile %}
-                <a href="{{ downloadUrl }}" class="cv-btn" download>⬇ Download ZIP</a>
+                <a href="{{ path('track_fileobject_download', {id: fileObject.id}) }}" class="cv-btn download">Download</a>
             {% endif %}
-            <a href="{{ path('profile_view') }}" class="cv-btn primary">✓ Done</a>
+            <a href="{{ path('app_my_profile') }}" class="cv-btn primary">Done</a>
         </div>
 
         <div class="cv-body">
-
-            {% if hasFile %}
-                {# ── File Tree ── #}
+            {% if not hasFile %}
+                <div class="cv-nofile">
+                    <div style="font-size:48px;">📂</div>
+                    <div style="font-size:18px; font-weight:700; color:#e6edf3;">No file uploaded yet</div>
+                    <div>Upload a file for this artifact to preview it.</div>
+                    <a href="{{ path('app_my_profile') }}" class="cv-btn primary">Back to Profile</a>
+                </div>
+            {% elseif viewerMode == 'tree' %}
                 <div class="cv-tree" id="cv-tree">
                     <div class="cv-tree-search">
-                        <input type="text" id="cv-tree-search" placeholder="Filter files…">
+                        <input type="text" id="cv-tree-search" placeholder="Filter files...">
                     </div>
                     <div class="cv-tree-list" id="cv-tree-list">
-                        <div style="padding: 20px; text-align:center; color:#8b949e; font-size:12px;">Loading tree…</div>
+                        <div style="padding:20px; text-align:center; color:#8b949e; font-size:12px;">Loading tree...</div>
                     </div>
                 </div>
 
-                {# ── Resize handle ── #}
                 <div class="cv-resize-handle" id="cv-resize"></div>
 
-                {# ── Editor ── #}
                 <div class="cv-editor-panel">
                     <div class="cv-editor-header">
-                        <span id="cv-file-path" class="cv-editor-path">—</span>
-                        <span id="cv-file-lang" class="cv-editor-lang">—</span>
-                        <button class="cv-btn" id="cv-download-file" style="display:none">⬇ Download file</button>
+                        <span id="cv-file-path" class="cv-editor-path"></span>
+                        <span id="cv-file-lang" class="cv-editor-lang"></span>
+                        <button class="cv-btn" id="cv-download-file" style="display:none;">Download file</button>
                     </div>
-                    <div id="cv-monaco">
-                        <div class="cv-empty">
-                            <div class="cv-empty-icon">⚡</div>
-                            <div>Click a file in the tree to view it</div>
-                        </div>
-                    </div>
+                    <div id="cv-monaco"></div>
                 </div>
-
             {% else %}
-                <div class="cv-nofile">
-                    <div style="font-size:48px">📦</div>
-                    <div style="font-size:18px; font-weight:700; color:#e6edf3">No file uploaded yet</div>
-                    <div>Upload a ZIP file for this artifact to browse the code.</div>
-                    <a href="{{ path('profile_view') }}" class="cv-btn primary">Back to Profile</a>
+                <div class="cv-editor-panel" style="width:100%;">
+                    <div class="cv-editor-header">
+                        <span id="cv-file-path" class="cv-editor-path">{{ fileObject.storageKey|split('/')|last }}</span>
+                        <span id="cv-file-lang" class="cv-editor-lang">{{ fileExt|default('') }}</span>
+                    </div>
+
+                    {% if mimeType starts with 'image/' %}
+                        <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:24px;">
+                            <img src="{{ downloadUrl }}" alt="{{ artifact.artifactName }}" style="max-width:100%; max-height:100%; border-radius:12px;">
+                        </div>
+                    {% elseif mimeType starts with 'video/' %}
+                        <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:24px;">
+                            <video controls style="max-width:100%; max-height:100%; border-radius:12px;">
+                                <source src="{{ downloadUrl }}" type="{{ mimeType }}">
+                            </video>
+                        </div>
+                    {% elseif mimeType starts with 'audio/' %}
+                        <div style="flex:1; display:flex; align-items:center; justify-content:center; padding:24px;">
+                            <audio controls style="width:min(720px, 100%);">
+                                <source src="{{ downloadUrl }}" type="{{ mimeType }}">
+                            </audio>
+                        </div>
+                    {% elseif mimeType == 'application/pdf' %}
+                        <iframe src="{{ downloadUrl }}" style="width:100%; height:100%; border:0;"></iframe>
+                    {% else %}
+                        <div id="cv-monaco" style="height:100%;"></div>
+                    {% endif %}
                 </div>
             {% endif %}
-
         </div>
     </div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
+
     {% if hasFile %}
         <script>
-            const ARTIFACT_ID  = {{ artifact.id }};
-            const FO_ID        = {{ fileObject.id }};
+            const VIEWER_MODE = {{ viewerMode|json_encode|raw }};
+            const ARTIFACT_ID = {{ artifact.id }};
             const DOWNLOAD_URL = {{ downloadUrl|json_encode|raw }};
-            const TREE_URL     = `/workspace/code/${ARTIFACT_ID}/tree?fo=${FO_ID}`;
-            const FILE_URL     = `/workspace/code/${ARTIFACT_ID}/file?fo=${FO_ID}&path=`;
+            const FO_ID = {{ fileObject ? fileObject.id : 'null' }};
+            const TREE_URL = {{ path('code_viewer_tree', { artifactId: artifact.id })|json_encode|raw }} + `?fo=${FO_ID}`;
+            const FILE_URL = {{ path('code_viewer_file', { artifactId: artifact.id })|json_encode|raw }} + `?fo=${FO_ID}&path=`;
+            const RAW_URL = {{ path('code_viewer_raw', { artifactId: artifact.id })|json_encode|raw }} + `?fo=${FO_ID}`;
 
-            let monacoEditor   = null;
-            let currentPath    = null;
-            let treeData       = [];
+            let monacoEditor = null;
 
-            // ── Monaco loader ────────────────────────────────────────────────────────────
-            require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/vs' } });
-            require(['vs/editor/editor.main'], function () {
-                monacoEditor = monaco.editor.create(document.getElementById('cv-monaco'), {
-                    value:            '// Select a file from the tree',
-                    language:         'plaintext',
-                    theme:            'vs-dark',
-                    fontSize:         13,
-                    lineNumbers:      'on',
-                    minimap:          { enabled: true },
-                    scrollBeyondLastLine: false,
-                    automaticLayout:  true,
-                    readOnly:         true,
-                    fontFamily:       "'JetBrains Mono', 'Fira Code', monospace",
+            function escHtml(s) {
+                return String(s ?? '')
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+            }
+
+            function initMonaco(onReady) {
+                const target = document.getElementById('cv-monaco');
+                if (!target) return;
+
+                target.innerHTML = '';
+
+                require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/vs' } });
+                require(['vs/editor/editor.main'], function () {
+                    monacoEditor = monaco.editor.create(target, {
+                        value: '// Click a file in the tree to view it',
+                        language: 'plaintext',
+                        theme: 'vs-dark',
+                        fontSize: 13,
+                        lineNumbers: 'on',
+                        minimap: { enabled: true },
+                        scrollBeyondLastLine: false,
+                        automaticLayout: true,
+                        readOnly: true,
+                        fontFamily: 'JetBrains Mono, Fira Code, monospace'
+                    });
+
+                    if (typeof onReady === 'function') onReady();
                 });
-                loadTree();
-            });
+            }
 
-            // ── Tree loading ─────────────────────────────────────────────────────────────
             async function loadTree() {
-                const res  = await fetch(TREE_URL);
-                const json = await res.json();
-                treeData   = json.tree || [];
-                renderTree(treeData, document.getElementById('cv-tree-list'), 0);
+                const list = document.getElementById('cv-tree-list');
+                list.innerHTML = '<div style="padding:20px; text-align:center; color:#8b949e; font-size:12px;">Loading tree...</div>';
+
+                try {
+                    const res = await fetch(TREE_URL);
+                    const json = await res.json();
+
+                    if (!res.ok) {
+                        throw new Error(json.error || 'Failed to load tree.');
+                    }
+
+                    list.innerHTML = '';
+                    renderTree(json.tree || [], list, 0);
+                } catch (e) {
+                    list.innerHTML = `<div style="padding:20px; color:#ff7b72;">${escHtml(e.message || 'Failed to load tree.')}</div>`;
+                }
             }
 
             function renderTree(nodes, container, depth) {
                 nodes.forEach(node => {
-                    const el  = document.createElement('div');
+                    const el = document.createElement('div');
                     el.className = `cv-tree-node ${node.type}`;
                     el.style.paddingLeft = `${12 + depth * 16}px`;
                     el.innerHTML = `<span class="icon"></span><span class="label">${escHtml(node.name)}</span>`;
@@ -218,87 +279,145 @@
 
                     if (node.type === 'dir') {
                         const childContainer = document.createElement('div');
-                        childContainer.className = 'cv-tree-indent';
+                        childContainer.className = 'cv-tree-children';
                         childContainer.style.display = 'none';
-                        el.addEventListener('click', e => {
+
+                        el.addEventListener('click', (e) => {
                             e.stopPropagation();
                             const open = el.classList.toggle('open');
                             childContainer.style.display = open ? 'block' : 'none';
                         });
+
                         container.appendChild(el);
                         container.appendChild(childContainer);
+
                         renderTree(node.children || [], childContainer, depth + 1);
                     } else {
-                        el.addEventListener('click', () => openFile(node.path, el));
+                        el.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            openFile(node.path, el);
+                        });
+
                         container.appendChild(el);
                     }
                 });
             }
 
             async function openFile(path, el) {
-                document.querySelectorAll('.cv-tree-node').forEach(n => n.classList.remove('active'));
-                el.classList.add('active');
-                currentPath = path;
+                try {
+                    document.querySelectorAll('.cv-tree-node.file').forEach(n => n.classList.remove('active'));
+                    el.classList.add('active');
 
-                document.getElementById('cv-file-path').textContent = path;
-                monacoEditor.setValue('// Loading…');
+                    document.getElementById('cv-file-path').textContent = path;
+                    document.getElementById('cv-breadcrumb').textContent = path;
 
-                const res  = await fetch(FILE_URL + encodeURIComponent(path));
+                    if (monacoEditor) {
+                        monacoEditor.setValue('Loading...');
+                    }
+                    console.log('Opening file path:', path);
+                    const res = await fetch(FILE_URL + encodeURIComponent(path));
+                    const json = await res.json();
+                    console.log('File response:', json);
+
+                    if (!res.ok) {
+                        throw new Error(json.error || 'Failed to load file.');
+                    }
+
+                    document.getElementById('cv-file-lang').textContent = json.language || 'plaintext';
+                    document.getElementById('cv-download-file').style.display = 'inline-flex';
+
+                    monaco.editor.setModelLanguage(monacoEditor.getModel(), json.language || 'plaintext');
+                    monacoEditor.setValue(json.content || '');
+                    monacoEditor.layout();
+
+                    document.getElementById('cv-download-file').onclick = () => {
+                        const blob = new Blob([json.content || ''], { type: 'text/plain' });
+                        const a = document.createElement('a');
+                        a.href = URL.createObjectURL(blob);
+                        a.download = path.split('/').pop();
+                        a.click();
+                        URL.revokeObjectURL(a.href);
+                    };
+                } catch (e) {
+                    if (monacoEditor) {
+                        monacoEditor.setValue('// ' + (e.message || 'Failed to load file.'));
+                    }
+                    console.error(e);
+                }
+            }
+            async function loadRawFile() {
+                const res = await fetch(RAW_URL);
                 const json = await res.json();
 
-                document.getElementById('cv-breadcrumb').textContent = path;
-                document.getElementById('cv-file-lang').textContent  = json.language || 'plaintext';
-                document.getElementById('cv-download-file').style.display = 'inline-flex';
+                document.getElementById('cv-breadcrumb').textContent = json.path || 'Preview';
+                const pathEl = document.getElementById('cv-file-path');
+                const langEl = document.getElementById('cv-file-lang');
+
+                if (pathEl) pathEl.textContent = json.path || '';
+                if (langEl) langEl.textContent = json.language || 'plaintext';
 
                 monaco.editor.setModelLanguage(monacoEditor.getModel(), json.language || 'plaintext');
                 monacoEditor.setValue(json.content || '');
-
-                // Download individual file button
-                document.getElementById('cv-download-file').onclick = () => {
-                    const blob = new Blob([json.content], { type: 'text/plain' });
-                    const a    = document.createElement('a');
-                    a.href     = URL.createObjectURL(blob);
-                    a.download = path.split('/').pop();
-                    a.click();
-                };
             }
 
-            // ── Search filter ─────────────────────────────────────────────────────────────
-            document.getElementById('cv-tree-search').addEventListener('input', function () {
-                const q = this.value.toLowerCase().trim();
-                document.querySelectorAll('.cv-tree-node.file').forEach(el => {
-                    const name = el.querySelector('.label').textContent.toLowerCase();
-                    el.style.display = (!q || name.includes(q)) ? '' : 'none';
+            function initTreeSearch() {
+                const input = document.getElementById('cv-tree-search');
+                if (!input) return;
+
+                input.addEventListener('input', function () {
+                    const q = this.value.toLowerCase().trim();
+                    document.querySelectorAll('.cv-tree-node.file').forEach(el => {
+                        const name = (el.querySelector('.label')?.textContent || '').toLowerCase();
+                        el.style.display = (!q || name.includes(q)) ? '' : 'none';
+                    });
                 });
-            });
+            }
 
-            // ── Resizable tree panel ──────────────────────────────────────────────────────
-            (function() {
+            function initResizeHandle() {
                 const handle = document.getElementById('cv-resize');
-                const tree   = document.getElementById('cv-tree');
-                let dragging = false, startX = 0, startW = 0;
+                const tree = document.getElementById('cv-tree');
+                if (!handle || !tree) return;
 
-                handle.addEventListener('mousedown', e => {
-                    dragging = true; startX = e.clientX; startW = tree.offsetWidth;
+                let dragging = false;
+                let startX = 0;
+                let startW = 0;
+
+                handle.addEventListener('mousedown', (e) => {
+                    dragging = true;
+                    startX = e.clientX;
+                    startW = tree.offsetWidth;
                     handle.classList.add('dragging');
                     document.body.style.cursor = 'col-resize';
                 });
-                document.addEventListener('mousemove', e => {
+
+                document.addEventListener('mousemove', (e) => {
                     if (!dragging) return;
                     const w = Math.max(140, Math.min(600, startW + e.clientX - startX));
                     tree.style.width = w + 'px';
                 });
+
                 document.addEventListener('mouseup', () => {
                     if (!dragging) return;
                     dragging = false;
                     handle.classList.remove('dragging');
                     document.body.style.cursor = '';
                 });
-            })();
-
-            function escHtml(s) {
-                return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
             }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                if (VIEWER_MODE === 'tree') {
+                    initMonaco(() => {
+                        loadTree();
+                        initTreeSearch();
+                        initResizeHandle();
+                    });
+                } else {
+                    const monacoTarget = document.getElementById('cv-monaco');
+                    if (monacoTarget) {
+                        initMonaco(() => loadRawFile());
+                    }
+                }
+            });
         </script>
         <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.47.0/min/vs/loader.js"></script>
     {% endif %}

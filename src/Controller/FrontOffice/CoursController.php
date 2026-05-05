@@ -16,6 +16,7 @@ use App\Service\CertificationService;
 use App\Service\PaiementService;
 use App\Service\TranslationService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -28,6 +29,7 @@ use Symfony\Component\Mailer\MailerInterface;
 #[IsGranted('ROLE_CANDIDAT')]
 class CoursController extends AbstractController
 {
+    use UserTypeCasterTrait;
     private const COURSES_PER_PAGE = 6;
 
     public function __construct(
@@ -50,7 +52,8 @@ class CoursController extends AbstractController
         $niveau = trim((string) $request->query->get('niveau', ''));
         $page = max(1, (int) $request->query->get('page', 1));
         $viewedLessonIds = $this->getViewedLessonIds($request);
-        $order = $request->query->get('order', 'recent');
+        $orderValue = $request->query->get('order', 'recent');
+        $order = is_string($orderValue) ? $orderValue : 'recent';
 
         // Translate the user's search query back to native language (French) to search in the Database
         $dbQuery = $query;
@@ -67,7 +70,7 @@ class CoursController extends AbstractController
         $courseStates = [];
         $purchasedCourseIds = [];
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if ($user instanceof \App\Entity\User && $user->getId() !== null) {
             $purchasedCourseIds = $this->paiementService->getCoursAchetes((int) $user->getId());
         }
@@ -128,7 +131,7 @@ class CoursController extends AbstractController
     #[Route('/mes-recommandations', name: 'app_candidate_mes_recommandations')]
     public function recommendations(Request $request): Response
     {
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof \App\Entity\User || $user->getId() === null) {
             throw $this->createAccessDeniedException();
         }
@@ -152,9 +155,9 @@ class CoursController extends AbstractController
         $gate = $this->computeFinalTestGate($cours);
 
         // Créer un certificat si le cours est complété
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if ($user instanceof \App\Entity\User) {
-            $progress = (int) ($outline['progress'] ?? 0);
+            $progress = $outline['progress'];
             $this->certificationService->createCertificateIfCompleted($user, $cours, $progress);
         }
 
@@ -249,7 +252,7 @@ class CoursController extends AbstractController
         $completedModuleQuizzes = 0;
         $passedFinalTest = 0;
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if ($user instanceof \App\Entity\User && $user->getId() !== null) {
             foreach ($modules as $module) {
                 $moduleId = $module->getId();
@@ -292,7 +295,7 @@ class CoursController extends AbstractController
 
         if (is_resource($blob)) {
             $meta = stream_get_meta_data($blob);
-            if (($meta['seekable'] ?? false) === true) {
+            if ($meta['seekable'] === true) {
                 rewind($blob);
             }
 
@@ -354,7 +357,7 @@ class CoursController extends AbstractController
             $state = $this->buildCourseOutline($course, $viewedLessonIds);
             $allCourseStates[$courseId] = $state;
 
-            $progress = (int) ($state['progress'] ?? 0);
+            $progress = $state['progress'];
             if ($progress <= 0) {
                 continue;
             }
@@ -418,7 +421,7 @@ class CoursController extends AbstractController
             return ['unlocked' => false, 'total' => 0, 'passed' => 0];
         }
 
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
         if (!$user instanceof \App\Entity\User || $user->getId() === null) {
             return ['unlocked' => false, 'total' => count($modules), 'passed' => 0];
         }
@@ -439,7 +442,7 @@ class CoursController extends AbstractController
         $total = count($modules);
 
         return [
-            'unlocked' => $total > 0 && $passed >= $total,
+            'unlocked' => $passed >= $total,
             'total' => $total,
             'passed' => $passed,
         ];
@@ -459,3 +462,4 @@ class CoursController extends AbstractController
         return new Response('Email envoyé avec ton compte ! Vérifie ta boîte de réception.');
     }
 }
+

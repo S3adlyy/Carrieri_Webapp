@@ -12,6 +12,7 @@ class OffreInsightService
 {
     /**
      * @param Postulation[] $postulations
+     * @return array<string, mixed>
      */
     public function analyze(OffreEmploi $offre, array $postulations = []): array
     {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controller\FrontOffice;
 
 use App\Entity\OffreEmploi;
+use App\Service\CandidateOfferMatchService;
 use App\Entity\Postulation;
 use App\Repository\FavoritesOffresRepository;
 use App\Repository\OffreEmploiRepository;
@@ -18,6 +19,7 @@ use Psr\Log\LoggerInterface;
 use App\Entity\User;
 use App\Service\ProfileService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use App\Controller\UserTypeCasterTrait;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
@@ -26,7 +28,8 @@ use Symfony\Component\Security\Http\Attribute\IsGranted;
 #[IsGranted('ROLE_CANDIDAT')]
 class CandidateMainController extends AbstractController
 {
-    private $logger;
+    use UserTypeCasterTrait;
+    private LoggerInterface $logger;
     private ProfileService $profileService;
 
     public function __construct(ProfileService $profileService, LoggerInterface $logger)
@@ -46,12 +49,14 @@ class CandidateMainController extends AbstractController
     public function offres(
         Request $request,
         OffreEmploiRepository $offreEmploiRepository,
-        FavoritesOffresRepository $favoritesRepo
+        FavoritesOffresRepository $favoritesRepo,
+        CandidateOfferMatchService $candidateOfferMatchService
     ): Response {
-        $keyword = $request->query->get('keyword');
-        $type = $request->query->get('type');
-        $localisation = $request->query->get('localisation');
+        $keyword = $this->queryString($request, 'keyword');
+        $type = $this->queryString($request, 'type');
+        $localisation = $this->queryString($request, 'localisation');
         $salaireMin = $request->query->get('salaire');
+        $sort = (string) $request->query->get('sort', 'smart');
 
         $offres = $offreEmploiRepository->searchAndFilter(
             $keyword,
@@ -72,15 +77,69 @@ class CandidateMainController extends AbstractController
 
         $user = $this->getUser();
         $favoriteIds = [];
+        $rankedOffres = [];
 
         if ($user instanceof User) {
-            $favoriteIds = $favoritesRepo->getFavoriteOfferIdsByCandidat($user->getId());
+            $candidateId = $this->requireEntityId($user->getId());
+            $favoriteIds = $favoritesRepo->getFavoriteOfferIdsByCandidat($candidateId);
+            $rankedOffres = $this->buildRankedOffers($offres, $user, $candidateOfferMatchService);
+
+            if ($sort === 'date') {
+                usort($rankedOffres, static function (array $left, array $right): int {
+                    $leftDate = $left['offre']->getDatePublication()?->getTimestamp() ?? 0;
+                    $rightDate = $right['offre']->getDatePublication()?->getTimestamp() ?? 0;
+
+                    return $rightDate <=> $leftDate;
+                });
+            } else {
+                usort($rankedOffres, static function (array $left, array $right): int {
+                    return $right['match']['score'] <=> $left['match']['score'];
+                });
+            }
+        } else {
+            foreach ($offres as $offre) {
+                $rankedOffres[] = [
+                    'offre' => $offre,
+                    'match' => null,
+                ];
+            }
         }
 
         return $this->render('FrontOffice/main/offres.html.twig', [
-            'offres' => $offres,
+            'rankedOffres' => $rankedOffres,
             'stats' => $stats,
             'favoriteIds' => $favoriteIds,
+            'currentSort' => $sort,
+        ]);
+    }
+
+    #[Route('/offres/smart', name: 'app_candidate_offres_smart')]
+    public function smartOffres(
+        Request $request,
+        OffreEmploiRepository $offreEmploiRepository,
+        FavoritesOffresRepository $favoritesRepo,
+        CandidateOfferMatchService $candidateOfferMatchService
+    ): Response {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            throw $this->createAccessDeniedException();
+        }
+
+        $offres = $offreEmploiRepository->searchAndFilter(
+            $this->queryString($request, 'keyword'),
+            $this->queryString($request, 'type'),
+            $this->queryString($request, 'localisation'),
+            $request->query->get('salaire') ? (float) $request->query->get('salaire') : null
+        );
+
+        $rankedOffres = $this->buildRankedOffers($offres, $user, $candidateOfferMatchService);
+        usort($rankedOffres, static function (array $left, array $right): int {
+            return $right['match']['score'] <=> $left['match']['score'];
+        });
+
+        return $this->render('FrontOffice/main/offres_smart.html.twig', [
+            'rankedOffres' => $rankedOffres,
+            'favoriteIds' => $favoritesRepo->getFavoriteOfferIdsByCandidat($this->requireEntityId($user->getId())),
         ]);
     }
 
@@ -107,7 +166,10 @@ class CandidateMainController extends AbstractController
         $user = $this->getUser();
         if ($user instanceof User) {
             $alreadyApplied = $postulationRepository->hasUserAppliedToOffer($user, $offre);
-            $isFavorite = $favoritesRepo->isFavorite($user->getId(), $offre->getId());
+            $isFavorite = $favoritesRepo->isFavorite(
+                $this->requireEntityId($user->getId()),
+                $this->requireEntityId($offre->getId())
+            );
 
             if ($alreadyApplied) {
                 $postulation = $postulationRepository->findOneBy([
@@ -210,7 +272,12 @@ class CandidateMainController extends AbstractController
             }
 
             if ($errors === []) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/cv';
+                $projectDir = $this->getParameter('kernel.project_dir');
+                if (!is_string($projectDir)) {
+                    throw new \LogicException('The kernel.project_dir parameter must be a string.');
+                }
+
+                $uploadDir = $projectDir . '/public/uploads/cv';
 
                 if (!is_dir($uploadDir)) {
                     mkdir($uploadDir, 0777, true);
@@ -230,8 +297,8 @@ class CandidateMainController extends AbstractController
                     $postulation->setStatut('En attente');
                     $postulation->setMotivationCandidature($motivation);
                     $postulation->setCvPath('uploads/cv/' . $safeFilename);
-                    $postulation->setCandidatId($user->getId());
-                    $postulation->setOffreId($offre->getId());
+                    $postulation->setCandidatId($this->requireEntityId($user->getId()));
+                    $postulation->setOffreId($this->requireEntityId($offre->getId()));
                     $postulation->setUser($user);
                     $postulation->setOffreEmploi($offre);
 
@@ -281,6 +348,7 @@ class CandidateMainController extends AbstractController
         ]);
     }
 
+
     #[Route('/mes-postulations', name: 'app_candidate_postulations')]
     public function myApplications(Request $request, PostulationRepository $postulationRepository): Response
     {
@@ -296,8 +364,6 @@ class CandidateMainController extends AbstractController
         ];
 
         $postulations = $postulationRepository->searchPostulationsForCandidate($user, $filters);
-
-        // Get statistics
         $stats = $postulationRepository->getStatsByUser($user);
 
         return $this->render('FrontOffice/main/postulations.html.twig', [
@@ -309,8 +375,7 @@ class CandidateMainController extends AbstractController
     #[Route('/profile', name: 'app_candidate_profile')]  // Add this route attribute
     public function profile(): Response
     {
-        /** @var User $user */
-        $user = $this->getUser();
+        $user = $this->getAuthenticatedUser();
 
         if (!$user instanceof User) {
             throw $this->createAccessDeniedException('You must be logged in.');
@@ -335,7 +400,7 @@ class CandidateMainController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $favoritesRows = $favoritesRepo->getFavoritesByCandidat($user->getId());
+        $favoritesRows = $favoritesRepo->getFavoritesByCandidat($this->requireEntityId($user->getId()));
         $favorites = [];
 
         foreach ($favoritesRows as $favoriteRow) {
@@ -381,19 +446,71 @@ class CandidateMainController extends AbstractController
             throw $this->createAccessDeniedException();
         }
 
-        $isFavorite = $favoritesRepo->isFavorite($user->getId(), $id);
+        $candidateId = $this->requireEntityId($user->getId());
+        $isFavorite = $favoritesRepo->isFavorite($candidateId, $id);
 
-        if ($isFavorite) {
-            $success = $favoritesRepo->removeFavorite($user->getId(), $id);
+        if ($isFavorite && $request->request->get('_favorite_action') === 'add') {
+            $success = true;
+            $message = 'Offre déjà dans vos favoris.';
+        } elseif ($isFavorite) {
+            $success = $favoritesRepo->removeFavorite($candidateId, $id);
             $message = $success ? 'Offre retirée des favoris.' : 'Impossible de retirer cette offre des favoris.';
         } else {
-            $success = $favoritesRepo->addFavorite($user->getId(), $id);
+            $success = $favoritesRepo->addFavorite($candidateId, $id);
             $message = $success ? 'Offre ajoutée aux favoris.' : 'Impossible d’ajouter cette offre aux favoris.';
+        }
+
+        if ($request->isXmlHttpRequest()) {
+            return new Response('', $success ? Response::HTTP_NO_CONTENT : Response::HTTP_BAD_REQUEST);
         }
 
         $this->addFlash($success ? 'success' : 'error', $message);
 
         $referer = $request->headers->get('referer');
         return $this->redirect($referer ?: $this->generateUrl('app_candidate_offres'));
+    }
+
+    /**
+     * @param OffreEmploi[] $offres
+     * @return array<int, array{offre: OffreEmploi, match: array<string, mixed>}>
+     */
+    private function buildRankedOffers(
+        array $offres,
+        User $user,
+        CandidateOfferMatchService $candidateOfferMatchService
+    ): array {
+        $rankedOffres = [];
+
+        foreach ($offres as $offre) {
+            $rankedOffres[] = [
+                'offre' => $offre,
+                'match' => $candidateOfferMatchService->match($user, $offre),
+            ];
+        }
+
+        return $rankedOffres;
+    }
+
+    private function queryString(Request $request, string $key): ?string
+    {
+        $value = $request->query->get($key);
+        if ($value === null) {
+            return null;
+        }
+
+        if (is_bool($value)) {
+            return $value ? '1' : '0';
+        }
+
+        return trim((string) $value);
+    }
+
+    private function requireEntityId(?int $id): int
+    {
+        if ($id === null) {
+            throw new \LogicException('Expected a persisted entity with an id.');
+        }
+
+        return $id;
     }
 }
