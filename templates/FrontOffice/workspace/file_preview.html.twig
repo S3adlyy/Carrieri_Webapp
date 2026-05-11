@@ -1,0 +1,139 @@
+{% extends 'FrontOffice/main/base_candidate.html.twig' %}
+
+{% block title %}{{ artifact.artifactName }}{% endblock %}
+{% block candidate_page_heading %}{% endblock %}
+{% block candidate_breadcrumb %}{% endblock %}
+{% block candidate_content_container_class %}container-fluid p-0{% endblock %}
+{% block candidate_content_row_class %}row g-0 m-0{% endblock %}
+{% block candidate_content_col_class %}col-12 p-0{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .fp-shell{
+            min-height:calc(100vh - 60px);
+            background:#0d1117;
+            color:#c9d1d9;
+            display:flex;
+            flex-direction:column;
+        }
+        .fp-topbar{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:14px 20px;
+            background:#161b22;
+            border-bottom:1px solid #30363d;
+        }
+        .fp-title{font-weight:700;color:#e6edf3;}
+        .fp-meta{font-size:12px;color:#8b949e;}
+        .fp-spacer{margin-left:auto;}
+        .fp-btn{
+            background:#21262d;
+            border:1px solid #30363d;
+            color:#c9d1d9;
+            padding:6px 14px;
+            border-radius:8px;
+            text-decoration:none;
+            font-size:12px;
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+        }
+        .fp-btn:hover{background:#30363d;color:#fff;}
+        .fp-body{
+            flex:1;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:24px;
+        }
+        .fp-card{
+            width:min(1200px, 100%);
+            background:#161b22;
+            border:1px solid #30363d;
+            border-radius:16px;
+            padding:20px;
+            box-shadow:0 20px 60px rgba(0,0,0,.35);
+        }
+        .fp-image{
+            display:block;
+            max-width:100%;
+            max-height:75vh;
+            margin:0 auto;
+            border-radius:12px;
+            background:#0d1117;
+        }
+        .fp-video,.fp-audio,.fp-iframe{
+            width:100%;
+            border-radius:12px;
+            background:#0d1117;
+        }
+        .fp-video{max-height:75vh;}
+        .fp-iframe{height:78vh;border:1px solid #30363d;}
+        .fp-text{
+            white-space:pre-wrap;
+            word-break:break-word;
+            font:13px/1.6 'JetBrains Mono','Fira Code',monospace;
+            background:#0d1117;
+            border:1px solid #30363d;
+            border-radius:12px;
+            padding:18px;
+            max-height:75vh;
+            overflow:auto;
+        }
+        .fp-empty{
+            text-align:center;
+            color:#8b949e;
+            padding:60px 20px;
+        }
+    </style>
+{% endblock %}
+
+{% block candidate_content %}
+    <div class="fp-shell">
+        <div class="fp-topbar">
+            <a href="{{ path('app_my_profile') }}" class="fp-btn">Back</a>
+            <div>
+                <div class="fp-title">{{ artifact.artifactName }}</div>
+                <div class="fp-meta">{{ artifactType }}</div>
+            </div>
+            <div class="fp-spacer"></div>
+            {% if hasFile and downloadUrl %}
+                <a href="{{ downloadUrl }}" class="fp-btn" target="_blank" rel="noopener noreferrer">Download</a>
+            {% endif %}
+        </div>
+
+        <div class="fp-body">
+            <div class="fp-card">
+                {% if not hasFile and artifactType != 'TEXT' and artifactType != 'LINK' %}
+                    <div class="fp-empty">No file uploaded for this artifact.</div>
+
+                {% elseif artifactType == 'IMAGE' %}
+                    <img src="{{ downloadUrl }}" alt="{{ artifact.artifactName }}" class="fp-image">
+
+                {% elseif artifactType == 'VIDEO' %}
+                    <video class="fp-video" controls preload="metadata">
+                        <source src="{{ downloadUrl }}">
+                        Your browser does not support video playback.
+                    </video>
+
+                {% elseif artifactType == 'AUDIO' %}
+                    <audio class="fp-audio" controls preload="metadata">
+                        <source src="{{ downloadUrl }}">
+                        Your browser does not support audio playback.
+                    </audio>
+
+                {% elseif artifactType == 'DOCUMENT' %}
+                    <iframe src="{{ downloadUrl }}" class="fp-iframe"></iframe>
+
+                {% elseif artifactType == 'TEXT' or artifactType == 'LINK' %}
+                    <div class="fp-text">{{ artifact.textContent }}</div>
+
+                {% else %}
+                    <iframe src="{{ downloadUrl }}" class="fp-iframe"></iframe>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}

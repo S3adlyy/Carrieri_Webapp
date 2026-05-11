@@ -217,8 +217,8 @@ class RegistrationController extends AbstractController
         $user->setLastName((string) $pendingData['lastName']);
         $user->setEmail((string) $pendingData['email']);
         $role = $pendingData['role'];
-        $user->setRoles('ROLE_' . (string) $role);
-        $user->setType((string) $role);
+        $user->setRoles($role);
+        $user->setType($role);
         $user->setIsActive(1);
         $user->setCreatedAt(new \DateTimeImmutable());
         $user->setFaceEnabled(0);
@@ -273,6 +273,7 @@ class RegistrationController extends AbstractController
         // Hash password
         $hashedPassword = $this->passwordHasher->hashPassword($user, $pendingData['plainPassword']);
         $user->setPasswordHash($hashedPassword);
+        echo "hashed password: ".$hashedPassword;
 
         try {
             $this->entityManager->persist($user);

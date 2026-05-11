@@ -36,20 +36,64 @@ final class CodeViewerController extends AbstractController
             ? $this->fileObjectService->findById($foId)
             : $this->fileObjectService->findLatestByArtifact($artifact);
 
-        $storageKey = $fo?->getStorageKey() ?? '';
-        $ext = strtolower(pathinfo($storageKey, PATHINFO_EXTENSION));
-        $isZip = in_array($ext, ['zip'], true);
-        $mode = $request->query->get('mode', $isZip ? 'tree' : 'preview');
+        $mode = (string) $request->query->get('mode', '');
+        $type = strtoupper((string) ($artifact->getArtifactType() ?? 'OTHER'));
+
+        $downloadUrl = $fo
+            ? $this->fileObjectService->presignedDownloadUrl((string) $fo->getStorageKey(), 1800)
+            : null;
+
+        $storageKey = $fo ? (string) $fo->getStorageKey() : '';
+        $fileExt = $storageKey !== '' ? strtolower((string) pathinfo($storageKey, PATHINFO_EXTENSION)) : '';
+        $mimeType = $this->guessMimeTypeFromExtension($fileExt);
+
+        if ($mode === 'preview' && $type !== 'CODE') {
+            return $this->render('FrontOffice/workspace/file_preview.html.twig', [
+                'artifact' => $artifact,
+                'fileObject' => $fo,
+                'hasFile' => $fo !== null,
+                'downloadUrl' => $downloadUrl,
+                'artifactType' => $type,
+                'mimeType' => $mimeType,
+                'fileExt' => $fileExt,
+                'viewerMode' => 'preview',
+            ]);
+        }
 
         return $this->render('FrontOffice/workspace/code_viewer.html.twig', [
             'artifact' => $artifact,
             'fileObject' => $fo,
             'hasFile' => $fo !== null,
-            'downloadUrl' => $fo ? $this->fileObjectService->presignedDownloadUrl($storageKey, 1800) : null,
-            'viewerMode' => $mode,
-            'fileExt' => $ext,
-            'mimeType' => $fo?->getMimeType(),
+            'downloadUrl' => $downloadUrl,
+            'viewerMode' => 'tree',
+            'mimeType' => $mimeType,
+            'fileExt' => $fileExt,
         ]);
+    }
+    private function guessMimeTypeFromExtension(string $ext): string
+    {
+        return match (strtolower($ext)) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'svg' => 'image/svg+xml',
+            'mp4' => 'video/mp4',
+            'webm' => 'video/webm',
+            'mov' => 'video/quicktime',
+            'mp3' => 'audio/mpeg',
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            'm4a' => 'audio/mp4',
+            'pdf' => 'application/pdf',
+            'txt' => 'text/plain',
+            'md' => 'text/markdown',
+            'json' => 'application/json',
+            'csv' => 'text/csv',
+            'html' => 'text/html',
+            'xml' => 'application/xml',
+            default => 'application/octet-stream',
+        };
     }
 
     #[Route('/{artifactId}/raw', name: 'code_viewer_raw', methods: ['GET'])]

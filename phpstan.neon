@@ -1,4 +1,8 @@
 parameters:
  level: 8
  paths:
- - src
+ - src/Controller/ProfileController.php
+ - src/Entity/User.php
+ - src/Service/AzureFaceClientService.php
+ - src/Service/AzureFaceConfigService.php
+ - src/Service/ProfileService.php

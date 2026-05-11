@@ -24,7 +24,9 @@ final class SnapshotController extends AbstractController
         private readonly FileObjectService $fileObjectService,
     ) {}
 
-    /** Create a snapshot for a track */
+    /** Create a snapshot for a track
+     * @throws \Exception
+     */
     #[Route('/create/{trackId}', name: 'snapshot_create', methods: ['POST'])]
     public function create(int $trackId, Request $request): JsonResponse
     {
@@ -39,7 +41,11 @@ final class SnapshotController extends AbstractController
         }
 
         $data    = json_decode($request->getContent(), true) ?? [];
+        $title = trim((string) ($data['title'] ?? ''));
         $message = trim((string) ($data['message'] ?? ''));
+        if ($title === '') {
+            return $this->json(['error' => 'Title is required.'], 422);
+        }
         if ($message === '') return $this->json(['error' => 'Message is required.'], 422);
         if (strlen($message) > 280) return $this->json(['error' => 'Message too long (max 280 chars).'], 422);
 
@@ -48,7 +54,8 @@ final class SnapshotController extends AbstractController
             return $this->json(['error' => 'User not found.'], 403);
         }
 
-        $snapshot = $this->snapshotService->create($track, $currentUserId, $message);
+        $snapshot = $this->snapshotService->create($track, $currentUser,$title, $message);
+        dump($snapshot);
 
         return $this->json(['snapshot' => $this->serializeSnapshot($snapshot)], 201);
     }
@@ -86,6 +93,9 @@ final class SnapshotController extends AbstractController
                         'artifactId' => null,
                         'artifactName' => null,
                         'artifactType' => null,
+                        'language' => null,
+                        'textContent' => null,
+                        'description' => null,
                         'fileObjectId' => $fo?->getId(),
                         'hasFile' => $fo !== null,
                         'downloadUrl' => null,
@@ -96,6 +106,7 @@ final class SnapshotController extends AbstractController
                     'artifactId'   => $artifact->getId(),
                     'artifactName' => $artifact->getArtifactName(),
                     'artifactType' => $artifact->getArtifactType(),
+                    'textContent'  => $artifact->getTestContent(),
                     'fileObjectId' => $fo?->getId(),
                     'hasFile'      => $fo !== null,
                     'downloadUrl'  => $fo ? $this->fileObjectService->presignedDownloadUrl((string) $fo->getStorageKey(), 600) : null,
@@ -104,13 +115,41 @@ final class SnapshotController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/delete', name: 'snapshot_delete', methods: ['POST'])]
+    public function delete(int $id): JsonResponse
+    {
+        $snapshot = $this->snapshotService->findById($id);
+        if (!$snapshot) {
+            return $this->json(['error' => 'Snapshot not found.'], 404);
+        }
+
+        $track = $snapshot->getTrack();
+        if (!$track) {
+            return $this->json(['error' => 'Track not found.'], 404);
+        }
+
+        $workspace = $track->getWorkspace();
+        $workspaceUser = $workspace?->getUser();
+        $currentUser = $this->requireUser();
+
+        if (!$workspace || !$workspaceUser || $workspaceUser->getId() !== $currentUser->getId()) {
+            return $this->json(['error' => 'Forbidden.'], 403);
+        }
+
+        $this->snapshotService->delete($snapshot);
+
+        return $this->json(['ok' => true]);
+    }
+
+
     /**
-     * @return array{id:int|null,message:string|null,createdAt:string|null,isFinal:bool}
+     * @return array{id:int,title:string|null,message:string|null,createdAt:string|null,isFinal:bool}
      */
     private function serializeSnapshot(\App\Entity\Snapshot $s): array
     {
         return [
             'id'        => $s->getId(),
+            'title'     => $s->getTitle(),
             'message'   => $s->getMessage(),
             'createdAt' => $s->getCreatedAt()?->format('Y-m-d H:i'),
             'isFinal'   => (bool) $s->getIsFinal(),

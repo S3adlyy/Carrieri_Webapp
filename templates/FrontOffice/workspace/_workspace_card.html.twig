@@ -170,8 +170,23 @@
         </div>
         <div class="wsc-modal-body">
             <div class="wsc-field">
-                <label>What did you accomplish? *</label>
-                <textarea id="wsc-snap-msg" rows="4" maxlength="280" placeholder="Keep it short and specific — 1-2 sentences."></textarea>
+                <label>Snapshot title</label>
+                <input
+                        type="text"
+                        id="wsc-snap-title"
+                        maxlength="80"
+                        placeholder="e.g. Initial API version, Added auth flow"
+                >
+            </div>
+
+            <div class="wsc-field">
+                <label>What did you accomplish?</label>
+                <textarea
+                        id="wsc-snap-msg"
+                        rows="4"
+                        maxlength="280"
+                        placeholder="Keep it short and specific: what changed in this version?"
+                ></textarea>
                 <span class="wsc-field-hint"><span id="wsc-snap-chars">0</span>/280</span>
             </div>
             <div class="wsc-modal-error" id="wsc-snap-err" style="display:none"></div>
@@ -531,6 +546,68 @@
     @keyframes wsc-toast-in { from { opacity:0; transform: translateX(24px); } }
     .wsc-toast.success { border-color: rgba(16,185,129,.3); }
     .wsc-toast.error   { border-color: rgba(239,68,68,.3); }
+
+    .wsc-snapshot-browser {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .wsc-snapshot-browser-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .wsc-snap-nav {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(255,255,255,.05);
+        border: 1px solid rgba(255,255,255,.08);
+        color: #cbd5e1;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .wsc-snap-nav:hover {
+        background: rgba(99,102,241,.14);
+        border-color: rgba(99,102,241,.35);
+        color: #a5b4fc;
+    }
+
+    .wsc-seg {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        min-width: 150px;
+    }
+
+    .wsc-seg-title {
+        font-size: .76rem;
+        font-weight: 700;
+        color: #e2e8f0;
+    }
+
+    .wsc-seg-date {
+        font-size: .68rem;
+        color: #64748b;
+    }
+
+    .wsc-snapshot-viewer {
+        background: rgba(255,255,255,.03);
+        border: 1px solid rgba(255,255,255,.07);
+        border-radius: 14px;
+        padding: 16px;
+    }
+
+    .wsc-snap-message {
+        margin-top: 10px;
+        font-size: .82rem;
+        line-height: 1.55;
+        color: #cbd5e1;
+    }
 </style>
 
 {# ── Toast container ── #}
@@ -561,7 +638,9 @@
                 snapshotListTemplate: '/snapshot/list/999999',
                 snapshotCreateTemplate: '/snapshot/create/999999',
                 codeViewerTemplate: '{{ path('codeviewer', { artifactId: 999999 }) }}',
-                codeRawViewerTemplate: '{{ path('codeviewer', { artifactId: 999999 }) }}'
+                codeRawViewerTemplate: '{{ path('codeviewer', { artifactId: 999999 }) }}',
+                snapshotDetailTemplate: '{{ path('snapshot_detail', { id: 999999 }) }}',
+                snapshotDeleteTemplate: '{{ path('snapshot_delete', { id: 999999 }) }}'
             }
         };
 
@@ -706,9 +785,51 @@
         function normalizeSnapshot(item) {
             return {
                 id: Number(item?.id ?? 0),
+                title: String(item?.title ?? ''),
                 message: String(item?.message ?? item?.text ?? ''),
-                createdAt: item?.createdAt ?? item?.date ?? ''
+                createdAt: item?.createdAt ?? item?.date ?? '',
+                isFinal: Boolean(item?.isFinal ?? false),
             };
+        }
+        async function loadSnapshotDetail(snapshotId) {
+            return await wscFetch(routeWithId(WSC.routes.snapshotDetailTemplate, snapshotId));
+        }
+        function previewSnapshotFile(fileObjectId, artifactType, artifactId) {
+            if (!fileObjectId) {
+                wscToast('No file attached to this snapshot item.', 'error');
+                return;
+            }
+
+            const upperType = String(artifactType || '').toUpperCase();
+            const baseUrl = routeWithId(WSC.routes.codeViewerTemplate, artifactId);
+
+            if (upperType === 'CODE') {
+                window.open(`${baseUrl}?fo=${encodeURIComponent(fileObjectId)}`, '_blank');
+                return;
+            }
+
+            if (['DOCUMENT', 'IMAGE', 'VIDEO', 'AUDIO', 'TEXT', 'OTHER'].includes(upperType)) {
+                window.open(`${baseUrl}?fo=${encodeURIComponent(fileObjectId)}&mode=preview&type=${encodeURIComponent(upperType)}`, '_blank');
+                return;
+            }
+
+            wscToast('This snapshot item type has no file preview.', 'error');
+        }
+        async function deleteSnapshot(snapshotId) {
+            if (!confirm('Delete this snapshot? This cannot be undone.')) return;
+
+            try {
+                await wscFetch(routeWithId(WSC.routes.snapshotDeleteTemplate, snapshotId), {
+                    method: 'POST',
+                });
+
+                wscToast('Snapshot deleted', 'success');
+                if (WSC.currentTrackId) {
+                    await openTrackDetail(WSC.currentTrackId);
+                }
+            } catch (e) {
+                wscToast(e.message, 'error');
+            }
         }
 
         async function loadWorkspaceData() {
@@ -850,6 +971,10 @@
             <div id="wsc-panel-current">${renderArtifactsHtml(artifacts)}</div>
             <div id="wsc-panel-progress" style="display:none">${renderTimelineHtml(snapshots)}</div>
         `;
+            if (Array.isArray(snapshots) && snapshots.length > 0) {
+                WSC.currentSnapshotId = Number(snapshots[0].id);
+                showSnapshot(snapshots[0].id);
+            }
         }
 
         function renderArtifactsHtml(artifacts) {
@@ -964,31 +1089,32 @@
         function renderTimelineHtml(snapshots) {
             if (!Array.isArray(snapshots) || snapshots.length === 0) {
                 return `
-                <div class="wsc-empty" style="padding:40px 0">
-                    <div class="wsc-empty-art" style="font-size:36px">📸</div>
-                    <div class="wsc-empty-title" style="font-size:1rem">No snapshots yet</div>
-                    <div class="wsc-empty-sub">Save progress updates for this track.</div>
-                </div>
-            `;
+      <div class="wsc-empty" style="padding:40px 0;">
+        <div class="wsc-empty-art" style="font-size:36px;">🕓</div>
+        <div class="wsc-empty-title" style="font-size:1rem;">No snapshots yet</div>
+        <div class="wsc-empty-sub">Save progress updates for this track.</div>
+      </div>
+    `;
             }
 
             return `
-            <div class="wsc-timeline">
-                ${snapshots.map((snap, index) => `
-                    <button class="wsc-seg ${index === 0 ? 'active' : ''}" type="button" onclick="showSnapshot(${snap.id})" data-snapshot-id="${snap.id}">
-                        ${escHtml(snap.createdAt || ('Snapshot #' + snap.id))}
-                    </button>
-                `).join('')}
-            </div>
-            <div id="wsc-snapshot-panels">
-                ${snapshots.map((snap, index) => `
-                    <div class="wsc-snap-card" data-snapshot-panel="${snap.id}" style="${index === 0 ? '' : 'display:none'}">
-                        <div class="wsc-snap-card-title">${escHtml(snap.createdAt || 'Snapshot')}</div>
-                        <div class="wsc-snap-card-meta">${escHtml(snap.message)}</div>
-                    </div>
-                `).join('')}
-            </div>
-        `;
+    <div class="wsc-snapshot-browser">
+      <div class="wsc-timeline">
+        ${snapshots.map((snap, index) => `
+          <button
+            class="wsc-seg ${index === 0 ? 'active' : ''}"
+            type="button"
+            onclick="showSnapshot(${snap.id})"
+            data-snapshot-id="${snap.id}"
+          >
+            <span class="wsc-seg-title">${escHtml(snap.title || ('Snapshot ' + snap.id))}</span>
+            <span class="wsc-seg-date">${escHtml(snap.createdAt || '')}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div id="wsc-snapshot-viewer"></div>
+    </div>
+  `;
         }
 
         function switchMode(mode) {
@@ -1006,17 +1132,159 @@
             setVisible(progressPanel, !showCurrent);
         }
 
+        function renderSnapshotDetail(snapshot, items) {
+            const safeItems = Array.isArray(items) ? items : [];
+
+            const filesHtml = safeItems.length
+                ? safeItems.map(item => {
+                    const hasFile = Boolean(item.hasFile);
+                    const badge = hasFile
+                        ? `<span class="wsc-art-badge">File</span>`
+                        : `<span class="wsc-art-badge no-file">No file</span>`;
+
+                    const actions = hasFile && item.downloadUrl
+                        ? `
+            <div class="wsc-art-actions">
+              <a class="wsc-btn-sm" href="${item.downloadUrl}" target="_blank" rel="noopener noreferrer">Open</a>
+            </div>
+          `
+                        : '';
+
+                    return `
+          <div class="wsc-artifact-row">
+            <div class="wsc-art-icon">📄</div>
+            <div style="flex:1;min-width:0;">
+              <div class="wsc-art-name">${escHtml(item.artifactName || 'Untitled artifact')}</div>
+              <div class="wsc-art-meta">
+                ${escHtml(item.artifactType || 'Unknown')}
+                ${item.fileObjectId ? ` · version file #${escHtml(item.fileObjectId)}` : ''}
+              </div>
+            </div>
+            ${badge}
+            ${actions}
+          </div>
+        `;
+                }).join('')
+                : `
+      <div class="wsc-empty" style="padding:32px 0;">
+        <div class="wsc-empty-art" style="font-size:30px;">📂</div>
+        <div class="wsc-empty-title" style="font-size:1rem;">No files captured</div>
+        <div class="wsc-empty-sub">This snapshot does not contain file-based artifacts.</div>
+      </div>
+    `;
+
+            return `
+    <div class="wsc-snap-card">
+      <div class="wsc-snap-card-title">${escHtml(snapshot.title || 'Snapshot')}</div>
+      <div class="wsc-snap-card-meta">${escHtml(snapshot.createdAt || '')}</div>
+      ${snapshot.message ? `<div class="wsc-snap-message">${escHtml(snapshot.message)}</div>` : ''}
+    </div>
+
+    <div class="wsc-snapshot-files">
+      <div class="wsc-art-group-header">Files in this snapshot</div>
+      <div class="wsc-artifacts">${filesHtml}</div>
+    </div>
+  `;
+        }
 
 
 
-        function showSnapshot(snapshotId) {
+
+        async function showSnapshot(snapshotId) {
             document.querySelectorAll('.wsc-seg').forEach(seg => {
                 seg.classList.toggle('active', Number(seg.dataset.snapshotId) === Number(snapshotId));
             });
 
-            document.querySelectorAll('[data-snapshot-panel]').forEach(panel => {
-                panel.style.display = Number(panel.dataset.snapshotPanel) === Number(snapshotId) ? 'block' : 'none';
-            });
+            const viewer = qs('wsc-snapshot-viewer');
+            if (!viewer) return;
+
+            viewer.innerHTML = `
+    <div class="wsc-loading">
+      <div class="wsc-skeleton"></div>
+      <div class="wsc-skeleton" style="width:70%;"></div>
+    </div>
+  `;
+
+            try {
+                const data = await wscFetch(routeWithId(WSC.routes.snapshotDetailTemplate, snapshotId), {
+                    method: 'GET',
+                });
+
+                viewer.innerHTML = renderSnapshotViewer(data.snapshot, data.items || []);
+                WSC.currentSnapshotId = Number(snapshotId);
+            } catch (e) {
+                viewer.innerHTML = `<div style="color:#f87171;padding:20px;">Could not load snapshot: ${escHtml(e.message)}</div>`;
+            }
+        }
+        function renderSnapshotViewer(snapshot, items) {
+            const rows = Array.isArray(items) && items.length
+                ? items.map(item => {
+                    const previewBtn = item.hasFile
+                        ? `<button class="wsc-btn-sm" type="button"
+      onclick="previewSnapshotFile(${Number(item.fileObjectId || 0)}, '${escHtml(item.artifactType || 'OTHER')}', ${Number(item.artifactId || 0)})">
+      Preview
+     </button>`
+                        : '';
+                    const inlineText = item.type === 'TEXT' && item.textContent
+                        ? `<div class="wsc-art-meta">${escHtml(String(item.textContent).slice(0, 140))}</div>`
+                        : '';
+
+                    const downloadBtn = item.hasFile && item.downloadUrl
+                        ? `<a class="wsc-btn-sm" href="${item.downloadUrl}" target="_blank" rel="noopener noreferrer">Download</a>`
+                        : '';
+
+                    return `
+          <div class="wsc-artifact-row">
+            <div class="wsc-art-icon">📄</div>
+            <div style="flex:1;min-width:0;">
+              <div class="wsc-art-name">${escHtml(item.artifactName || 'Untitled artifact')}</div>
+              <div class="wsc-art-meta">${escHtml(item.artifactType || 'Unknown')}</div>
+            </div>
+            ${item.hasFile ? '<span class="wsc-art-badge">Saved file</span>' : '<span class="wsc-art-badge no-file">No file</span>'}
+            <div class="wsc-art-actions">
+              ${previewBtn}
+              ${downloadBtn}
+            </div>
+          </div>
+        `;
+                }).join('')
+                : `
+      <div class="wsc-empty" style="padding:32px 0;">
+        <div class="wsc-empty-art" style="font-size:32px;">📂</div>
+        <div class="wsc-empty-title" style="font-size:1rem;">No files in this snapshot</div>
+      </div>
+    `;
+
+            const deleteBtn = WSC.isOwner
+                ? `<button class="wsc-btn-sm wsc-btn-danger" type="button" onclick="deleteSnapshot(${Number(snapshot.id || 0)})">Delete snapshot</button>`
+                : '';
+
+            return `
+    <div class="wsc-snap-card">
+      <div class="wsc-snap-card-title">${escHtml(snapshot.title || 'Snapshot')}</div>
+      <div class="wsc-snap-card-meta">${escHtml(snapshot.createdAt || '')}</div>
+      <div class="wsc-snap-message">${escHtml(snapshot.message || '')}</div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+        ${deleteBtn}
+      </div>
+    </div>
+
+    <div class="wsc-art-group-header">Files captured in this version</div>
+    <div class="wsc-artifacts">${rows}</div>
+  `;
+        }
+        function navigateSnapshot(direction) {
+            const segments = Array.from(document.querySelectorAll('.wsc-seg'));
+            if (!segments.length) return;
+
+            const ids = segments.map(seg => Number(seg.dataset.snapshotId));
+            const currentId = Number(WSC.currentSnapshotId || ids[0]);
+            const index = ids.indexOf(currentId);
+            const nextIndex = Math.max(0, Math.min(ids.length - 1, index + direction));
+
+            if (ids[nextIndex] && ids[nextIndex] !== currentId) {
+                showSnapshot(ids[nextIndex]);
+            }
         }
 
         function openCreateTrack() {
@@ -1425,6 +1693,11 @@
             const upperType = String(type || '').toUpperCase();
             const baseUrl = routeWithId(WSC.routes.codeViewerTemplate, artifactId);
 
+            if (upperType === 'TEXT' || upperType === 'LINK') {
+                window.open(`${baseUrl}?mode=preview`, '_blank');
+                return;
+            }
+
             if (!fileObjectId) {
                 wscToast('No file attached to this artifact.', 'error');
                 return;
@@ -1435,7 +1708,7 @@
                 return;
             }
 
-            if (upperType === 'DOCUMENT' || upperType === 'IMAGE' || upperType === 'VIDEO' || upperType === 'AUDIO' || upperType === 'OTHER') {
+            if (upperType === 'DOCUMENT' || upperType === 'IMAGE' || upperType === 'VIDEO' || upperType === 'AUDIO' || upperType === 'OTHER'|| upperType === 'TEXT') {
                 window.open(`${baseUrl}?fo=${fileObjectId}&mode=preview`, '_blank');
                 return;
             }
@@ -1445,11 +1718,12 @@
 
         function openSnapshotModal(trackId) {
             WSC.currentTrackId = Number(trackId);
+            if (qs('wsc-snap-title')) qs('wsc-snap-title').value = '';
             if (qs('wsc-snap-msg')) qs('wsc-snap-msg').value = '';
             if (qs('wsc-snap-chars')) qs('wsc-snap-chars').textContent = '0';
             clearModalError('wsc-snap-err');
             setVisible(qs('wsc-snap-overlay'), true, 'flex');
-            qs('wsc-snap-msg')?.focus();
+            qs('wsc-snap-title')?.focus();
         }
 
         function closeSnapshotModal() {
@@ -1458,18 +1732,25 @@
         }
 
         async function saveSnapshot() {
+            const title = getValue('wsc-snap-title').trim();
             const msg = getValue('wsc-snap-msg').trim();
 
             if (!WSC.currentTrackId) {
                 showModalError('wsc-snap-err', 'No track selected.');
                 return;
             }
-
+            if (!title) {
+                showModalError('wsc-snap-err', 'Title is required.');
+                return;
+            }
+            if (title.length > 80) {
+                showModalError('wsc-snap-err', 'Max 80 characters for title.');
+                return;
+            }
             if (!msg) {
                 showModalError('wsc-snap-err', 'Message is required.');
                 return;
             }
-
             if (msg.length > 280) {
                 showModalError('wsc-snap-err', 'Max 280 characters.');
                 return;
@@ -1478,11 +1759,11 @@
             try {
                 await wscFetch(routeWithId(WSC.routes.snapshotCreateTemplate, WSC.currentTrackId), {
                     method: 'POST',
-                    body: JSON.stringify({ message: msg })
+                    body: JSON.stringify({ title, message: msg }),
                 });
 
                 closeSnapshotModal();
-                wscToast('Snapshot saved 📸', 'success');
+                wscToast('Snapshot saved', 'success');
                 await openTrackDetail(WSC.currentTrackId);
             } catch (e) {
                 showModalError('wsc-snap-err', e.message);
@@ -1594,6 +1875,9 @@
         window.switchMode = switchMode;
         window.showSnapshot = showSnapshot;
         window.previewArtifact = previewArtifact;
+        window.deleteSnapshot = deleteSnapshot;
+        window.previewSnapshotFile = previewSnapshotFile;
+        window.navigateSnapshot = navigateSnapshot;
 
         initArtifactDropzone();
         onArtifactTypeChange();

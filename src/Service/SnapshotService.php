@@ -9,6 +9,7 @@ use App\Repository\SnapshotRepository;
 use App\Repository\SnapshotItemRepository;
 use App\Service\ArtifactService;
 use App\Service\FileObjectService;
+use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 
 final class SnapshotService
@@ -24,16 +25,19 @@ final class SnapshotService
     /**
      * Creates a snapshot of all current artifacts in the track.
      * Each artifact's latest FileObject is captured in a SnapshotItem.
+     * @throws \Exception
      */
-    public function create(Track $track, int $authorId, string $message): Snapshot
+    public function create(Track $track, User $user, string $title, string $message): Snapshot
     {
         $snapshot = new Snapshot();
         $snapshot->setTrack($track);
-        $snapshot->setAuthorId($authorId);
-        $snapshot->setTitle("Snapshot");
+        $snapshot->setUser($user);
+        $snapshot->setTitle($title);
         $snapshot->setMessage($message);
-        $snapshot->setCreatedAt(new \DateTimeImmutable());
-        $snapshot->setIsFinal(0);
+        $snapshot->setCreatedAt(new \DateTime());  // Changed from DateTimeImmutable
+        $snapshot->setIsFinal(false);
+
+        // Debug: Check values before persist
         $this->em->persist($snapshot);
 
         $artifacts = $this->artifactService->listActiveByTrack($track);
@@ -42,12 +46,32 @@ final class SnapshotService
             $item = new SnapshotItem();
             $item->setSnapshot($snapshot);
             $item->setArtifact($artifact);
-            $item->setFileObject($latestFo); // null if TEXT/LINK with no upload
+            $item->setFileObject($latestFo);
             $this->em->persist($item);
+
         }
 
-        $this->em->flush();
+
+        try {
+            $this->em->flush();
+        } catch (\Exception $e) {
+            dump($e->getMessage());
+            throw $e;
+        }
+
         return $snapshot;
+    }
+
+    public function delete(Snapshot $snapshot): void
+    {
+        $items = $this->snapshotItemRepo->findBy(['snapshot' => $snapshot]);
+
+        foreach ($items as $item) {
+            $this->em->remove($item);
+        }
+
+        $this->em->remove($snapshot);
+        $this->em->flush();
     }
 
     /** @return Snapshot[] oldest first */

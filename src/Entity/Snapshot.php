@@ -8,50 +8,89 @@ use Doctrine\ORM\Mapping as ORM;
 
 #[ORM\Table(name: 'snapshot')]
 #[ORM\Entity]
+#[ORM\HasLifecycleCallbacks]
 class Snapshot
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id;
 
-    #[ORM\Column]
+    #[ORM\Column(type: "string", length: 255)]
     private ?string $title = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: "text")]
     private ?string $message = null;
 
-    #[ORM\Column]
-    private ?int $isFinal = null;
+    #[ORM\Column(type: "boolean")]
+    private ?bool $isFinal = null;
 
-    #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    #[ORM\Column(type: "datetime")]
+    private ?\DateTime $createdAt = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: "integer")]
     private ?int $trackId = null;
 
-    #[ORM\Column]
+    #[ORM\Column(type: "integer")]
     private ?int $authorId = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'track_id', referencedColumnName: 'id')]
+    #[ORM\JoinColumn(name: 'track_id', referencedColumnName: 'id', nullable: false)]
     private ?Track $track = null;
 
     #[ORM\ManyToOne]
-    #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id')]
+    #[ORM\JoinColumn(name: 'author_id', referencedColumnName: 'id', nullable: false)]
     private ?User $user = null;
 
+    #[ORM\PrePersist]
+    public function onPrePersist(): void
+    {
+        // Set required fields
+        if (!$this->title) {
+            $this->title = "Snapshot";
+        }
+
+        if (!$this->createdAt) {
+            $this->createdAt = new \DateTime();
+        }
+
+        if ($this->isFinal === null) {
+            $this->isFinal = false;
+        }
+
+        // CRITICAL: Ensure IDs from relations are set
+        if ($this->track && !$this->trackId) {
+            $this->trackId = $this->track->getId();
+        }
+
+        if ($this->user && !$this->authorId) {
+            $this->authorId = $this->user->getId();
+        }
+
+        // Validation - these MUST NOT be null
+        if (!$this->trackId) {
+            throw new \RuntimeException('trackId cannot be null');
+        }
+
+        if (!$this->authorId) {
+            throw new \RuntimeException('authorId cannot be null');
+        }
+
+        if (!$this->message) {
+            throw new \RuntimeException('message cannot be null');
+        }
+    }
+
+    // Getters and setters
     public function getId(): ?int
     {
         return $this->id;
     }
-
     public function setId(?int $id): self
     {
         $this->id = $id;
         return $this;
     }
-
     public function getTitle(): ?string
     {
         return $this->title;
@@ -74,23 +113,23 @@ class Snapshot
         return $this;
     }
 
-    public function getIsFinal(): ?int
+    public function getIsFinal(): ?bool
     {
         return $this->isFinal;
     }
 
-    public function setIsFinal(?int $isFinal): self
+    public function setIsFinal(?bool $isFinal): self
     {
         $this->isFinal = $isFinal;
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    public function getCreatedAt(): ?\DateTime
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(?\DateTimeImmutable $createdAt): self
+    public function setCreatedAt(?\DateTime $createdAt): self
     {
         $this->createdAt = $createdAt;
         return $this;
@@ -126,6 +165,9 @@ class Snapshot
     public function setTrack(?Track $track): self
     {
         $this->track = $track;
+        if ($track) {
+            $this->trackId = $track->getId();
+        }
         return $this;
     }
 
@@ -137,6 +179,9 @@ class Snapshot
     public function setUser(?User $user): self
     {
         $this->user = $user;
+        if ($user) {
+            $this->authorId = $user->getId();
+        }
         return $this;
     }
 }
